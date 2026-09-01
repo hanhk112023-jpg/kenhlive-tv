@@ -37,6 +37,11 @@ class MainActivity : AppCompatActivity() {
             tab.text = if (pos == 0) "🔴 Trực tiếp" else "📅 Lịch trình"
         }.attach()
 
+        // deep-link: --ei tab 1 mở thẳng tab Lịch trình (dùng cho CI screenshot)
+        if (intent?.getIntExtra("tab", 0) == 1) {
+            viewPager.post { viewPager.setCurrentItem(1, false) }
+        }
+
         checkUpdate()
     }
 
