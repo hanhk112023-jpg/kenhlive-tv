@@ -1,7 +1,6 @@
 package com.kenhlive.tv
 
-import android.content.Intent
-import android.os.Bundle
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -12,11 +11,11 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import coil.transform.CircleCropTransformation
-import coil.transform.RoundedCornersTransformation
 
-/** Grid card BLV đang live: avatar tròn viền đỏ + pills đẹp. */
+/** Grid card BLV đang live: avatar tròn viền gradient + pills. Long-click = chọn multiview. */
 class LiveRoomAdapter(
-    private val onClick: (LiveRoom) -> Unit
+    private val onClick: (LiveRoom) -> Unit,
+    private val onLongClick: (LiveRoom) -> Unit = {}
 ) : ListAdapter<LiveRoom, LiveRoomAdapter.VH>(DIFF) {
 
     companion object {
@@ -25,6 +24,8 @@ class LiveRoomAdapter(
             override fun areContentsTheSame(a: LiveRoom, b: LiveRoom) = a == b
         }
     }
+
+    var highlightRoomNums: Set<String> = emptySet()
 
     inner class VH(v: View) : RecyclerView.ViewHolder(v) {
         val avatar: ImageView = v.findViewById(R.id.avatar)
@@ -51,6 +52,9 @@ class LiveRoomAdapter(
             placeholder(R.drawable.logo_placeholder)
             error(R.drawable.logo_placeholder)
         }
+        val picked = r.roomNum in highlightRoomNums
+        h.blv.setTextColor(if (picked) 0xFFFFD166.toInt() else Color.WHITE)
         h.itemView.setOnClickListener { onClick(r) }
+        h.itemView.setOnLongClickListener { onLongClick(r); true }
     }
 }

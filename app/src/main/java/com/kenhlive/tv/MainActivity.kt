@@ -25,6 +25,10 @@ class MainActivity : AppCompatActivity() {
 
         viewPager = findViewById(R.id.viewPager)
         val tabLayout = findViewById<TabLayout>(R.id.tabLayout)
+        findViewById<View>(R.id.multiBtn).setOnClickListener {
+            val f = supportFragmentManager.findFragmentByTag("f0")
+            (f as? LiveFragment)?.openMultiView()
+        }
 
         viewPager.adapter = object : FragmentStateAdapter(this) {
             override fun getItemCount() = 2
