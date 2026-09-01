@@ -2,30 +2,31 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:gravity="center_horizontal"
-    android:padding="4dp"
-    android:layout_marginRight="10dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="5dp"
+    android:layout_marginRight="8dp"
     android:focusable="true"
     android:clickable="true"
     android:background="@drawable/anchor_chip_bg">
 
     <ImageView
         android:id="@+id/anchorAvatar"
-        android:layout_width="44dp"
-        android:layout_height="44dp"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
         android:scaleType="centerCrop"
-        android:background="#1A1A1A"
+        android:background="#2A2A2A"
         android:contentDescription="@string/app_name" />
 
     <TextView
         android:id="@+id/anchorName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:textColor="#B9C2D8"
-        android:textSize="10sp"
+        android:layout_marginLeft="8dp"
+        android:textColor="#D7DEED"
+        android:textSize="12sp"
+        android:textStyle="bold"
         android:ellipsize="end"
         android:maxLines="1"
-        android:maxLength="14" />
+        android:maxLength="18" />
 </LinearLayout>

@@ -3,31 +3,38 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="12dp"
-    android:layout_margin="5dp"
+    android:padding="14dp"
+    android:layout_margin="6dp"
     android:background="@drawable/card_bg">
 
+    <!-- hàng trên: giờ + 2 đội + giải -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
+        <!-- giờ trong khung -->
         <TextView
             android:id="@+id/matchTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minWidth="46dp"
+            android:minWidth="58dp"
             android:gravity="center"
             android:textColor="#FFD166"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:background="@drawable/time_pill"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp" />
 
         <ImageView
             android:id="@+id/hostIcon"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_marginLeft="8dp"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:layout_marginLeft="12dp"
             android:scaleType="fitCenter"
             android:contentDescription="@string/app_name" />
 
@@ -37,52 +44,85 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:paddingLeft="10dp"
-            android:paddingRight="10dp">
+            android:paddingRight="10dp"
+            android:gravity="center_vertical">
 
             <TextView
                 android:id="@+id/matchName"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="#F2F5FA"
-                android:textSize="14sp"
+                android:textColor="#FFFFFF"
+                android:textSize="15sp"
+                android:textStyle="bold"
                 android:ellipsize="end"
                 android:maxLines="1" />
 
             <TextView
                 android:id="@+id/matchLeague"
-                android:layout_width="match_parent"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
                 android:textColor="#8890A6"
                 android:textSize="11sp"
                 android:ellipsize="end"
                 android:maxLines="1" />
         </LinearLayout>
 
+        <ImageView
+            android:id="@+id/guestIcon"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:layout_marginRight="8dp"
+            android:scaleType="fitCenter"
+            android:contentDescription="@string/app_name" />
+
         <TextView
             android:id="@+id/statusBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="9sp"
+            android:textSize="10sp"
             android:textStyle="bold"
             android:background="@drawable/badge_live"
-            android:paddingLeft="7dp"
-            android:paddingRight="7dp"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp" />
-
-        <ImageView
-            android:id="@+id/guestIcon"
-            android:layout_width="30dp"
-            android:layout_height="30dp"
-            android:layout_marginLeft="8dp"
-            android:scaleType="fitCenter"
-            android:contentDescription="@string/app_name" />
+            android:paddingLeft="9dp"
+            android:paddingRight="9dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp" />
     </LinearLayout>
 
+    <!-- hàng BLV: tách bằng divider mảnh, tiêu đề nhỏ -->
     <LinearLayout
-        android:id="@+id/anchorRow"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="8dp" />
+        android:orientation="vertical"
+        android:layout_marginTop="12dp">
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#1E2436"
+            android:layout_marginBottom="10dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="BÌNH LUẬN VIÊN"
+            android:textColor="#6B7490"
+            android:textSize="9sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.1"
+            android:paddingLeft="2dp"
+            android:paddingBottom="8dp" />
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none"
+            android:clipToPadding="false">
+
+            <LinearLayout
+                android:id="@+id/anchorRow"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+    </LinearLayout>
 </LinearLayout>

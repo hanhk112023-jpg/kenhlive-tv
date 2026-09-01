@@ -10,9 +10,8 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
-import coil.transform.CircleCropTransformation
 
-/** Lịch trình: header ngày + card trận (2 logo + giờ + hàng avatar BLV). */
+/** Lịch trình: header ngày (accent bar + count) + card trận thoáng + hàng avatar BLV cuộn ngang. */
 class ScheduleAdapter(
     private val onAnchorClick: (AnchorInfo, ScheduleMatch) -> Unit
 ) : ListAdapter<Any, RecyclerView.ViewHolder>(DIFF) {
@@ -32,6 +31,7 @@ class ScheduleAdapter(
 
     inner class DayVH(v: View) : RecyclerView.ViewHolder(v) {
         val tv: TextView = v.findViewById(R.id.dayLabel)
+        val count: TextView = v.findViewById(R.id.dayCount)
     }
 
     inner class MatchVH(v: View) : RecyclerView.ViewHolder(v) {
@@ -57,7 +57,17 @@ class ScheduleAdapter(
 
     override fun onBindViewHolder(h: RecyclerView.ViewHolder, pos: Int) {
         when (val item = getItem(pos)) {
-            is String -> (h as DayVH).tv.text = item
+            is String -> {
+                val vh = h as DayVH
+                vh.tv.text = item
+                // count trận trong ngày (String đứng trước các ScheduleMatch liền nhau)
+                var n = 0
+                for (j in pos + 1 until itemCount) {
+                    if (getItem(j) !is ScheduleMatch) break
+                    n++
+                }
+                vh.count.text = if (n > 0) "$n trận" else ""
+            }
             is ScheduleMatch -> {
                 val vh = h as MatchVH
                 vh.name.text = "${item.host} vs ${item.guest}"
@@ -73,19 +83,30 @@ class ScheduleAdapter(
                     vh.badge.setBackgroundResource(R.drawable.badge_grey)
                 }
                 vh.badge.visibility = View.VISIBLE
-                vh.hostIcon.load(item.hostIcon) { crossfade(80); error(R.drawable.logo_placeholder) }
-                vh.guestIcon.load(item.guestIcon) { crossfade(80); error(R.drawable.logo_placeholder) }
-                // hàng avatar BLV
+                vh.hostIcon.load(item.hostIcon) {
+                    crossfade(80); error(R.drawable.logo_placeholder); placeholder(R.drawable.logo_placeholder)
+                }
+                vh.guestIcon.load(item.guestIcon) {
+                    crossfade(80); error(R.drawable.logo_placeholder); placeholder(R.drawable.logo_placeholder)
+                }
+                // hàng avatar BLV (cuộn ngang, avatar tròn viền "LIVE" nếu đang phát)
                 vh.anchorRow.removeAllViews()
                 val inf = LayoutInflater.from(vh.anchorRow.context)
-                item.anchors.take(6).forEach { a ->
+                item.anchors.forEach { a ->
                     val av = inf.inflate(R.layout.item_anchor_chip, vh.anchorRow, false)
                     val img = av.findViewById<ImageView>(R.id.anchorAvatar)
                     val txt = av.findViewById<TextView>(R.id.anchorName)
                     txt.text = a.nickName
-                    img.load(a.icon) { crossfade(80); transformations(coil.transform.CircleCropTransformation()); error(R.drawable.logo_placeholder) }
-                    av.setOnClickListener { if (a.roomNum.isNotBlank()) onAnchorClick(a, item) }
-                    av.alpha = if (a.roomNum.isNotBlank()) 1f else 0.4f
+                    img.load(a.icon) {
+                        crossfade(80)
+                        transformations(coil.transform.CircleCropTransformation())
+                        error(R.drawable.logo_placeholder)
+                        placeholder(R.drawable.logo_placeholder)
+                    }
+                    val live = a.roomNum.isNotBlank()
+                    av.alpha = if (live) 1f else 0.45f
+                    img.setColorFilter(0x00000000)
+                    av.setOnClickListener { if (live) onAnchorClick(a, item) }
                     vh.anchorRow.addView(av)
                 }
             }
