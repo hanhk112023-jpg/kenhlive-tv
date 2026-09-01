@@ -26,12 +26,12 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      # dùng image ANDROID TV (leanback) — không phải phone. TV x86_64 chỉ có API 36
+      # TV image x86_64 (API36) lỗi SystemUI trên runner — dùng x86 32-bit API 30 ổn định hơn
       - name: Chạy Android TV emulator + chụp
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 36
-          arch: x86_64
+          api-level: 30
+          arch: x86
           target: android-tv
           script: |
             adb install -r app/build/outputs/apk/debug/app-debug.apk
