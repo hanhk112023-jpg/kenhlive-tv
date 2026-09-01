@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- focus bằng D-pad trên TV -->
+    <item android:state_focused="true">
+        <shape>
+            <gradient android:angle="0" android:startColor="#2A3350" android:endColor="#1E2740" />
+            <corners android:radius="14dp" />
+            <stroke android:width="2dp" android:color="#4CC9F0" />
+        </shape>
+    </item>
+    <item android:state_pressed="true">
+        <shape>
+            <solid android:color="#2A3350" />
+            <corners android:radius="14dp" />
+            <stroke android:width="2dp" android:color="#7C5CFF" />
+        </shape>
+    </item>
+    <item>
+        <shape>
+            <solid android:color="#141927" />
+            <corners android:radius="14dp" />
+            <stroke android:width="1dp" android:color="#232B42" />
+        </shape>
+    </item>
+</selector>
