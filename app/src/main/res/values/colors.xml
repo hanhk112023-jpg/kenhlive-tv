@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Palette SportzX (đào từ SportzX_3.1v.apk res/values/colors.xml) -->
+    <color name="accent_amber">#FFB020</color>
+    <color name="accent_cyan">#00F0FF</color>
+    <color name="accent_green">#00E676</color>
+    <color name="accent_indigo">#6366F1</color>
+    <color name="accent_purple">#9D4EDD</color>
+    <color name="accent_red">#FF2A5F</color>
+    <color name="text_primary">#F8FAFC</color>
+    <color name="text_secondary">#94A3B8</color>
+    <color name="text_muted">#64748B</color>
+    <color name="text_dark">#0F172A</color>
+    <color name="bg_deep">#090B14</color>
+</resources>
