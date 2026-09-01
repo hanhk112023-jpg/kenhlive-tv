@@ -63,14 +63,15 @@ class ScheduleAdapter(
                 vh.league.text = item.league
                 vh.time.text = SocoliveRepository.formatTime(item.matchTimeMs)
                 if (item.isLive) {
-                    vh.badge.text = "● Đang trực tiếp"
-                    vh.badge.setTextColor(0xFFFF5D5D.toInt())
-                    vh.badge.visibility = View.VISIBLE
+                    vh.badge.text = "● LIVE"
+                    vh.badge.setTextColor(0xFFFFFFFF.toInt())
+                    vh.badge.setBackgroundResource(R.drawable.badge_live)
                 } else {
-                    vh.badge.text = "Chưa bắt đầu"
-                    vh.badge.setTextColor(0xFF6B7490.toInt())
-                    vh.badge.visibility = View.VISIBLE
+                    vh.badge.text = SocoliveRepository.formatTime(item.matchTimeMs)
+                    vh.badge.setTextColor(0xFF9AA4C0.toInt())
+                    vh.badge.setBackgroundResource(R.drawable.badge_grey)
                 }
+                vh.badge.visibility = View.VISIBLE
                 vh.hostIcon.load(item.hostIcon) { crossfade(80); error(R.drawable.logo_placeholder) }
                 vh.guestIcon.load(item.guestIcon) { crossfade(80); error(R.drawable.logo_placeholder) }
                 // hàng avatar BLV
@@ -81,7 +82,7 @@ class ScheduleAdapter(
                     val img = av.findViewById<ImageView>(R.id.anchorAvatar)
                     val txt = av.findViewById<TextView>(R.id.anchorName)
                     txt.text = a.nickName
-                    img.load(a.icon) { crossfade(60); error(R.drawable.logo_placeholder) }
+                    img.load(a.icon) { crossfade(80); transformations(coil.transform.CircleCropTransformation()); error(R.drawable.logo_placeholder) }
                     av.setOnClickListener { if (a.roomNum.isNotBlank()) onAnchorClick(a, item) }
                     av.alpha = if (a.roomNum.isNotBlank()) 1f else 0.4f
                     vh.anchorRow.addView(av)

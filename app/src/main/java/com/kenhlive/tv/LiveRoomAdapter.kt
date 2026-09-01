@@ -1,5 +1,7 @@
 package com.kenhlive.tv
 
+import android.content.Intent
+import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,8 +11,10 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
+import coil.transform.CircleCropTransformation
+import coil.transform.RoundedCornersTransformation
 
-/** Grid card BLV đang live: avatar tròn + tên + viewers + trận + giải. */
+/** Grid card BLV đang live: avatar tròn viền đỏ + pills đẹp. */
 class LiveRoomAdapter(
     private val onClick: (LiveRoom) -> Unit
 ) : ListAdapter<LiveRoom, LiveRoomAdapter.VH>(DIFF) {
@@ -38,11 +42,12 @@ class LiveRoomAdapter(
     override fun onBindViewHolder(h: VH, pos: Int) {
         val r = getItem(pos)
         h.blv.text = r.blvName
-        h.viewers.text = "👁 ${SocoliveRepository.fmtViewers(r.viewers)}"
+        h.viewers.text = "👁 ${SocoliveRepository.fmtViewers(r.viewers)} đang xem"
         h.match.text = r.matchTitle
         h.league.text = r.league
         h.avatar.load(r.avatar) {
-            crossfade(80)
+            crossfade(120)
+            transformations(CircleCropTransformation())
             placeholder(R.drawable.logo_placeholder)
             error(R.drawable.logo_placeholder)
         }

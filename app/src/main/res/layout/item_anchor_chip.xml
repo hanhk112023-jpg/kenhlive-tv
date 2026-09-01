@@ -8,7 +8,7 @@
     android:layout_marginRight="10dp"
     android:focusable="true"
     android:clickable="true"
-    android:background="@drawable/chip_bg">
+    android:background="@drawable/anchor_chip_bg">
 
     <ImageView
         android:id="@+id/anchorAvatar"

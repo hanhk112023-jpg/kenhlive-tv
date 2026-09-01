@@ -2,6 +2,11 @@ name: Screenshots
 
 on:
   workflow_dispatch:
+    inputs:
+      proxy:
+        description: "Đi proxy VN (bắt buộc cho API Socolive)"
+        type: boolean
+        default: true
 
 jobs:
   shots:
@@ -21,13 +26,45 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
+      # ---- Proxy VN (mihomo qua YUNA subscription) cho API Socolive ----
+      - name: Set up proxy VN
+        if: ${{ inputs.proxy }}
+        env:
+          SUB_URL: ${{ secrets.YUNA_SUB_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "$SUB_URL" ]; then echo "YUNA_SUB_URL not set"; exit 1; fi
+          MH=$(ls /usr/local/bin/mihomo 2>/dev/null || true)
+          if [ -z "$MH" ]; then
+            VER=v1.19.30
+            curl -sSL -o /tmp/mihomo.gz "https://github.com/MetaCubeX/mihomo/releases/download/${VER}/mihomo-linux-amd64-${VER}.gz"
+            gunzip -f /tmp/mihomo.gz && install -m 0755 /tmp/mihomo /usr/local/bin/mihomo
+          fi
+          curl -sSL -H 'User-Agent: clash-verge/1.6.6' -o /tmp/sub_full.yaml "$SUB_URL"
+          python3 - << 'PYEOF'
+          import yaml
+          cfg = yaml.safe_load(open('/tmp/sub_full.yaml'))
+          names = cfg.get('proxies', [])
+          order = [p for p in names if 'VN' in p.get('name','').upper()] + \
+                  [p for p in names if 'SG' in p.get('name','').upper()]
+          keep = order[:10]
+          groups = [{'name':'POOL','type':'url-test','proxies':[p['name'] for p in keep],
+                     'url':'http://www.gstatic.com/generate_204','interval':120,'tolerance':50}]
+          out = {'mixed-port':7891,'allow-lan':True,'mode':'rule','log-level':'warning',
+                 'proxies':keep,'proxy-groups':groups,'rules':['MATCH,POOL']}
+          yaml.safe_dump(out, open('/tmp/mihomo_ci.yaml','w'))
+          PYEOF
+          nohup mihomo -f /tmp/mihomo_ci.yaml -d /tmp/mihomo_ci > /tmp/mihomo.log 2>&1 &
+          sleep 4
+          IP=$(curl -sS -m 15 -x http://127.0.0.1:7891 https://api.ipify.org || echo "?")
+          echo "exit IP qua proxy: $IP"
+
+      # ---- Android emulator ----
       - name: KVM permissions
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-          sudo gpasswd -a $USER kvm || true
-          ls -l /dev/kvm
 
       - name: Chạy emulator + chụp 2 tab
         uses: reactivecircus/android-emulator-runner@v2
@@ -36,12 +73,15 @@ jobs:
           target: google_apis
           arch: x86_64
           script: |
+            # emulator dùng proxy của host (10.0.2.2 = host loopback)
+            adb root
+            adb shell settings put global http_proxy 10.0.2.2:7891
             adb install -r app/build/outputs/apk/debug/app-debug.apk
             adb shell am start -n com.kenhlive.tv/.MainActivity
-            sleep 18
+            sleep 22
             adb exec-out screencap -p > shot1_tructiep.png
-            adb shell input swipe 950 500 120 500 400
-            sleep 12
+            adb shell input tap 540 320
+            sleep 14
             adb exec-out screencap -p > shot2_lichtrinh.png
 
       - uses: actions/upload-artifact@v4

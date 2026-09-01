@@ -62,8 +62,13 @@
             android:id="@+id/statusBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="10sp"
-            android:textStyle="bold" />
+            android:textSize="9sp"
+            android:textStyle="bold"
+            android:background="@drawable/badge_live"
+            android:paddingLeft="7dp"
+            android:paddingRight="7dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp" />
 
         <ImageView
             android:id="@+id/guestIcon"
