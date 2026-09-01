@@ -1,11 +1,11 @@
 package com.socolive.tv
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
+import android.view.Gravity
 import android.view.View
-import android.widget.AdapterView
-import android.widget.ArrayAdapter
-import android.widget.Spinner
+import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -19,17 +19,20 @@ import kotlinx.coroutines.withContext
 class MainActivity : AppCompatActivity() {
     private val scope = CoroutineScope(Dispatchers.Main)
     private var channels = mutableListOf<Channel>()
-    private var filtered = mutableListOf<Channel>()
+    private var currentGroup = "Tất cả"
     private lateinit var adapter: ChannelAdapter
-    private lateinit var spinner: Spinner
+    private lateinit var chipRow: LinearLayout
     private lateinit var statusText: TextView
+    private lateinit var countText: TextView
+    private val chipViews = mutableMapOf<String, TextView>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        spinner = findViewById(R.id.groupSpinner)
+        chipRow = findViewById(R.id.chipRow)
         statusText = findViewById(R.id.statusText)
+        countText = findViewById(R.id.countText)
         adapter = ChannelAdapter { channel -> openChannel(channel) }
         findViewById<RecyclerView>(R.id.recyclerView).apply {
             layoutManager = LinearLayoutManager(this@MainActivity)
@@ -43,11 +46,10 @@ class MainActivity : AppCompatActivity() {
         val url = getString(R.string.default_url)
         scope.launch {
             try {
-                statusText.text = "Đang tải playlist..."
                 val result = withContext(Dispatchers.IO) { M3uParser.fetch(url) }
                 channels = result.toMutableList()
-                setupGroups()
-                Toast.makeText(this@MainActivity, "Đã tải ${channels.size} kênh", Toast.LENGTH_SHORT).show()
+                buildChips()
+                applyFilter(currentGroup)
                 statusText.visibility = View.GONE
             } catch (e: Exception) {
                 statusText.text = "Lỗi tải playlist: ${e.message}"
@@ -56,23 +58,45 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun setupGroups() {
+    private fun buildChips() {
+        chipRow.removeAllViews()
+        chipViews.clear()
         val groups = listOf("Tất cả") + channels.map { it.group }.distinct().sorted()
-        spinner.adapter = ArrayAdapter(this, android.R.layout.simple_spinner_dropdown_item, groups)
-        spinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(p: AdapterView<*>?, v: View?, pos: Int, id: Long) {
-                applyFilter(groups[pos])
+        groups.forEach { g ->
+            val tv = TextView(this).apply {
+                text = if (g == "Tất cả") "Tất cả (${channels.size})"
+                       else "$g (${channels.count { it.group == g }})"
+                textSize = 14f
+                setPadding(34, 16, 34, 16)
+                setTextColor(Color.WHITE)
+                background = getDrawable(R.drawable.chip_bg)
+                layoutParams = LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.WRAP_CONTENT,
+                    LinearLayout.LayoutParams.WRAP_CONTENT
+                ).apply { marginEnd = 10.dp() }
+                isFocusable = true
+                setOnClickListener { applyFilter(g) }
             }
-            override fun onNothingSelected(p: AdapterView<*>?) {}
+            chipRow.addView(tv)
+            chipViews[g] = tv
+        }
+        selectChip(currentGroup)
+    }
+
+    private fun selectChip(g: String) {
+        chipViews.forEach { (name, tv) ->
+            tv.isSelected = name == g
+            tv.setTextColor(if (name == g) Color.parseColor("#4CC9F0") else Color.WHITE)
         }
     }
 
     private fun applyFilter(group: String) {
-        filtered = if (group == "Tất cả")
-            channels.toMutableList()
-        else
-            channels.filter { it.group == group }.toMutableList()
-        adapter.setData(filtered)
+        currentGroup = group
+        selectChip(group)
+        val list = if (group == "Tất cả") channels
+                   else channels.filter { it.group == group }
+        adapter.submitList(list)
+        countText.text = "${list.size} kênh"
     }
 
     private fun openChannel(channel: Channel) {
@@ -80,4 +104,6 @@ class MainActivity : AppCompatActivity() {
             .putExtra("url", channel.url)
             .putExtra("name", channel.name))
     }
+
+    private fun Int.dp(): Int = (this * resources.displayMetrics.density).toInt()
 }
