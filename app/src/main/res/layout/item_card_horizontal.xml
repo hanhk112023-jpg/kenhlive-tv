@@ -79,18 +79,35 @@
         android:ellipsize="end"
         android:maxLines="2" />
 
-    <TextView
-        android:id="@+id/cardViewers"
+    <LinearLayout
+        android:id="@+id/watchBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:textColor="#FFB800"
-        android:fontFamily="@font/oswald"
-        android:textSize="13sp"
-        android:fontFeatureSettings="tnum"
-        android:background="@drawable/pill_viewers"
-        android:paddingLeft="12dp"
-        android:paddingRight="12dp"
-        android:paddingTop="3dp"
-        android:paddingBottom="3dp" />
+        android:layout_marginTop="9dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/pill_watch"
+        android:paddingLeft="14dp"
+        android:paddingRight="14dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"
+        android:focusable="true">
+
+        <ImageView
+            android:layout_width="13dp"
+            android:layout_height="13dp"
+            android:src="@drawable/ic_play_triangle"
+            android:contentDescription="play" />
+
+        <TextView
+            android:id="@+id/cardViewers"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="6dp"
+            android:textColor="#0B0F19"
+            android:fontFamily="@font/oswald"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:fontFeatureSettings="tnum" />
+    </LinearLayout>
 </LinearLayout>

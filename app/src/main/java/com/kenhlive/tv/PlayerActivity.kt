@@ -39,6 +39,13 @@ class PlayerActivity : AppCompatActivity() {
         }
         findViewById<PlayerView>(R.id.playerView).player = player
         findViewById<TextView>(R.id.backBtn).setOnClickListener { finish() }
+        // Multi-view: chỉ có ở màn hình đang xem — mở grid 2x2, phòng hiện tại làm ô đầu
+        findViewById<TextView>(R.id.multiBtn).setOnClickListener {
+            val i = android.content.Intent(this, MultiViewActivity::class.java)
+            i.putExtra("initial_room", name)
+            i.putExtra("initial_url", url)
+            startActivity(i)
+        }
     }
 
     override fun onStop() {

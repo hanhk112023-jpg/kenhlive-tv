@@ -34,7 +34,10 @@ class MultiViewActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         val nums = intent?.getStringArrayExtra("roomNums") ?: arrayOf()
         names = intent?.getStringArrayExtra("names") ?: arrayOf()
-        if (nums.isEmpty()) { finish(); return }
+        // mở từ Player: phòng đang xem làm ô đầu (cần fetch roomNum từ tên? — Player truyền thẳng stream URL)
+        val initialUrl = intent?.getStringExtra("initial_url")
+        val initialName = intent?.getStringExtra("initial_room")
+        if (nums.isEmpty() && initialUrl == null) { finish(); return }
 
         val grid = GridLayout(this).apply {
             columnCount = 2
@@ -44,8 +47,10 @@ class MultiViewActivity : AppCompatActivity() {
         setContentView(grid)
 
         lifecycleScope.launch {
-            // fetch stream song song cho từng phòng
-            val urls = nums.map { n -> async { SocoliveRepository.fetchStream(n) } }.awaitAll()
+            // fetch stream song song; nếu mở từ Player thì ô đầu là phòng đang xem (URL sẵn có)
+            val deferred = nums.map { n -> async { SocoliveRepository.fetchStream(n) } }.toMutableList()
+            if (initialUrl != null) deferred.add(0, async { initialUrl })
+            val urls = deferred.awaitAll()
             // tế bào không có stream vẫn thêm (đen + label lỗi) để giữ grid đều
             urls.forEachIndexed { i, url -> addCell(grid, i, url, i / 2, i % 2, urls.size) }
             if (players.isNotEmpty()) {
@@ -69,7 +74,11 @@ class MultiViewActivity : AppCompatActivity() {
         cell.layoutParams = lp
 
         val label = cell.findViewById<TextView>(R.id.cellLabel)
-        label.text = names.getOrElse(idx) { "Kênh ${idx + 1}" }
+        val initialName = intent?.getStringExtra("initial_room")
+        label.text = when {
+            idx == 0 && initialName != null -> initialName
+            else -> names.getOrElse(idx) { "Kênh ${idx + 1}" }
+        }
 
         if (url == null) {
             label.text = "${label.text} · không có stream"

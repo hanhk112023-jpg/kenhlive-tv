@@ -37,11 +37,6 @@ class MainActivity : AppCompatActivity() {
         viewPager = findViewById(R.id.viewPager)
         navLive = findViewById(R.id.nav_live)
         navSchedule = findViewById(R.id.nav_schedule)
-        findViewById<View>(R.id.multiBtn).setOnClickListener {
-            val f = supportFragmentManager.findFragmentByTag("f0")
-            (f as? LiveFragment)?.openMultiView()
-        }
-
         viewPager.adapter = object : FragmentStateAdapter(this) {
             override fun getItemCount() = 2
             override fun createFragment(position: Int): Fragment = when (position) {

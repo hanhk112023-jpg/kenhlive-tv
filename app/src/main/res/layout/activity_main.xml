@@ -37,22 +37,6 @@
                 android:textSize="20sp"
                 android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/multiBtn"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Multi-view"
-                android:textColor="#F8FAFC"
-                android:fontFamily="sans-serif-medium"
-                android:textSize="12sp"
-                android:textStyle="bold"
-                android:background="@drawable/bg_live_pill"
-                android:paddingLeft="14dp"
-                android:paddingRight="14dp"
-                android:paddingTop="7dp"
-                android:paddingBottom="7dp"
-                android:layout_marginRight="10dp"
-                android:focusable="true" />
         </LinearLayout>
 
         <TextView
