@@ -1,4 +1,4 @@
-package com.socolive.tv
+package com.kenhlive.tv
 
 import android.content.Intent
 import android.graphics.Color

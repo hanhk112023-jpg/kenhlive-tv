@@ -1,4 +1,4 @@
-package com.socolive.tv
+package com.kenhlive.tv
 
 import android.net.Uri
 import android.os.Bundle

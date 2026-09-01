@@ -1,4 +1,4 @@
-package com.socolive.tv
+package com.kenhlive.tv
 
 import android.app.Activity
 import android.content.pm.PackageManager

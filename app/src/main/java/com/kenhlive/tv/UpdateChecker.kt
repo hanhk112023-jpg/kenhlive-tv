@@ -1,4 +1,4 @@
-package com.socolive.tv
+package com.kenhlive.tv
 
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -14,7 +14,7 @@ data class AppRelease(
 
 object UpdateChecker {
     private const val LATEST =
-        "https://api.github.com/repos/hanhk112023-jpg/socolive-tv/releases/latest"
+        "https://api.github.com/repos/hanhk112023-jpg/kenhlive-tv/releases/latest"
 
     suspend fun latest(): AppRelease? = withContext(Dispatchers.IO) {
         try {

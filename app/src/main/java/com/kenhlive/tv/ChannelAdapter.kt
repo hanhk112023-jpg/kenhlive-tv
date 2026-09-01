@@ -1,4 +1,4 @@
-package com.socolive.tv
+package com.kenhlive.tv
 
 import android.view.LayoutInflater
 import android.view.View
@@ -9,6 +9,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
+import coil.request.CachePolicy
 
 class ChannelAdapter(
     private val gridMode: Boolean,
@@ -40,7 +41,8 @@ class ChannelAdapter(
         h.group.text = c.group
         if (c.logo.isNotBlank()) {
             h.logo.load(c.logo) {
-                crossfade(120)
+                crossfade(80)
+                memoryCachePolicy(CachePolicy.ENABLED)
                 placeholder(R.drawable.logo_placeholder)
                 error(R.drawable.logo_placeholder)
             }
