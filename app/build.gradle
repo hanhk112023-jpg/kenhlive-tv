@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace 'com.socolive.tv'
+    namespace 'com.kenhlive.tv'
     compileSdk 34
 
     defaultConfig {
