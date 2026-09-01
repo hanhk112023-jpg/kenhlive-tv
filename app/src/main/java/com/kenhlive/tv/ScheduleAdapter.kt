@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
+import coil.transform.CircleCropTransformation
 
 /** Lịch trình: header ngày + card trận (2 logo + giờ + hàng avatar BLV). */
 class ScheduleAdapter(
