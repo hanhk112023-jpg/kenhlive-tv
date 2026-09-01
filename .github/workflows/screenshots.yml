@@ -80,8 +80,8 @@ jobs:
             adb shell am start -n com.kenhlive.tv/.MainActivity
             sleep 22
             adb exec-out screencap -p > shot1_tructiep.png
-            adb shell input tap 540 320
-            sleep 14
+            adb shell input swipe 900 1100 150 1100 500
+            sleep 16
             adb exec-out screencap -p > shot2_lichtrinh.png
 
       - uses: actions/upload-artifact@v4
