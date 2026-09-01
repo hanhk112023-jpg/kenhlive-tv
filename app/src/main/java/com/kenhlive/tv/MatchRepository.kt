@@ -104,26 +104,6 @@ object MatchRepository {
         return if (open > 0 && close > open) s.substring(open + 1, close) else s
     }
 
-    /** Lấy stream URL phát được từ roomNum (hdM3u8 → m3u8 → hdFlv → flv). */
-    suspend fun fetchStream(roomNum: String): String? = withContext(Dispatchers.IO) {
-        try {
-            val now = System.currentTimeMillis() / 1000
-            val u = "$API/room/$roomNum/detail.json?callback=detail&v=$now&_=$now"
-            val conn = URL(u).openConnection() as HttpURLConnection
-            conn.connectTimeout = 8000
-            conn.readTimeout = 12000
-            conn.setRequestProperty("User-Agent", UA)
-            conn.setRequestProperty("Referer", "https://vnres.co/")
-            if (conn.responseCode != 200) return@withContext null
-            val body = conn.inputStream.bufferedReader().readText()
-            val data = JSONObject(stripJsonp(body)).optJSONObject("data") ?: return@withContext null
-            val stream = data.optJSONObject("stream") ?: return@withContext null
-            listOf("hdM3u8", "m3u8", "hdFlv", "flv").firstNotNullOfOrNull { k ->
-                stream.optString(k, "").takeIf { it.isNotBlank() }
-            }
-        } catch (_: Exception) { null }
-    }
-
     fun leagueWeight(league: String): Int {
         LEAGUE_ORDER.forEachIndexed { i, name ->
             if (league.contains(name, ignoreCase = true)) return i

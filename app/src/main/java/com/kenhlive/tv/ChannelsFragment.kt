@@ -26,7 +26,6 @@ class ChannelsFragment : Fragment() {
     private lateinit var statusText: TextView
     private val chipViews = mutableMapOf<String, TextView>()
     private val isTvMode by lazy { DeviceMode.usePhoneLayout(requireActivity()).not() }
-    var onCountChanged: ((Int) -> Unit)? = null
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -47,17 +46,21 @@ class ChannelsFragment : Fragment() {
     }
 
     private fun load() {
-        val url = requireContext().getString(R.string.default_url)
+        statusText.visibility = View.VISIBLE
+        statusText.text = "Đang tải kênh từ Socolive..."
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val result = withContext(Dispatchers.IO) { M3uParser.fetch(url) }
+                val result = SocoliveRepository.fetchRooms()
+                if (result.isEmpty()) {
+                    statusText.text = "Không có kênh nào đang live"
+                    return@launch
+                }
                 channels = result.toMutableList()
                 buildChips()
                 applyFilter(currentGroup)
                 statusText.visibility = View.GONE
-                onCountChanged?.invoke(channels.size)
             } catch (e: Exception) {
-                statusText.text = "Lỗi tải playlist: ${e.message}"
+                statusText.text = "Lỗi tải: ${e.message} — thử lại sau"
                 Toast.makeText(context, "Lỗi: ${e.message}", Toast.LENGTH_SHORT).show()
             }
         }
@@ -104,9 +107,19 @@ class ChannelsFragment : Fragment() {
     }
 
     private fun openChannel(channel: Channel) {
-        startActivity(Intent(requireContext(), PlayerActivity::class.java)
-            .putExtra("url", channel.url)
-            .putExtra("name", channel.name))
+        viewLifecycleOwner.lifecycleScope.launch {
+            val url = if (channel.url.isNotBlank()) channel.url
+                      else SocoliveRepository.fetchStream(channel.roomNum)
+            if (url == null) {
+                Toast.makeText(context, "Stream chưa sẵn sàng — thử lại", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            val label = if (channel.anchor.isNotBlank()) "${channel.name} · BLV ${channel.anchor}"
+                        else channel.name
+            startActivity(Intent(requireContext(), PlayerActivity::class.java)
+                .putExtra("url", url)
+                .putExtra("name", label))
+        }
     }
 
     private fun Int.dp(): Int = (this * resources.displayMetrics.density).toInt()

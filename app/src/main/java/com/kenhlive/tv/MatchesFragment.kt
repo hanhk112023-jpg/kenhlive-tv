@@ -63,7 +63,7 @@ class MatchesFragment : Fragment() {
 
     private fun openMatch(match: Match) {
         viewLifecycleOwner.lifecycleScope.launch {
-            val url = MatchRepository.fetchStream(match.roomNum)
+            val url = SocoliveRepository.fetchStream(match.roomNum)
             if (url == null) {
                 Toast.makeText(context, "Chưa có stream cho trận này", Toast.LENGTH_SHORT).show()
                 return@launch

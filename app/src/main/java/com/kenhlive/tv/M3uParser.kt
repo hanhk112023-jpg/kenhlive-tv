@@ -11,7 +11,9 @@ data class Channel(
     val name: String,
     val group: String,
     val logo: String,
-    val url: String
+    val url: String,
+    val roomNum: String = "",
+    val anchor: String = ""
 )
 
 object M3uParser {
