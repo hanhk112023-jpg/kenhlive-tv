@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="12dp"
+    android:layout_margin="5dp"
+    android:background="@drawable/card_bg"
+    android:focusable="true"
+    android:clickable="true">
+
+    <TextView
+        android:id="@+id/matchTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:minWidth="44dp"
+        android:gravity="center"
+        android:textColor="#FFD166"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+
+    <ImageView
+        android:id="@+id/hostIcon"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:layout_marginLeft="10dp"
+        android:scaleType="fitCenter"
+        android:contentDescription="@string/app_name" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp">
+
+        <TextView
+            android:id="@+id/matchName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#F2F5FA"
+            android:textSize="14sp"
+            android:ellipsize="end"
+            android:maxLines="1" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginTop="3dp">
+
+            <TextView
+                android:id="@+id/matchLeague"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#6B7490"
+                android:textSize="11sp"
+                android:ellipsize="end"
+                android:maxLines="1" />
+
+            <TextView
+                android:id="@+id/liveBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:text="● LIVE"
+                android:textColor="#FF5D5D"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/guestIcon"
+        android:layout_width="34dp"
+        android:layout_height="34dp"
+        android:scaleType="fitCenter"
+        android:contentDescription="@string/app_name" />
+</LinearLayout>
