@@ -17,6 +17,6 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:text="Đang tải..."
-        android:textColor="#6B7490"
+        android:textColor="#8890A6"
         android:textSize="15sp" />
 </FrameLayout>

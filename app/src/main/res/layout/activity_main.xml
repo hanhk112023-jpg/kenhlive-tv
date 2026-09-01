@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#0B0F19">
+    android:background="#000000">
 
     <!-- Header -->
     <LinearLayout
@@ -13,7 +13,7 @@
         android:padding="14dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="#121826">
+        android:background="#0A0A0A">
 
         <ImageView
             android:layout_width="36dp"
@@ -52,7 +52,7 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:layout_marginLeft="12dp"
-            android:textColor="#6B7490"
+            android:textColor="#8890A6"
             android:textSize="12sp"
             android:gravity="right" />
     </LinearLayout>
@@ -62,8 +62,8 @@
         android:id="@+id/tabLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#0E1320"
-        app:tabTextColor="#6B7490"
+        android:background="#000000"
+        app:tabTextColor="#8890A6"
         app:tabSelectedTextColor="#4CC9F0"
         app:tabIndicatorColor="#4CC9F0"
         app:tabIndicatorHeight="3dp"

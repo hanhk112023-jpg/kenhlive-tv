@@ -3,6 +3,9 @@ package com.kenhlive.tv
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.graphics.Color
+import android.view.WindowInsetsController
+import android.view.Window
 import android.view.View
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -23,6 +26,9 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+        window.statusBarColor = Color.BLACK
+        window.navigationBarColor = Color.BLACK
+        if (android.os.Build.VERSION.SDK_INT >= 30) window.insetsController?.setSystemBarsAppearance(0, 0)
 
         viewPager = findViewById(R.id.viewPager)
         val tabLayout = findViewById<TabLayout>(R.id.tabLayout)

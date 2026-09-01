@@ -52,7 +52,7 @@
                 android:id="@+id/matchLeague"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="#6B7490"
+                android:textColor="#8890A6"
                 android:textSize="11sp"
                 android:ellipsize="end"
                 android:maxLines="1" />
