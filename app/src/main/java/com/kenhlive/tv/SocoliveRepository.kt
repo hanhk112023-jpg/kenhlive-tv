@@ -11,14 +11,15 @@ import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
 
-/** Phòng live đang phát (tab Trực tiếp). */
+/** Phòng live đang phát (row "Đang live" + hero banner). */
 data class LiveRoom(
     val roomNum: String,
     val blvName: String,
     val avatar: String,
     val viewers: Int,
     val matchTitle: String,   // "A vs B"
-    val league: String        // "CHA FACup"
+    val league: String,        // "CHA FACup"
+    val cover: String = ""     // ảnh nền phòng (hero banner)
 )
 
 /** 1 BLV phát 1 trận. */
@@ -94,7 +95,8 @@ object SocoliveRepository {
                         avatar = a.optString("cutOutIcon", "").ifBlank { a.optString("icon", "") },
                         viewers = r.optInt("viewCount", 0),
                         matchTitle = match,
-                        league = league
+                        league = league,
+                        cover = r.optString("cover", "")
                     )
                 )
             }

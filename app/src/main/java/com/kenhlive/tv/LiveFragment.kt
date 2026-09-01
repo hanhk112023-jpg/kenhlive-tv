@@ -9,13 +9,15 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.launch
 
+/** Trang chủ Netflix-style: hero banner + rows cuộn ngang theo giải. */
 class LiveFragment : Fragment() {
-    private lateinit var adapter: LiveRoomAdapter
+    private lateinit var adapter: HomeAdapter
     private lateinit var statusText: TextView
+    private lateinit var recyclerView: RecyclerView
     private var rooms = listOf<LiveRoom>()
     private val multiSel = mutableListOf<LiveRoom>()
 
@@ -24,22 +26,14 @@ class LiveFragment : Fragment() {
     ): View {
         val v = inflater.inflate(R.layout.fragment_live, container, false)
         statusText = v.findViewById(R.id.statusText)
-        val isTv = DeviceMode.usePhoneLayout(requireActivity()).not()
-        adapter = LiveRoomAdapter(
-            onClick = { room -> openRoom(room) },
-            onLongClick = { room -> toggleMulti(room) }
-        )
-        v.findViewById<RecyclerView>(R.id.recyclerView).apply {
-            layoutManager = GridLayoutManager(requireContext(), if (isTv) 4 else 2)
-            adapter = this@LiveFragment.adapter
-        }
+        recyclerView = v.findViewById(R.id.recyclerView)
         load()
         return v
     }
 
     private fun load() {
         statusText.visibility = View.VISIBLE
-        statusText.text = "Đang tải phòng live..."
+        statusText.text = "Đang tải..."
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 rooms = SocoliveRepository.fetchLiveRooms()
@@ -48,7 +42,14 @@ class LiveFragment : Fragment() {
                     return@launch
                 }
                 statusText.visibility = View.GONE
-                adapter.submitList(rooms)
+                adapter = HomeAdapter(
+                    rooms = rooms,
+                    lifecycleOwner = viewLifecycleOwner,
+                    onPlay = { r -> openRoom(r) },
+                    onLongClick = { r -> toggleMulti(r) }
+                )
+                recyclerView.layoutManager = LinearLayoutManager(requireContext())
+                recyclerView.adapter = adapter
             } catch (e: Exception) {
                 statusText.text = "Lỗi tải: ${e.message}"
             }
@@ -68,7 +69,6 @@ class LiveFragment : Fragment() {
         }
     }
 
-    /** Nhấn giữ card để thêm/bớt phòng khỏi multiview (2-4 phòng). */
     private fun toggleMulti(room: LiveRoom) {
         val existing = multiSel.indexOfFirst { it.roomNum == room.roomNum }
         if (existing >= 0) multiSel.removeAt(existing)
@@ -76,14 +76,9 @@ class LiveFragment : Fragment() {
             Toast.makeText(context, "Tối đa 4 phòng", Toast.LENGTH_SHORT).show()
             return
         } else multiSel.add(room)
-
-        adapter.highlightRoomNums = multiSel.map { it.roomNum }.toSet()
-        adapter.notifyDataSetChanged()
-
-        val n = multiSel.size
         Toast.makeText(context,
-            if (existing >= 0) "Bỏ ${room.blvName} (${n}/4)"
-            else "Đã chọn ${room.blvName} (${n}/4) — chọn nút Multi-view để xem",
+            if (existing >= 0) "Bỏ ${room.blvName} (${multiSel.size}/4)"
+            else "Đã chọn ${room.blvName} (${multiSel.size}/4)",
             Toast.LENGTH_SHORT).show()
     }
 
@@ -92,10 +87,8 @@ class LiveFragment : Fragment() {
             Toast.makeText(context, "Nhấn GIỮ card để chọn 2-4 phòng trước", Toast.LENGTH_LONG).show()
             return
         }
-        val nums = multiSel.map { it.roomNum }.toTypedArray()
-        val names = multiSel.map { "${it.matchTitle} · ${it.blvName}" }.toTypedArray()
         startActivity(Intent(requireContext(), MultiViewActivity::class.java)
-            .putExtra("roomNums", nums)
-            .putExtra("names", names))
+            .putExtra("roomNums", multiSel.map { it.roomNum }.toTypedArray())
+            .putExtra("names", multiSel.map { "${it.matchTitle} · ${it.blvName}" }.toTypedArray()))
     }
 }
