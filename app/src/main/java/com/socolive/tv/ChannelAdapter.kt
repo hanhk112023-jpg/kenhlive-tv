@@ -5,18 +5,20 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.recyclerview.widget.DiffUtil
+import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import com.bumptech.glide.Glide
+import coil.load
 
 class ChannelAdapter(
     private val onClick: (Channel) -> Unit
-) : RecyclerView.Adapter<ChannelAdapter.VH>() {
+) : ListAdapter<Channel, ChannelAdapter.VH>(DIFF) {
 
-    private var items = listOf<Channel>()
-
-    fun setData(list: List<Channel>) {
-        items = list
-        notifyDataSetChanged()
+    companion object {
+        val DIFF = object : DiffUtil.ItemCallback<Channel>() {
+            override fun areItemsTheSame(a: Channel, b: Channel) = a.url == b.url
+            override fun areContentsTheSame(a: Channel, b: Channel) = a == b
+        }
     }
 
     inner class VH(v: View) : RecyclerView.ViewHolder(v) {
@@ -32,12 +34,18 @@ class ChannelAdapter(
     }
 
     override fun onBindViewHolder(h: VH, pos: Int) {
-        val c = items[pos]
+        val c = getItem(pos)
         h.name.text = c.name
         h.group.text = c.group
-        Glide.with(h.logo).load(c.logo).placeholder(R.drawable.banner).into(h.logo)
+        if (c.logo.isNotBlank()) {
+            h.logo.load(c.logo) {
+                crossfade(120)
+                placeholder(R.drawable.logo_placeholder)
+                error(R.drawable.logo_placeholder)
+            }
+        } else {
+            h.logo.setImageResource(R.drawable.logo_placeholder)
+        }
         h.itemView.setOnClickListener { onClick(c) }
     }
-
-    override fun getItemCount() = items.size
 }
