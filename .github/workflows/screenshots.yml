@@ -77,17 +77,24 @@ jobs:
             adb root
             adb shell settings put global http_proxy 10.0.2.2:7891
             adb install -r app/build/outputs/apk/debug/app-debug.apk
-            adb shell am start -n com.kenhlive.tv/.MainActivity
-            sleep 22
+            adb logcat -c
+            # monkey launch (độ tin cậy cao hơn am start trên CI)
+            adb shell monkey -p com.kenhlive.tv -c android.intent.category.LAUNCHER 1
+            sleep 25
+            adb shell "dumpsys window | grep mCurrentFocus" || true
             adb exec-out screencap -p > shot1_tructiep.png
-            # mở thẳng tab Lịch trình qua intent extra (chắc chắn 100%)
             adb shell am force-stop com.kenhlive.tv
             sleep 2
             adb shell am start -n com.kenhlive.tv/.MainActivity --ei tab 1
-            sleep 20
+            sleep 22
+            adb shell "dumpsys window | grep mCurrentFocus" || true
             adb exec-out screencap -p > shot2_lichtrinh.png
+            adb logcat -d -s AndroidRuntime:E > crashlog.txt || true
 
       - uses: actions/upload-artifact@v4
         with:
           name: screenshots
+      path: |
+        shot*.png
+        crashlog.txt
           path: shot*.png
