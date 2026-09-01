@@ -1,78 +1,168 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="#0B0F19">
 
-    <!-- Header -->
-    <LinearLayout
+    <FrameLayout
+        android:id="@+id/toolbar_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="14dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="#0B0F19">
+        app:layout_constraintTop_toTopOf="parent">
 
-        <ImageView
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:src="@mipmap/ic_launcher"
-            android:contentDescription="@string/app_name" />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="54dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/topbar_back"
+            android:paddingLeft="16dp"
+            android:paddingRight="12dp">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
-            android:text="KênhLive"
-            android:textColor="#FFFFFF"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            <ImageView
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:src="@mipmap/ic_launcher"
+                android:contentDescription="@string/app_name" />
 
-        <TextView
-            android:id="@+id/multiBtn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Multi-view"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:background="@drawable/pill_viewers"
-            android:paddingLeft="14dp"
-            android:paddingRight="14dp"
-            android:paddingTop="6dp"
-            android:paddingBottom="6dp"
-            android:layout_marginRight="10dp"
-            android:focusable="true" />
+            <TextView
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:text="KênhLive"
+                android:textColor="#F8FAFC"
+                android:fontFamily="@font/oswald"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/multiBtn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Multi-view"
+                android:textColor="#F8FAFC"
+                android:fontFamily="sans-serif-medium"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:background="@drawable/bg_live_pill"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:paddingTop="7dp"
+                android:paddingBottom="7dp"
+                android:layout_marginRight="10dp"
+                android:focusable="true" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/countText"
-            android:layout_width="0dp"
-            android:layout_weight="1"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="12dp"
-            android:textColor="#8890A6"
-            android:textSize="12sp"
-            android:gravity="right" />
-    </LinearLayout>
+            android:layout_gravity="bottom|start"
+            android:layout_marginLeft="16dp"
+            android:layout_marginBottom="2dp"
+            android:textColor="#64748B"
+            android:textSize="9sp"
+            android:visibility="gone" />
+    </FrameLayout>
 
-    <!-- TabLayout -->
-    <com.google.android.material.tabs.TabLayout
-        android:id="@+id/tabLayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="#0B0F19"
-        app:tabTextColor="#8890A6"
-        app:tabSelectedTextColor="#4CC9F0"
-        app:tabIndicatorColor="#4CC9F0"
-        app:tabIndicatorHeight="3dp"
-        app:tabMode="fixed"
-        app:tabGravity="fill" />
-
-    <!-- ViewPager -->
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/viewPager"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-</LinearLayout>
+        android:layout_height="0dp"
+        android:paddingBottom="66dp"
+        android:clipToPadding="false"
+        app:layout_constraintTop_toBottomOf="@id/toolbar_container"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <!-- BOTTOM NAV GLASS PILL nổi — xác SportzX -->
+    <FrameLayout
+        android:id="@+id/custom_bottom_nav"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginBottom="5dp"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        app:layout_constraintBottom_toBottomOf="parent">
+
+        <View
+            android:id="@+id/liveStripe"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@drawable/bg_nav_glow_border"
+            android:alpha="0.9" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_margin="1dp"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:baselineAligned="false"
+            android:background="@drawable/bg_glass_nav_bottom">
+
+            <LinearLayout
+                android:id="@+id/nav_live"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/bg_nav_item_tab"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:id="@+id/iv_live"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_live_stream"
+                    app:tint="#64748B"
+                    android:contentDescription="Live" />
+
+                <TextView
+                    android:id="@+id/tv_live"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="TRỰC TIẾP"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    android:textColor="#64748B" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/nav_schedule"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:background="@drawable/bg_nav_item_tab"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:id="@+id/iv_schedule"
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:src="@drawable/ic_sports"
+                    app:tint="#64748B"
+                    android:contentDescription="Lịch" />
+
+                <TextView
+                    android:id="@+id/tv_schedule"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="LỊCH TRÌNH"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    android:textColor="#64748B" />
+            </LinearLayout>
+        </LinearLayout>
+    </FrameLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
