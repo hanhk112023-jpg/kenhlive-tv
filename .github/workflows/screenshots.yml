@@ -21,6 +21,14 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
+      - name: KVM permissions
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          sudo gpasswd -a $USER kvm || true
+          ls -l /dev/kvm
+
       - name: Chạy emulator + chụp 2 tab
         uses: reactivecircus/android-emulator-runner@v2
         with:
