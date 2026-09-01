@@ -26,14 +26,12 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
-      # dùng image ANDROID TV (leanback) — không phải phone
+      # dùng image ANDROID TV (leanback) — không phải phone. TV x86_64 chỉ có API 36
       - name: Chạy Android TV emulator + chụp
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 30
+          api-level: 36
           arch: x86_64
-          # TV image: leanback landscape 16:9
-          image: android-tv-google_apis
           target: android-tv
           script: |
             adb install -r app/build/outputs/apk/debug/app-debug.apk
