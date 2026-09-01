@@ -13,26 +13,22 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.coroutines.launch
 
-class MatchesFragment : Fragment() {
-    private lateinit var adapter: MatchAdapter
+class ScheduleFragment : Fragment() {
+    private lateinit var adapter: ScheduleAdapter
     private lateinit var statusText: TextView
-    private lateinit var recyclerView: RecyclerView
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         val v = inflater.inflate(R.layout.fragment_matches, container, false)
         statusText = v.findViewById(R.id.statusText)
-        recyclerView = v.findViewById(R.id.recyclerView)
-        adapter = MatchAdapter { match -> openMatch(match) }
-        recyclerView.layoutManager = LinearLayoutManager(requireContext())
-        recyclerView.adapter = adapter
+        adapter = ScheduleAdapter { anchor, match -> openAnchor(anchor, match) }
+        v.findViewById<RecyclerView>(R.id.recyclerView).apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = this@ScheduleFragment.adapter
+        }
+        load()
         return v
-    }
-
-    override fun onResume() {
-        super.onResume()
-        if (adapter.itemCount == 0) load()
     }
 
     private fun load() {
@@ -40,14 +36,12 @@ class MatchesFragment : Fragment() {
         statusText.text = "Đang tải lịch thi đấu..."
         viewLifecycleOwner.lifecycleScope.launch {
             try {
-                val days = MatchRepository.fetchWeek()
+                val days = SocoliveRepository.fetchSchedule(7)
                 val items = mutableListOf<Any>()
                 for (d in days) {
                     if (d.matches.isEmpty()) continue
-                    items.add(MatchRepository.dayLabel(d.date))
-                    d.matches.sortedWith(
-                        compareBy({ it.hasRoom.not() }, { MatchRepository.leagueWeight(it.league) }, { it.matchTime })
-                    ).forEach { items.add(it) }
+                    items.add(SocoliveRepository.dayLabel(d.date))
+                    items.addAll(d.matches)
                 }
                 if (items.isEmpty()) {
                     statusText.text = "Không có trận nào 7 ngày tới"
@@ -61,16 +55,16 @@ class MatchesFragment : Fragment() {
         }
     }
 
-    private fun openMatch(match: Match) {
+    private fun openAnchor(anchor: AnchorInfo, match: ScheduleMatch) {
         viewLifecycleOwner.lifecycleScope.launch {
-            val url = SocoliveRepository.fetchStream(match.roomNum)
+            val url = SocoliveRepository.fetchStream(anchor.roomNum)
             if (url == null) {
-                Toast.makeText(context, "Chưa có stream cho trận này", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "Stream chưa sẵn sàng — thử lại", Toast.LENGTH_SHORT).show()
                 return@launch
             }
             startActivity(Intent(requireContext(), PlayerActivity::class.java)
                 .putExtra("url", url)
-                .putExtra("name", "${match.title} (${match.league})"))
+                .putExtra("name", "${match.host} vs ${match.guest} · ${anchor.nickName}"))
         }
     }
 }

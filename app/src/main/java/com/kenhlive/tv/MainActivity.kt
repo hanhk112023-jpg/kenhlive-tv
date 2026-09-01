@@ -3,8 +3,6 @@ package com.kenhlive.tv
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
@@ -20,25 +18,23 @@ import kotlinx.coroutines.withContext
 
 class MainActivity : AppCompatActivity() {
     private lateinit var viewPager: ViewPager2
-    private lateinit var countText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         viewPager = findViewById(R.id.viewPager)
-        countText = findViewById(R.id.countText)
         val tabLayout = findViewById<TabLayout>(R.id.tabLayout)
 
         viewPager.adapter = object : FragmentStateAdapter(this) {
             override fun getItemCount() = 2
             override fun createFragment(position: Int): Fragment = when (position) {
-                0 -> ChannelsFragment()
-                else -> MatchesFragment()
+                0 -> LiveFragment()
+                else -> ScheduleFragment()
             }
         }
         TabLayoutMediator(tabLayout, viewPager) { tab, pos ->
-            tab.text = if (pos == 0) "📺 Kênh" else "📅 Lịch thi đấu"
+            tab.text = if (pos == 0) "🔴 Trực tiếp" else "📅 Lịch trình"
         }.attach()
 
         checkUpdate()
