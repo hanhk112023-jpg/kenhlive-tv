@@ -80,8 +80,12 @@ jobs:
             adb shell am start -n com.kenhlive.tv/.MainActivity
             sleep 22
             adb exec-out screencap -p > shot1_tructiep.png
-            adb shell input swipe 900 1100 150 1100 500
-            sleep 16
+            # tap thẳng tab LỊCH TRÌNH (nửa phải tab bar, y~290px @1080x1920)
+            adb shell input tap 810 290
+            sleep 6
+            # nếu vẫn chưa đổi, swipe chậm
+            adb shell input swipe 950 960 130 960 1200 || true
+            sleep 14
             adb exec-out screencap -p > shot2_lichtrinh.png
 
       - uses: actions/upload-artifact@v4
