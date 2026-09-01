@@ -19,14 +19,24 @@
             android:layout_height="112dp"
             android:background="@drawable/avatar_ring" />
 
-        <ImageView
-            android:id="@+id/cardAvatar"
+        <FrameLayout
             android:layout_width="98dp"
             android:layout_height="98dp"
             android:layout_gravity="center"
-            android:scaleType="centerCrop"
-            android:background="#1A1E28"
-            android:contentDescription="@string/app_name" />
+            android:background="@drawable/avatar_bg">
+
+            <ImageView
+                android:id="@+id/cardAvatar"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:contentDescription="@string/app_name" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@drawable/avatar_mask" />
+        </FrameLayout>
 
         <TextView
             android:layout_width="wrap_content"
