@@ -32,8 +32,8 @@ class MultiViewActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val nums = intent?.getStringExtraArray("roomNums") ?: arrayOf()
-        names = intent?.getStringExtraArray("names") ?: arrayOf()
+        val nums = intent?.getStringArrayExtra("roomNums") ?: arrayOf()
+        names = intent?.getStringArrayExtra("names") ?: arrayOf()
         if (nums.isEmpty()) { finish(); return }
 
         val grid = GridLayout(this).apply {
