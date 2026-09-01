@@ -1,7 +1,5 @@
 package com.kenhlive.tv
 
-import android.content.Intent
-import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,19 +8,16 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.lifecycle.LifecycleOwner
-import androidx.lifecycle.lifecycleScope
-import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import coil.load
 import coil.transform.CircleCropTransformation
-import kotlinx.coroutines.launch
+import com.google.android.material.progressindicator.LinearProgressIndicator
 
 /**
  * Trang chủ Netflix-style:
  *  Row 0: HERO banner tự chạy (top 5 phòng theo viewers)
- *  Row 1: "🔴 Đang live — N phòng" (card dọc cuộn ngang)
- *  Row 2+: "Giải XXX" — các phòng theo giải, cuộn ngang
+ *  Row 1+: "Giải XXX" — card cuộn ngang (card cuối hở "peek") + LinearProgressIndicator tiến độ.
  */
 class HomeAdapter(
     private val rooms: List<LiveRoom>,
@@ -36,11 +31,10 @@ class HomeAdapter(
         private const val TYPE_ROW = 1
     }
 
-    // gom theo giải, giữ thứ tự viewers
     private val rows: List<Pair<String, List<LiveRoom>>> = run {
-        val grouped = rooms.groupBy { it.league }
-        val sorted = grouped.entries.sortedByDescending { e -> e.value.maxOf { it.viewers } }
-        sorted.map { it.key to it.value }
+        rooms.groupBy { it.league }
+            .entries.sortedByDescending { it.value.maxOf { r -> r.viewers } }
+            .map { it.key to it.value }
     }
 
     inner class HeroVH(v: View) : RecyclerView.ViewHolder(v) {
@@ -51,10 +45,10 @@ class HomeAdapter(
         val title: TextView = v.findViewById(R.id.rowTitle)
         val scroll: HorizontalScrollView = v.findViewById(R.id.rowScroll)
         val container: LinearLayout = v.findViewById(R.id.rowContainer)
+        val progress: LinearProgressIndicator = v.findViewById(R.id.rowProgress)
     }
 
     override fun getItemViewType(pos: Int) = if (pos == 0) TYPE_HERO else TYPE_ROW
-
     override fun getItemCount() = 1 + rows.size
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -74,7 +68,7 @@ class HomeAdapter(
         }
         val (league, list) = rows[pos - 1]
         val vh = h as RowVH
-        vh.title.text = "$league  ·  ${list.size} phòng"
+        vh.title.text = "$league · ${list.size} phòng"
         vh.container.removeAllViews()
         val inf = LayoutInflater.from(vh.container.context)
         list.forEach { r ->
@@ -95,6 +89,16 @@ class HomeAdapter(
             card.setOnClickListener { onPlay(r) }
             card.setOnLongClickListener { onLongClick(r); true }
             vh.container.addView(card)
+        }
+        // progress bar: update khi scroll (peek 28% cuối)
+        vh.scroll.post {
+            vh.progress.progress = 0
+            vh.scroll.setOnScrollChangeListener { _, _, _, _, _ ->
+                val wide = (vh.scroll.getChildAt(0)?.width ?: vh.scroll.width).coerceAtLeast(1)
+                val maxScrool = (wide - vh.scroll.width).coerceAtLeast(0)
+                val p = if (maxScrool > 0) (vh.scroll.scrollX * 1000 / maxScrool).coerceIn(0, 1000) else 0
+                vh.progress.progress = p
+            }
         }
     }
 }

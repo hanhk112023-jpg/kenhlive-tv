@@ -35,7 +35,8 @@ data class ScheduleMatch(
     val matchTimeMs: Long,
     val hostIcon: String,
     val guestIcon: String,
-    val anchors: List<AnchorInfo>
+    val anchors: List<AnchorInfo>,
+    val leagueCrest: String = ""
 ) {
     val isLive: Boolean get() = matchTimeMs > 0 && System.currentTimeMillis() >= matchTimeMs
     val hasRoom: Boolean get() = anchors.any { it.roomNum.isNotBlank() }
@@ -138,7 +139,10 @@ object SocoliveRepository {
                         matchTimeMs = timeMs,
                         hostIcon = m.optString("hostIcon", ""),
                         guestIcon = m.optString("guestIcon", ""),
-                        anchors = anchors
+                        anchors = anchors,
+                        // crest giải (fallback: categoryIcon rồi hostIcon)
+                        leagueCrest = m.optString("categoryIcon", "")
+                            .ifBlank { m.optString("hostIcon", "") }
                     )
                 )
             }

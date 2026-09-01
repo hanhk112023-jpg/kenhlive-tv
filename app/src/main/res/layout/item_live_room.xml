@@ -25,7 +25,7 @@
             android:layout_height="80dp"
             android:layout_gravity="center"
             android:scaleType="centerCrop"
-            android:background="#1A1A1A"
+            android:background="#121316"
             android:contentDescription="@string/app_name" />
 
         <TextView
@@ -62,7 +62,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:gravity="center"
-        android:textColor="#000000"
+        android:textColor="#0B0F19"
         android:background="@drawable/pill_viewers"
         android:paddingLeft="10dp"
         android:paddingRight="10dp"

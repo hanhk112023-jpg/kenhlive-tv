@@ -10,8 +10,9 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
+import coil.transform.CircleCropTransformation
 
-/** Lịch trình: header ngày (accent bar + count) + card trận thoáng + hàng avatar BLV cuộn ngang. */
+/** Lịch trình: header ngày (accent bar + count) + card trận xen kẽ tông + hàng BLV chỉ avatar (tap reveal). */
 class ScheduleAdapter(
     private val onAnchorClick: (AnchorInfo, ScheduleMatch) -> Unit
 ) : ListAdapter<Any, RecyclerView.ViewHolder>(DIFF) {
@@ -19,6 +20,7 @@ class ScheduleAdapter(
     companion object {
         private const val TYPE_DAY = 0
         private const val TYPE_MATCH = 1
+        private const val MAX_ANCHORS = 4
         val DIFF = object : DiffUtil.ItemCallback<Any>() {
             override fun areItemsTheSame(a: Any, b: Any): Boolean = when {
                 a is String && b is String -> a == b
@@ -39,13 +41,13 @@ class ScheduleAdapter(
         val hostIcon: ImageView = v.findViewById(R.id.hostIcon)
         val guestIcon: ImageView = v.findViewById(R.id.guestIcon)
         val name: TextView = v.findViewById(R.id.matchName)
+        val crest: ImageView = v.findViewById(R.id.leagueCrest)
         val league: TextView = v.findViewById(R.id.matchLeague)
         val badge: TextView = v.findViewById(R.id.statusBadge)
         val anchorRow: LinearLayout = v.findViewById(R.id.anchorRow)
     }
 
-    override fun getItemViewType(pos: Int): Int =
-        if (getItem(pos) is String) TYPE_DAY else TYPE_MATCH
+    override fun getItemViewType(pos: Int): Int = if (getItem(pos) is String) TYPE_DAY else TYPE_MATCH
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inf = LayoutInflater.from(parent.context)
@@ -60,16 +62,14 @@ class ScheduleAdapter(
             is String -> {
                 val vh = h as DayVH
                 vh.tv.text = item
-                // count trận trong ngày (String đứng trước các ScheduleMatch liền nhau)
                 var n = 0
-                for (j in pos + 1 until itemCount) {
-                    if (getItem(j) !is ScheduleMatch) break
-                    n++
-                }
+                for (j in pos + 1 until itemCount) { if (getItem(j) !is ScheduleMatch) break; n++ }
                 vh.count.text = if (n > 0) "$n trận" else ""
             }
             is ScheduleMatch -> {
                 val vh = h as MatchVH
+                // xen kẽ 2 tông nền card
+                vh.itemView.setBackgroundResource(if (pos % 2 == 0) R.drawable.card_a else R.drawable.card_b)
                 vh.name.text = "${item.host} vs ${item.guest}"
                 vh.league.text = item.league
                 vh.time.text = SocoliveRepository.formatTime(item.matchTimeMs)
@@ -89,24 +89,39 @@ class ScheduleAdapter(
                 vh.guestIcon.load(item.guestIcon) {
                     crossfade(80); error(R.drawable.logo_placeholder); placeholder(R.drawable.logo_placeholder)
                 }
-                // hàng avatar BLV (cuộn ngang, avatar tròn viền "LIVE" nếu đang phát)
+                // crest giải cùng hàng nhỏ
+                vh.crest.load(item.leagueCrest) {
+                    crossfade(60); error(R.drawable.logo_placeholder); placeholder(R.drawable.logo_placeholder)
+                } // dùng leagueCrest nếu có
+
+                // hàng BLV: chỉ avatar tròn (bỏ label tên) → tap reveal tên qua contentDescription
                 vh.anchorRow.removeAllViews()
                 val inf = LayoutInflater.from(vh.anchorRow.context)
-                item.anchors.forEach { a ->
-                    val av = inf.inflate(R.layout.item_anchor_chip, vh.anchorRow, false)
+                item.anchors.take(MAX_ANCHORS).forEach { a ->
+                    val av = inf.inflate(R.layout.item_anchor_avatar, vh.anchorRow, false)
                     val img = av.findViewById<ImageView>(R.id.anchorAvatar)
-                    val txt = av.findViewById<TextView>(R.id.anchorName)
-                    txt.text = a.nickName
+                    img.contentDescription = a.nickName
                     img.load(a.icon) {
                         crossfade(80)
-                        transformations(coil.transform.CircleCropTransformation())
+                        transformations(CircleCropTransformation())
                         error(R.drawable.logo_placeholder)
                         placeholder(R.drawable.logo_placeholder)
                     }
                     val live = a.roomNum.isNotBlank()
-                    av.alpha = if (live) 1f else 0.45f
-                    img.setColorFilter(0x00000000)
+                    img.alpha = if (live) 1f else 0.4f
                     av.setOnClickListener { if (live) onAnchorClick(a, item) }
+                    // tap-to-reveal: giữ name trong tag, dùng Toast nhỏ khi click
+                    av.setOnLongClickListener {
+                        android.widget.Toast.makeText(av.context, a.nickName, android.widget.Toast.LENGTH_SHORT).show(); true
+                    }
+                    vh.anchorRow.addView(av)
+                }
+                // "+N" nếu dư BLV
+                val extra = item.anchors.size - MAX_ANCHORS
+                if (extra > 0) {
+                    val av = inf.inflate(R.layout.item_anchor_plus, vh.anchorRow, false)
+                    val txt = av.findViewById<TextView>(R.id.anchorPlus)
+                    txt.text = "+$extra"
                     vh.anchorRow.addView(av)
                 }
             }

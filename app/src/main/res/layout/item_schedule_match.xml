@@ -3,38 +3,38 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="14dp"
-    android:layout_margin="6dp"
-    android:background="@drawable/card_bg">
+    android:padding="13dp"
+    android:layout_margin="5dp"
+    android:background="@drawable/card_alt_bg">
 
-    <!-- hàng trên: giờ + 2 đội + giải -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
-        <!-- giờ trong khung -->
         <TextView
             android:id="@+id/matchTime"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minWidth="58dp"
+            android:minWidth="54dp"
             android:gravity="center"
-            android:textColor="#FFD166"
-            android:textSize="17sp"
+            android:textColor="#FFB800"
+            android:fontFamily="@font/oswald"
+            android:textSize="16sp"
             android:textStyle="bold"
+            android:fontFeatureSettings="tnum"
             android:background="@drawable/time_pill"
-            android:paddingLeft="10dp"
-            android:paddingRight="10dp"
-            android:paddingTop="5dp"
-            android:paddingBottom="5dp" />
+            android:paddingLeft="9dp"
+            android:paddingRight="9dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp" />
 
         <ImageView
             android:id="@+id/hostIcon"
-            android:layout_width="26dp"
-            android:layout_height="26dp"
-            android:layout_marginLeft="12dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:layout_marginLeft="11dp"
             android:scaleType="fitCenter"
             android:contentDescription="@string/app_name" />
 
@@ -52,26 +52,43 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:textColor="#FFFFFF"
-                android:textSize="15sp"
+                android:fontFamily="@font/oswald"
+                android:textSize="16sp"
                 android:textStyle="bold"
                 android:ellipsize="end"
                 android:maxLines="1" />
 
-            <TextView
-                android:id="@+id/matchLeague"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:textColor="#8890A6"
-                android:textSize="11sp"
-                android:ellipsize="end"
-                android:maxLines="1" />
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="2dp">
+
+                <ImageView
+                    android:id="@+id/leagueCrest"
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:scaleType="fitCenter"
+                    android:contentDescription="crest" />
+
+                <TextView
+                    android:id="@+id/matchLeague"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="5dp"
+                    android:textColor="#8890A6"
+                    android:fontFamily="sans-serif-medium"
+                    android:textSize="11sp"
+                    android:ellipsize="end"
+                    android:maxLines="1" />
+            </LinearLayout>
         </LinearLayout>
 
         <ImageView
             android:id="@+id/guestIcon"
-            android:layout_width="26dp"
-            android:layout_height="26dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:layout_marginRight="8dp"
             android:scaleType="fitCenter"
             android:contentDescription="@string/app_name" />
@@ -89,28 +106,29 @@
             android:paddingBottom="3dp" />
     </LinearLayout>
 
-    <!-- hàng BLV: tách bằng divider mảnh, tiêu đề nhỏ -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:layout_marginTop="12dp">
+        android:layout_marginTop="11dp">
+
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="#1E2436"
-            android:layout_marginBottom="10dp" />
+            android:background="#1A1E28"
+            android:layout_marginBottom="9dp" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="BÌNH LUẬN VIÊN"
+            android:text="BLV"
             android:textColor="#6B7490"
+            android:fontFamily="sans-serif-medium"
             android:textSize="9sp"
             android:textStyle="bold"
             android:letterSpacing="0.1"
             android:paddingLeft="2dp"
-            android:paddingBottom="8dp" />
+            android:paddingBottom="7dp" />
 
         <HorizontalScrollView
             android:layout_width="match_parent"

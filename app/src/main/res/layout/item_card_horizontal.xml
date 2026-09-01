@@ -1,31 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="200dp"
+    android:layout_width="190dp"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:gravity="center_horizontal"
-    android:padding="10dp"
-    android:layout_margin="6dp"
+    android:padding="12dp"
+    android:layout_margin="7dp"
     android:background="@drawable/card_live_bg"
     android:focusable="true"
     android:clickable="true">
 
     <FrameLayout
-        android:layout_width="110dp"
-        android:layout_height="110dp">
+        android:layout_width="112dp"
+        android:layout_height="112dp">
 
         <View
-            android:layout_width="110dp"
-            android:layout_height="110dp"
+            android:layout_width="112dp"
+            android:layout_height="112dp"
             android:background="@drawable/avatar_ring" />
 
         <ImageView
             android:id="@+id/cardAvatar"
-            android:layout_width="96dp"
-            android:layout_height="96dp"
+            android:layout_width="98dp"
+            android:layout_height="98dp"
             android:layout_gravity="center"
             android:scaleType="centerCrop"
-            android:background="#1A1A1A"
+            android:background="#1A1E28"
             android:contentDescription="@string/app_name" />
 
         <TextView
@@ -48,10 +48,11 @@
         android:id="@+id/cardBlv"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="9dp"
+        android:layout_marginTop="10dp"
         android:gravity="center"
         android:textColor="#FFFFFF"
-        android:textSize="14sp"
+        android:fontFamily="@font/oswald"
+        android:textSize="17sp"
         android:textStyle="bold"
         android:ellipsize="end"
         android:maxLines="1" />
@@ -63,6 +64,7 @@
         android:layout_marginTop="4dp"
         android:gravity="center"
         android:textColor="#C3CBDF"
+        android:fontFamily="sans-serif-medium"
         android:textSize="11sp"
         android:ellipsize="end"
         android:maxLines="2" />
@@ -71,13 +73,14 @@
         android:id="@+id/cardViewers"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:textColor="#000000"
+        android:layout_marginTop="8dp"
+        android:textColor="#FFB800"
+        android:fontFamily="@font/oswald"
+        android:textSize="13sp"
+        android:fontFeatureSettings="tnum"
         android:background="@drawable/pill_viewers"
-        android:paddingLeft="10dp"
-        android:paddingRight="10dp"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
         android:paddingTop="3dp"
-        android:paddingBottom="3dp"
-        android:textSize="10sp"
-        android:textStyle="bold" />
+        android:paddingBottom="3dp" />
 </LinearLayout>

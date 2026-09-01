@@ -4,7 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#000000">
+    android:background="#0B0F19">
 
     <!-- Header -->
     <LinearLayout
@@ -13,7 +13,7 @@
         android:padding="14dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="#0A0A0A">
+        android:background="#0B0F19">
 
         <ImageView
             android:layout_width="36dp"
@@ -35,7 +35,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="⬚ Multi-view"
-            android:textColor="#FFD166"
+            android:textColor="#FFB800"
             android:textSize="13sp"
             android:textStyle="bold"
             android:background="@drawable/pill_viewers"
@@ -62,7 +62,7 @@
         android:id="@+id/tabLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="#000000"
+        android:background="#0B0F19"
         app:tabTextColor="#8890A6"
         app:tabSelectedTextColor="#4CC9F0"
         app:tabIndicatorColor="#4CC9F0"
