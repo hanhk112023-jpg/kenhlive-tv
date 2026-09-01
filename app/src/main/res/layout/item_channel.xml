@@ -4,16 +4,16 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:padding="10dp"
-    android:background="#121826"
-    android:layout_margin="6dp"
+    android:padding="12dp"
+    android:layout_margin="5dp"
+    android:background="@drawable/card_bg"
     android:focusable="true"
     android:clickable="true">
 
     <ImageView
         android:id="@+id/channelLogo"
-        android:layout_width="64dp"
-        android:layout_height="36dp"
+        android:layout_width="72dp"
+        android:layout_height="42dp"
         android:scaleType="fitCenter"
         android:contentDescription="@string/app_name" />
 
@@ -28,8 +28,8 @@
             android:id="@+id/channelName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"
+            android:textColor="#F2F5FA"
+            android:textSize="15sp"
             android:ellipsize="end"
             android:maxLines="1" />
 
@@ -38,7 +38,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="#4CC9F0"
-            android:textSize="12sp"
-            android:layout_marginTop="2dp" />
+            android:textSize="11sp"
+            android:layout_marginTop="3dp" />
     </LinearLayout>
 </LinearLayout>
