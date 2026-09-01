@@ -34,7 +34,7 @@
             android:id="@+id/multiBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="⬚ Multi-view"
+            android:text="Multi-view"
             android:textColor="#FFB800"
             android:textSize="13sp"
             android:textStyle="bold"

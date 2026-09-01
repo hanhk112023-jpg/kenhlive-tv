@@ -92,12 +92,13 @@ class HomeAdapter(
         }
         // progress bar: update khi scroll (peek 28% cuối)
         vh.scroll.post {
-            vh.progress.progress = 0
+            val wide = (vh.scroll.getChildAt(0)?.width ?: vh.scroll.width).coerceAtLeast(1)
+            val maxScroll = (wide - vh.scroll.width).coerceAtLeast(0)
+            // hàng vừa màn hình (không cuộn) → ẩn progress
+            vh.progress.visibility = if (maxScroll > 0) View.VISIBLE else View.GONE
             vh.scroll.setOnScrollChangeListener { _, _, _, _, _ ->
-                val wide = (vh.scroll.getChildAt(0)?.width ?: vh.scroll.width).coerceAtLeast(1)
-                val maxScrool = (wide - vh.scroll.width).coerceAtLeast(0)
-                val p = if (maxScrool > 0) (vh.scroll.scrollX * 1000 / maxScrool).coerceIn(0, 1000) else 0
-                vh.progress.progress = p
+                val p = if (maxScroll > 0) (vh.scroll.scrollX * 1000 / maxScroll).coerceIn(0, 1000) else 0
+                vh.progress.setProgressCompat(p, true)
             }
         }
     }
