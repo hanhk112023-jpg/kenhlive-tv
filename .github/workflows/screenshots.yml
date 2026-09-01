@@ -78,9 +78,8 @@ jobs:
             adb shell settings put global http_proxy 10.0.2.2:7891
             adb install -r app/build/outputs/apk/debug/app-debug.apk
             adb logcat -c
-            # monkey launch (độ tin cậy cao hơn am start trên CI)
-            adb shell monkey -p com.kenhlive.tv -c android.intent.category.LAUNCHER 1
-            sleep 25
+            adb shell am start -W -n com.kenhlive.tv/.MainActivity
+            sleep 28
             adb shell "dumpsys window | grep mCurrentFocus" || true
             adb exec-out screencap -p > shot1_tructiep.png
             adb shell am force-stop com.kenhlive.tv
