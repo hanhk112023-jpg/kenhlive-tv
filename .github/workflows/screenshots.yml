@@ -94,7 +94,6 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: screenshots
-      path: |
-        shot*.png
-        crashlog.txt
-          path: shot*.png
+          path: |
+            shot*.png
+            crashlog.txt
