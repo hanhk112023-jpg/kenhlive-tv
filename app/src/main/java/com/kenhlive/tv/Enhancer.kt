@@ -90,7 +90,7 @@ class AudioEnhancer(private val ctx: Context) {
                     }
                     bass = BassBoost(0, sessionId).apply {
                         enabled = true
-                        setStrength((getMaxAvailableBoost() * 0.9f).toShort())
+                        setStrength(900.toShort()) // thang 0..1000
                     }
                 }
                 EnhanceSettings.AQ_DIALOG -> {
@@ -118,7 +118,7 @@ class AudioEnhancer(private val ctx: Context) {
                     virt = try {
                         Virtualizer(0, sessionId).apply {
                             enabled = true
-                            setStrength((getMaxAvailableVirtualization() * 0.3f).toShort())
+                            setStrength(300.toShort()) // thang 0..1000
                         }
                     } catch (e: Exception) { null }
                 }

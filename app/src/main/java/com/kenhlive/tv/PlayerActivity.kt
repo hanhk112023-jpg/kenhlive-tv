@@ -59,9 +59,10 @@ class PlayerActivity : AppCompatActivity() {
         // audio fx gắn sau khi player có session
         player?.let { p ->
             p.addListener(object : Player.Listener {
-                override fun onEvents(player: Player, events: Player.Events) {
-                    if (player.audioSessionId != 0 && audioFx.notAttached) {
-                        audioFx.attach(player.audioSessionId, EnhanceSettings.audioMode(this@PlayerActivity))
+                override fun onEvents(p: Player, events: Player.Events) {
+                    val sid = (p as? ExoPlayer)?.audioSessionId ?: 0
+                    if (sid != 0 && audioFx.notAttached) {
+                        audioFx.attach(sid, EnhanceSettings.audioMode(this@PlayerActivity))
                     }
                 }
             })
