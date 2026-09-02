@@ -85,9 +85,9 @@ jobs:
             adb shell am start -n com.kenhlive.tv/.MainActivity --ei tab 1
             sleep 24
             adb exec-out screencap -p > tv3_schedule.png
-            # ===== MULTIVIEW v4.4: mở trực tiếp (adb root cho phép non-exported) =====
+            # ===== MULTIVIEW v4.4: mở qua debug hook trong MainActivity (exported) =====
             adb shell am force-stop com.kenhlive.tv; sleep 2
-            adb shell am start -n com.kenhlive.tv/.MultiViewActivity
+            adb shell am start -W -n com.kenhlive.tv/.MainActivity --es open mv
             sleep 30
             adb exec-out screencap -p > tv4_multiview.png
             # OK → dialog chọn BLV/đổi trận
