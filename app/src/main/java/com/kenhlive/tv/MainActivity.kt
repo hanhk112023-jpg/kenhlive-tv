@@ -61,6 +61,23 @@ class MainActivity : AppCompatActivity() {
         }
 
         UpdateManager.checkAndUpdate(this)
+        // Debug hook (CI screenshot): am start .../.MainActivity --es open mv|player
+        intent.getStringExtra("open")?.let { target ->
+            when (target) {
+                "mv" -> startActivity(Intent(this, MultiViewActivity::class.java))
+                "player" -> CoroutineScope(Dispatchers.Main).launch {
+                    try {
+                        val g = SocoliveRepository.groupRooms(SocoliveRepository.fetchLiveRooms()).firstOrNull()
+                        val r = g?.top
+                        if (r != null) {
+                            val u = SocoliveRepository.fetchStream(r.roomNum)
+                            if (u != null) startActivity(Intent(this@MainActivity, PlayerActivity::class.java)
+                                .putExtra("url", u).putExtra("name", "${r.matchTitle} · ${r.blvName}"))
+                        }
+                    } catch (e: Exception) {}
+                }
+            }
+        }
         refreshCount()
     }
 
