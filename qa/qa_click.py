@@ -1,20 +1,25 @@
 #!/usr/bin/env python3
 """
-QA click-through driver v2 cho KênhLive Android TV.
-- Đọc text + content-desc để đặt tên nút (không còn ''
-- Tap từng node clickable, chụp ảnh mỗi bước (có ảnh thật)
-- Đục sâu: sau khi tap mở màn mới (Player/dialog/multiview), tự điều hướng + tap tiếp
-- Bắt FATAL EXCEPTION + ANR; dò ca sâu (deep 2) để phát hiện nút chết
+QA click-through driver v3 cho KênhLive Android TV — KHÓA TRONG APP.
+- Chỉ tap node thuộc cửa sổ app (mất focus → relaunch ngay)
+- Bỏ qua node hệ thống (launcher/settings/notification)
+- Text + content-desc để đặt tên nút
+- Ảnh mỗi bước (screencap -> file)
+- Bắt FATAL EXCEPTION + ANR
 Output: report.json + shots/*.png
 
-Chạy trên host có adb. python3 qa_click.py <output_dir> <deep>
+python3 qa_click.py <output_dir> <deep>
 """
 import json, os, re, subprocess, sys, time
 
 OUT = sys.argv[1] if len(sys.argv) > 1 else "/tmp/qa"
-DEEP = int(sys.argv[2]) if len(sys.argv) > 2 else 3
+DEEP = int(sys.argv[2]) if len(sys.argv) > 2 else 4
 os.makedirs(OUT + "/shots", exist_ok=True)
 PKG = "com.kenhlive.tv"
+
+# text node hệ thống cần bỏ (launcher Android TV / search / setup wizard)
+SYSTEM_TEXTS = ("search", "sign in", "notification", "system", "settings",
+                "apps", "youtube", "dismiss", "google", "favorites", "home")
 
 def sh(cmd, timeout=25):
     try:
@@ -23,18 +28,31 @@ def sh(cmd, timeout=25):
     except Exception:
         return ""
 
-def tap(x, y):
-    sh(f"adb shell input tap {x} {y}")
+def tap(x, y): sh(f"adb shell input tap {x} {y}")
 
-def back():
-    sh("adb shell input keyevent 4")
+def key(k): sh(f"adb shell input keyevent {k}")
+
+def back(): key("4")
+
+def is_app_focused():
+    f = sh("adb shell dumpsys window | grep mCurrentFocus")
+    return f and PKG in f
 
 def launch():
-    sh(f"adb shell am force-stop {PKG}; sleep 1")
-    sh(f"adb shell am start -n {PKG}/.MainActivity"); time.sleep(9)
+    sh(f"adb shell am force-stop {PKG}")
+    time.sleep(1)
+    sh(f"adb shell am start -n {PKG}/.MainActivity")
+    time.sleep(9)
+    if not is_app_focused():
+        time.sleep(4)
+        sh(f"adb shell am start -n {PKG}/.MainActivity")
+        time.sleep(6)
 
 def uia_dump():
-    """(text, cx, cy) các node clickable. text = content-desc hay text."""
+    """(text,cx,cy) các node clickable của APP; [] nếu rỗng/khoá không vào."""
+    if not is_app_focused():
+        launch()
+        time.sleep(2)
     avail = sh("adb shell which uiautomator", timeout=15)
     if "uiautomator" not in avail:
         return []
@@ -53,27 +71,34 @@ def uia_dump():
         desc = re.search(r'content-desc="([^"]*)"', n)
         label = (txt.group(1) if txt and txt.group(1) else
                  (desc.group(1) if desc and desc.group(1) else "node"))
+        low = label.lower()
+        # bỏ node thuộc launcher hệ thống (tránh thoát app)
+        if any(s in low for s in SYSTEM_TEXTS):
+            continue
+        # bỏ node quá nhỏ / ở sát mép (thanh trạng thái/notification)
+        if cy < 60 or w < 20:
+            continue
         out.append((label, cx, cy, w, h))
     return out
 
 def crash_count(baseline):
-    """(số FATAL/ANR mới, current logcat) so với baseline."""
     cur = sh("adb logcat -d -s AndroidRuntime:E")
     nf = cur.count("FATAL EXCEPTION") - baseline.count("FATAL EXCEPTION")
     na = cur.count("ANR in " + PKG) - baseline.count("ANR in " + PKG)
-    return (nf + na, cur, cur.replace(baseline, "")[-1200:])
+    return (nf + na, cur.replace(baseline, "")[-1500:])
 
 def scr(fn):
     sh(f"mkdir -p {OUT}/shots")
-    sh(f"adb exec-out screencap -p > {fn}", timeout=15)
+    # exec-out sang file (tránh mang \r\n qua shell)
+    with open(fn, "wb") as f:
+        subprocess.run("adb exec-out screencap -p".split(), stdout=f, timeout=20)
 
-report = {"pkg": PKG, "deep": DEEP, "tests": [], "crashes": [], "dead": []}
+report = {"pkg": PKG, "deep": DEEP, "tests": [], "crashes": []}
 seen = set()
-launch(); time.sleep(3)
+launch(); time.sleep(2)
 baseline = sh("adb logcat -d -s AndroidRuntime:E")
 
-def scan_screen(depth, follow=True):
-    """Tap mọi node mới trên màn hiện tại. follow=True: sau khi tap mở tầng mới thì đi tiếp."""
+def scan_screen(depth):
     nodes = uia_dump()
     found = []
     for t,cx,cy,w,h in nodes:
@@ -87,37 +112,29 @@ def scan_screen(depth, follow=True):
         tap(cx, cy); time.sleep(3)
         fn = f"{OUT}/shots/d{depth}_{t[:16].replace('/','_')}.png"
         scr(fn)
-        nf, cur, tail = crash_count(baseline)
+        nf, tail = crash_count(baseline)
         report["tests"].append({"depth": depth, "text": t[:60], "xy": [cx,cy],
                                 "crash": nf > 0, "shot": fn})
         if nf > 0:
-            report["crashes"].append({"depth": depth, "text": t[:60], "xy": [cx,cy],
-                                      "sig": tail})
-            print("   *** CRASH/ANR sau khi tap ***", flush=True)
+            report["crashes"].append({"depth": depth, "text": t[:60], "xy": [cx,cy], "sig": tail})
+            print("   *** CRASH/ANR ***", flush=True)
             crashed = True
-        elif follow and depth < DEEP:
-            # mở tầng mới (dialog/Player/multiview) → đi tiếp trước khi BACK
-            deeper = uia_dump()
-            # nếu có node mới (khác tập seen ngoài tọa độ vừa tap) → đục tiếp
-            extra = [x for x in deeper if (x[1]//50, x[2]//50) not in seen]
-            if extra:
-                print(f"   -> mở tầng mới ({len(extra)} node), đục tiếp", flush=True)
-                rc = scan_screen(depth+1, follow=True)
-                if rc: crashed = True
+        else:
+            # đục sâu nếu mở tầng mới và vẫn trong app
+            if depth < DEEP and is_app_focused():
+                extra = [x for x in uia_dump() if (x[1]//50, x[2]//50) not in seen]
+                if extra:
+                    print(f"   -> tầng mới {len(extra)} node", flush=True)
+                    if scan_screen(depth+1): crashed = True
         back(); time.sleep(1.5)
+        if not is_app_focused():
+            launch(); time.sleep(2)
     return crashed
 
-def navigate_and_scan():
-    """Đục sâu: home -> bấm card -> dialog -> Player -> multiview."""
-    for depth in range(1, DEEP+1):
-        if scan_screen(depth):
-            print("vòng ngừng do crash", flush=True); break
-        # sau mỗi vòng, đổi màn bằng D-pad để lộ node sâu
-        sh("adb shell input keyevent 20"); time.sleep(0.5)
-        sh("adb shell input keyevent 22"); time.sleep(0.5)
-
-navigate_and_scan()
+for depth in range(1, DEEP+1):
+    if scan_screen(depth): break
+    key("20"); time.sleep(0.5)   # D-pad xuống lộ hàng
+    key("22"); time.sleep(0.5)
 
 json.dump(report, open(f"{OUT}/report.json","w"), ensure_ascii=False, indent=2)
-print("=== QA DONE ===", flush=True)
-print("tests:", len(report["tests"]), "crashes:", len(report["crashes"]), flush=True)
+print("=== QA DONE === tests:", len(report["tests"]), "crashes:", len(report["crashes"]), flush=True)
