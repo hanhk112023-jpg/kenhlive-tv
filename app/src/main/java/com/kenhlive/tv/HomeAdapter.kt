@@ -19,7 +19,7 @@ import coil.transform.RoundedCornersTransformation
  *  Row 1+: theo giải — card thumbnail 16:9, mỗi card = 1 TRẬN (gộp N phòng).
  */
 class HomeAdapter(
-    private val groups: List<LiveMatchGroup>,
+    private var groups: List<LiveMatchGroup>,
     private val lifecycleOwner: LifecycleOwner,
     private val onGroupClick: (LiveMatchGroup) -> Unit,
     private val onLongClickGroup: (LiveMatchGroup) -> Unit
@@ -28,12 +28,19 @@ class HomeAdapter(
     companion object {
         private const val TYPE_HERO = 0
         private const val TYPE_ROW = 1
+        private fun buildRows(groups: List<LiveMatchGroup>) =
+            groups.groupBy { it.league }
+                .entries.sortedByDescending { it.value.sumOf { g -> g.totalViewers } }
+                .map { it.key to it.value }
     }
 
-    private val rows: List<Pair<String, List<LiveMatchGroup>>> = run {
-        groups.groupBy { it.league }
-            .entries.sortedByDescending { it.value.sumOf { g -> g.totalViewers } }
-            .map { it.key to it.value }
+    private var rows: List<Pair<String, List<LiveMatchGroup>>> = buildRows(groups)
+
+    /** Cập nhật dữ liệu mới (auto-refresh) — rebuild rows + notify. */
+    fun submit(newGroups: List<LiveMatchGroup>) {
+        groups = newGroups
+        rows = buildRows(groups)
+        notifyDataSetChanged()
     }
 
     inner class HeroVH(v: View) : RecyclerView.ViewHolder(v) {

@@ -2,6 +2,8 @@ package com.kenhlive.tv
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import android.view.View
@@ -18,6 +20,49 @@ class ScheduleFragment : Fragment() {
     private lateinit var statusText: TextView
     private lateinit var emptyTitle: TextView
     private lateinit var emptyState: View
+    private var loadedOnce = false
+    private val refreshHandler = Handler(Looper.getMainLooper())
+    private var refreshing = false
+    private val autoRefresh = object : Runnable {
+        override fun run() {
+            silentRefresh()
+            refreshHandler.postDelayed(this, 10 * 60_000L) // lịch đổi chậm — 10 phút
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refreshHandler.removeCallbacks(autoRefresh)
+        refreshHandler.postDelayed(autoRefresh, 10 * 60_000L)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        refreshHandler.removeCallbacks(autoRefresh)
+    }
+
+    /** Fetch lại lịch âm thầm, không hiện "Đang tải" — giữ nguyên vị trí cuộn. */
+    private fun silentRefresh() {
+        if (refreshing || !isAdded || !::adapter.isInitialized || !loadedOnce) return
+        refreshing = true
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val days = SocoliveRepository.fetchSchedule(7)
+                val items = mutableListOf<Any>()
+                for (d in days) {
+                    if (d.matches.isEmpty()) continue
+                    items.add(SocoliveRepository.dayLabel(d.date))
+                    items.addAll(d.matches)
+                }
+                if (items.isNotEmpty() && isAdded) {
+                    emptyState.visibility = View.GONE
+                    statusText.visibility = View.GONE
+                    adapter.submitList(items)
+                }
+            } catch (e: Exception) { /* giữ dữ liệu cũ */ }
+            finally { refreshing = false }
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -57,6 +102,7 @@ class ScheduleFragment : Fragment() {
                 emptyState.visibility = View.GONE
                 statusText.visibility = View.GONE
                 adapter.submitList(items)
+                loadedOnce = true
             } catch (e: Exception) {
                 emptyState.visibility = View.VISIBLE
                 statusText.text = "Lỗi tải lịch — vuốt để thử lại"

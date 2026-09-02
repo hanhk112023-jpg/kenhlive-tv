@@ -4,6 +4,8 @@ import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import android.view.Window
 import android.view.WindowInsetsController
@@ -90,6 +92,25 @@ class MainActivity : AppCompatActivity() {
         val idle = 0xFFCFCFCF.toInt()
         findViewById<TextView>(R.id.tv_live)?.setTextColor(if (live) active else idle)
         findViewById<TextView>(R.id.tv_schedule)?.setTextColor(if (!live) active else idle)
+    }
+
+    private val countHandler = Handler(Looper.getMainLooper())
+    private val countTick = object : Runnable {
+        override fun run() {
+            refreshCount()
+            countHandler.postDelayed(this, 3 * 60_000L)
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        countHandler.removeCallbacks(countTick)
+        countHandler.postDelayed(countTick, 3 * 60_000L)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        countHandler.removeCallbacks(countTick)
     }
 
     private fun refreshCount() {
