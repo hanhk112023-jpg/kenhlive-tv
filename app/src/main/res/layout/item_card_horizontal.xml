@@ -86,7 +86,7 @@
         android:layout_marginTop="9dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="@drawable/pill_watch"
+        android:background="@drawable/btn_watch_ai"
         android:paddingLeft="14dp"
         android:paddingRight="14dp"
         android:paddingTop="6dp"
