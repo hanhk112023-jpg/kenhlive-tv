@@ -117,13 +117,11 @@ object SocoliveRepository {
     }
 
     /** Gom phòng live theo trận (giải + tên trận), sort phòng theo viewers. */
-    companion object {
-        fun groupRooms(rooms: List<LiveRoom>): List<LiveMatchGroup> =
-            rooms.groupBy { it.league to it.matchTitle }
-                .values
-                .map { g -> LiveMatchGroup(g.first().league, g.first().matchTitle, g.sortedByDescending { it.viewers }) }
-                .sortedByDescending { it.totalViewers }
-    }
+    fun groupRooms(rooms: List<LiveRoom>): List<LiveMatchGroup> =
+        rooms.groupBy { it.league to it.matchTitle }
+            .values
+            .map { g -> LiveMatchGroup(g.first().league, g.first().matchTitle, g.sortedByDescending { it.viewers }) }
+            .sortedByDescending { it.totalViewers }
 
     // ---------- TAB LỊCH TRÌNH ----------
     suspend fun fetchSchedule(days: Int = 7): List<DaySchedule> = withContext(Dispatchers.IO) {

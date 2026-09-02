@@ -79,7 +79,7 @@ class LiveFragment : Fragment() {
                 crossfade(80); transformations(CircleCropTransformation())
                 placeholder(R.drawable.logo_placeholder); error(R.drawable.logo_placeholder)
             }
-            opt.setOnClickListener { openRoom(r); dialog.dismiss() }
+            opt.setOnClickListener { openRoom(r); dialog?.dismiss() }
             list.addView(opt)
         }
         dialog = AlertDialog.Builder(requireContext())
