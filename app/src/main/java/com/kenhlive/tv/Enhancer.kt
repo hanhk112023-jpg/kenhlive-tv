@@ -15,10 +15,11 @@ object EnhanceSettings {
     private const val PREF = "enhance"
     const val VQ_AUTO = 0; const val VQ_HIGH = 1; const val VQ_STABLE = 2
     const val AQ_STANDARD = 0; const val AQ_BASS = 1; const val AQ_DIALOG = 2; const val AQ_NIGHT = 3
+    const val AQ_AUTO = 4
 
     private fun sp(ctx: Context) = ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE)
     fun videoQuality(ctx: Context) = sp(ctx).getInt("vq", VQ_HIGH)
-    fun audioMode(ctx: Context) = sp(ctx).getInt("aq", AQ_STANDARD)
+    fun audioMode(ctx: Context) = sp(ctx).getInt("aq", AQ_AUTO)
     fun setVideoQuality(ctx: Context, v: Int) = sp(ctx).edit().putInt("vq", v).apply()
     fun setAudioMode(ctx: Context, v: Int) = sp(ctx).edit().putInt("aq", v).apply()
 }
@@ -121,6 +122,20 @@ class AudioEnhancer(private val ctx: Context) {
                             setStrength(300.toShort()) // thang 0..1000
                         }
                     } catch (e: Exception) { null }
+                }
+                EnhanceSettings.AQ_AUTO -> {
+                    // TỰ ĐỘNG (To & Hay): EQ nổi bass + presence (hay) + LoudnessEnhancer (to)
+                    eq = Equalizer(0, sessionId).apply {
+                        enabled = true
+                        val n = numberOfBands.toInt()
+                        if (n > 0) setBandLevel(0.toShort(), 300.toShort())   // +3dB bass
+                        if (n > 2) setBandLevel(2.toShort(), 250.toShort())   // rõ lời BLV
+                        if (n > 3) setBandLevel(3.toShort(), 300.toShort())   // presence
+                    }
+                    loud = LoudnessEnhancer(sessionId).apply {
+                        enabled = true
+                        setTargetGain(450) // +4.5dB — to rõ, không méo
+                    }
                 }
                 else -> { /* chuẩn: không fx */ }
             }

@@ -86,7 +86,7 @@ class PlayerActivity : AppCompatActivity() {
         val vq = EnhanceSettings.videoQuality(this)
         val aq = EnhanceSettings.audioMode(this)
         val vqNames = arrayOf("Tự động", "Cao nhất (nét)", "Ổn định (mượt)")
-        val aqNames = arrayOf("Chuẩn", "Bass mạnh", "Rõ tiếng BLV", "Ban đêm (êm)")
+        val aqNames = arrayOf("Chuẩn", "Bass mạnh", "Rõ tiếng BLV", "Ban đêm (êm)", "Tự động (to & hay)")
         val msg = "Hình: ${vqNames[vq]}\nÂm: ${aqNames[aq]}\n\nChọn hình:\n" +
             vqNames.mapIndexed { i, n -> if (i == vq) "[x] $n" else "[ ] $n" }.joinToString("\n") +
             "\n\nChọn âm:\n" + aqNames.mapIndexed { i, n -> if (i == aq) "[x] $n" else "[ ] $n" }.joinToString("\n")
@@ -109,10 +109,10 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun cycleAudio() {
-        val next = (EnhanceSettings.audioMode(this) + 1) % 4
+        val next = (EnhanceSettings.audioMode(this) + 1) % 5
         EnhanceSettings.setAudioMode(this, next)
         player?.let { audioFx.attach(it.audioSessionId, next) }
-        val names = arrayOf("Chuẩn", "Bass mạnh", "Rõ tiếng BLV", "Ban đêm")
+        val names = arrayOf("Chuẩn", "Bass mạnh", "Rõ tiếng BLV", "Ban đêm", "Tự động (to & hay)")
         android.widget.Toast.makeText(this, "Âm: ${names[next]}", android.widget.Toast.LENGTH_SHORT).show()
     }
 
