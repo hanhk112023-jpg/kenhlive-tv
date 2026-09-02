@@ -72,7 +72,7 @@ jobs:
             adb install -r app/build/outputs/apk/debug/app-debug.apk
             adb logcat -c
             mkdir -p /tmp/qa /tmp/qa/shots
-            python3 qa/qa_click.py /tmp/qa
+            python3 qa/qa_click.py /tmp/qa 4
             cp /tmp/qa/report.json qa_report.json
             cp -r /tmp/qa/shots qa_shots
             adb logcat -d -s AndroidRuntime:E > qa_crash.log || true
