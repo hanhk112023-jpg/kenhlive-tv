@@ -49,7 +49,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="TRỰC TIẾP"
-                android:textSize="15sp"
+                android:textSize="17sp"
                 android:textStyle="bold"
                 android:fontFamily="@font/oswald"
                 android:letterSpacing="0.08"
@@ -72,11 +72,11 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="LỊCH TRÌNH"
-                android:textSize="15sp"
+                android:textSize="17sp"
                 android:textStyle="bold"
                 android:fontFamily="@font/oswald"
                 android:letterSpacing="0.08"
-                android:textColor="#8A94A6" />
+                android:textColor="#B8C0CC" />
         </LinearLayout>
 
         <View
@@ -88,8 +88,8 @@
             android:id="@+id/countText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#B3B3B3"
-            android:textSize="13sp"
+            android:textColor="#D0D0D0"
+            android:textSize="15sp"
             android:visibility="gone" />
     </LinearLayout>
 
