@@ -55,8 +55,8 @@ class HeroAdapter(
         h.viewers.text = "👁 ${SocoliveRepository.fmtViewers(r.viewers)} · ${r.blvName}"
         h.cover.load(r.cover.ifBlank { r.avatar }) {
             crossfade(200)
-            placeholder(R.drawable.logo_placeholder)
-            error(R.drawable.logo_placeholder)
+            placeholder(R.drawable.hero_fallback)
+            error(R.drawable.hero_fallback)
         }
         h.itemView.setOnClickListener { onClick(r) }
     }
