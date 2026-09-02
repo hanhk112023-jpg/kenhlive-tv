@@ -15,15 +15,15 @@ import coil.transform.CircleCropTransformation
 import com.google.android.material.progressindicator.LinearProgressIndicator
 
 /**
- * Trang chủ Netflix-style:
- *  Row 0: HERO banner tự chạy (top 5 phòng theo viewers)
- *  Row 1+: "Giải XXX" — card cuộn ngang (card cuối hở "peek") + LinearProgressIndicator tiến độ.
+ * Trang chủ Netflix-style theo TRẬN (gộp phòng):
+ *  Row 0: HERO top 5 trận theo tổng viewers
+ *  Row 1+: "Giải XXX" — card mỗi TRẬN (1 card = N phòng), click mở dialog chọn phòng.
  */
 class HomeAdapter(
-    private val rooms: List<LiveRoom>,
+    private val groups: List<LiveMatchGroup>,
     private val lifecycleOwner: LifecycleOwner,
-    private val onPlay: (LiveRoom) -> Unit,
-    private val onLongClick: (LiveRoom) -> Unit
+    private val onGroupClick: (LiveMatchGroup) -> Unit,
+    private val onLongClickGroup: (LiveMatchGroup) -> Unit
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
     companion object {
@@ -31,9 +31,10 @@ class HomeAdapter(
         private const val TYPE_ROW = 1
     }
 
-    private val rows: List<Pair<String, List<LiveRoom>>> = run {
-        rooms.groupBy { it.league }
-            .entries.sortedByDescending { it.value.maxOf { r -> r.viewers } }
+    // group theo giải, giữ thứ tự tổng viewers
+    private val rows: List<Pair<String, List<LiveMatchGroup>>> = run {
+        groups.groupBy { it.league }
+            .entries.sortedByDescending { it.value.sumOf { g -> g.totalViewers } }
             .map { it.key to it.value }
     }
 
@@ -61,40 +62,55 @@ class HomeAdapter(
 
     override fun onBindViewHolder(h: RecyclerView.ViewHolder, pos: Int) {
         if (h is HeroVH) {
-            val hero = HeroAdapter(rooms.take(5)) { r -> onPlay(r) }
+            val hero = HeroAdapter(groups.take(5)) { g -> onGroupClick(g) }
             h.pager.adapter = hero
             hero.attach(h.pager)
             return
         }
         val (league, list) = rows[pos - 1]
         val vh = h as RowVH
-        vh.title.text = "$league · ${list.size} phòng"
+        vh.title.text = "$league · ${list.size} trận"
         vh.container.removeAllViews()
         val inf = LayoutInflater.from(vh.container.context)
-        list.forEach { r ->
+        list.forEach { g ->
             val card = inf.inflate(R.layout.item_card_horizontal, vh.container, false)
             val avatar = card.findViewById<ImageView>(R.id.cardAvatar)
             val blv = card.findViewById<TextView>(R.id.cardBlv)
             val match = card.findViewById<TextView>(R.id.cardMatch)
             val viewers = card.findViewById<TextView>(R.id.cardViewers)
-            blv.text = r.blvName
-            match.text = r.matchTitle
-            viewers.text = "👁 ${SocoliveRepository.fmtViewers(r.viewers)}"
-            avatar.load(r.avatar) {
+            val blvRow = card.findViewById<LinearLayout>(R.id.blvRow)
+            blv.text = g.matchTitle
+            match.text = g.league
+            viewers.text = SocoliveRepository.fmtViewers(g.totalViewers)
+            avatar.load(g.top.avatar) {
                 crossfade(100)
                 transformations(CircleCropTransformation())
                 placeholder(R.drawable.logo_placeholder)
                 error(R.drawable.logo_placeholder)
             }
-            card.setOnClickListener { onPlay(r) }
-            card.setOnLongClickListener { onLongClick(r); true }
+            // hàng avatar các BLV trong trận (tối đa 4) + badge số phòng
+            blvRow.removeAllViews()
+            g.rooms.take(4).forEach { r ->
+                val mini = inf.inflate(R.layout.item_mini_avatar, blvRow, false)
+                mini.findViewById<ImageView>(R.id.miniAvatar).load(r.avatar) {
+                    crossfade(60); transformations(CircleCropTransformation())
+                    placeholder(R.drawable.logo_placeholder); error(R.drawable.logo_placeholder)
+                }
+                blvRow.addView(mini)
+            }
+            if (g.count > 1) {
+                card.findViewById<TextView>(R.id.roomBadge).text = "${g.count} phòng"
+                card.findViewById<TextView>(R.id.roomBadge).visibility = View.VISIBLE
+            } else {
+                card.findViewById<TextView>(R.id.roomBadge).visibility = View.GONE
+            }
+            card.setOnClickListener { onGroupClick(g) }
+            card.setOnLongClickListener { onLongClickGroup(g); true }
             vh.container.addView(card)
         }
-        // progress bar: update khi scroll (peek 28% cuối)
         vh.scroll.post {
             val wide = (vh.scroll.getChildAt(0)?.width ?: vh.scroll.width).coerceAtLeast(1)
             val maxScroll = (wide - vh.scroll.width).coerceAtLeast(0)
-            // hàng vừa màn hình (không cuộn) → ẩn progress
             vh.progress.visibility = if (maxScroll > 0) View.VISIBLE else View.GONE
             vh.scroll.setOnScrollChangeListener { _, _, _, _, _ ->
                 val p = if (maxScroll > 0) (vh.scroll.scrollX * 1000 / maxScroll).coerceIn(0, 1000) else 0

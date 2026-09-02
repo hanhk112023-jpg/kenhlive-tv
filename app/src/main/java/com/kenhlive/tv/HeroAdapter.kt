@@ -11,18 +11,18 @@ import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import coil.load
 
-/** Hero banner: Layer A (BLV + tagline) trên, Layer B (giải + trận + viewers) khung pill dưới. */
+/** Hero banner Netflix-style, mỗi slide = 1 TRẬN (gộp N phòng). */
 class HeroAdapter(
-    private val rooms: List<LiveRoom>,
-    private val onClick: (LiveRoom) -> Unit
+    private val groups: List<LiveMatchGroup>,
+    private val onClick: (LiveMatchGroup) -> Unit
 ) : RecyclerView.Adapter<HeroAdapter.HV>() {
 
     private val handler = Handler(Looper.getMainLooper())
     private var pager: ViewPager2? = null
     private val auto = object : Runnable {
         override fun run() {
-            pager?.let { if (it.adapter != null && rooms.isNotEmpty()) {
-                it.currentItem = (it.currentItem + 1) % rooms.size } }
+            pager?.let { if (it.adapter != null && groups.isNotEmpty()) {
+                it.currentItem = (it.currentItem + 1) % groups.size } }
             handler.postDelayed(this, 5000)
         }
     }
@@ -43,23 +43,23 @@ class HeroAdapter(
         return HV(LayoutInflater.from(parent.context).inflate(R.layout.item_hero, parent, false))
     }
 
-    override fun getItemCount() = rooms.size.coerceAtMost(8)
+    override fun getItemCount() = groups.size.coerceAtMost(8)
 
     override fun onBindViewHolder(h: HV, pos: Int) {
-        val r = rooms[pos]
-        h.blv.text = r.blvName
-        // tagline tự sinh từ giải (Layer A)
-        h.tagline.text = "${r.league} · CUỒNG NHIỆT TRÊN LIVE"
-        h.title.text = r.matchTitle
-        h.league.text = r.league
-        h.viewers.text = "👁 ${SocoliveRepository.fmtViewers(r.viewers)} · ${r.blvName}"
-        h.cover.load(r.cover.ifBlank { r.avatar }) {
+        val g = groups[pos]
+        val top = g.top
+        h.blv.text = top.blvName
+        h.tagline.text = if (g.count > 1) "${g.count} phòng · gộp từ các BLV" else "${top.blvName} · CUỒNG NHIỆT TRÊN LIVE"
+        h.title.text = g.matchTitle
+        h.league.text = g.league
+        h.viewers.text = "👁 ${SocoliveRepository.fmtViewers(g.totalViewers)} · ${g.count} phòng"
+        h.cover.load(top.cover.ifBlank { top.avatar }) {
             crossfade(200)
             placeholder(R.drawable.hero_fallback)
             error(R.drawable.hero_fallback)
         }
-        h.itemView.setOnClickListener { onClick(r) }
+        h.itemView.setOnClickListener { onClick(g) }
     }
 
-    fun roomAt(pos: Int): LiveRoom = rooms[pos % rooms.size]
+    fun groupAt(pos: Int): LiveMatchGroup = groups[pos % groups.size]
 }

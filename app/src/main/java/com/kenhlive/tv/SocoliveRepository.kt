@@ -23,6 +23,17 @@ data class LiveRoom(
 )
 
 /** 1 BLV phát 1 trận. */
+/** Gộp nhiều phòng cùng 1 trận (cùng giải + tên trận). */
+data class LiveMatchGroup(
+    val league: String,
+    val matchTitle: String,
+    val rooms: List<LiveRoom>   // sorted by viewers desc
+) {
+    val totalViewers: Int get() = rooms.sumOf { it.viewers }
+    val top: LiveRoom get() = rooms.first()
+    val count: Int get() = rooms.size
+}
+
 data class AnchorInfo(val nickName: String, val icon: String, val roomNum: String)
 
 /** Trận đấu trong lịch (tab Lịch trình). */
@@ -103,6 +114,15 @@ object SocoliveRepository {
             }
         }
         out.sortedByDescending { it.viewers }
+    }
+
+    /** Gom phòng live theo trận (giải + tên trận), sort phòng theo viewers. */
+    companion object {
+        fun groupRooms(rooms: List<LiveRoom>): List<LiveMatchGroup> =
+            rooms.groupBy { it.league to it.matchTitle }
+                .values
+                .map { g -> LiveMatchGroup(g.first().league, g.first().matchTitle, g.sortedByDescending { it.viewers }) }
+                .sortedByDescending { it.totalViewers }
     }
 
     // ---------- TAB LỊCH TRÌNH ----------
