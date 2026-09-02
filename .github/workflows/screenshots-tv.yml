@@ -85,6 +85,18 @@ jobs:
             adb shell am start -n com.kenhlive.tv/.MainActivity --ei tab 1
             sleep 24
             adb exec-out screencap -p > tv3_schedule.png
+            # ===== MULTIVIEW v4.4: mở trực tiếp (adb root cho phép non-exported) =====
+            adb shell am force-stop com.kenhlive.tv; sleep 2
+            adb shell am start -n com.kenhlive.tv/.MultiViewActivity
+            sleep 30
+            adb exec-out screencap -p > tv4_multiview.png
+            # OK → dialog chọn BLV/đổi trận
+            adb shell input keyevent 23; sleep 4
+            adb exec-out screencap -p > tv5_mv_dialog.png
+            # đóng dialog → MENU hoán đổi 2 ô
+            adb shell input keyevent 4; sleep 2
+            adb shell input keyevent 82; sleep 4
+            adb exec-out screencap -p > tv6_mv_swapped.png
             adb logcat -d -s AndroidRuntime:E > crashlog.txt || true
 
       - uses: actions/upload-artifact@v4
