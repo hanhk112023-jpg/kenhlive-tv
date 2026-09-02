@@ -3,8 +3,8 @@ package com.kenhlive.tv
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
+import android.view.View
 import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
@@ -16,12 +16,14 @@ import kotlinx.coroutines.launch
 class ScheduleFragment : Fragment() {
     private lateinit var adapter: ScheduleAdapter
     private lateinit var statusText: TextView
+    private lateinit var emptyState: View
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
     ): View {
         val v = inflater.inflate(R.layout.fragment_matches, container, false)
         statusText = v.findViewById(R.id.statusText)
+        emptyState = v.findViewById(R.id.emptyState)
         adapter = ScheduleAdapter { anchor, match -> openAnchor(anchor, match) }
         v.findViewById<RecyclerView>(R.id.recyclerView).apply {
             layoutManager = LinearLayoutManager(requireContext())
@@ -32,6 +34,7 @@ class ScheduleFragment : Fragment() {
     }
 
     private fun load() {
+        emptyState.visibility = View.VISIBLE
         statusText.visibility = View.VISIBLE
         statusText.text = "Đang tải lịch thi đấu..."
         viewLifecycleOwner.lifecycleScope.launch {
@@ -44,13 +47,17 @@ class ScheduleFragment : Fragment() {
                     items.addAll(d.matches)
                 }
                 if (items.isEmpty()) {
+                    v.findViewById<TextView>(R.id.emptyTitle).text = "Sân vắng bóng"
                     statusText.text = "Không có trận nào 7 ngày tới"
+                    emptyState.visibility = View.VISIBLE
                     return@launch
                 }
+                emptyState.visibility = View.GONE
                 statusText.visibility = View.GONE
                 adapter.submitList(items)
             } catch (e: Exception) {
-                statusText.text = "Lỗi tải lịch: ${e.message}"
+                emptyState.visibility = View.VISIBLE
+                statusText.text = "Lỗi tải lịch — vuốt để thử lại"
             }
         }
     }
