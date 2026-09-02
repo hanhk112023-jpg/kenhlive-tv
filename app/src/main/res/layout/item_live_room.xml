@@ -62,7 +62,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
         android:gravity="center"
-        android:textColor="#0B0F19"
+        android:textColor="#000000"
         android:background="@drawable/pill_viewers"
         android:paddingLeft="10dp"
         android:paddingRight="10dp"

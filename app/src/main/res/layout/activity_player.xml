@@ -2,13 +2,13 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0B0F19">
+    android:background="#000000">
 
     <androidx.media3.ui.PlayerView
         android:id="@+id/playerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#0B0F19" />
+        android:background="#000000" />
 
     <!-- Top overlay: back + title -->
     <LinearLayout
@@ -27,7 +27,7 @@
             android:text="← Quay lại"
             android:textColor="#FFFFFF"
             android:textSize="15sp"
-            android:background="@drawable/btn_glass_ai"
+            android:background="@drawable/btn_glass_flat"
             android:focusable="true"
             android:clickable="true" />
 
@@ -41,7 +41,7 @@
             android:fontFamily="sans-serif-medium"
             android:textSize="12sp"
             android:textStyle="bold"
-            android:background="@drawable/btn_glass_ai"
+            android:background="@drawable/btn_glass_flat"
             android:paddingLeft="13dp"
             android:paddingRight="13dp"
             android:paddingTop="7dp"

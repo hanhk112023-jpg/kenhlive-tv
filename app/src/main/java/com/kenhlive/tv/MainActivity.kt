@@ -71,8 +71,12 @@ class MainActivity : AppCompatActivity() {
         navLive?.isSelected = live
         navSchedule?.isSelected = !live
         findViewById<ImageView>(R.id.iv_live)?.setImageResource(if (live) R.drawable.ic_live_stream else R.drawable.ic_live_stream)
-        findViewById<TextView>(R.id.tv_live)?.setTextColor(if (live) 0xFF00F0FF.toInt() else 0xFF64748B.toInt())
-        findViewById<TextView>(R.id.tv_schedule)?.setTextColor(if (!live) 0xFF00F0FF.toInt() else 0xFF64748B.toInt())
+        val active = 0xFFFFB800.toInt()
+        val idle = 0xFF8A94A6.toInt()
+        findViewById<TextView>(R.id.tv_live)?.setTextColor(if (live) active else idle)
+        findViewById<TextView>(R.id.tv_schedule)?.setTextColor(if (!live) active else idle)
+        findViewById<ImageView>(R.id.iv_live)?.setColorFilter(if (live) active else idle)
+        findViewById<ImageView>(R.id.iv_schedule)?.setColorFilter(if (!live) active else idle)
     }
 
     private fun refreshCount() {

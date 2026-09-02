@@ -6,7 +6,7 @@
     android:gravity="center_horizontal"
     android:padding="12dp"
     android:layout_margin="7dp"
-    android:background="@drawable/card_live_bg"
+    android:background="@drawable/card_flat"
     android:focusable="true"
     android:clickable="true">
 
@@ -86,7 +86,7 @@
         android:layout_marginTop="9dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="@drawable/btn_watch_ai"
+        android:background="@drawable/btn_watch_flat"
         android:paddingLeft="14dp"
         android:paddingRight="14dp"
         android:paddingTop="6dp"
@@ -104,7 +104,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="6dp"
-            android:textColor="#0B0F19"
+            android:textColor="#000000"
             android:fontFamily="@font/oswald"
             android:textSize="12sp"
             android:textStyle="bold"
