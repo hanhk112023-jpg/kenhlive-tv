@@ -16,6 +16,7 @@ import kotlinx.coroutines.launch
 class ScheduleFragment : Fragment() {
     private lateinit var adapter: ScheduleAdapter
     private lateinit var statusText: TextView
+    private lateinit var emptyTitle: TextView
     private lateinit var emptyState: View
 
     override fun onCreateView(
@@ -23,6 +24,7 @@ class ScheduleFragment : Fragment() {
     ): View {
         val v = inflater.inflate(R.layout.fragment_matches, container, false)
         statusText = v.findViewById(R.id.statusText)
+        emptyTitle = v.findViewById(R.id.emptyTitle)
         emptyState = v.findViewById(R.id.emptyState)
         adapter = ScheduleAdapter { anchor, match -> openAnchor(anchor, match) }
         v.findViewById<RecyclerView>(R.id.recyclerView).apply {
@@ -47,7 +49,7 @@ class ScheduleFragment : Fragment() {
                     items.addAll(d.matches)
                 }
                 if (items.isEmpty()) {
-                    v.findViewById<TextView>(R.id.emptyTitle).text = "Sân vắng bóng"
+                    emptyTitle.text = "Sân vắng bóng"
                     statusText.text = "Không có trận nào 7 ngày tới"
                     emptyState.visibility = View.VISIBLE
                     return@launch
