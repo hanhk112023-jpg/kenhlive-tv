@@ -25,7 +25,6 @@ class LiveFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private var groups = listOf<LiveMatchGroup>()
     private var rooms = listOf<LiveRoom>()
-    private val multiSel = mutableListOf<LiveRoom>()
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -90,48 +89,27 @@ class LiveFragment : Fragment() {
         dialog?.show()
     }
 
-    private fun openRoom(room: LiveRoom, groupRooms: List<LiveRoom>) {
+    private fun openRoom(room: LiveRoom, groupRooms: List<LiveRoom> = emptyList()) {
         viewLifecycleOwner.lifecycleScope.launch {
             val url = SocoliveRepository.fetchStream(room.roomNum)
             if (url == null) {
                 Toast.makeText(context, "Stream chưa sẵn sàng — thử lại", Toast.LENGTH_SHORT).show()
                 return@launch
             }
-            // Các phòng cùng trận (≤4 ô): phòng đang xem là ô đầu, còn lại theo viewers
-            val others = groupRooms.filter { it.roomNum != room.roomNum }
-                .sortedByDescending { it.viewers }.take(3)
-            val mvNames = mutableListOf("${room.matchTitle} · ${room.blvName}")
-            val mvNums = mutableListOf<String>()
-            for (o in others) {
-                mvNums.add(o.roomNum)
-                mvNames.add("${o.matchTitle} · ${o.blvName}")
-            }
             startActivity(Intent(requireContext(), PlayerActivity::class.java)
                 .putExtra("url", url)
-                .putExtra("name", "${room.matchTitle} · ${room.blvName}")
-                .putExtra("roomNums", mvNums.toTypedArray())
-                .putExtra("names", mvNames.toTypedArray()))
+                .putExtra("name", "${room.matchTitle} · ${room.blvName}"))
         }
     }
 
+    /** Nhấn GIỮ card = mở multiview 2 trận, ô đầu là trận này. */
     private fun toggleMultiGroup(g: LiveMatchGroup) {
-        // thêm cả nhóm phòng vào multiview (tối đa 4)
-        for (r in g.rooms) {
-            if (multiSel.size >= 4) break
-            if (multiSel.none { it.roomNum == r.roomNum }) multiSel.add(r)
-        }
-        Toast.makeText(context, "Multiview: ${multiSel.map { it.blvName }.take(3).joinToString(", ")}${if (multiSel.size > 3) "…" else ""} (${multiSel.size}/4)",
-            Toast.LENGTH_SHORT).show()
+        startActivity(Intent(requireContext(), MultiViewActivity::class.java)
+            .putExtra("initial_room", "${g.top.matchTitle} · ${g.top.blvName}"))
     }
 
     fun openMultiView() {
-        if (multiSel.size < 2) {
-            Toast.makeText(context, "Nhấn GIỮ card để chọn 2-4 phòng trước", Toast.LENGTH_LONG).show()
-            return
-        }
-        startActivity(Intent(requireContext(), MultiViewActivity::class.java)
-            .putExtra("roomNums", multiSel.map { it.roomNum }.toTypedArray())
-            .putExtra("names", multiSel.map { "${it.matchTitle} · ${it.blvName}" }.toTypedArray()))
+        startActivity(Intent(requireContext(), MultiViewActivity::class.java))
     }
 
     private var dialog: AlertDialog? = null

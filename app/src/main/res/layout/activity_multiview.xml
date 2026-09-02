@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#000000">
+
+    <!-- Thanh hint -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="◫ MULTIVIEW"
+            android:textColor="#FF3B30"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/oswald"
+            android:letterSpacing="0.1" />
+
+        <TextView
+            android:id="@+id/hintText"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="14dp"
+            android:text="←→ chọn trận · OK đổi trận · MENU hoán đổi · BACK thoát"
+            android:textColor="#CFCFCF"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- 2 ô trận cạnh nhau -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="horizontal"
+        android:baselineAligned="false">
+
+        <include
+            android:id="@+id/slot0"
+            layout="@layout/item_multiview_cell"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginRight="4dp" />
+
+        <include
+            android:id="@+id/slot1"
+            layout="@layout/item_multiview_cell"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginLeft="4dp" />
+    </LinearLayout>
+</LinearLayout>
