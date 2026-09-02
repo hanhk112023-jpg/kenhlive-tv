@@ -102,9 +102,9 @@ jobs:
             adb shell am start -W -n com.kenhlive.tv/.MainActivity --es open player
             sleep 35
             adb exec-out screencap -p > tv7_player.png
-            # focus: backBtn → RIGHT multiBtn → RIGHT qualityBtn → OK
-            adb shell input keyevent 21; sleep 1
-            adb shell input keyevent 21; sleep 1
+            # focus đầu = backBtn → RIGHT x2 (multiBtn, qualityBtn) → OK mở dialog
+            adb shell input keyevent 22; sleep 1
+            adb shell input keyevent 22; sleep 1
             adb shell input keyevent 23; sleep 3
             adb exec-out screencap -p > tv8_quality_dialog.png
             adb logcat -d -s AndroidRuntime:E > crashlog.txt || true
