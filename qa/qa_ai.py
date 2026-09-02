@@ -58,15 +58,20 @@ def chat(system, prompt, img_jpeg):
     return r['choices'][0]['message']['content']
 
 DECIDE_SYS = """Bạn là QA driver cho app Android TV KênhLive (xem bóng đá, nền đen).
-Đây là ảnh màn hình hiện tại. QUAN SÁT kỹ và chọn ĐÚNG 1 nút bấm có ý nghĩa nhất mà BẠN CHƯA thấy trong lịch sử (các ảnh + label trước: ###HISTORY###).
+Đây là ảnh màn hình hiện tại. QUAN SÁT kỹ và chọn ĐÚNG 1 nút bấm có ý nghĩa nhất mà BẠN CHƯA thấy trong lịch sử (các label trước: ###HISTORY###).
 Trả về JSON thuần, KHÔNG giải thích ngoài JSON:
 {"x":<int>,"y":<int>,"label":"<tên nút ngắn tiếng Việt>","expect":"<điều sẽ xảy ra sau bấm, ngắn>","note":"<quan sát ngắn>"}
-- x,y phải nằm trong vùng nút BẤM ĐƯỢC.
-- Nếu đã bấm hết nút đáng giá hoặc không còn gì mới → trả {"done":true,"reason":"..."}."""
+QUY TẮC CHỌN NÚT (quan trọng):
+- Chỉ chọn nút THẬT SỰ BẤM ĐƯỢC: nút CTA (Xem ngay), card trận, tab (Trực tiếp/Lịch trình), mục trong dialog, nút phòng/BLV.
+- KHÔNG chọn: dòng chữ trạng thái như "N phòng đang live", "đang tải", tiêu đề trận, tên giải, chữ trang trí KHÔNG có khung nút/viền nổi bật.
+- Nếu 1 vùng là dòng text nằm trên nền, không có nền nút rõ ràng → coi là KHÔNG bấm được, đừng chọn.
+- x,y phải nằm TRONG vùng nút (không chọn text kế bên).
+- Nếu đã bấm hết nút đáng giá hoặc chỉ còn text trạng thái → trả {"done":true,"reason":"..."}."""
 
 def decide(img, hist):
-    hist = "; ".join(f"{i}→{h['label']}" for i,h in enumerate(hist[-6:])) or "không có"
-    sys = DECIDE_SYS.replace("###HISTORY###", hist)
+    vis = [h['label'] for h in hist[-8:]]
+    # ưu tiên từ chối bấm lại các text trạng thái đã bấm nhầm
+    sys = DECIDE_SYS.replace("###HISTORY###", "; ".join(vis) or "không có")
     raw = chat(sys, "Trả JSON duy nhất.", img)
     return raw
 
