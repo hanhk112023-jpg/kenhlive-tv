@@ -1,0 +1,86 @@
+name: QA Clicks
+
+on:
+  workflow_dispatch:
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Build debug APK
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      # proxy VN — json.vnres.co chặn IP datacenter (403)
+      - name: Set up proxy VN
+        env:
+          SUB_URL: ${{ secrets.YUNA_SUB_URL }}
+        run: |
+          set -euo pipefail
+          if [ -z "$SUB_URL" ]; then echo "YUNA_SUB_URL not set"; exit 1; fi
+          MH=$(ls /usr/local/bin/mihomo 2>/dev/null || true)
+          if [ -z "$MH" ]; then
+            VER=v1.19.30
+            curl -sSL -o /tmp/mihomo.gz "https://github.com/MetaCubeX/mihomo/releases/download/${VER}/mihomo-linux-amd64-${VER}.gz"
+            gunzip -f /tmp/mihomo.gz && install -m 0755 /tmp/mihomo /usr/local/bin/mihomo
+          fi
+          curl -sSL -H 'User-Agent: clash-verge/1.6.6' -o /tmp/sub_full.yaml "$SUB_URL"
+          python3 - << 'PYEOF'
+          import yaml
+          cfg = yaml.safe_load(open('/tmp/sub_full.yaml'))
+          names = cfg.get('proxies', [])
+          order = [p for p in names if 'VN' in p.get('name','').upper()] + \
+                  [p for p in names if 'SG' in p.get('name','').upper()]
+          keep = order[:10]
+          groups = [{'name':'POOL','type':'url-test','proxies':[p['name'] for p in keep],
+                     'url':'http://www.gstatic.com/generate_204','interval':120,'tolerance':50}]
+          out = {'mixed-port':7891,'allow-lan':True,'mode':'rule','log-level':'warning',
+                 'proxies':keep,'proxy-groups':groups,'rules':['MATCH,POOL']}
+          yaml.safe_dump(out, open('/tmp/mihomo_ci.yaml','w'))
+          PYEOF
+          nohup mihomo -f /tmp/mihomo_ci.yaml -d /tmp/mihomo_ci > /tmp/mihomo.log 2>&1 &
+          sleep 4
+          echo "exit IP: $(curl -sS -m 15 -x http://127.0.0.1:7891 https://api.ipify.org || echo '?')"
+
+      - name: KVM permissions
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Chạy TV emulator + QA click-through
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86
+          target: android-tv
+          script: |
+            adb root
+            adb shell settings put global http_proxy 10.0.2.2:7891
+            adb shell wm size 1920x1080
+            adb shell settings put system accelerometer_rotation 0
+            adb shell settings put system user_rotation 0
+            adb install -r app/build/outputs/apk/debug/app-debug.apk
+            adb logcat -c
+            mkdir -p /tmp/qa /tmp/qa/shots
+            python3 qa/qa_click.py /tmp/qa
+            cp /tmp/qa/report.json qa_report.json
+            cp -r /tmp/qa/shots qa_shots
+            adb logcat -d -s AndroidRuntime:E > qa_crash.log || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: qa-clickthrough
+          path: |
+            qa_report.json
+            qa_crash.log
+            qa_shots/**
