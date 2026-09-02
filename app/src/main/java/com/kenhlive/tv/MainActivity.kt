@@ -60,7 +60,7 @@ class MainActivity : AppCompatActivity() {
             viewPager.post { viewPager.setCurrentItem(1, false) }
         }
 
-        checkUpdate()
+        UpdateManager.checkAndUpdate(this)
         refreshCount()
     }
 
@@ -84,34 +84,6 @@ class MainActivity : AppCompatActivity() {
                     tv.text = "● $n phòng đang live"
                 }
             }
-        }
-    }
-
-    private fun checkUpdate() {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                val latest = okhttp3.OkHttpClient().newCall(
-                    okhttp3.Request.Builder().url("https://api.github.com/repos/hanhk112023-jpg/kenhlive-tv/releases/latest").build()
-                ).execute().use { resp ->
-                    if (!resp.isSuccessful) return@launch
-                    val obj = org.json.JSONObject(resp.body!!.string())
-                    obj.optString("tag_name").removePrefix("v")
-                }
-                val cur = packageManager.getPackageInfo(packageName, 0).versionName
-                val l = latest.split('.').map { it.toIntOrNull() ?: 0 }
-                val c = cur.split('.').map { it.toIntOrNull() ?: 0 }
-                val newer = l.size == 3 && c.size == 3 &&
-                    (l[0] > c[0] || (l[0] == c[0] && l[1] > c[1]) || (l[0] == c[0] && l[1] == c[1] && l[2] > c[2]))
-                if (newer) withContext(Dispatchers.Main) {
-                    AlertDialog.Builder(this@MainActivity)
-                        .setTitle("Có bản mới v$latest")
-                        .setMessage("Cập nhật qua GitHub?")
-                        .setPositiveButton("Mở") { _, _ ->
-                            startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://tinyurl.com/kenhlive")))
-                        }
-                        .setNegativeButton("Để sau", null).show()
-                }
-            } catch (e: Exception) { /* im lặng */ }
         }
     }
 }

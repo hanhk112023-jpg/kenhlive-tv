@@ -7,6 +7,15 @@ android {
     namespace 'com.kenhlive.tv'
     compileSdk 34
 
+    signingConfigs {
+        kenhlive {
+            storeFile rootProject.file('keystore/kenhlive.jks')
+            storePassword 'kenhlive2026'
+            keyAlias 'kenhlive'
+            keyPassword 'kenhlive2026'
+        }
+    }
+
     defaultConfig {
         applicationId "com.kenhlive.tv"
         minSdk 21
@@ -19,6 +28,7 @@ android {
         debug {
             minifyEnabled false
             shrinkResources false
+            signingConfig signingConfigs.kenhlive
         }
         release {
             minifyEnabled true
