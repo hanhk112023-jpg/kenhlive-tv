@@ -81,7 +81,7 @@ class MultiViewActivity : AppCompatActivity() {
             s.root.setOnClickListener { requestFocusSlot(i) }
             s.audioBadge.setOnClickListener {
                 s.muted = !s.muted
-                s.audioBadge.text = if (s.muted) "🔇" else "🔊"
+                s.audioBadge.text = if (s.muted) "TĨNH LẶNG" else "ÂM THANH"
                 applyVolumes()
             }
         }
@@ -125,8 +125,10 @@ class MultiViewActivity : AppCompatActivity() {
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action != KeyEvent.ACTION_DOWN) return super.dispatchKeyEvent(event)
         when (event.keyCode) {
-            KeyEvent.KEYCODE_DPAD_LEFT  -> { if (slots[1].root.visibility == View.VISIBLE) { focused = 0; applyFocus(); return true } }
-            KeyEvent.KEYCODE_DPAD_RIGHT -> { if (slots[1].root.visibility == View.VISIBLE) { focused = 1; applyFocus(); return true } }
+            KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_UP ->
+                { if (slots[1].root.visibility == View.VISIBLE && focused != 0) { focused = 0; applyFocus(); return true } }
+            KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_DOWN ->
+                { if (slots[1].root.visibility == View.VISIBLE && focused != 1) { focused = 1; applyFocus(); return true } }
             KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER -> {
                 openRoomPicker(focused); return true
             }
@@ -139,11 +141,24 @@ class MultiViewActivity : AppCompatActivity() {
 
     private fun applyFocus() {
         slots.forEachIndexed { i, s ->
-            s.swapHint.visibility = if (i == focused && slots[1].root.visibility == View.VISIBLE) View.VISIBLE else View.GONE
+            val isFocus = i == focused
+            s.root.background = if (isFocus) focusDrawable() else normalDrawable()
+            s.swapHint.visibility = if (isFocus && slots[1].root.visibility == View.VISIBLE) View.VISIBLE else View.GONE
         }
         slots[focused].root.requestFocus()
         applyVolumes()
     }
+
+    private fun focusDrawable(): android.graphics.drawable.Drawable =
+        android.graphics.drawable.GradientDrawable().apply {
+            setColor(0xFF000000.toInt())
+            setStroke(8, 0xFFFF3B30.toInt())
+        }
+    private fun normalDrawable(): android.graphics.drawable.Drawable =
+        android.graphics.drawable.GradientDrawable().apply {
+            setColor(0xFF000000.toInt())
+            setStroke(2, 0xFF262626.toInt())
+        }
 
     /** CẢ HAI đều nghe được: focus 100%, kia 55% (trừ khi mute riêng). */
     private fun applyVolumes() {
@@ -161,7 +176,7 @@ class MultiViewActivity : AppCompatActivity() {
         b.player = tmpPlayer; b.room = tmpRoom; b.group = tmpGroup; b.muted = tmpMuted
         a.playerView.player = a.player; b.playerView.player = b.player
         a.label.text = fmtLabel(a); b.label.text = fmtLabel(b)
-        a.audioBadge.text = if (a.muted) "🔇" else "🔊"; b.audioBadge.text = if (b.muted) "🔇" else "🔊"
+        a.audioBadge.text = if (a.muted) "TĨNH LẶNG" else "ÂM THANH"; b.audioBadge.text = if (b.muted) "TĨNH LẶNG" else "ÂM THANH"
         applyVolumes()
         Toast.makeText(this, "Đã hoán đổi 2 trận", Toast.LENGTH_SHORT).show()
     }
@@ -182,8 +197,8 @@ class MultiViewActivity : AppCompatActivity() {
         // các phòng của trận này
         g.rooms.forEach { r ->
             val opt = inf.inflate(R.layout.item_room_option, list, false)
-            opt.findViewById<TextView>(R.id.roomName).text = "🎙 ${r.blvName}"
-            opt.findViewById<TextView>(R.id.roomMeta).text = "👁 ${SocoliveRepository.fmtViewers(r.viewers)}"
+            opt.findViewById<TextView>(R.id.roomName).text = r.blvName
+            opt.findViewById<TextView>(R.id.roomMeta).text = "${SocoliveRepository.fmtViewers(r.viewers)} lượt xem · LIVE"
             opt.setOnClickListener {
                 s.room = r; s.label.text = fmtLabel(s)
                 playInSlot(i, "FETCH")
@@ -195,15 +210,15 @@ class MultiViewActivity : AppCompatActivity() {
         val other = groups.filter { it !== g }.take(6)
         if (other.isNotEmpty()) {
             val div = TextView(this).apply {
-                text = "── ĐỔI SANG TRẬN KHÁC ──"
+                text = "ĐỔI SANG TRẬN KHÁC"
                 setTextColor(0xFF94A3B8.toInt()); textSize = 12f
                 setPadding(24, 18, 24, 8)
             }
             list.addView(div)
             other.forEach { og ->
                 val opt = inf.inflate(R.layout.item_room_option, list, false)
-                opt.findViewById<TextView>(R.id.roomName).text = "⚽ ${og.matchTitle}"
-                opt.findViewById<TextView>(R.id.roomMeta).text = "${og.league} · ${og.count} phòng · 👁 ${SocoliveRepository.fmtViewers(og.totalViewers)}"
+                opt.findViewById<TextView>(R.id.roomName).text = og.matchTitle
+                opt.findViewById<TextView>(R.id.roomMeta).text = "${og.league} · ${og.count} phòng · ${SocoliveRepository.fmtViewers(og.totalViewers)} lượt xem"
                 opt.setOnClickListener {
                     s.group = og; s.room = og.top; s.label.text = fmtLabel(s)
                     playInSlot(i, "FETCH")

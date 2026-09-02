@@ -32,17 +32,17 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:layout_marginLeft="14dp"
-            android:text="←→ chọn trận · OK đổi trận · MENU hoán đổi · BACK thoát"
+            android:text="↑↓←→ chọn trận · OK đổi trận · MENU hoán đổi · BACK thoát"
             android:textColor="#CFCFCF"
             android:textSize="12sp" />
     </LinearLayout>
 
-    <!-- 2 ô trận cạnh nhau -->
+    <!-- 2 ô trận: trên/dưới, mỗi ô full-width -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:orientation="horizontal"
+        android:orientation="vertical"
         android:baselineAligned="false">
 
         <include
@@ -51,7 +51,7 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_marginRight="4dp" />
+            android:layout_marginBottom="3dp" />
 
         <include
             android:id="@+id/slot1"
@@ -59,6 +59,6 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_marginLeft="4dp" />
+            android:layout_marginTop="3dp" />
     </LinearLayout>
 </LinearLayout>
