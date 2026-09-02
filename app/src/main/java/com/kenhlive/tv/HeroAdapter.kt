@@ -37,6 +37,7 @@ class HeroAdapter(
         val blv: TextView = v.findViewById(R.id.heroBlv)
         val tagline: TextView = v.findViewById(R.id.heroTagline)
         val viewers: TextView = v.findViewById(R.id.heroViewers)
+        val play: View = v.findViewById(R.id.heroPlay)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HV {
@@ -52,13 +53,14 @@ class HeroAdapter(
         h.tagline.text = if (g.count > 1) "${g.count} phòng · gộp từ các BLV" else "${top.blvName} · CUỒNG NHIỆT TRÊN LIVE"
         h.title.text = g.matchTitle
         h.league.text = g.league
-        h.viewers.text = "👁 ${SocoliveRepository.fmtViewers(g.totalViewers)} · ${g.count} phòng"
+        h.viewers.text = "👁 ${SocoliveRepository.fmtViewers(g.totalViewers)}"
         h.cover.load(top.cover.ifBlank { top.avatar }) {
             crossfade(200)
             placeholder(R.drawable.hero_fallback)
             error(R.drawable.hero_fallback)
         }
         h.itemView.setOnClickListener { onClick(g) }
+        h.play.setOnClickListener { onClick(g) }
     }
 
     fun groupAt(pos: Int): LiveMatchGroup = groups[pos % groups.size]

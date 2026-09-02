@@ -6,7 +6,5 @@
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/heroPager"
         android:layout_width="match_parent"
-        android:layout_height="270dp"
-        android:clipToPadding="false"
-        android:clipChildren="false" />
+        android:layout_height="380dp" />
 </FrameLayout>

@@ -1,137 +1,117 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="190dp"
+    android:layout_width="300dp"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:gravity="center_horizontal"
-    android:padding="12dp"
-    android:layout_margin="7dp"
-    android:background="@drawable/card_flat"
+    android:layout_margin="8dp"
+    android:background="@drawable/card_focus_bg"
+    android:padding="6dp"
     android:focusable="true"
     android:clickable="true">
 
+    <!-- THUMBNAIL 16:9 -->
     <FrameLayout
-        android:layout_width="112dp"
-        android:layout_height="112dp">
+        android:layout_width="match_parent"
+        android:layout_height="169dp">
 
-        <View
-            android:layout_width="112dp"
-            android:layout_height="112dp"
-            android:background="@drawable/avatar_ring" />
+        <ImageView
+            android:id="@+id/cardThumb"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:background="@drawable/thumb_round_bg"
+            android:contentDescription="@string/app_name" />
 
-        <FrameLayout
-            android:layout_width="98dp"
-            android:layout_height="98dp"
-            android:layout_gravity="center"
-            android:background="@drawable/avatar_bg">
-
-            <ImageView
-                android:id="@+id/cardAvatar"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                android:contentDescription="@string/app_name" />
-
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/avatar_mask" />
-        </FrameLayout>
-
+        <!-- LIVE badge góc trên-trái -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="bottom|center_horizontal"
-            android:layout_marginBottom="1dp"
+            android:layout_gravity="top|left"
+            android:layout_margin="8dp"
             android:text="● LIVE"
             android:textColor="#FFFFFF"
             android:background="@drawable/badge_live"
             android:paddingLeft="8dp"
             android:paddingRight="8dp"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp"
-            android:textSize="9sp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
+            android:textSize="11sp"
             android:textStyle="bold" />
+
+        <!-- badge N phòng góc trên-phải -->
+        <TextView
+            android:id="@+id/roomBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|right"
+            android:layout_margin="8dp"
+            android:textColor="#FFFFFF"
+            android:fontFamily="sans-serif-medium"
+            android:textSize="11sp"
+            android:background="@drawable/room_badge_bg"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
+            android:visibility="gone" />
+
+        <!-- scrim đáy + avatar BLV nhỏ + viewers -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_gravity="bottom"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/thumb_bottom_scrim"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp">
+
+            <ImageView
+                android:id="@+id/cardAvatar"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:scaleType="centerCrop"
+                android:background="@drawable/avatar_mask"
+                android:contentDescription="blv" />
+
+            <TextView
+                android:id="@+id/cardBlv"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="7dp"
+                android:textColor="#FFFFFF"
+                android:fontFamily="sans-serif-medium"
+                android:textSize="12sp"
+                android:ellipsize="end"
+                android:maxLines="1" />
+
+            <TextView
+                android:id="@+id/cardViewers"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFF"
+                android:fontFamily="@font/oswald"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:fontFeatureSettings="tnum" />
+        </LinearLayout>
     </FrameLayout>
 
-    <TextView
-        android:id="@+id/cardBlv"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:gravity="center"
-        android:textColor="#FFFFFF"
-        android:fontFamily="@font/oswald"
-        android:textSize="17sp"
-        android:textStyle="bold"
-        android:ellipsize="end"
-        android:maxLines="1" />
-
+    <!-- TÊN TRẬN 2 dòng + giải -->
     <TextView
         android:id="@+id/cardMatch"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:gravity="center"
-        android:textColor="#C3CBDF"
-        android:fontFamily="sans-serif-medium"
-        android:textSize="11sp"
-        android:ellipsize="end"
-        android:maxLines="1" />
-
-        <LinearLayout
-        android:id="@+id/blvRow"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
         android:layout_marginTop="9dp"
-        android:layout_gravity="center_horizontal"
-        android:orientation="horizontal" />
-
-        <TextView
-        android:id="@+id/roomBadge"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:textColor="#00F0FF"
-        android:fontFamily="sans-serif-medium"
-        android:textSize="10sp"
+        android:layout_marginLeft="2dp"
+        android:layout_marginRight="2dp"
+        android:textColor="#FFFFFF"
+        android:fontFamily="@font/oswald"
+        android:textSize="15sp"
         android:textStyle="bold"
-        android:background="@drawable/room_badge_bg"
-        android:paddingLeft="9dp"
-        android:paddingRight="9dp"
-        android:paddingTop="2dp"
-        android:paddingBottom="2dp"
-        android:visibility="gone" />
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:minLines="2" />
 
-    <LinearLayout
-        android:id="@+id/watchBtn"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="9dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:background="@drawable/btn_watch_flat"
-        android:paddingLeft="14dp"
-        android:paddingRight="14dp"
-        android:paddingTop="6dp"
-        android:paddingBottom="6dp"
-        android:focusable="true">
-
-        <ImageView
-            android:layout_width="13dp"
-            android:layout_height="13dp"
-            android:src="@drawable/ic_play_triangle"
-            android:contentDescription="play" />
-
-        <TextView
-            android:id="@+id/cardViewers"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="6dp"
-            android:textColor="#000000"
-            android:fontFamily="@font/oswald"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:fontFeatureSettings="tnum" />
-    </LinearLayout>
 </LinearLayout>

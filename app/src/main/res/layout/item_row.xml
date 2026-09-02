@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingTop="12dp"
+    android:paddingTop="18dp"
     android:paddingBottom="8dp">
 
     <LinearLayout
@@ -21,7 +21,7 @@
             android:layout_height="wrap_content"
             android:textColor="#FFFFFF"
             android:fontFamily="@font/oswald"
-            android:textSize="17sp"
+            android:textSize="21sp"
             android:textStyle="bold" />
     </LinearLayout>
 
@@ -42,19 +42,9 @@
             android:orientation="horizontal" />
     </HorizontalScrollView>
 
-    <!-- progress bar mỏng dưới mỗi hàng: nhỏ, bo tròn -->
-    <com.google.android.material.progressindicator.LinearProgressIndicator
+    <View
         android:id="@+id/rowProgress"
-        style="@style/Widget.Material3.LinearProgressIndicator"
-        android:layout_width="match_parent"
-        android:layout_height="2dp"
-        android:layout_marginTop="6dp"
-        android:layout_marginLeft="16dp"
-        android:layout_marginRight="16dp"
-        app:trackColor="#3A4150"
-        app:indicatorColor="#FFB800"
-        app:trackThickness="2dp"
-        app:indicatorSize="2dp"
-        android:max="1000"
-        xmlns:app="http://schemas.android.com/apk/res-auto" />
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone" />
 </LinearLayout>

@@ -52,8 +52,6 @@ class MainActivity : AppCompatActivity() {
         val clickSched = View.OnClickListener { viewPager.setCurrentItem(1, true) }
         navLive?.setOnClickListener(clickLive)
         navSchedule?.setOnClickListener(clickSched)
-        findViewById<View>(R.id.iv_live)?.setOnClickListener(clickLive)
-        findViewById<View>(R.id.iv_schedule)?.setOnClickListener(clickSched)
         findViewById<View>(R.id.tv_live)?.setOnClickListener(clickLive)
         findViewById<View>(R.id.tv_schedule)?.setOnClickListener(clickSched)
 
@@ -70,13 +68,10 @@ class MainActivity : AppCompatActivity() {
         val live = pos == 0
         navLive?.isSelected = live
         navSchedule?.isSelected = !live
-        findViewById<ImageView>(R.id.iv_live)?.setImageResource(if (live) R.drawable.ic_live_stream else R.drawable.ic_live_stream)
-        val active = 0xFFFFB800.toInt()
+        val active = 0xFFFFFFFF.toInt()
         val idle = 0xFF8A94A6.toInt()
         findViewById<TextView>(R.id.tv_live)?.setTextColor(if (live) active else idle)
         findViewById<TextView>(R.id.tv_schedule)?.setTextColor(if (!live) active else idle)
-        findViewById<ImageView>(R.id.iv_live)?.setColorFilter(if (live) active else idle)
-        findViewById<ImageView>(R.id.iv_schedule)?.setColorFilter(if (!live) active else idle)
     }
 
     private fun refreshCount() {
@@ -86,7 +81,7 @@ class MainActivity : AppCompatActivity() {
                 val tv = findViewById<TextView>(R.id.countText)
                 if (n > 0 && tv != null) {
                     tv.visibility = View.VISIBLE
-                    tv.text = "$n phòng đang live"
+                    tv.text = "● $n phòng đang live"
                 }
             }
         }
