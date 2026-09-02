@@ -71,8 +71,9 @@ jobs:
             adb shell settings put system user_rotation 0
             adb install -r app/build/outputs/apk/debug/app-debug.apk
             adb logcat -c
+            python3 -m pip install --quiet Pillow 2>/dev/null || true
             mkdir -p /tmp/qa /tmp/qa/shots
-            python3 qa/qa_click.py /tmp/qa 4
+            python3 qa/qa_ai.py /tmp/qa 14
             cp /tmp/qa/report.json qa_report.json
             cp -r /tmp/qa/shots qa_shots
             adb logcat -d -s AndroidRuntime:E > qa_crash.log || true
