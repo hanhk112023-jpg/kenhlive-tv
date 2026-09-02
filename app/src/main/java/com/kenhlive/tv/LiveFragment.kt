@@ -3,6 +3,8 @@ package com.kenhlive.tv
 import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,6 +27,14 @@ class LiveFragment : Fragment() {
     private lateinit var recyclerView: RecyclerView
     private var groups = listOf<LiveMatchGroup>()
     private var rooms = listOf<LiveRoom>()
+    private val refreshHandler = Handler(Looper.getMainLooper())
+    private var refreshing = false
+    private val autoRefresh = object : Runnable {
+        override fun run() {
+            silentRefresh()
+            refreshHandler.postDelayed(this, 3 * 60_000L) // 3 phút — playlist GH cũng cập nhật 5'
+        }
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
@@ -34,6 +44,34 @@ class LiveFragment : Fragment() {
         recyclerView = v.findViewById(R.id.recyclerView)
         load()
         return v
+    }
+
+    override fun onResume() {
+        super.onResume()
+        refreshHandler.removeCallbacks(autoRefresh)
+        refreshHandler.postDelayed(autoRefresh, 3 * 60_000L)
+    }
+
+    override fun onPause() {
+        super.onPause()
+        refreshHandler.removeCallbacks(autoRefresh)
+    }
+
+    /** Fetch lại âm thầm: giữ nguyên vị trí cuộn, chỉ cập nhật dữ liệu. */
+    private fun silentRefresh() {
+        if (refreshing || !isAdded || !::adapter.isInitialized) return
+        refreshing = true
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                val newRooms = SocoliveRepository.fetchLiveRooms()
+                val newGroups = SocoliveRepository.groupRooms(newRooms)
+                if (newGroups.isNotEmpty() && isAdded) {
+                    rooms = newRooms; groups = newGroups
+                    adapter.submit(newGroups)
+                }
+            } catch (e: Exception) { /* giữ dữ liệu cũ */ }
+            finally { refreshing = false }
+        }
     }
 
     private fun load() {
