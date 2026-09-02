@@ -65,7 +65,7 @@ class LiveFragment : Fragment() {
 
     // Mở dialog chọn phòng trong trận (nếu 1 phòng thì play luôn)
     private fun openGroupPicker(g: LiveMatchGroup) {
-        if (g.count == 1) { openRoom(g.top); return }
+        if (g.count == 1) { openRoom(g.top, g.rooms); return }
         val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_room_picker, null)
         view.findViewById<TextView>(R.id.dialogTitle).text = g.matchTitle
         view.findViewById<TextView>(R.id.dialogLeague).text = "${g.league} · ${g.count} phòng live"
@@ -79,7 +79,7 @@ class LiveFragment : Fragment() {
                 crossfade(80); transformations(CircleCropTransformation())
                 placeholder(R.drawable.logo_placeholder); error(R.drawable.logo_placeholder)
             }
-            opt.setOnClickListener { openRoom(r); dialog?.dismiss() }
+            opt.setOnClickListener { openRoom(r, g.rooms); dialog?.dismiss() }
             list.addView(opt)
         }
         dialog = AlertDialog.Builder(requireContext())
@@ -90,16 +90,27 @@ class LiveFragment : Fragment() {
         dialog?.show()
     }
 
-    private fun openRoom(room: LiveRoom) {
+    private fun openRoom(room: LiveRoom, groupRooms: List<LiveRoom>) {
         viewLifecycleOwner.lifecycleScope.launch {
             val url = SocoliveRepository.fetchStream(room.roomNum)
             if (url == null) {
                 Toast.makeText(context, "Stream chưa sẵn sàng — thử lại", Toast.LENGTH_SHORT).show()
                 return@launch
             }
+            // Các phòng cùng trận (≤4 ô): phòng đang xem là ô đầu, còn lại theo viewers
+            val others = groupRooms.filter { it.roomNum != room.roomNum }
+                .sortedByDescending { it.viewers }.take(3)
+            val mvNames = mutableListOf("${room.matchTitle} · ${room.blvName}")
+            val mvNums = mutableListOf<String>()
+            for (o in others) {
+                mvNums.add(o.roomNum)
+                mvNames.add("${o.matchTitle} · ${o.blvName}")
+            }
             startActivity(Intent(requireContext(), PlayerActivity::class.java)
                 .putExtra("url", url)
-                .putExtra("name", "${room.matchTitle} · ${room.blvName}"))
+                .putExtra("name", "${room.matchTitle} · ${room.blvName}")
+                .putExtra("roomNums", mvNums.toTypedArray())
+                .putExtra("names", mvNames.toTypedArray()))
         }
     }
 
