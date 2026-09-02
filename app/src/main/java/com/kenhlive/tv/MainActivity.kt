@@ -76,6 +76,7 @@ class MainActivity : AppCompatActivity() {
                         }
                     } catch (e: Exception) {}
                 }
+                else -> {}
             }
         }
         refreshCount()
