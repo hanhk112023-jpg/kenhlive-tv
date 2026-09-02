@@ -153,12 +153,12 @@ class MultiViewActivity : AppCompatActivity() {
 
     private fun focusDrawable(): android.graphics.drawable.Drawable =
         android.graphics.drawable.GradientDrawable().apply {
-            setColor(0xFF000000.toInt())
+            setColor(0x00000000)            // TRONG SUỐT — chỉ viền
             setStroke(8, 0xFFFF3B30.toInt())
         }
     private fun normalDrawable(): android.graphics.drawable.Drawable =
         android.graphics.drawable.GradientDrawable().apply {
-            setColor(0xFF000000.toInt())
+            setColor(0x00000000)
             setStroke(2, 0xFF262626.toInt())
         }
 
