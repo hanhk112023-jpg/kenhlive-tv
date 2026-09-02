@@ -28,8 +28,6 @@ class PlayerActivity : AppCompatActivity() {
 
         val url = intent.getStringExtra("url") ?: ""
         val name = intent.getStringExtra("name") ?: "Kênh"
-        val roomNums = intent.getStringArrayExtra("roomNums") ?: arrayOf()
-        val names = intent.getStringArrayExtra("names") ?: arrayOf<String>()
 
         topOverlay = findViewById(R.id.topOverlay)
         findViewById<TextView>(R.id.playerTitle).text = name
@@ -58,8 +56,6 @@ class PlayerActivity : AppCompatActivity() {
             val i = Intent(this, MultiViewActivity::class.java)
             i.putExtra("initial_room", name)
             i.putExtra("initial_url", url)
-            i.putExtra("roomNums", roomNums)
-            i.putExtra("names", names)
             startActivity(i)
         }
 

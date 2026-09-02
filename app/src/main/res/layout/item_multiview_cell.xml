@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/mv_cell_bg"
+    android:focusable="true"
+    android:descendantFocusability="blocksDescendants">
+
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/cellPlayer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#000000"
+        app:use_controller="false" />
+
+    <!-- Label trận + BLV -->
+    <TextView
+        android:id="@+id/cellLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|left"
+        android:layout_margin="10dp"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:fontFamily="@font/oswald"
+        android:background="#B3000000"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp" />
+
+    <!-- Badge ÂM THANH / TĨNH LẶNG (tap để mute từng ô) -->
+    <TextView
+        android:id="@+id/cellAudio"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|right"
+        android:layout_margin="10dp"
+        android:text="🔊"
+        android:textColor="#FFFFFF"
+        android:textSize="14sp"
+        android:background="#B3000000"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:focusable="false" />
+
+    <!-- Gợi ý đổi trận khi ô đang focus -->
+    <TextView
+        android:id="@+id/cellSwapHint"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="14dp"
+        android:text="OK · đổi trận"
+        android:textColor="#FFD166"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:background="#B3000000"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
+        android:visibility="gone" />
+</FrameLayout>
