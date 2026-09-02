@@ -1,7 +1,6 @@
 package com.kenhlive.tv
 
 import android.app.AlertDialog
-import android.net.Uri
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.LayoutInflater
@@ -14,7 +13,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
-import androidx.media3.common.MediaItem
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
 import kotlinx.coroutines.launch
@@ -30,7 +28,7 @@ import kotlinx.coroutines.launch
  */
 class MultiViewActivity : AppCompatActivity() {
 
-    private class Slot(val root: FrameLayout) {
+    private inner class Slot(val root: FrameLayout) {
         val playerView: PlayerView = root.findViewById(R.id.cellPlayer)
         val label: TextView = root.findViewById(R.id.cellLabel)
         val audioBadge: TextView = root.findViewById(R.id.cellAudio)
@@ -39,6 +37,7 @@ class MultiViewActivity : AppCompatActivity() {
         var group: LiveMatchGroup? = null
         var room: LiveRoom? = null
         var muted = false
+        val fx = AudioEnhancer(this@MultiViewActivity)
     }
 
     private lateinit var slots: Array<Slot>
@@ -104,21 +103,25 @@ class MultiViewActivity : AppCompatActivity() {
                 else -> knownUrl
             }
             if (url == null) { s.label.text = "${s.label.text} · lỗi stream"; return@launch }
-            s.player?.release()
-            s.player = ExoPlayer.Builder(this@MultiViewActivity).build().apply {
-                setAudioAttributes(
-                    AudioAttributes.Builder().setUsage(C.USAGE_MEDIA)
-                        .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE).build(),
-                    false
-                )
-                volume = 0f
-                setMediaItem(MediaItem.fromUri(Uri.parse(url)))
-                prepare()
-                playWhenReady = true
-            }
+            s.player?.release(); s.fx.detach()
+            s.player = ExoPlayer.Builder(this@MultiViewActivity)
+                .setTrackSelector(Enhancer.buildTrackSelector(this@MultiViewActivity))
+                .setLoadControl(Enhancer.buildLoadControl())
+                .build().apply {
+                    setAudioAttributes(
+                        AudioAttributes.Builder().setUsage(C.USAGE_MEDIA)
+                            .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE).build(),
+                        false
+                    )
+                    volume = 0f
+                    setMediaItem(Enhancer.buildMediaItem(url))
+                    prepare()
+                    playWhenReady = true
+                }
             s.playerView.player = s.player
             // Fill khung ô multiview: crop nhẹ thay vì letterbox (bỏ khoảng đen)
             s.playerView.resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+            s.fx.attach(s.player!!.audioSessionId, EnhanceSettings.audioMode(this@MultiViewActivity))
             applyVolumes()
         }
     }
@@ -177,6 +180,10 @@ class MultiViewActivity : AppCompatActivity() {
         a.player = b.player; a.room = b.room; a.group = b.group; a.muted = b.muted
         b.player = tmpPlayer; b.room = tmpRoom; b.group = tmpGroup; b.muted = tmpMuted
         a.playerView.player = a.player; b.playerView.player = b.player
+        // audio fx gắn theo player mới của từng ô
+        a.fx.detach(); b.fx.detach()
+        a.player?.let { a.fx.attach(it.audioSessionId, EnhanceSettings.audioMode(this)) }
+        b.player?.let { b.fx.attach(it.audioSessionId, EnhanceSettings.audioMode(this)) }
         a.label.text = fmtLabel(a); b.label.text = fmtLabel(b)
         a.audioBadge.text = if (a.muted) "TĨNH LẶNG" else "ÂM THANH"; b.audioBadge.text = if (b.muted) "TĨNH LẶNG" else "ÂM THANH"
         applyVolumes()
@@ -237,6 +244,6 @@ class MultiViewActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-        slots.forEach { it.player?.release(); it.player = null }
+        slots.forEach { it.player?.release(); it.player = null; it.fx.detach() }
     }
 }
