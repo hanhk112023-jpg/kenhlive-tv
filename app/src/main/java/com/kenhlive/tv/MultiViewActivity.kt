@@ -117,6 +117,8 @@ class MultiViewActivity : AppCompatActivity() {
                 playWhenReady = true
             }
             s.playerView.player = s.player
+            // Fill khung ô multiview: crop nhẹ thay vì letterbox (bỏ khoảng đen)
+            s.playerView.resizeMode = androidx.media3.ui.AspectRatioFrameLayout.RESIZE_MODE_ZOOM
             applyVolumes()
         }
     }
@@ -142,7 +144,7 @@ class MultiViewActivity : AppCompatActivity() {
     private fun applyFocus() {
         slots.forEachIndexed { i, s ->
             val isFocus = i == focused
-            s.root.background = if (isFocus) focusDrawable() else normalDrawable()
+            s.root.foreground = if (isFocus) focusDrawable() else normalDrawable()
             s.swapHint.visibility = if (isFocus && slots[1].root.visibility == View.VISIBLE) View.VISIBLE else View.GONE
         }
         slots[focused].root.requestFocus()
