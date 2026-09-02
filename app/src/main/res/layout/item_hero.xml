@@ -31,11 +31,14 @@
             android:id="@+id/heroLeague"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#FF3B30"
+            android:textColor="#FF4A40"
             android:fontFamily="sans-serif-medium"
-            android:textSize="13sp"
+            android:textSize="14sp"
             android:textStyle="bold"
-            android:letterSpacing="0.12" />
+            android:letterSpacing="0.12"
+            android:shadowColor="#E6000000"
+            android:shadowDy="2"
+            android:shadowRadius="6" />
 
         <TextView
             android:id="@+id/heroTitle"

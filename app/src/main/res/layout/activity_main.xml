@@ -76,7 +76,7 @@
                 android:textStyle="bold"
                 android:fontFamily="@font/oswald"
                 android:letterSpacing="0.08"
-                android:textColor="#B8C0CC" />
+                android:textColor="#CFCFCF" />
         </LinearLayout>
 
         <View
@@ -88,7 +88,7 @@
             android:id="@+id/countText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#D0D0D0"
+            android:textColor="#DCDCDC"
             android:textSize="15sp"
             android:visibility="gone" />
     </LinearLayout>
