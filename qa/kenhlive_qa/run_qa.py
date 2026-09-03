@@ -185,18 +185,17 @@ else:
                     installer = True; break
             add_check('Tải xong → installer TỰ BẬT', installer, act if installer else f'180s mà installer không bật (activity={act})')
             if not installer:
-                # CHẨN ĐOÁN 3 tầng: file tải về + trạng thái DM + logcat installer
+                # CHẨN ĐOÁN OkHttp: file .part (đang tải) / .apk (xong) + logcat installer
                 fsize = sh(f'{P.a} shell ls -la /sdcard/Android/data/{PKG}/files/updates/ 2>/dev/null')
-                dm = sh(f'{P.a} shell dumpsys download 2>/dev/null | grep -E "status|reason|total_bytes|current_bytes|uri" | head -12')
-                inst_log = sh(f'{P.a} logcat -d 2>/dev/null | grep -iE "packageinstaller|ActivityNotFound|INSTALL_PACKAGES|fileprovider" | tail -8')
-                print('  DIAG file:', fsize[:200], flush=True)
-                print('  DIAG dm:', dm[:300], flush=True)
+                inst_log = sh(f'{P.a} logcat -d 2>/dev/null | grep -iE "packageinstaller|ActivityNotFound|INSTALL_PACKAGES|fileprovider|OkHttp|kenhlive" | tail -10')
+                print('  DIAG file:', fsize[:250], flush=True)
                 print('  DIAG inst:', inst_log[:300], flush=True)
-                dl_done = 'status: 200' in dm or '10317358' in fsize or '10299' in fsize
-                add_finding('Update', 'HIGH',
-                    'Tải APK xong nhưng màn cài đặt không tự mở' if dl_done else 'Download không hoàn tất trong 180s',
-                    f'file: {fsize[:120]} | dm: {dm[:150]} | log: {inst_log[:150]}',
-                    'installer thiếu/trên TV cần FLAG_ACTIVITY_NEW_TASK + resolver ACTION_INSTALL; hoặc DM fail qua proxy → tải bằng OkHttp trong app')
+                has_apk = '.apk' in fsize and '.part' not in fsize
+                has_part = '.part' in fsize
+                state = 'APK đủ size nhưng installer không mở' if has_apk else ('file .part — tải chậm/dừng giữa chừng' if has_part else 'updates/ trống — OkHttp không tải được (mạng/proxy)')
+                add_finding('Update', 'HIGH', state,
+                    f'file: {fsize[:150]} | log: {inst_log[:150]}',
+                    'installer: thử FLAG_ACTIVITY_NEW_TASK + resolver ACTION_INSTALL; tải lỗi: kiểm tra proxy emulator + GitHub từ app')
             else:
                 shot('installer_opened')
                 P.key('4')  # đóng installer, về app

@@ -24,6 +24,7 @@ import kotlinx.coroutines.launch
 class LiveFragment : Fragment() {
     private lateinit var adapter: HomeAdapter
     private lateinit var statusText: TextView
+    private lateinit var retryBtn: TextView
     private lateinit var recyclerView: RecyclerView
     private var groups = listOf<LiveMatchGroup>()
     private var rooms = listOf<LiveRoom>()
@@ -41,7 +42,9 @@ class LiveFragment : Fragment() {
     ): View {
         val v = inflater.inflate(R.layout.fragment_live, container, false)
         statusText = v.findViewById(R.id.statusText)
+        retryBtn = v.findViewById(R.id.retryBtn)
         recyclerView = v.findViewById(R.id.recyclerView)
+        retryBtn.setOnClickListener { load() }
         load()
         return v
     }
@@ -55,6 +58,7 @@ class LiveFragment : Fragment() {
     override fun onPause() {
         super.onPause()
         refreshHandler.removeCallbacks(autoRefresh)
+        refreshHandler.removeCallbacks(autoRetry)
     }
 
     /** Fetch lại âm thầm: giữ nguyên vị trí cuộn, chỉ cập nhật dữ liệu. */
@@ -77,6 +81,7 @@ class LiveFragment : Fragment() {
     private fun load() {
         statusText.visibility = View.VISIBLE
         statusText.text = "Đang tải..."
+        retryBtn.visibility = View.GONE
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 rooms = SocoliveRepository.fetchLiveRooms()
@@ -86,6 +91,7 @@ class LiveFragment : Fragment() {
                     return@launch
                 }
                 statusText.visibility = View.GONE
+                retryBtn.visibility = View.GONE
                 adapter = HomeAdapter(
                     groups = groups,
                     lifecycleOwner = viewLifecycleOwner,
@@ -95,9 +101,17 @@ class LiveFragment : Fragment() {
                 recyclerView.layoutManager = LinearLayoutManager(requireContext())
                 recyclerView.adapter = adapter
             } catch (e: Exception) {
-                statusText.text = "Lỗi tải: ${e.message}"
+                statusText.text = "Không tải được danh sách trận\n(kiểm tra kết nối mạng)"
+                statusText.visibility = View.VISIBLE
+                retryBtn.visibility = View.VISIBLE
+                // tự thử lại 1 lần sau 15s (mạng chập chờn hay hồi nhanh)
+                refreshHandler.postDelayed(autoRetry, 15_000)
             }
         }
+    }
+
+    private val autoRetry = Runnable {
+        if (isAdded && retryBtn.visibility == View.VISIBLE) load()
     }
 
     // Mở dialog chọn phòng trong trận (nếu 1 phòng thì play luôn)

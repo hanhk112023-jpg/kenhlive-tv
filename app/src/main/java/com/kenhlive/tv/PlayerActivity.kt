@@ -23,6 +23,7 @@ class PlayerActivity : AppCompatActivity() {
     private val hideOverlay = Runnable { topOverlay?.visibility = View.GONE }
     private val audioFx = AudioEnhancer(this)
     private var url: String = ""
+    private var streamRetries = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,12 +44,19 @@ class PlayerActivity : AppCompatActivity() {
                 playWhenReady = true
                 addListener(object : Player.Listener {
                     override fun onPlayerError(error: PlaybackException) {
-                        val msg = when (error.errorCode) {
-                            PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED,
-                            PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT -> "Mạng lỗi — thử lại sau"
-                            else -> "Stream lỗi: ${error.errorCodeName}"
+                        val isNet = error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ||
+                                    error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ||
+                                    error.errorCodeName.startsWith("ERROR_CODE_IO")
+                        if (isNet && streamRetries < 3) {
+                            // stream hay chập chờn đầu phiên → tự thử lại tối đa 3 lần (2s/4s/6s)
+                            streamRetries++
+                            android.widget.Toast.makeText(this@PlayerActivity,
+                                "Mạng chập chờn — tự thử lại lần $streamRetries…", android.widget.Toast.LENGTH_SHORT).show()
+                            handler.postDelayed({ player?.prepare() }, 2000L * streamRetries)
+                        } else {
+                            val msg = if (isNet) "Mạng lỗi — thoát ra vào lại sau" else "Stream lỗi: ${error.errorCodeName}"
+                            android.widget.Toast.makeText(this@PlayerActivity, msg, android.widget.Toast.LENGTH_LONG).show()
                         }
-                        android.widget.Toast.makeText(this@PlayerActivity, msg, android.widget.Toast.LENGTH_LONG).show()
                     }
                 })
             }
