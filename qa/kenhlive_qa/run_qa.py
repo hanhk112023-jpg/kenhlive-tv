@@ -149,6 +149,9 @@ shot('after_back')
 
 # ---------- 5.5 UPDATE FLOW (bug văng khi bấm TẢI NGAY) ----------
 print('[5.5] Luồng tự cập nhật', flush=True)
+# cấp quyền cài app TRƯỚC (emulator fresh chưa có → app sẽ chỉ hiện dialog xin quyền, không tải)
+sh(f'adb shell pm grant {PKG} android.permission.REQUEST_INSTALL_PACKAGES')
+sh(f'adb shell appops set {PKG} REQUEST_INSTALL_PACKAGES allow')
 sh(f'adb shell am start -n {PKG}/.MainActivity --es open update'); time.sleep(10)
 png = shot('update_dialog')
 if png is None or P.is_blank(png):
@@ -175,12 +178,12 @@ else:
             add_check('Toast/progress tải xuất hiện', P.has_focus(), 'app vẫn foreground sau tap')
             # chờ tải xong (APK ~10MB qua proxy VN) — installer PHẢI tự bật (polling v4.8.4)
             installer = False; act = '?'
-            for _ in range(24):
+            for _ in range(36):   # APK ~10MB qua proxy VN → cho tới 180s
                 time.sleep(5)
                 act = P.current_activity()
                 if 'packageinstaller' in act.lower() or 'PermissionController' in act or 'install' in act.lower():
                     installer = True; break
-            add_check('Tải xong → installer TỰ BẬT', installer, act if installer else f'120s mà installer không bật (activity={act})')
+            add_check('Tải xong → installer TỰ BẬT', installer, act if installer else f'180s mà installer không bật (activity={act})')
             if not installer:
                 add_finding('Update', 'HIGH', 'Tải APK xong nhưng màn cài đặt không tự mở', f'activity sau 120s: {act}',
                             'polling DownloadManager mỗi 2s + broadcast; kiểm tra FileProvider grant + ACTION_VIEW resolver trên ROM này')
