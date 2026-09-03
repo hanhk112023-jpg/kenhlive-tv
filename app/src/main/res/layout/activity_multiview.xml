@@ -32,7 +32,7 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:layout_marginLeft="14dp"
-            android:text="↑↓←→ chọn trận · OK đổi trận · MENU hoán đổi · BACK thoát"
+            android:text="LÊN/XUỐNG: chọn trận · OK: đổi trận · MENU: hoán đổi · BACK: thoát"
             android:textColor="#CFCFCF"
             android:textSize="12sp" />
     </LinearLayout>
