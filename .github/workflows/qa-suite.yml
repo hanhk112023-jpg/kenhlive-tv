@@ -26,9 +26,11 @@ jobs:
           ./gradlew assembleDebug --no-daemon
 
       # proxy VN — json.vnres.co chặn IP datacenter
+      # ƯU TIÊN node tĩnh YUNA_PROXY_YAML (không phụ thuộc dashboard.yunagrp.com — hay chết)
       - name: Set up proxy VN
         env:
           SUB_URL: ${{ secrets.YUNA_SUB_URL }}
+          STATIC_YAML: ${{ secrets.YUNA_PROXY_YAML }}
         run: |
           set -euo pipefail
           MH=$(ls /usr/local/bin/mihomo 2>/dev/null || true)
@@ -37,26 +39,18 @@ jobs:
             curl -sSL -o /tmp/mihomo.gz "https://github.com/MetaCubeX/mihomo/releases/download/${VER}/mihomo-linux-amd64-${VER}.gz"
             gunzip -f /tmp/mihomo.gz && install -m 0750 /tmp/mihomo /usr/local/bin/mihomo
           fi
-          # Yuna hay chập chờn → retry 4 lần cách nhau 20s
-          OK=0
-          for try in 1 2 3 4; do
-            if curl -sSL -m 40 -H 'User-Agent: clash-verge/1.6.6' -o /tmp/sub_full.yaml "$SUB_URL" && [ -s /tmp/sub_full.yaml ] && grep -q "proxies" /tmp/sub_full.yaml; then OK=1; break; fi
-            echo "sub fetch attempt $try failed, retry in 20s"; sleep 20
-          done
-          [ "$OK" = "1" ] || { echo "::error::Khong tai duoc subscription Yuna sau 4 lan"; exit 1; }
-          python3 - << 'PYEOF'
-          import yaml
-          cfg = yaml.safe_load(open('/tmp/sub_full.yaml'))
-          names = cfg.get('proxies', [])
-          order = [p for p in names if 'VN' in p.get('name','').upper()] + \
-                  [p for p in names if 'SG' in p.get('name','').upper()]
-          keep = order[:10]
-          groups = [{'name':'POOL','type':'url-test','proxies':[p['name'] for p in keep],
-                     'url':'http://www.gstatic.com/generate_204','interval':120,'tolerance':50}]
-          out = {'mixed-port':7891,'allow-lan':True,'mode':'rule','log-level':'warning',
-                 'proxies':keep,'proxy-groups':groups,'rules':['MATCH,POOL']}
-          yaml.safe_dump(out, open('/tmp/mihomo_ci.yaml','w'))
-          PYEOF
+          if [ -n "$STATIC_YAML" ]; then
+            echo "dung node tinh YUNA_PROXY_YAML"
+            printf '%s\n' "$STATIC_YAML" > /tmp/mihomo_ci.yaml
+          else
+            OK=0
+            for try in 1 2 3 4; do
+              if curl -sSL -m 40 -H 'User-Agent: clash-verge/1.6.6' -o /tmp/sub_full.yaml "$SUB_URL" && [ -s /tmp/sub_full.yaml ] && grep -q "proxies" /tmp/sub_full.yaml; then OK=1; break; fi
+              echo "sub fetch attempt $try failed, retry in 20s"; sleep 20
+            done
+            [ "$OK" = "1" ] || { echo "::error::Khong tai duoc subscription Yuna sau 4 lan"; exit 1; }
+            python3 qa/ci_sub_to_yaml.py
+          fi
           nohup mihomo -f /tmp/mihomo_ci.yaml -d /tmp/mihomo_ci > /tmp/mihomo.log 2>&1 &
           sleep 4
           echo "exit IP: $(curl -sS -m 15 -x http://127.0.0.1:7891 https://api.ipify.org || echo '?')"
@@ -87,7 +81,7 @@ jobs:
             ARGS=""
             if [ "${{ inputs.quick }}" = "true" ]; then ARGS="--quick"; fi
             python3 qa/kenhlive_qa/run_qa.py --out /tmp/qa_report $ARGS
-            cp -r /tmp/qa_report/* qa_out/ 2>/dev/null || { mkdir -p qa_out && cp -r /tmp/qa_report/* qa_out/; }
+            mkdir -p qa_out && cp -r /tmp/qa_report/* qa_out/
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -97,21 +91,4 @@ jobs:
 
       - name: Kết quả
         if: always()
-        run: |
-          python3 - << 'PYEOF'
-          import json, os
-          p = 'qa_out/qa_report.json'
-          if not os.path.exists(p):
-              print('::error::QA không tạo được report (emulator/crash sớm?)'); exit(1)
-          r = json.load(open(p))
-          print(f"### KênhLive QA: {r['score']}/100 · {r['checks_passed']}/{r['checks_total']} checks · {len(r['findings'])} findings")
-          crit = [f for f in r['findings'] if f.get('severity') in ('CRITICAL','HIGH')]
-          for f in crit[:10]:
-              print(f"- [{f['severity']}] {f['area']}: {f['issue'][:120]}")
-          with open(os.environ['GITHUB_STEP_SUMMARY'],'w') as s:
-              s.write(f"## KênhLive QA — **{r['score']}/100**\n\n{r['checks_passed']}/{r['checks_total']} checks pass · {len(r['findings'])} findings\n\n")
-              for f in sorted(r['findings'], key=lambda x:{'CRITICAL':0,'HIGH':1,'MEDIUM':2,'LOW':3}.get(x.get('severity'),4))[:15]:
-                  s.write(f"- **[{f.get('severity')}]** {f.get('area')} — {f.get('issue')}\n  - 💡 {f.get('suggestion','')}\n")
-          if any(f.get('severity')=='CRITICAL' for f in r['findings']):
-              print('::error::Có CRITICAL finding'); exit(1)
-          PYEOF
+        run: python3 qa/ci_report.py
