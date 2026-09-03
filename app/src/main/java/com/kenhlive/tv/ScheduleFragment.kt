@@ -74,7 +74,10 @@ class ScheduleFragment : Fragment() {
         emptyState = v.findViewById(R.id.emptyState)
         retryBtn = v.findViewById(R.id.retryBtn)
         retryBtn.setOnClickListener { load() }
-        adapter = ScheduleAdapter { anchor, match -> openAnchor(anchor, match) }
+        adapter = ScheduleAdapter(
+            onAnchorClick = { anchor, match -> openAnchor(anchor, match) },
+            onMatchClick = { match -> onMatchTap(match) }
+        )
         v.findViewById<RecyclerView>(R.id.recyclerView).apply {
             layoutManager = LinearLayoutManager(requireContext())
             adapter = this@ScheduleFragment.adapter
@@ -113,6 +116,22 @@ class ScheduleFragment : Fragment() {
                 emptyTitle.text = "Không tải được lịch"
                 statusText.text = "Kiểm tra kết nối mạng rồi thử lại"
                 retryBtn.visibility = View.VISIBLE
+            }
+        }
+    }
+
+    /** OK trên card lịch: chọn BLV có phòng live (1 → play, nhiều → dialog). */
+    private fun onMatchTap(match: ScheduleMatch) {
+        val live = match.anchors.filter { it.roomNum.isNotBlank() }
+        when {
+            live.isEmpty() -> Toast.makeText(context, "Trận chưa có phòng live", Toast.LENGTH_SHORT).show()
+            live.size == 1 -> openAnchor(live.first(), match)
+            else -> {
+                val names = live.map { it.nickName }.toTypedArray()
+                androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                    .setTitle("${match.host} vs ${match.guest}")
+                    .setItems(names) { _, i -> openAnchor(live[i], match) }
+                    .show()
             }
         }
     }
