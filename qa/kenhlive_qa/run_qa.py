@@ -76,6 +76,17 @@ P.force_stop(); time.sleep(1.5); P.logcat_baseline()
 t = P.launch()
 add_check('App khởi động', t >= 0, f'cold start {t}ms' if t >= 0 else 'KHÔNG lên được màn hình')
 if 0 <= t > 8000: add_finding('Cold start', 'HIGH', f'Khởi động chậm {t}ms', 'đo từ am start tới có focus', 'lazy-load playlist, move fetch ra khỏi onCreate, tránh main-thread IO')
+# chờ playlist load qua proxy VN xong (tối đa 60s) — tránh chụp nhầm lúc "Đang tải..."
+for _ in range(12):
+    time.sleep(5)
+    _p = P.screencap()
+    if _p and not P.is_blank(_p):
+        from PIL import Image as _I
+        import io as _io
+        _im = _I.open(_io.BytesIO(_p)).convert('L')
+        # nội dung đã render: nhiều vùng sáng (card/ảnh) — blank/loading thuần thì std thấp
+        from PIL import ImageStat as _IS
+        if _IS.Stat(_im.resize((64,64))).stddev[0] > 18: break
 png = shot('home')
 if P.is_blank(png): add_finding('Home', 'CRITICAL', 'Màn hình trắng/đen sau khi mở app', 'std pixel < 4', 'kiểm tra crash render / layout chưa attach')
 judge('Home', png)

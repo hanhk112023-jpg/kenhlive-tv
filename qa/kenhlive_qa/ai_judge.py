@@ -40,6 +40,10 @@ Tiêu chí bắt buộc kiểm trên ẢNH MÀN HÌNH TV:
 4. LAYOUT: card đều nhau, ảnh avatar tròn đúng, logo đội hiển thị (ảnh vỡ/màu lạ = MEDIUM), khoảng cách chuẩn 10-foot
 5. ĐIỀU KHIỂN TV: focus highlight rõ ràng trên D-pad (viền sáng), nút bấm được phân biệt rõ với text thường
 6. CHẤT LƯỢNG: ảnh mờ/kéo giãn/nứt = MEDIUM
+QUY TẮC NGUỒN (RẤT QUAN TRỌNG — tránh báo oan):
+- App này phát stream IPTV từ nguồn thứ 3. Mọi thứ BAKE TRONG VIDEO (quảng cáo, watermark, số điện thoại/Zalo/Telegram, màn hình chờ phòng BLV, danh sách chat, "phòng đang tắt", chất lượng video mờ/thấp) là NỘI DUNG NGUỒN PHÁT, KHÔNG phải lỗi app → tối đa INFO, KHÔNG được báo CRITICAL/HIGH.
+- "Màn hình đen" nếu có viền letterbox + dải video ở giữa = player đang phát bình thường, KHÔNG phải blank.
+- CHỈ báo lỗi app ở vùng UI của app: layout, text overlay của app, nút bấm, tab, focus, dialog, danh sách card.
 Trả JSON thuần (mảng, không markdown):
 [{"area":"<màn hình/element>","severity":"CRITICAL|HIGH|MEDIUM|LOW","issue":"<vấn đề cụ thể quan sát thấy>","evidence":"<bằng chứng nhìn thấy trong ảnh>","suggestion":"<gợi ý sửa cụ thể>"}]
 Nếu màn hình hoàn hảo trả []. CHỈ báo lỗi NHÌN THẤY thật trong ảnh, không đoán mò."""
