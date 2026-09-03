@@ -216,6 +216,37 @@ if lost > 0: add_finding('Điều hướng', 'HIGH', f'Mất focus {lost}/32 l�
 add_check('Mash — focus di chuyển (không kẹt)', stuck < 16, f'{stuck}/32 lần focus đứng nguyên')
 if stuck >= 16: add_finding('Điều hướng', 'MEDIUM', f'Focus kẹt {stuck}/32 lần khi mash', 'nhiều lần bấm không đổi focus', 'có thể hết phần tử theo hướng — kiểm tra focusables ở mép hàng')
 
+# ---------- 5.56 MÉP HÀNG: LEFT/RIGHT không được thoát khỏi card row ----------
+print('[5.56] Mép hàng D-pad', flush=True)
+sh(f'adb shell am force-stop {PKG}'); time.sleep(1)
+sh(f'adb shell am start -n {PKG}/.MainActivity --ei tab 0'); time.sleep(12)
+
+def focused_is_card():
+    sh(f'{P.a} shell uiautomator dump /sdcard/ef.xml >/dev/null 2>&1')
+    ef = sh(f'{P.a} shell cat /sdcard/ef.xml 2>/dev/null', timeout=20)
+    mf = _re.search(r'<node[^>]*focused="true"[^>]*/?>', ef)
+    return (mf is not None and 'cardRoot' in mf.group(0)), (mf.group(0)[:110] if mf else '?')
+
+# đưa focus vào card bằng D-pad DOWN (không tap — tap mở dialog)
+in_card = False
+for _ in range(10):
+    P.key('20'); time.sleep(0.5)
+    in_card, _ = focused_is_card()
+    if in_card: break
+if not in_card:
+    add_finding('Điều hướng', 'HIGH', 'Không đưa được focus vào card bằng DOWN', '10 lần DOWN không tới cardRoot', 'kiểm tra focus chain tab→hero→row')
+else:
+    # LEFT 3 lần — focus phải ĐỨNG YÊN ở card (mép trái chặn)
+    for _ in range(3): P.key('21'); time.sleep(0.4)
+    ok_l, what_l = focused_is_card()
+    add_check('LEFT tại mép trái — không thoát khỏi hàng', ok_l, 'focus vẫn ở cardRoot' if ok_l else f'nhảy tới: {what_l}')
+    if not ok_l: add_finding('Điều hướng', 'HIGH', 'Bấm LEFT ở đầu hàng làm focus nhảy lên tab/hero', what_l, 'nextFocusLeftId=self trên card đầu')
+    # RIGHT 12 lần (dài hơn mọi hàng) — vẫn phải ở card (mép phải chặn)
+    for _ in range(12): P.key('22'); time.sleep(0.35)
+    ok_r, what_r = focused_is_card()
+    add_check('RIGHT 12 lần — không thoát khỏi hàng', ok_r, 'focus vẫn ở cardRoot' if ok_r else f'nhảy tới: {what_r}')
+    if not ok_r: add_finding('Điều hướng', 'HIGH', 'Bấm RIGHT quá cuối hàng làm focus nhảy đi nơi khác', what_r, 'nextFocusRightId=self trên card cuối')
+
 # ---------- 5.6 SEARCH (v4.8) ----------
 print('[5.6] Tìm kiếm', flush=True)
 sh(f'adb shell am start -n {PKG}/.MainActivity --es open search'); time.sleep(8)
