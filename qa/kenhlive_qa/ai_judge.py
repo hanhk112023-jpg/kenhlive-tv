@@ -43,6 +43,8 @@ Tiêu chí bắt buộc kiểm trên ẢNH MÀN HÌNH TV:
 QUY TẮC NGUỒN (RẤT QUAN TRỌNG — tránh báo oan):
 - App này phát stream IPTV từ nguồn thứ 3. Mọi thứ BAKE TRONG VIDEO (quảng cáo, watermark, số điện thoại/Zalo/Telegram, màn hình chờ phòng BLV, danh sách chat, "phòng đang tắt", chất lượng video mờ/thấp) là NỘI DUNG NGUỒN PHÁT, KHÔNG phải lỗi app → tối đa INFO, KHÔNG được báo CRITICAL/HIGH.
 - "Màn hình đen" nếu có viền letterbox + dải video ở giữa = player đang phát bình thường, KHÔNG phải blank.
+- Số card/section ÍT (1-2 card mỗi hàng, nhiều khoảng trống) khi khung giờ ít trận live = ĐÚNG hành vi, KHÔNG phải lỗi layout. Chỉ báo khi có ≥3 trận mà vẫn xếp lệch.
+- Chữ cắt cụt nằm BÊN TRONG ảnh thumbnail/video (chữ meme bake sẵn) = nguồn phát, không phải text của app.
 - CHỈ báo lỗi app ở vùng UI của app: layout, text overlay của app, nút bấm, tab, focus, dialog, danh sách card.
 Trả JSON thuần (mảng, không markdown):
 [{"area":"<màn hình/element>","severity":"CRITICAL|HIGH|MEDIUM|LOW","issue":"<vấn đề cụ thể quan sát thấy>","evidence":"<bằng chứng nhìn thấy trong ảnh>","suggestion":"<gợi ý sửa cụ thể>"}]
