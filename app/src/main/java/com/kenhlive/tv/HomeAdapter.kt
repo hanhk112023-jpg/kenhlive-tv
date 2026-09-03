@@ -109,8 +109,11 @@ class HomeAdapter(
         vh.title.text = league
         vh.container.removeAllViews()
         val inf = LayoutInflater.from(vh.container.context)
-        list.forEach { g ->
+        list.forEachIndexed { idx, g ->
             val card = inf.inflate(R.layout.item_card_horizontal, vh.container, false)
+            // mép hàng: chặn focus thoát lên tab/hero (lỗi D-pad trái/phải "nhảy đi đâu")
+            if (idx == 0) card.nextFocusLeftId = R.id.cardRoot
+            if (idx == list.size - 1) card.nextFocusRightId = R.id.cardRoot
             val thumb = card.findViewById<ImageView>(R.id.cardThumb)
             val avatar = card.findViewById<ImageView>(R.id.cardAvatar)
             val blv = card.findViewById<TextView>(R.id.cardBlv)
