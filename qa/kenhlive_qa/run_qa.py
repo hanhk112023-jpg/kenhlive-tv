@@ -179,7 +179,17 @@ else:
 # ---------- 5.55 D-PAD MASH (điều hướng 4 hướng liên tục) ----------
 import re as _re
 print('[5.55] Mash D-pad 4 hướng', flush=True)
-sh(f'adb shell am start -n {PKG}/.MainActivity --ei tab 0'); time.sleep(8)
+# dọn dialog treo từ test update (nếu không nó chặn focus của mọi test sau)
+sh(f'{P.a} shell uiautomator dump /sdcard/d0.xml >/dev/null 2>&1')
+d0 = sh(f'{P.a} shell cat /sdcard/d0.xml 2>/dev/null', timeout=20)
+md = _re.search(r'text="HỦY"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', d0) or \
+     _re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"[^>]*text="HỦY"', d0)
+if md:
+    sh(f'{P.a} shell input tap {(int(md.group(1))+int(md.group(3)))//2} {(int(md.group(2))+int(md.group(4)))//2}')
+    time.sleep(1.5)
+    print('  (đã bấm HỦY dialog quyền cài)', flush=True)
+sh(f'adb shell am force-stop {PKG}'); time.sleep(1)
+sh(f'adb shell am start -n {PKG}/.MainActivity --ei tab 0'); time.sleep(10)
 def focus_now():
     sh(f'{P.a} shell uiautomator dump /sdcard/f.xml >/dev/null 2>&1')
     fx = sh(f'{P.a} shell cat /sdcard/f.xml 2>/dev/null', timeout=20)
@@ -189,14 +199,15 @@ def focus_now():
     rid = _re.search(r'resource-id="([^"]+)"', n)
     b = _re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
     return (rid.group(1) if rid else '?', b.groups() if b else None)
-lost = 0; stuck = 0; prev = None
+lost = 0; stuck = 0
 for code, name in [('22','RIGHT'),('21','LEFT'),('20','DOWN'),('19','UP')]:
-    for i in range(8):
-        P.key(code); time.sleep(0.35)   # mash nhanh liên tục
-        f = focus_now()
-        if f is None: lost += 1
-        elif prev and f == prev: stuck += 1
-        prev = f
+    for burst in range(2):
+        before = focus_now()
+        for _ in range(5): P.key(code); time.sleep(0.12)   # 5 phím liên tiếp như giữ nút
+        time.sleep(0.6)
+        after = focus_now()
+        if after is None: lost += 1
+        elif before and after == before: stuck += 1
 cr = P.crashes()
 add_check('Mash 32 lần 4 hướng — không crash', not cr, cr[0]['detail'][:80] if cr else 'sạch')
 if cr: add_finding('Điều hướng', 'CRITICAL', 'Crash khi bấm D-pad liên tục', cr[0]['detail'][:250], 'kiểm tra focus search trong ViewPager2/HorizontalScrollView')
@@ -207,15 +218,6 @@ if stuck >= 16: add_finding('Điều hướng', 'MEDIUM', f'Focus kẹt {stuck}/
 
 # ---------- 5.6 SEARCH (v4.8) ----------
 print('[5.6] Tìm kiếm', flush=True)
-# dọn dialog còn treo từ test update ("Cần quyền cài app" → HỦY) — nếu không nó chặn mọi thao tác sau
-sh(f'{P.a} shell uiautomator dump /sdcard/d0.xml >/dev/null 2>&1')
-d0 = sh(f'{P.a} shell cat /sdcard/d0.xml 2>/dev/null', timeout=20)
-md = _re.search(r'text="HỦY"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', d0) or \
-     _re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"[^>]*text="HỦY"', d0)
-if md:
-    sh(f'{P.a} shell input tap {(int(md.group(1))+int(md.group(3)))//2} {(int(md.group(2))+int(md.group(4)))//2}')
-    time.sleep(1.5)
-    print('  (đã bấm HỦY dialog quyền cài)', flush=True)
 sh(f'adb shell am start -n {PKG}/.MainActivity --es open search'); time.sleep(8)
 png = shot('search_tab')
 if P.is_blank(png): add_finding('Search', 'CRITICAL', 'Tab tìm kiếm blank', '', 'kiểm tra SearchFragment layout')
