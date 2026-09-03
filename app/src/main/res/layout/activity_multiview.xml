@@ -1,27 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Multiview 2 trận TRÁI/PHẢI: 2 ô weightSum=2 chia ĐỀU tuyệt đối,
+     hint bar overlay đè lên (không ăn chiều cao → không lệch ô) -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
     android:background="#000000">
 
-    <!-- Thanh hint -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="horizontal"
+        android:weightSum="2"
+        android:baselineAligned="false">
+
+        <include
+            android:id="@+id/slot0"
+            layout="@layout/item_multiview_cell"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+
+        <include
+            android:id="@+id/slot1"
+            layout="@layout/item_multiview_cell"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+    </LinearLayout>
+
+    <!-- Thanh hint overlay -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_gravity="top"
         android:orientation="horizontal"
         android:gravity="center_vertical"
+        android:background="#B3000000"
         android:paddingLeft="16dp"
         android:paddingRight="16dp"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp">
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp">
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="◫ MULTIVIEW"
             android:textColor="#FF3B30"
-            android:textSize="15sp"
+            android:textSize="14sp"
             android:textStyle="bold"
             android:fontFamily="@font/oswald"
             android:letterSpacing="0.1" />
@@ -32,33 +57,8 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:layout_marginLeft="14dp"
-            android:text="LÊN/XUỐNG: chọn trận · OK: đổi trận · MENU: hoán đổi · BACK: thoát"
+            android:text="TRÁI/PHẢI: chọn trận · OK: đổi trận · MENU: hoán đổi · BACK: thoát"
             android:textColor="#CFCFCF"
             android:textSize="12sp" />
     </LinearLayout>
-
-    <!-- 2 ô trận: trên/dưới, mỗi ô full-width -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="vertical"
-        android:baselineAligned="false">
-
-        <include
-            android:id="@+id/slot0"
-            layout="@layout/item_multiview_cell"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:layout_marginBottom="0dp" />
-
-        <include
-            android:id="@+id/slot1"
-            layout="@layout/item_multiview_cell"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1"
-            android:layout_marginTop="0dp" />
-    </LinearLayout>
-</LinearLayout>
+</FrameLayout>
