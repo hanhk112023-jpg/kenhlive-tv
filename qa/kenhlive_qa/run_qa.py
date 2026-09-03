@@ -186,7 +186,7 @@ else:
             add_check('Tải xong → installer TỰ BẬT', installer, act if installer else f'180s mà installer không bật (activity={act})')
             if not installer:
                 # CHẨN ĐOÁN OkHttp: file .part (đang tải) / .apk (xong) + logcat installer
-                fsize = sh(f'{P.a} shell ls -la /sdcard/Android/data/{PKG}/files/updates/ 2>/dev/null')
+                fsize = sh(f'{P.a} shell ls -la /sdcard/Android/data/{PKG}/files/Download/updates/ /sdcard/Android/data/{PKG}/files/updates/ 2>/dev/null')
                 inst_log = sh(f'{P.a} logcat -d 2>/dev/null | grep -iE "packageinstaller|ActivityNotFound|INSTALL_PACKAGES|fileprovider|OkHttp|kenhlive" | tail -10')
                 print('  DIAG file:', fsize[:250], flush=True)
                 print('  DIAG inst:', inst_log[:300], flush=True)
