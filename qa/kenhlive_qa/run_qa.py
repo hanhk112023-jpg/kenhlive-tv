@@ -68,6 +68,7 @@ def judge(label, png):
     except Exception as e:
         print('  (ai judge skip:', str(e)[:60], ')', flush=True)
 
+auto_refresh_info = None
 print(f'=== KenhLive QA Suite · APK {APK_VERSION} · AI={"off" if args.no_ai else "on"} ===', flush=True)
 
 # ---------- 1. COLD START ----------
@@ -307,6 +308,7 @@ if not args.quick:
     sh(f'adb shell input keyevent 4'); time.sleep(1)   # đóng keyboard nếu còn
     sh(f'adb shell am start -n {PKG}/.MainActivity --ei tab 0'); time.sleep(8)
     r = P.auto_refresh(wait_s=210, interval_s=15)
+    auto_refresh_info = r
     add_check('Tự cập nhật danh sách live', r['ok'], f"max diff {r.get('max_diff_pct')}% / {r.get('shots')} shots")
     if not r['ok']: add_finding('Auto-refresh', 'HIGH', 'Danh sách live KHÔNG tự cập nhật', r.get('reason', ''), 'kiểm tra Handler.postDelayed trong LiveFragment.onResume, gọi load(silent)=true')
     shot('refresh_end')
@@ -328,7 +330,8 @@ try:
         for f in judge_logcat(newlog):
             if isinstance(f, dict) and f.get('issue'): findings.append(f)
         print('[9] AI perf analysis', flush=True)
-        for f in judge_perf({'versionName': APK_VERSION, 'cold_start_ms': t, 'jank': j, 'pss_kb': m}):
+        for f in judge_perf({'versionName': APK_VERSION, 'cold_start_ms': t, 'jank': j, 'pss_kb': m,
+                                 'auto_refresh': auto_refresh_info or 'bỏ qua (quick)'}):
             if isinstance(f, dict) and f.get('issue'): findings.append(f)
 except Exception as e:
     print('  (AI skip:', str(e)[:80], ')', flush=True)
