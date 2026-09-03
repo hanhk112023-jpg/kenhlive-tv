@@ -36,10 +36,18 @@ class HomeAdapter(
 
     private var rows: List<Pair<String, List<LiveMatchGroup>>> = buildRows(groups)
 
-    /** Cập nhật dữ liệu mới (auto-refresh) — rebuild rows + notify. */
+    /** Cập nhật dữ liệu mới (auto-refresh). Cấu trúc không đổi → notifyItemRangeChanged
+     *  (rebind TẠI CHỖ, RecyclerView giữ focus đang có) thay vì notifyDataSetChanged
+     *  (destroy toàn bộ → đá mất focus giữa lúc user đang bấm D-pad = lỗi "nhảy lung tung"). */
     fun submit(newGroups: List<LiveMatchGroup>) {
+        val oldSig = rows.map { (l, gs) -> l to gs.map { it.matchTitle } }
         groups = newGroups
         rows = buildRows(groups)
+        val newSig = rows.map { (l, gs) -> l to gs.map { it.matchTitle } }
+        if (oldSig == newSig) {
+            if (itemCount > 0) notifyItemRangeChanged(0, itemCount, "data")
+            return
+        }
         notifyDataSetChanged()
     }
 
@@ -61,6 +69,32 @@ class HomeAdapter(
             HeroVH(inf.inflate(R.layout.item_hero_pager, parent, false))
         else
             RowVH(inf.inflate(R.layout.item_row, parent, false))
+    }
+
+    /** Payload "data": cập nhật text viewers tại chỗ, KHÔNG rebuild view → giữ nguyên focus D-pad. */
+    override fun onBindViewHolder(h: RecyclerView.ViewHolder, pos: Int, payloads: List<Any>) {
+        if (payloads.isNotEmpty() && payloads[0] == "data") {
+            if (h is RowVH && pos - 1 < rows.size) {
+                val list = rows[pos - 1].second
+                val cont = h.container
+                for (i in 0 until minOf(cont.childCount, list.size)) {
+                    val card = cont.getChildAt(i)
+                    val g = list[i]
+                    card.findViewById<TextView>(R.id.cardViewers)?.text =
+                        "👁 ${SocoliveRepository.fmtViewers(g.totalViewers)}"
+                    card.findViewById<TextView>(R.id.cardBlv)?.text =
+                        g.top.blvName + if (g.count > 1) " +${g.count - 1} BLV" else ""
+                    card.findViewById<TextView>(R.id.roomBadge)?.let { b ->
+                        if (g.count > 1) { b.text = "${g.count} phòng"; b.visibility = View.VISIBLE }
+                        else b.visibility = View.GONE
+                    }
+                    card.setOnClickListener { onGroupClick(g) }
+                    card.setOnLongClickListener { onLongClickGroup(g); true }
+                }
+            }
+            return // hero: giữ nguyên trang đang xem, không rebind
+        }
+        onBindViewHolder(h, pos)
     }
 
     override fun onBindViewHolder(h: RecyclerView.ViewHolder, pos: Int) {

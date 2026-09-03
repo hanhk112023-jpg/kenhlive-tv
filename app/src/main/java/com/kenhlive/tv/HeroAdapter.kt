@@ -21,11 +21,16 @@ class HeroAdapter(
     private var pager: ViewPager2? = null
     private val auto = object : Runnable {
         override fun run() {
-            pager?.let { if (it.adapter != null && groups.isNotEmpty()) {
-                it.currentItem = (it.currentItem + 1) % groups.size } }
+            pager?.let {
+                // KHÔNG lật trang khi user đang focus trong hero — giữ focus ổn định cho D-pad
+                if (it.adapter != null && groups.isNotEmpty() && !it.isFocused && !hasFocusedChild()) {
+                    it.currentItem = (it.currentItem + 1) % groups.size
+                }
+            }
             handler.postDelayed(this, 5000)
         }
     }
+    private fun hasFocusedChild(): Boolean = pager?.hasFocus() == true
 
     fun attach(p: ViewPager2) { pager = p; handler.removeCallbacks(auto); handler.postDelayed(auto, 5000) }
     fun detach() { handler.removeCallbacks(auto); pager = null }
