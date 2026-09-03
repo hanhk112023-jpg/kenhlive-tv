@@ -146,6 +146,36 @@ add_check('Back không văng app', P.has_focus(), 'activity=' + P.current_activi
 if not P.has_focus(): add_finding('Navigation', 'HIGH', 'Bấm back văng khỏi app', 'mất focus về launcher', 'override onBackPressed: back từ multiview→home, không finish Activity gốc')
 shot('after_back')
 
+# ---------- 5.5 UPDATE FLOW (bug văng khi bấm TẢI NGAY) ----------
+print('[5.5] Luồng tự cập nhật', flush=True)
+sh(f'adb shell am start -n {PKG}/.MainActivity --es open update'); time.sleep(10)
+png = shot('update_dialog')
+if png is None or P.is_blank(png):
+    add_check('Dialog update hiện ra', False, 'không thấy dialog')
+    add_finding('Update', 'HIGH', 'Dialog "Có bản mới" không hiện qua hook update', 'blank/không screenshot', 'kiểm tra debugForceDialog + GitHub API từ emulator (proxy VN)')
+else:
+    add_check('Dialog update hiện ra', True, 'dialog v99.0 QA hiển thị')
+    # bấm TẢI NGAY bằng uiautomator bounds (không phụ thuộc tọa độ)
+    import re as _re
+    sh(f'{P.a} shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1')
+    ux = sh(f'{P.a} shell cat /sdcard/u.xml 2>/dev/null', timeout=20)
+    mb = _re.search(r'[^>]*text="TẢI NGAY"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', ux) or \
+        _re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"[^>]*text="TẢI NGAY"', ux)
+    if mb:
+        x = (int(mb.group(1)) + int(mb.group(3))) // 2; y = (int(mb.group(2)) + int(mb.group(4))) // 2
+        sh(f'{P.a} shell input tap {x} {y}'); time.sleep(6)
+        cr = P.crashes()
+        add_check('Bấm TẢI NGAY không crash', not cr, cr[0]['detail'][:80] if cr else f'tap @ {x},{y} — app còn sống')
+        if cr:
+            add_finding('Update', 'CRITICAL', 'VĂNG APP khi bấm TẢI NGAY', cr[0]['detail'][:250],
+                        'dialog/receiver phải dùng Activity context + RECEIVER_NOT_EXPORTED (API33+)')
+        else:
+            shot('after_tai_ngay')
+            add_check('Toast/progress tải xuất hiện', P.has_focus(), 'app vẫn foreground sau tap')
+    else:
+        add_check('Nút TẢI NGAY tìm được', False, 'uiautomator không thấy text TẢI NGAY')
+        add_finding('Update', 'MEDIUM', 'Không tìm thấy nút TẢI NGAY trong dialog', 'dump không khớp text', 'kiểm tra string hiển thị')
+
 # ---------- 6. AUTO-REFRESH (v4.7) ----------
 if not args.quick:
     print('[6] Auto-refresh (ngồi yên 3.5 phút, refresh chu kỳ 3\')', flush=True)
