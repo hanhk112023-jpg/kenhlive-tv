@@ -173,6 +173,20 @@ else:
         else:
             shot('after_tai_ngay')
             add_check('Toast/progress tải xuất hiện', P.has_focus(), 'app vẫn foreground sau tap')
+            # chờ tải xong (APK ~10MB qua proxy VN) — installer PHẢI tự bật (polling v4.8.4)
+            installer = False; act = '?'
+            for _ in range(24):
+                time.sleep(5)
+                act = P.current_activity()
+                if 'packageinstaller' in act.lower() or 'PermissionController' in act or 'install' in act.lower():
+                    installer = True; break
+            add_check('Tải xong → installer TỰ BẬT', installer, act if installer else f'120s mà installer không bật (activity={act})')
+            if not installer:
+                add_finding('Update', 'HIGH', 'Tải APK xong nhưng màn cài đặt không tự mở', f'activity sau 120s: {act}',
+                            'polling DownloadManager mỗi 2s + broadcast; kiểm tra FileProvider grant + ACTION_VIEW resolver trên ROM này')
+            else:
+                shot('installer_opened')
+                P.key('4')  # đóng installer, về app
     else:
         add_check('Nút TẢI NGAY tìm được', False, 'uiautomator không thấy text TẢI NGAY')
         add_finding('Update', 'MEDIUM', 'Không tìm thấy nút TẢI NGAY trong dialog', 'dump không khớp text', 'kiểm tra string hiển thị')
