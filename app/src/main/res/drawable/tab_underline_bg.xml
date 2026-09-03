@@ -11,9 +11,9 @@
         <layer-list>
             <item>
                 <shape android:shape="rectangle">
-                    <stroke android:width="2dp" android:color="#FF3B30" />
+                    <stroke android:width="3dp" android:color="#FF3B30" />
                     <corners android:radius="8dp" />
-                    <solid android:color="#14FF3B30" />
+                    <solid android:color="#2AFF3B30" />
                 </shape>
             </item>
         </layer-list>

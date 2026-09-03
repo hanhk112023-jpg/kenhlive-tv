@@ -63,8 +63,13 @@ class MainActivity : AppCompatActivity() {
         }
 
         UpdateManager.checkAndUpdate(this)
-        // Debug hook (CI screenshot): am start .../.MainActivity --es open mv|player
-        intent.getStringExtra("open")?.let { target ->
+        handleDebugIntent(intent)
+        refreshCount()
+    }
+
+    // Debug hook (CI screenshot): am start .../.MainActivity --es open mv|player
+    private fun handleDebugIntent(i: Intent?) {
+        i?.getStringExtra("open")?.let { target ->
             when (target) {
                 "mv" -> startActivity(Intent(this, MultiViewActivity::class.java))
                 "player" -> CoroutineScope(Dispatchers.Main).launch {
@@ -81,7 +86,13 @@ class MainActivity : AppCompatActivity() {
                 else -> {}
             }
         }
-        refreshCount()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.getIntExtra("tab", 0) == 1) viewPager.post { viewPager.setCurrentItem(1, false) }
+        handleDebugIntent(intent)
     }
 
     private fun paintNav(pos: Int) {
