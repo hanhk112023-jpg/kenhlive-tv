@@ -207,7 +207,7 @@ object UpdateManager {
         if (!f.exists() || f.length() < 1_000_000) return
         val d = appCtx.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         try {
-            val cur = d.query(DownloadManager.Query().setIds(prefs.getLong(KEY_DL_ID, -1)))
+            val cur = d.query(DownloadManager.Query().setFilterById(prefs.getLong(KEY_DL_ID, -1)))
             var done = false
             if (cur != null && cur.moveToFirst()) {
                 val status = cur.getInt(cur.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
