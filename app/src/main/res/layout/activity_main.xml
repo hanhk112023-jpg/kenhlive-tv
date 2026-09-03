@@ -113,6 +113,9 @@
             android:layout_height="wrap_content"
             android:textColor="#DCDCDC"
             android:textSize="15sp"
+            android:singleLine="true"
+            android:ellipsize="end"
+            android:maxWidth="170dp"
             android:visibility="gone" />
     </LinearLayout>
 
