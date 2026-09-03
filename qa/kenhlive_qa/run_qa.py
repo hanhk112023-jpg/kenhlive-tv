@@ -176,8 +176,36 @@ else:
         add_check('Nút TẢI NGAY tìm được', False, 'uiautomator không thấy text TẢI NGAY')
         add_finding('Update', 'MEDIUM', 'Không tìm thấy nút TẢI NGAY trong dialog', 'dump không khớp text', 'kiểm tra string hiển thị')
 
-# ---------- 5.6 SEARCH (v4.8) ----------
+# ---------- 5.55 D-PAD MASH (điều hướng 4 hướng liên tục) ----------
 import re as _re
+print('[5.55] Mash D-pad 4 hướng', flush=True)
+sh(f'adb shell am start -n {PKG}/.MainActivity --ei tab 0'); time.sleep(8)
+def focus_now():
+    sh(f'{P.a} shell uiautomator dump /sdcard/f.xml >/dev/null 2>&1')
+    fx = sh(f'{P.a} shell cat /sdcard/f.xml 2>/dev/null', timeout=20)
+    m = _re.search(r'<node[^>]*focused="true"[^>]*/?>', fx)
+    if not m: return None
+    n = m.group(0)
+    rid = _re.search(r'resource-id="([^"]+)"', n)
+    b = _re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', n)
+    return (rid.group(1) if rid else '?', b.groups() if b else None)
+lost = 0; stuck = 0; prev = None
+for code, name in [('22','RIGHT'),('21','LEFT'),('20','DOWN'),('19','UP')]:
+    for i in range(8):
+        P.key(code); time.sleep(0.35)   # mash nhanh liên tục
+        f = focus_now()
+        if f is None: lost += 1
+        elif prev and f == prev: stuck += 1
+        prev = f
+cr = P.crashes()
+add_check('Mash 32 lần 4 hướng — không crash', not cr, cr[0]['detail'][:80] if cr else 'sạch')
+if cr: add_finding('Điều hướng', 'CRITICAL', 'Crash khi bấm D-pad liên tục', cr[0]['detail'][:250], 'kiểm tra focus search trong ViewPager2/HorizontalScrollView')
+add_check('Mash — focus không mất', lost == 0, f'{lost}/32 lần không tìm thấy element focused')
+if lost > 0: add_finding('Điều hướng', 'HIGH', f'Mất focus {lost}/32 lần khi mash D-pad', 'uiautomator không có node focused=true', 'bảo đảm focusOrder/descendantFocusability, tránh notifyDataSetChanged khi đang focus')
+add_check('Mash — focus di chuyển (không kẹt)', stuck < 16, f'{stuck}/32 lần focus đứng nguyên')
+if stuck >= 16: add_finding('Điều hướng', 'MEDIUM', f'Focus kẹt {stuck}/32 lần khi mash', 'nhiều lần bấm không đổi focus', 'có thể hết phần tử theo hướng — kiểm tra focusables ở mép hàng')
+
+# ---------- 5.6 SEARCH (v4.8) ----------
 print('[5.6] Tìm kiếm', flush=True)
 # dọn dialog còn treo từ test update ("Cần quyền cài app" → HỦY) — nếu không nó chặn mọi thao tác sau
 sh(f'{P.a} shell uiautomator dump /sdcard/d0.xml >/dev/null 2>&1')
