@@ -178,15 +178,25 @@ else:
             add_check('Toast/progress tải xuất hiện', P.has_focus(), 'app vẫn foreground sau tap')
             # chờ tải xong (APK ~10MB qua proxy VN) — installer PHẢI tự bật (polling v4.8.4)
             installer = False; act = '?'
-            for _ in range(36):   # APK ~10MB qua proxy VN → cho tới 180s
+            for _ in range(36):   # tới 180s
                 time.sleep(5)
                 act = P.current_activity()
                 if 'packageinstaller' in act.lower() or 'PermissionController' in act or 'install' in act.lower():
                     installer = True; break
             add_check('Tải xong → installer TỰ BẬT', installer, act if installer else f'180s mà installer không bật (activity={act})')
             if not installer:
-                add_finding('Update', 'HIGH', 'Tải APK xong nhưng màn cài đặt không tự mở', f'activity sau 120s: {act}',
-                            'polling DownloadManager mỗi 2s + broadcast; kiểm tra FileProvider grant + ACTION_VIEW resolver trên ROM này')
+                # CHẨN ĐOÁN 3 tầng: file tải về + trạng thái DM + logcat installer
+                fsize = sh(f'{P.a} shell ls -la /sdcard/Android/data/{PKG}/files/updates/ 2>/dev/null')
+                dm = sh(f'{P.a} shell dumpsys download 2>/dev/null | grep -E "status|reason|total_bytes|current_bytes|uri" | head -12')
+                inst_log = sh(f'{P.a} logcat -d 2>/dev/null | grep -iE "packageinstaller|ActivityNotFound|INSTALL_PACKAGES|fileprovider" | tail -8')
+                print('  DIAG file:', fsize[:200], flush=True)
+                print('  DIAG dm:', dm[:300], flush=True)
+                print('  DIAG inst:', inst_log[:300], flush=True)
+                dl_done = 'status: 200' in dm or '10317358' in fsize or '10299' in fsize
+                add_finding('Update', 'HIGH',
+                    'Tải APK xong nhưng màn cài đặt không tự mở' if dl_done else 'Download không hoàn tất trong 180s',
+                    f'file: {fsize[:120]} | dm: {dm[:150]} | log: {inst_log[:150]}',
+                    'installer thiếu/trên TV cần FLAG_ACTIVITY_NEW_TASK + resolver ACTION_INSTALL; hoặc DM fail qua proxy → tải bằng OkHttp trong app')
             else:
                 shot('installer_opened')
                 P.key('4')  # đóng installer, về app
