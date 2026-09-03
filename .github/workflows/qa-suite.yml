@@ -37,7 +37,13 @@ jobs:
             curl -sSL -o /tmp/mihomo.gz "https://github.com/MetaCubeX/mihomo/releases/download/${VER}/mihomo-linux-amd64-${VER}.gz"
             gunzip -f /tmp/mihomo.gz && install -m 0750 /tmp/mihomo /usr/local/bin/mihomo
           fi
-          curl -sSL -H 'User-Agent: clash-verge/1.6.6' -o /tmp/sub_full.yaml "$SUB_URL"
+          # Yuna hay chập chờn → retry 4 lần cách nhau 20s
+          OK=0
+          for try in 1 2 3 4; do
+            if curl -sSL -m 40 -H 'User-Agent: clash-verge/1.6.6' -o /tmp/sub_full.yaml "$SUB_URL" && [ -s /tmp/sub_full.yaml ] && grep -q "proxies" /tmp/sub_full.yaml; then OK=1; break; fi
+            echo "sub fetch attempt $try failed, retry in 20s"; sleep 20
+          done
+          [ "$OK" = "1" ] || { echo "::error::Khong tai duoc subscription Yuna sau 4 lan"; exit 1; }
           python3 - << 'PYEOF'
           import yaml
           cfg = yaml.safe_load(open('/tmp/sub_full.yaml'))
