@@ -176,6 +176,61 @@ else:
         add_check('Nút TẢI NGAY tìm được', False, 'uiautomator không thấy text TẢI NGAY')
         add_finding('Update', 'MEDIUM', 'Không tìm thấy nút TẢI NGAY trong dialog', 'dump không khớp text', 'kiểm tra string hiển thị')
 
+# ---------- 5.6 SEARCH (v4.8) ----------
+import re as _re
+print('[5.6] Tìm kiếm', flush=True)
+sh(f'adb shell am start -n {PKG}/.MainActivity --es open search'); time.sleep(8)
+png = shot('search_tab')
+if P.is_blank(png): add_finding('Search', 'CRITICAL', 'Tab tìm kiếm blank', '', 'kiểm tra SearchFragment layout')
+judge('Tab tìm kiếm (rỗng)', png)
+# tap vào ô search để lấy focus (bounds từ uiautomator)
+sh(f'{P.a} shell uiautomator dump /sdcard/si.xml >/dev/null 2>&1')
+six = sh(f'{P.a} shell cat /sdcard/si.xml 2>/dev/null', timeout=20)
+mi = _re.search(r'resource-id="[^"]*searchInput"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', six) or \
+     _re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"[^>]*resource-id="[^"]*searchInput"', six)
+if mi:
+    sh(f'{P.a} shell input tap {(int(mi.group(1))+int(mi.group(3)))//2} {(int(mi.group(2))+int(mi.group(4)))//2}'); time.sleep(1.5)
+else:
+    add_finding('Search', 'MEDIUM', 'Không tìm thấy ô searchInput trong layout', 'uiautomator', 'kiểm tra id')
+def del_n(n):
+    for _ in range(n): sh(f'{P.a} shell input keyevent KEYCODE_DEL')
+# lấy title trận ĐẦU TIÊN từ danh sách đang hiện → tìm bằng 1 từ ASCII trong title (deterministic)
+sh(f'{P.a} shell uiautomator dump /sdcard/s0.xml >/dev/null 2>&1')
+s0 = sh(f'{P.a} shell cat /sdcard/s0.xml 2>/dev/null', timeout=20)
+titles = _re.findall(r'resource-id="[^"]*srMatch"[^>]*text="([^"]+)"', s0) or \
+         _re.findall(r'text="([^"]+)"[^>]*resource-id="[^"]*srMatch"', s0)
+import re as _re2
+q = ''
+for t in titles:
+    for w in _re2.findall(r'[A-Za-z]{4,}', t):
+        q = w; break
+    if q: break
+if not q:
+    add_finding('Search', 'MEDIUM', 'Danh sách search rỗng — không có trận live để test', 'không tìm thấy srMatch text', 'kiểm tra proxy VN/API')
+else:
+    sh(f'{P.a} shell input text "{q}"'); time.sleep(3)
+    png2 = shot('search_query')
+    judge(f'Kết quả tìm "{q}"', png2)
+    sh(f'{P.a} shell uiautomator dump /sdcard/s.xml >/dev/null 2>&1')
+    sx = sh(f'{P.a} shell cat /sdcard/s.xml 2>/dev/null', timeout=20)
+    n_res = sx.count('srMatch')
+    add_check(f'Tìm "{q}" có kết quả', n_res > 0, f'{n_res} dòng kết quả (srMatch)')
+    if n_res == 0: add_finding('Search', 'HIGH', f'Gõ "{q}" (rút từ title thật) không ra kết quả', 'uiautomator không thấy srMatch', 'kiểm tra norm() bỏ dấu + debounce 250ms')
+# từ khóa viết HOA phải khớp (case-insensitive): q đã ASCII → thử upper
+sh(f'{P.a} shell input keyevent KEYCODE_MOVE_END'); del_n(len(q) if q else 6); time.sleep(2)
+sh(f'{P.a} shell input text "{q.upper() if q else "REAL"}"'); time.sleep(3)
+sh(f'{P.a} shell uiautomator dump /sdcard/s2.xml >/dev/null 2>&1')
+sx2 = sh(f'{P.a} shell cat /sdcard/s2.xml 2>/dev/null', timeout=20)
+add_check('Tìm HOA khớp thường', sx2.count('srMatch') > 0, f'{sx2.count("srMatch")} dòng')
+shot('search_nodiacritic')
+# xóa → hiện lại tất cả
+del_n(len(q)+6 if q else 6); time.sleep(2)
+sh(f'{P.a} shell uiautomator dump /sdcard/s3.xml >/dev/null 2>&1')
+sx3 = sh(f'{P.a} shell cat /sdcard/s3.xml 2>/dev/null', timeout=20)
+add_check('Xóa query hiện lại danh sách', sx3.count('srMatch') > 0, f'{sx3.count("srMatch")} dòng')
+cr = P.crashes()
+if cr: add_finding('Search', 'CRITICAL', 'Crash khi tìm kiếm', cr[0]['detail'][:200], 'fix stacktrace')
+
 # ---------- 6. AUTO-REFRESH (v4.7) ----------
 if not args.quick:
     print('[6] Auto-refresh (ngồi yên 3.5 phút, refresh chu kỳ 3\')', flush=True)
