@@ -277,6 +277,44 @@ else:
     add_check('RIGHT 12 lần — không thoát khỏi hàng', ok_r, 'focus vẫn ở cardRoot' if ok_r else f'nhảy tới: {what_r}')
     if not ok_r: add_finding('Điều hướng', 'HIGH', 'Bấm RIGHT quá cuối hàng làm focus nhảy đi nơi khác', what_r, 'nextFocusRightId=self trên card cuối')
 
+# ---------- 5.57 TAB LỊCH: mash DOWN xuyên danh sách (bug 'nhảy lung tung') ----------
+print('[5.57] D-pad tab Lịch', flush=True)
+sh(f'adb shell am force-stop {PKG}'); time.sleep(1)
+sh(f'adb shell am start -n {PKG}/.MainActivity --ei tab 1'); time.sleep(14)
+
+def focused_sched():
+    sh(f'{P.a} shell uiautomator dump /sdcard/es.xml >/dev/null 2>&1')
+    es = sh(f'{P.a} shell cat /sdcard/es.xml 2>/dev/null', timeout=20)
+    mf = _re.search(r'<node[^>]*focused="true"[^>]*/?>', es)
+    tag = mf.group(0) if mf else '?'
+    return ('schedCard' in tag), tag[:110]
+
+# vào card đầu bằng DOWN
+in_sched = False
+for _ in range(8):
+    P.key('20'); time.sleep(0.5)
+    in_sched, _ = focused_sched()
+    if in_sched: break
+if not in_sched:
+    add_check('Tab Lịch — focus vào được card', False, '8 lần DOWN không tới schedCard')
+    add_finding('Điều hướng', 'HIGH', 'Tab Lịch: không đưa focus vào card được', 'schedCard không nhận focus', 'kiểm tra focusable card + blocksDescendants')
+else:
+    add_check('Tab Lịch — focus vào được card', True, 'schedCard nhận focus')
+    # mash DOWN 18 lần (dài hơn màn hình) — focus KHÔNG được rời khỏi schedCard
+    escaped = 0; where = ''
+    for _ in range(18):
+        P.key('20'); time.sleep(0.35)
+        ok, tag = focused_sched()
+        if not ok:
+            escaped += 1; where = tag
+    add_check('Tab Lịch — DOWN x18 không nhảy lung tung', escaped == 0,
+              'focus luôn trên card lịch' if escaped == 0 else f'{escaped}/18 lần nhảy ra: {where}')
+    if escaped: add_finding('Điều hướng', 'HIGH', 'Tab Lịch: mash DOWN làm focus nhảy ra ngoài card', where, 'card phải là ô focus duy nhất, chặn avatar/scrollview tranh focus')
+    # UP về đầu — vẫn phải ở card
+    for _ in range(6): P.key('19'); time.sleep(0.3)
+    ok_u, tag_u = focused_sched()
+    add_check('Tab Lịch — UP về đầu không văng', ok_u, 'focus vẫn ở schedCard' if ok_u else f'nhảy tới: {tag_u}')
+
 # ---------- 5.6 SEARCH (v4.8) ----------
 print('[5.6] Tìm kiếm', flush=True)
 sh(f'adb shell am start -n {PKG}/.MainActivity --es open search'); time.sleep(8)
