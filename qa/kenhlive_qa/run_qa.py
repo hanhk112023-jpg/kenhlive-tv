@@ -175,7 +175,10 @@ else:
                         'dialog/receiver phải dùng Activity context + RECEIVER_NOT_EXPORTED (API33+)')
         else:
             shot('after_tai_ngay')
-            add_check('Toast/progress tải xuất hiện', P.has_focus(), 'app vẫn foreground sau tap')
+            act_now = P.current_activity()
+            inst_fast = 'packageinstaller' in act_now.lower() or 'install' in act_now.lower()
+            add_check('Toast/progress tải xuất hiện', P.has_focus() or inst_fast,
+                      'installer đã bật trước (tải nhanh)' if inst_fast else 'app vẫn foreground sau tap')
             # chờ tải xong (APK ~10MB qua proxy VN) — installer PHẢI tự bật (polling v4.8.4)
             installer = False; act = '?'
             for _ in range(36):   # tới 180s
