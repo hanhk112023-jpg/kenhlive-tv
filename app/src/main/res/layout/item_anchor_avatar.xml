@@ -6,7 +6,7 @@
     android:layout_marginRight="9dp"
     android:scaleType="centerCrop"
     android:background="#1A1E28"
-    android:focusable="true"
+    android:focusable="false"
     android:clickable="true"
     android:contentDescription="BLV"
     android:padding="2dp" />

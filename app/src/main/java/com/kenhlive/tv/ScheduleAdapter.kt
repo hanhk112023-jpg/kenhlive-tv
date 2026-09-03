@@ -14,7 +14,8 @@ import coil.transform.CircleCropTransformation
 
 /** Lịch trình: header ngày (accent bar + count) + card trận xen kẽ tông + hàng BLV chỉ avatar (tap reveal). */
 class ScheduleAdapter(
-    private val onAnchorClick: (AnchorInfo, ScheduleMatch) -> Unit
+    private val onAnchorClick: (AnchorInfo, ScheduleMatch) -> Unit,
+    private val onMatchClick: (ScheduleMatch) -> Unit = {}
 ) : ListAdapter<Any, RecyclerView.ViewHolder>(DIFF) {
 
     companion object {
@@ -68,8 +69,10 @@ class ScheduleAdapter(
             }
             is ScheduleMatch -> {
                 val vh = h as MatchVH
-                // xen kẽ 2 tông nền card
-                vh.itemView.setBackgroundResource(if (pos % 2 == 0) R.drawable.card_a else R.drawable.card_b)
+                // xen kẽ 2 tông nền card (selector có viền đỏ khi focus — chuẩn TV D-pad)
+                vh.itemView.setBackgroundResource(if (pos % 2 == 0) R.drawable.card_a_focus else R.drawable.card_b_focus)
+                // OK/Enter trên card: 1 BLV có phòng → play luôn; nhiều → dialog chọn
+                vh.itemView.setOnClickListener { onMatchClick(item) }
                 vh.name.text = "${item.host} vs ${item.guest}"
                 vh.league.text = item.league
                 vh.time.text = SocoliveRepository.formatTime(item.matchTimeMs)
