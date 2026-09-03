@@ -36,14 +36,25 @@ class Probes:
     # ---------- logcat ----------
     def logcat_baseline(self):
         self._logcat_baseline = sh(f"{self.a} logcat -d -v brief", timeout=40)
-    def _logcat_new(self):
-        cur = sh(f"{self.a} logcat -d -v brief", timeout=40)
+    def _app_pid(self):
+        return sh(f"{self.a} shell pidof {self.pkg}").strip().split() or []
+    def _logcat_new_raw(self):
+        cur = sh(f"{self.a} logcat -d -v threadtime", timeout=40)
         if self._logcat_baseline and self._logcat_baseline in cur:
             return cur.split(self._logcat_baseline, 1)[1]
         return cur
+    def _logcat_new(self):
+        # threadtime có PID → lọc đúng log của app (bỏ nhiễu hệ thống emulator: usonia/Cast/SELinux)
+        # LƯU Ý: crashes() dùng _logcat_new_raw vì ANR ghi bởi system_server (PID khác app)
+        cur = self._logcat_new_raw()
+        pids = self._app_pid()
+        if pids:
+            keep = [l for l in cur.splitlines() if re.match(r'\s*\d+\s+\d+\s+.*', l) and l.split()[1] in pids]
+            cur = "\n".join(keep)
+        return cur
     def crashes(self):
-        """FATAL EXCEPTION / ANR của pkg từ baseline tới giờ."""
-        new = self._logcat_new()
+        """FATAL EXCEPTION / ANR của pkg từ baseline tới giờ (dùng raw — ANR ghi bởi system_server)."""
+        new = self._logcat_new_raw()
         out = []
         for m in re.finditer(r'FATAL EXCEPTION.*?(?=\n\d|\Z)', new, re.S):
             blk = m.group(0)[:600]
