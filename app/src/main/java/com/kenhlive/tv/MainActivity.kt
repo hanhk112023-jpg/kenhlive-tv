@@ -60,9 +60,10 @@ class MainActivity : AppCompatActivity() {
         findViewById<View>(R.id.tv_live)?.setOnClickListener(clickLive)
         findViewById<View>(R.id.tv_schedule)?.setOnClickListener(clickSched)
 
-        // deep-link: --ei tab 1 mở thẳng tab Lịch trình (dùng cho CI screenshot)
-        if (intent?.getIntExtra("tab", 0) == 1) {
-            viewPager.post { viewPager.setCurrentItem(1, false) }
+        // deep-link: --ei tab N mở thẳng tab N (0 Live / 1 Lịch / 2 Tìm — CI + QA dùng)
+        val tabX = intent?.getIntExtra("tab", -1) ?: -1
+        if (tabX in 0..2) {
+            viewPager.post { viewPager.setCurrentItem(tabX, false) }
         }
 
         UpdateManager.checkAndUpdate(this)
@@ -97,7 +98,8 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        if (intent.getIntExtra("tab", 0) == 1) viewPager.post { viewPager.setCurrentItem(1, false) }
+        val tabX = intent.getIntExtra("tab", -1)
+        if (tabX in 0..2) viewPager.post { viewPager.setCurrentItem(tabX, false) }
         handleDebugIntent(intent)
     }
 

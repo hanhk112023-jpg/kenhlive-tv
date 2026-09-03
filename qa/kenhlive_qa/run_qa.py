@@ -210,8 +210,8 @@ titles = _re.findall(r'resource-id="[^"]*srMatch"[^>]*text="([^"]+)"', s0) or \
          _re.findall(r'text="([^"]+)"[^>]*resource-id="[^"]*srMatch"', s0)
 import re as _re2
 q = ''
-for t in titles:
-    for w in _re2.findall(r'[A-Za-z]{4,}', t):
+for _tt in titles:
+    for w in _re2.findall(r'[A-Za-z]{4,}', _tt):
         q = w; break
     if q: break
 if not q:
@@ -243,7 +243,8 @@ if cr: add_finding('Search', 'CRITICAL', 'Crash khi tìm kiếm', cr[0]['detail'
 # ---------- 6. AUTO-REFRESH (v4.7) ----------
 if not args.quick:
     print('[6] Auto-refresh (ngồi yên 3.5 phút, refresh chu kỳ 3\')', flush=True)
-    sh(f'adb shell am start -n {PKG}/.MainActivity'); time.sleep(6)
+    sh(f'adb shell input keyevent 4'); time.sleep(1)   # đóng keyboard nếu còn
+    sh(f'adb shell am start -n {PKG}/.MainActivity --ei tab 0'); time.sleep(8)
     r = P.auto_refresh(wait_s=210, interval_s=15)
     add_check('Tự cập nhật danh sách live', r['ok'], f"max diff {r.get('max_diff_pct')}% / {r.get('shots')} shots")
     if not r['ok']: add_finding('Auto-refresh', 'HIGH', 'Danh sách live KHÔNG tự cập nhật', r.get('reason', ''), 'kiểm tra Handler.postDelayed trong LiveFragment.onResume, gọi load(silent)=true')
