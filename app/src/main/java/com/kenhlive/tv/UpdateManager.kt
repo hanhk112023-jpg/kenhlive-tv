@@ -2,11 +2,8 @@ package com.kenhlive.tv
 
 import android.app.Activity
 import android.app.AlertDialog
-import android.app.DownloadManager
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.net.Uri
 import android.os.Build
 import android.os.Environment
@@ -15,7 +12,6 @@ import android.widget.Toast
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -24,26 +20,24 @@ import org.json.JSONObject
 import java.io.File
 
 /**
- * Update in-app: kiểm tra GitHub Release → tải APK bằng DownloadManager → tự mở màn cài đặt.
+ * Update in-app: kiểm tra GitHub Release → tải APK bằng OkHttp streaming → tự mở màn cài đặt.
+ * v4.9: bỏ DownloadManager (system process không đi qua proxy → treo vĩnh viễn trên TV/emulator).
  *
  * FIX crash v4.7.2:
  *  - Dialog PHẢI dùng Activity context (bản cũ truyền applicationContext → BadTokenException
  *    "văng app khi ấn TẢI NGAY"). Mọi UI path giờ nhận Activity + check isFinishing.
- *  - registerReceiver khai báo RECEIVER_NOT_EXPORTED trên API 33+ (bản cũ crash SecurityException
- *    trên Android 13/14 TV).
- *  - Receiver lưu id vào SharedPreferences → vẫn mở installer nếu app bị kill giữa lúc tải.
+ *  - Persist dl_path vào SharedPreferences → vẫn mở installer nếu app bị kill giữa lúc tải.
  *  - Mở installer thử ACTION_VIEW rồi ACTION_INSTALL_PACKAGE, fail thì hướng dẫn thủ công.
  */
 object UpdateManager {
 
     private const val PREFS = "update_state"
-    private const val KEY_DL_ID = "dl_id"
     private const val KEY_DL_PATH = "dl_path"
-    private var receiverRegistered = false
+    private const val KEY_DL_VER = "dl_ver"
     @Volatile private var openedFor = -1L
     private val openLock = Any()
 
-    /** Mở installer ĐÚNG 1 lần cho 1 download id (broadcast + polling có thể cùng bắn). */
+    /** Mở installer ĐÚNG 1 lần cho 1 lần tải (tránh double-tap / resume trùng). */
     private fun openInstallerOnce(ctx: Context, id: Long, f: File) {
         synchronized(openLock) {
             if (openedFor == id) return
@@ -51,7 +45,7 @@ object UpdateManager {
         }
         // xóa trạng thái chờ — tránh resumePendingInstall mở lại installer mỗi lần bật app
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-            .remove(KEY_DL_ID).remove(KEY_DL_PATH).apply()
+            .remove(KEY_DL_PATH).remove(KEY_DL_VER).apply()
         openInstaller(ctx, f)
     }
 
@@ -161,114 +155,91 @@ object UpdateManager {
         downloadNow(appCtx, activity, url, version)
     }
 
+    /** Tải APK bằng OkHttp streaming (đi qua cùng proxy với API) — KHÔNG dùng
+     *  DownloadManager (system process bỏ qua proxy emulator/TV → treo vĩnh viễn).
+     *  Tiến độ hiển thị Toast định kỳ. Xong → mở installer ngay trên main thread. */
     private fun downloadNow(appCtx: Context, activity: Activity, url: String, version: String) {
-        try {
-            val dir = File(appCtx.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "updates").apply { mkdirs() }
-            dir.listFiles()?.forEach { it.delete() }
-            val file = File(dir, "KenhLive-v$version.apk")
-
-            val d = appCtx.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-            val req = DownloadManager.Request(Uri.parse(url))
-                .setTitle("KênhLive v$version")
-                .setDescription("Đang tải bản cập nhật…")
-                .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                .setDestinationUri(Uri.fromFile(file))
-                .setAllowedOverRoaming(true)
-            val id = d.enqueue(req)
-
-            // lưu trạng thái để nếu app chết giữa lúc tải, lần mở sau vẫn mở được installer
-            appCtx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
-                .putLong(KEY_DL_ID, id).putString(KEY_DL_PATH, file.absolutePath).apply()
-
-            registerCompleteReceiver(appCtx)
-            startPolling(appCtx, id, file)
-            Toast.makeText(appCtx, "Đang tải v$version…", Toast.LENGTH_SHORT).show()
-        } catch (e: Exception) {
-            Toast.makeText(appCtx, "Không tải được: ${e.message}", Toast.LENGTH_LONG).show()
-        }
-    }
-
-    private fun registerCompleteReceiver(ctx: Context) {
-        if (receiverRegistered) return
-        receiverRegistered = true
-        val filter = IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE)
-        val receiver = object : BroadcastReceiver() {
-            override fun onReceive(c: Context, i: Intent) {
-                val prefs = c.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-                val id = prefs.getLong(KEY_DL_ID, -1)
-                if (id != -1L && i.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1) == id) {
-                    val path = prefs.getString(KEY_DL_PATH, null)
-                    if (path != null) openInstallerOnce(c, id, File(path))
-                }
-            }
-        }
-        try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                ctx.registerReceiver(receiver, filter, Context.RECEIVER_NOT_EXPORTED)
-            } else {
-                ctx.registerReceiver(receiver, filter)
-            }
-        } catch (e: Exception) { receiverRegistered = false }
-    }
-
-    /** Poll DownloadManager mỗi 2s — KHÔNG phụ thuộc broadcast (TV box hay giết process, broadcast
-     *  DOWNLOAD_COMPLETE mất → installer không bao giờ bật). Chặn 10 phút. */
-    private fun startPolling(ctx: Context, id: Long, file: File) {
+        val dir = File(appCtx.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "updates").apply { mkdirs() }
+        // dọn file cũ nhưng GIỮ file đang chờ cài của version mới nhất (resume)
+        dir.listFiles()?.filter { !it.name.contains(version) }?.forEach { it.delete() }
+        val tmp = File(dir, "KenhLive-v$version.apk.part")
+        val file = File(dir, "KenhLive-v$version.apk")
+        val prefs = appCtx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         CoroutineScope(Dispatchers.IO).launch {
-            val d = ctx.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-            repeat(300) {
-                delay(2000)
-                var status = -1
-                try {
-                    d.query(DownloadManager.Query().setFilterById(id)).use { c ->
-                        if (c.moveToFirst())
-                            status = c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+            try {
+                // persist đường dẫn NGAY — app bị kill giữa lúc tải thì lần sau mở vẫn biết
+                prefs.edit().putString(KEY_DL_PATH, file.absolutePath).putString(KEY_DL_VER, version).apply()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(appCtx, "Bắt đầu tải v$version…", Toast.LENGTH_SHORT).show()
+                }
+
+                val client = OkHttpClient.Builder()
+                    .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                    .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                    .build()
+                val resp = client.newCall(Request.Builder().url(url).build()).execute()
+                if (!resp.isSuccessful) {
+                    resp.close()
+                    prefs.edit().remove(KEY_DL_PATH).remove(KEY_DL_VER).apply()
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(appCtx, "Tải thất bại: HTTP ${resp.code}", Toast.LENGTH_LONG).show()
                     }
-                } catch (e: Exception) { }
-                when (status) {
-                    DownloadManager.STATUS_SUCCESSFUL -> { openInstallerOnce(ctx, id, file); return@launch }
-                    DownloadManager.STATUS_FAILED -> return@launch
+                    return@launch
+                }
+                val total = resp.body?.contentLength() ?: -1L
+                resp.body?.byteStream()?.use { input ->
+                    java.io.FileOutputStream(tmp).use { out ->
+                        val buf = ByteArray(64 * 1024)
+                        var read: Int; var done = 0L; var lastToast = 0L
+                        while (input.read(buf).also { read = it } != -1) {
+                            out.write(buf, 0, read); done += read
+                            val now = System.currentTimeMillis()
+                            if (now - lastToast > 3000) {   // tiến độ mỗi 3s, không spam
+                                lastToast = now
+                                withContext(Dispatchers.Main) {
+                                    if (total > 0) Toast.makeText(appCtx,
+                                        "Đang tải v$version: ${done * 100 / total}% (${done / 1048576}/${total / 1048576}MB)", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                        out.fd.sync()
+                    }
+                }
+                resp.close()
+                if (!tmp.renameTo(file) || file.length() < 1_000_000) {
+                    tmp.delete(); file.delete()
+                    prefs.edit().remove(KEY_DL_PATH).remove(KEY_DL_VER).apply()
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(appCtx, "Tải xong nhưng file lỗi — thử lại", Toast.LENGTH_LONG).show()
+                    }
+                    return@launch
+                }
+                // tải xong → mở installer NGAY (main thread)
+                withContext(Dispatchers.Main) {
+                    openInstallerOnce(appCtx, System.currentTimeMillis(), file)
+                    Toast.makeText(appCtx, "Tải xong! Mở trình cài đặt…", Toast.LENGTH_LONG).show()
+                }
+            } catch (e: Exception) {
+                tmp.delete()
+                prefs.edit().remove(KEY_DL_PATH).remove(KEY_DL_VER).apply()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(appCtx, "Lỗi tải: ${e.message?.take(60)}", Toast.LENGTH_LONG).show()
                 }
             }
         }
     }
 
-    /** Gọi khi app khởi động: nếu có bản tải xong mà chưa cài (app bị kill giữa chừng) → mở installer. */
+    /** Gọi khi app khởi động: nếu có APK đã tải xong mà chưa cài (app bị kill giữa chừng) → mở installer. */
     fun resumePendingInstall(activity: Activity) {
         val appCtx = activity.applicationContext
         val prefs = appCtx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         val path = prefs.getString(KEY_DL_PATH, null) ?: return
         val f = File(path)
-        if (!f.exists() || f.length() < 1_000_000) return
-        val d = appCtx.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-        try {
-            val cur = d.query(DownloadManager.Query().setFilterById(prefs.getLong(KEY_DL_ID, -1)))
-            var status = -1
-            if (cur != null && cur.moveToFirst()) {
-                status = cur.getInt(cur.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
-                cur.close()
-            }
-            when (status) {
-                DownloadManager.STATUS_SUCCESSFUL -> {
-                    prefs.edit().remove(KEY_DL_ID).remove(KEY_DL_PATH).apply()
-                    openInstaller(appCtx, f)
-                }
-                // query sống nhưng id bay (DM bị clear) → fallback: file đủ lớn (>9MB ≈ APK hoàn chỉnh) mới mở
-                DownloadManager.STATUS_FAILED ->
-                    prefs.edit().remove(KEY_DL_ID).remove(KEY_DL_PATH).apply()
-                -1 -> if (f.length() > 9_000_000) {
-                    prefs.edit().remove(KEY_DL_ID).remove(KEY_DL_PATH).apply()
-                    openInstaller(appCtx, f)
-                }
-                else -> { } // còn đang tải (PENDING/RUNNING) → chờ
-            }
-        } catch (e: Exception) {
-            // DownloadManager không trả lời được (một số ROM) → fallback an toàn theo cỡ file
-            if (f.length() > 9_000_000) {
-                prefs.edit().remove(KEY_DL_ID).remove(KEY_DL_PATH).apply()
-                openInstaller(appCtx, f)
-            }
+        if (!f.exists() || f.length() < 1_000_000) {
+            prefs.edit().remove(KEY_DL_PATH).remove(KEY_DL_VER).apply(); return
         }
+        prefs.edit().remove(KEY_DL_PATH).remove(KEY_DL_VER).apply()
+        openInstaller(appCtx, f)
     }
 
     private fun openInstaller(ctx: Context, f: File) {

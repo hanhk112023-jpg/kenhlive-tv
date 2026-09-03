@@ -83,7 +83,14 @@ class SearchFragment : Fragment() {
                 buildChips()
                 applyQuery(input.text.toString())
             } catch (e: Exception) {
-                emptyText.text = "Không tải được danh sách — thử lại"
+                emptyText.text = "Không tải được danh sách — bấm ĐỂ THỬ LẠI"
+                emptyText.visibility = View.VISIBLE
+                emptyText.isFocusable = true
+                emptyText.setOnClickListener {
+                    emptyText.text = "Đang tải..."
+                    loaded = false
+                    loadRooms()
+                }
             }
         }
     }

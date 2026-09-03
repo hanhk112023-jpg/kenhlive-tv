@@ -63,15 +63,26 @@ object SocoliveRepository {
 
     private fun stamp(): String = (System.currentTimeMillis() / 1000).toString()
 
-    private fun get(url: String): String {
+    private fun getOnce(url: String): String {
         val conn = URL(url).openConnection() as HttpURLConnection
         conn.connectTimeout = 8000
         conn.readTimeout = 12000
         conn.setRequestProperty("User-Agent", UA)
         conn.setRequestProperty("Referer", "https://vnres.co/")
         conn.setRequestProperty("Accept", "application/json, text/plain, */*")
-        if (conn.responseCode != 200) throw RuntimeException("HTTP ${conn.responseCode}")
-        return conn.inputStream.bufferedReader().readText()
+        val code = conn.responseCode
+        if (code != 200) { conn.disconnect(); throw java.io.IOException("HTTP $code") }
+        return conn.inputStream.bufferedReader().use { it.readText() }
+    }
+
+    /** Retry 2 lần với backoff — mạng TV chập chờn, lỗi transient là chuyện thường. */
+    private fun get(url: String): String {
+        var last: Exception? = null
+        repeat(3) { i ->
+            try { return getOnce(url) }
+            catch (e: Exception) { last = e; if (i < 2) Thread.sleep(400L * (i + 1)) }
+        }
+        throw last ?: RuntimeException("network error")
     }
 
     fun stripJsonp(raw: String): String {

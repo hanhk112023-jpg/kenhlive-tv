@@ -49,5 +49,19 @@
             android:text="Đang tải..."
             android:textColor="#8890A6"
             android:textSize="13sp" />
+
+        <TextView
+            android:id="@+id/retryBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:padding="10dp"
+            android:text="THỬ LẠI"
+            android:textColor="#FF3B30"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:focusable="true"
+            android:background="?android:attr/selectableItemBackground"
+            android:visibility="gone" />
     </LinearLayout>
 </FrameLayout>

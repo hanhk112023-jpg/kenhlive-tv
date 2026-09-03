@@ -20,6 +20,7 @@ class ScheduleFragment : Fragment() {
     private lateinit var statusText: TextView
     private lateinit var emptyTitle: TextView
     private lateinit var emptyState: View
+    private lateinit var retryBtn: TextView
     private var loadedOnce = false
     private val refreshHandler = Handler(Looper.getMainLooper())
     private var refreshing = false
@@ -71,6 +72,8 @@ class ScheduleFragment : Fragment() {
         statusText = v.findViewById(R.id.statusText)
         emptyTitle = v.findViewById(R.id.emptyTitle)
         emptyState = v.findViewById(R.id.emptyState)
+        retryBtn = v.findViewById(R.id.retryBtn)
+        retryBtn.setOnClickListener { load() }
         adapter = ScheduleAdapter { anchor, match -> openAnchor(anchor, match) }
         v.findViewById<RecyclerView>(R.id.recyclerView).apply {
             layoutManager = LinearLayoutManager(requireContext())
@@ -83,6 +86,7 @@ class ScheduleFragment : Fragment() {
     private fun load() {
         emptyState.visibility = View.VISIBLE
         statusText.visibility = View.VISIBLE
+        retryBtn.visibility = View.GONE
         statusText.text = "Đang tải lịch thi đấu..."
         viewLifecycleOwner.lifecycleScope.launch {
             try {
@@ -96,6 +100,7 @@ class ScheduleFragment : Fragment() {
                 if (items.isEmpty()) {
                     emptyTitle.text = "Sân vắng bóng"
                     statusText.text = "Không có trận nào 7 ngày tới"
+                    retryBtn.visibility = View.GONE
                     emptyState.visibility = View.VISIBLE
                     return@launch
                 }
@@ -105,7 +110,9 @@ class ScheduleFragment : Fragment() {
                 loadedOnce = true
             } catch (e: Exception) {
                 emptyState.visibility = View.VISIBLE
-                statusText.text = "Lỗi tải lịch — vuốt để thử lại"
+                emptyTitle.text = "Không tải được lịch"
+                statusText.text = "Kiểm tra kết nối mạng rồi thử lại"
+                retryBtn.visibility = View.VISIBLE
             }
         }
     }
