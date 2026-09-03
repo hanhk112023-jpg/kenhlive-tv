@@ -104,7 +104,7 @@ object SocoliveRepository {
                     LiveRoom(
                         roomNum = num,
                         blvName = a.optString("nickName", "BLV"),
-                        avatar = a.optString("cutOutIcon", "").ifBlank { a.optString("icon", "") },
+                        avatar = a.optString("icon", "").ifBlank { a.optString("cutOutIcon", "") },
                         viewers = r.optInt("viewCount", 0),
                         matchTitle = match,
                         league = league,
@@ -141,7 +141,7 @@ object SocoliveRepository {
             if (arr != null) for (i in 0 until arr.length()) {
                 val a = arr.optJSONObject(i) ?: continue
                 val room = a.optJSONObject("anchor")?.optString("roomNum", "") ?: ""
-                val icon = a.optString("cutOutIcon", "").ifBlank { a.optString("icon", "") }
+                val icon = a.optString("icon", "").ifBlank { a.optString("cutOutIcon", "") }
                 anchors.add(AnchorInfo(a.optString("nickName", "BLV"), icon, room))
             }
             val timeMs = m.optLong("matchTime", 0L)

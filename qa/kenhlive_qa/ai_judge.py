@@ -6,11 +6,12 @@ BASE = os.environ.get('QA_PROXY', 'https://llm-key-proxy.htuananh153.workers.dev
 KEY  = os.environ.get('QA_PROXY_KEY', 'anhdz')
 UA   = 'curl/8.5.0'
 
-def _chat(model, prompt, imgs=None, max_tokens=2500, temperature=0.1, timeout=180):
+def _chat(model, prompt, imgs=None, max_tokens=8000, temperature=0.1, timeout=170):
     content = [{"type": "text", "text": prompt}]
     for b in (imgs or []):
         content.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64.b64encode(b).decode()}"}})
     payload = {"model": model, "temperature": temperature, "max_tokens": max_tokens,
+               "reasoning_effort": "low",  # glm-5.3-flash: tắt deep-thinking → 5s thay vì 180s, vẫn chấm đúng
                "messages": [{"role": "user", "content": content}]}
     req = urllib.request.Request(BASE, data=json.dumps(payload).encode(),
         headers={"Content-Type": "application/json", "Authorization": "Bearer " + KEY, "User-Agent": UA})
@@ -22,12 +23,7 @@ def _chat(model, prompt, imgs=None, max_tokens=2500, temperature=0.1, timeout=18
             if attempt == 2: raise
             time.sleep(3 * (attempt + 1))
             continue
-        c = (r['choices'][0]['message'].get('content') or '').strip()
-        if c: return c
-        # reasoning model có thể trả rỗng khi hết token → retry với budget gấp đôi
-        payload['max_tokens'] = max(payload['max_tokens'] * 2, 4000)
-        req = urllib.request.Request(BASE, data=json.dumps(payload).encode(),
-            headers={"Content-Type": "application/json", "Authorization": "Bearer " + KEY, "User-Agent": UA})
+        return (r['choices'][0]['message'].get('content') or '').strip()
     return ''
 
 def _jclean(s):
@@ -51,7 +47,7 @@ Nếu màn hình hoàn hảo trả []. CHỈ báo lỗi NHÌN THẤY thật tron
 def judge_screen(label, jpeg):
     """AI chấm 1 screenshot → list findings."""
     try:
-        raw = _chat('deepseek-v4-flash-vision-exp', JUDGE_SYS + f"\n\nĐây là màn hình '{label}' của app. Chấm theo rubric.", [jpeg])
+        raw = _chat('glm-5.3-flash', JUDGE_SYS + f"\n\nĐây là màn hình '{label}' của app. Chấm theo rubric.", [jpeg], max_tokens=8000)
         f = _jclean(raw)
         return f if isinstance(f, list) else []
     except Exception as e:
@@ -70,7 +66,7 @@ def judge_logcat(log_text):
     txt = "\n".join(keep[-400:])[:14000]
     if not txt.strip(): return []
     try:
-        raw = _chat('deepseek-v4-flash-vision-exp', LOG_SYS + "\n\nLOGCAT:\n" + txt, max_tokens=800)
+        raw = _chat('glm-5.3-flash', LOG_SYS + "\n\nLOGCAT:\n" + txt, max_tokens=800)
         f = _jclean(raw)
         return f if isinstance(f, list) else []
     except Exception:
@@ -83,7 +79,7 @@ Trả JSON thuần (mảng): [{"area":"...","severity":"...","issue":"...","evid
 
 def judge_perf(metrics):
     try:
-        raw = _chat('deepseek-v4-flash-vision-exp', PERF_SYS + "\n\nSỐ LIỆU:\n" + json.dumps(metrics, ensure_ascii=False)[:6000], max_tokens=600)
+        raw = _chat('glm-5.3-flash', PERF_SYS + "\n\nSỐ LIỆU:\n" + json.dumps(metrics, ensure_ascii=False)[:6000], max_tokens=600)
         f = _jclean(raw)
         return f if isinstance(f, list) else []
     except Exception:

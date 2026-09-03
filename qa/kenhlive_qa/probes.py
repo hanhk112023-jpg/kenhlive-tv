@@ -29,9 +29,9 @@ class Probes:
     def has_focus(self):
         return self.pkg in sh(f"{self.a} shell dumpsys window 2>/dev/null | grep -m1 mCurrentFocus")
     def current_activity(self):
-        out = sh(f"{self.a} shell dumpsys activity activities 2>/dev/null | grep -m1 mResumedActivity")
-        m = re.search(r'{[^ ]*\s+([^\s/]+)/([^\s}]+)', out)
-        return f"{m.group(1)}.{m.group(2)}" if m else "?"
+        out = sh(f"{self.a} shell dumpsys activity activities 2>/dev/null | grep -m1 -E 'mResumedActivity|topResumedActivity|mFocusedApp'")
+        m = re.search(r'([A-Za-z0-9_.]+)/([.A-Za-z0-9_]+)', out)
+        return f"{m.group(1)}/{m.group(2)}" if m else "?"
 
     # ---------- logcat ----------
     def logcat_baseline(self):
@@ -122,9 +122,16 @@ class Probes:
     # ---------- D-pad ----------
     def key(self, code): sh(f"{self.a} shell input keyevent {code}")
     def focused_view(self):
-        out = sh(f"{self.a} shell dumpsys window 2>/dev/null | grep -m1 'mCurrentFocus'")
-        m = re.search(r'mCurrentFocus=Window\{[^ ]*\s+[^ ]*\s+([^ ]+)', out)
-        return m.group(1) if m else out.strip()[-40:]
+        """View đang focus BÊN TRONG app (uiautomator) — mCurrentFocus chỉ là window, không đổi khi di chuyển trong app."""
+        sh(f"{self.a} shell uiautomator dump /sdcard/fv.xml >/dev/null 2>&1")
+        out = sh(f"{self.a} shell cat /sdcard/fv.xml 2>/dev/null", timeout=20)
+        m = re.search(r'<node[^>]*focused="true"[^>]*/?>', out)
+        if not m: return "?"
+        n = m.group(0)
+        rid = re.search(r'resource-id="([^"]*)"', n)
+        txt = re.search(r'text="([^"]*)"', n)
+        cls = re.search(r'class="([^"]*)"', n)
+        return (rid.group(1) if rid else (cls.group(1) if cls else '?')) + '|' + (txt.group(1)[:20] if txt else '')
 
     def dpad_moves_focus(self, code='22', wait=0.8):
         """RIGHT/D-pad có làm focus di chuyển không (điều hướng TV được không)."""
