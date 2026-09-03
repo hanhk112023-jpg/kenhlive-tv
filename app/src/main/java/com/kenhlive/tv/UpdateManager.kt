@@ -15,6 +15,7 @@ import android.widget.Toast
 import androidx.core.content.FileProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
@@ -39,6 +40,20 @@ object UpdateManager {
     private const val KEY_DL_ID = "dl_id"
     private const val KEY_DL_PATH = "dl_path"
     private var receiverRegistered = false
+    @Volatile private var openedFor = -1L
+    private val openLock = Any()
+
+    /** Mở installer ĐÚNG 1 lần cho 1 download id (broadcast + polling có thể cùng bắn). */
+    private fun openInstallerOnce(ctx: Context, id: Long, f: File) {
+        synchronized(openLock) {
+            if (openedFor == id) return
+            openedFor = id
+        }
+        // xóa trạng thái chờ — tránh resumePendingInstall mở lại installer mỗi lần bật app
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit()
+            .remove(KEY_DL_ID).remove(KEY_DL_PATH).apply()
+        openInstaller(ctx, f)
+    }
 
     fun checkAndUpdate(activity: Activity) {
         val appCtx = activity.applicationContext
@@ -166,6 +181,7 @@ object UpdateManager {
                 .putLong(KEY_DL_ID, id).putString(KEY_DL_PATH, file.absolutePath).apply()
 
             registerCompleteReceiver(appCtx)
+            startPolling(appCtx, id, file)
             Toast.makeText(appCtx, "Đang tải v$version…", Toast.LENGTH_SHORT).show()
         } catch (e: Exception) {
             Toast.makeText(appCtx, "Không tải được: ${e.message}", Toast.LENGTH_LONG).show()
@@ -182,10 +198,7 @@ object UpdateManager {
                 val id = prefs.getLong(KEY_DL_ID, -1)
                 if (id != -1L && i.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1) == id) {
                     val path = prefs.getString(KEY_DL_PATH, null)
-                    if (path != null) {
-                        prefs.edit().remove(KEY_DL_ID).remove(KEY_DL_PATH).apply()
-                        openInstaller(c, File(path))
-                    }
+                    if (path != null) openInstallerOnce(c, id, File(path))
                 }
             }
         }
@@ -198,6 +211,28 @@ object UpdateManager {
         } catch (e: Exception) { receiverRegistered = false }
     }
 
+    /** Poll DownloadManager mỗi 2s — KHÔNG phụ thuộc broadcast (TV box hay giết process, broadcast
+     *  DOWNLOAD_COMPLETE mất → installer không bao giờ bật). Chặn 10 phút. */
+    private fun startPolling(ctx: Context, id: Long, file: File) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val d = ctx.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
+            repeat(300) {
+                delay(2000)
+                var status = -1
+                try {
+                    d.query(DownloadManager.Query().setFilterById(id)).use { c ->
+                        if (c.moveToFirst())
+                            status = c.getInt(c.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
+                    }
+                } catch (e: Exception) { }
+                when (status) {
+                    DownloadManager.STATUS_SUCCESSFUL -> { openInstallerOnce(ctx, id, file); return@launch }
+                    DownloadManager.STATUS_FAILED -> return@launch
+                }
+            }
+        }
+    }
+
     /** Gọi khi app khởi động: nếu có bản tải xong mà chưa cài (app bị kill giữa chừng) → mở installer. */
     fun resumePendingInstall(activity: Activity) {
         val appCtx = activity.applicationContext
@@ -208,18 +243,32 @@ object UpdateManager {
         val d = appCtx.getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
         try {
             val cur = d.query(DownloadManager.Query().setFilterById(prefs.getLong(KEY_DL_ID, -1)))
-            var done = false
+            var status = -1
             if (cur != null && cur.moveToFirst()) {
-                val status = cur.getInt(cur.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
-                done = status == DownloadManager.STATUS_SUCCESSFUL
+                status = cur.getInt(cur.getColumnIndexOrThrow(DownloadManager.COLUMN_STATUS))
                 cur.close()
             }
-            if (done) {
-                // mở 1 lần rồi xóa trạng thái chờ — tránh hỏi lặp lại mỗi lần bật app
+            when (status) {
+                DownloadManager.STATUS_SUCCESSFUL -> {
+                    prefs.edit().remove(KEY_DL_ID).remove(KEY_DL_PATH).apply()
+                    openInstaller(appCtx, f)
+                }
+                // query sống nhưng id bay (DM bị clear) → fallback: file đủ lớn (>9MB ≈ APK hoàn chỉnh) mới mở
+                DownloadManager.STATUS_FAILED ->
+                    prefs.edit().remove(KEY_DL_ID).remove(KEY_DL_PATH).apply()
+                -1 -> if (f.length() > 9_000_000) {
+                    prefs.edit().remove(KEY_DL_ID).remove(KEY_DL_PATH).apply()
+                    openInstaller(appCtx, f)
+                }
+                else -> { } // còn đang tải (PENDING/RUNNING) → chờ
+            }
+        } catch (e: Exception) {
+            // DownloadManager không trả lời được (một số ROM) → fallback an toàn theo cỡ file
+            if (f.length() > 9_000_000) {
                 prefs.edit().remove(KEY_DL_ID).remove(KEY_DL_PATH).apply()
                 openInstaller(appCtx, f)
             }
-        } catch (e: Exception) { }
+        }
     }
 
     private fun openInstaller(ctx: Context, f: File) {
