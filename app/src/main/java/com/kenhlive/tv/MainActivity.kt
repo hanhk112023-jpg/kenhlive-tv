@@ -1,5 +1,6 @@
 package com.kenhlive.tv
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
@@ -40,10 +41,11 @@ class MainActivity : AppCompatActivity() {
         navLive = findViewById(R.id.nav_live)
         navSchedule = findViewById(R.id.nav_schedule)
         viewPager.adapter = object : FragmentStateAdapter(this) {
-            override fun getItemCount() = 2
+            override fun getItemCount() = 3
             override fun createFragment(position: Int): Fragment = when (position) {
                 0 -> LiveFragment()
-                else -> ScheduleFragment()
+                1 -> ScheduleFragment()
+                else -> SearchFragment()
             }
         }
         viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
@@ -54,6 +56,7 @@ class MainActivity : AppCompatActivity() {
         val clickSched = View.OnClickListener { viewPager.setCurrentItem(1, true) }
         navLive?.setOnClickListener(clickLive)
         navSchedule?.setOnClickListener(clickSched)
+        findViewById<View>(R.id.nav_search)?.setOnClickListener { viewPager.setCurrentItem(2, true) }
         findViewById<View>(R.id.tv_live)?.setOnClickListener(clickLive)
         findViewById<View>(R.id.tv_schedule)?.setOnClickListener(clickSched)
 
@@ -74,6 +77,7 @@ class MainActivity : AppCompatActivity() {
             when (target) {
                 "mv" -> startActivity(Intent(this, MultiViewActivity::class.java))
                 "update" -> UpdateManager.debugForceDialog(this)
+                "search" -> viewPager.post { viewPager.setCurrentItem(2, false) }
                 "player" -> CoroutineScope(Dispatchers.Main).launch {
                     try {
                         val g = SocoliveRepository.groupRooms(SocoliveRepository.fetchLiveRooms()).firstOrNull()
@@ -98,13 +102,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun paintNav(pos: Int) {
-        val live = pos == 0
-        navLive?.isSelected = live
-        navSchedule?.isSelected = !live
+        navLive?.isSelected = pos == 0
+        navSchedule?.isSelected = pos == 1
+        findViewById<View>(R.id.nav_search)?.isSelected = pos == 2
         val active = 0xFFFFFFFF.toInt()
         val idle = 0xFFCFCFCF.toInt()
-        findViewById<TextView>(R.id.tv_live)?.setTextColor(if (live) active else idle)
-        findViewById<TextView>(R.id.tv_schedule)?.setTextColor(if (!live) active else idle)
+        findViewById<TextView>(R.id.tv_live)?.setTextColor(if (pos == 0) active else idle)
+        findViewById<TextView>(R.id.tv_schedule)?.setTextColor(if (pos == 1) active else idle)
+        findViewById<TextView>(R.id.tv_search)?.setTextColor(if (pos == 2) active else idle)
+    }
+
+    fun hideKeyboard() {
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        currentFocus?.let { imm.hideSoftInputFromWindow(it.windowToken, 0) }
     }
 
     private val countHandler = Handler(Looper.getMainLooper())

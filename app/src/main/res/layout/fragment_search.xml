@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#000000">
+
+    <!-- Thanh tìm kiếm -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingLeft="24dp"
+        android:paddingRight="24dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="12dp">
+
+        <EditText
+            android:id="@+id/searchInput"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:hint="Tìm trận đấu, giải, BLV…"
+            android:textColorHint="#5A6072"
+            android:textColor="#FFFFFF"
+            android:textSize="19sp"
+            android:fontFamily="sans-serif-medium"
+            android:background="@drawable/search_input_bg"
+            android:paddingLeft="18dp"
+            android:paddingRight="18dp"
+            android:paddingTop="13dp"
+            android:paddingBottom="13dp"
+            android:drawableLeft="@android:drawable/ic_menu_search"
+            android:drawablePadding="12dp"
+            android:inputType="text"
+            android:imeOptions="actionSearch"
+            android:singleLine="true"
+            android:focusable="true" />
+
+        <TextView
+            android:id="@+id/clearBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="12dp"
+            android:text="✕ XÓA"
+            android:textColor="#CFCFCF"
+            android:textSize="14sp"
+            android:fontFamily="@font/oswald"
+            android:letterSpacing="0.06"
+            android:background="@drawable/btn_ghost_bg"
+            android:paddingLeft="18dp"
+            android:paddingRight="18dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="14dp"
+            android:focusable="true"
+            android:clickable="true" />
+    </LinearLayout>
+
+    <!-- Gợi ý nhanh khi trống -->
+    <HorizontalScrollView
+        android:id="@+id/chipRow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingLeft="24dp"
+        android:paddingRight="24dp"
+        android:paddingBottom="10dp"
+        android:scrollbars="none">
+        <LinearLayout
+            android:id="@+id/chipContainer"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
+    </HorizontalScrollView>
+
+    <TextView
+        android:id="@+id/resultCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="26dp"
+        android:layout_marginBottom="8dp"
+        android:textColor="#8890A6"
+        android:textSize="13sp" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/resultList"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingLeft="18dp"
+            android:paddingRight="18dp"
+            android:clipToPadding="false"
+            android:scrollbars="vertical" />
+
+        <TextView
+            android:id="@+id/emptyText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="Gõ để tìm trận đang live"
+            android:textColor="#5A6072"
+            android:textSize="16sp" />
+    </FrameLayout>
+</LinearLayout>
