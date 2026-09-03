@@ -1,5 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <external-files-path name="updates" path="updates/" />
+    <!-- BUG v4.9.0: getExternalFilesDir(DIRECTORY_DOWNLOADS)/updates = files/Download/updates
+         nhưng khai báo cũ path="updates/" → FileProvider ném IllegalArgumentException
+         → installer không mở được (toast 'mở trình quản lý tệp'). Sửa gốc đúng + phủ rộng. -->
+    <external-files-path name="updates" path="Download/updates/" />
+    <external-files-path name="ext_files" path="." />
+    <external-path name="sdcard" path="." />
+    <files-path name="int_files" path="." />
     <cache-path name="cache" path="." />
 </paths>
