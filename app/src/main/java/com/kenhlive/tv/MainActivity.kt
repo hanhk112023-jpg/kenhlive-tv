@@ -63,6 +63,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         UpdateManager.checkAndUpdate(this)
+        UpdateManager.resumePendingInstall(this)
         handleDebugIntent(intent)
         refreshCount()
     }
@@ -72,6 +73,7 @@ class MainActivity : AppCompatActivity() {
         i?.getStringExtra("open")?.let { target ->
             when (target) {
                 "mv" -> startActivity(Intent(this, MultiViewActivity::class.java))
+                "update" -> UpdateManager.debugForceDialog(this)
                 "player" -> CoroutineScope(Dispatchers.Main).launch {
                     try {
                         val g = SocoliveRepository.groupRooms(SocoliveRepository.fetchLiveRooms()).firstOrNull()
