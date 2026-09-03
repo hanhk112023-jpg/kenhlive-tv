@@ -179,6 +179,15 @@ else:
 # ---------- 5.6 SEARCH (v4.8) ----------
 import re as _re
 print('[5.6] Tìm kiếm', flush=True)
+# dọn dialog còn treo từ test update ("Cần quyền cài app" → HỦY) — nếu không nó chặn mọi thao tác sau
+sh(f'{P.a} shell uiautomator dump /sdcard/d0.xml >/dev/null 2>&1')
+d0 = sh(f'{P.a} shell cat /sdcard/d0.xml 2>/dev/null', timeout=20)
+md = _re.search(r'text="HỦY"[^>]*bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', d0) or \
+     _re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"[^>]*text="HỦY"', d0)
+if md:
+    sh(f'{P.a} shell input tap {(int(md.group(1))+int(md.group(3)))//2} {(int(md.group(2))+int(md.group(4)))//2}')
+    time.sleep(1.5)
+    print('  (đã bấm HỦY dialog quyền cài)', flush=True)
 sh(f'adb shell am start -n {PKG}/.MainActivity --es open search'); time.sleep(8)
 png = shot('search_tab')
 if P.is_blank(png): add_finding('Search', 'CRITICAL', 'Tab tìm kiếm blank', '', 'kiểm tra SearchFragment layout')

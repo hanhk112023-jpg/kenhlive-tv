@@ -143,7 +143,7 @@ class MainActivity : AppCompatActivity() {
                 val tv = findViewById<TextView>(R.id.countText)
                 if (n > 0 && tv != null) {
                     tv.visibility = View.VISIBLE
-                    tv.text = "● $n phòng đang live"
+                    tv.text = "● $n phòng live"
                 }
             }
         }
