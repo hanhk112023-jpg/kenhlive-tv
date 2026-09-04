@@ -242,23 +242,63 @@ object UpdateManager {
         openInstaller(appCtx, f)
     }
 
+    /** Mở PackageInstaller TRỰC TIẾP, không đi qua ACTION_VIEW chung (ROM hay đẩy
+     *  'Ứng dụng tệp'/file manager khi resolver chọn nhầm app). Ưu tiên component cài đặt
+     *  hệ thống, cùng lắm mới fallback ACTION_VIEW. */
     private fun openInstaller(ctx: Context, f: File) {
-        try {
-            val uri = FileProvider.getUriForFile(ctx, "${ctx.packageName}.fileprovider", f)
-            val intent = Intent(Intent.ACTION_VIEW)
-                .setDataAndType(uri, "application/vnd.android.package-archive")
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            ctx.startActivity(intent)
+        val uri = try {
+            FileProvider.getUriForFile(ctx, "${ctx.packageName}.fileprovider", f)
         } catch (e: Exception) {
+            Uri.fromFile(f) // ROM lạ không map FileProvider → file:// (cũ nhưng TV box hay chấp nhận)
+        }
+        val pm = ctx.packageManager
+        // 1) component PackageInstaller tường minh (không phải app 'Tệp')
+        val candidates = listOf(
+            "com.android.packageinstaller",
+            "com.google.android.packageinstaller",
+            "com.android.permissioncontroller"
+        )
+        for (pkg in candidates) {
             try {
-                val uri = FileProvider.getUriForFile(ctx, "${ctx.packageName}.fileprovider", f)
-                val alt = Intent("android.intent.action.INSTALL_PACKAGE")
+                val intent = Intent(Intent.ACTION_VIEW)
+                    .setClassName(pkg, "$pkg.PackageInstallerActivity")
                     .setDataAndType(uri, "application/vnd.android.package-archive")
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                ctx.startActivity(alt)
-            } catch (e2: Exception) {
-                Toast.makeText(ctx, "Tải xong! Mở trình quản lý tệp để cài: ${f.name}", Toast.LENGTH_LONG).show()
+                if (intent.resolveActivity(pm) != null) { ctx.startActivity(intent); return }
+            } catch (e: Exception) { }
+        }
+        // 2) resolve ACTION_VIEW nhưng LOẠI app quản lý tệp
+        try {
+            val probe = Intent(Intent.ACTION_VIEW)
+                .setDataAndType(uri, "application/vnd.android.package-archive")
+            val resolvers = pm.queryIntentActivities(probe, 0)
+            val installer = resolvers.firstOrNull { ri ->
+                val n = (ri.activityInfo.packageName + ri.activityInfo.name).lowercase()
+                !n.contains("documentsui") && !n.contains("filemanager") && !n.contains("file") &&
+                    !n.contains("explorer") && !n.contains("archive")
+            } ?: resolvers.firstOrNull()
+            if (installer != null) {
+                val intent = Intent(Intent.ACTION_VIEW)
+                    .setClassName(installer.activityInfo.packageName, installer.activityInfo.name)
+                    .setDataAndType(uri, "application/vnd.android.package-archive")
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                ctx.startActivity(intent)
+                return
             }
+        } catch (e: Exception) { }
+        // 3) ACTION_VIEW thường + INSTALL_PACKAGE fallback cuối
+        try {
+            ctx.startActivity(Intent(Intent.ACTION_VIEW)
+                .setDataAndType(uri, "application/vnd.android.package-archive")
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION))
+            return
+        } catch (e: Exception) { }
+        try {
+            ctx.startActivity(Intent("android.intent.action.INSTALL_PACKAGE")
+                .setDataAndType(uri, "application/vnd.android.package-archive")
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION))
+        } catch (e2: Exception) {
+            Toast.makeText(ctx, "Tải xong! Mở trình quản lý tệp để cài: ${f.name}", Toast.LENGTH_LONG).show()
         }
     }
 }
