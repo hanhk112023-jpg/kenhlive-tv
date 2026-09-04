@@ -20,8 +20,8 @@ android {
         applicationId "com.kenhlive.tv"
         minSdk 21
         targetSdk 34
-        versionCode 48
-        versionName "4.9.3"
+        versionCode 49
+        versionName "4.9.4"
     }
 
     buildTypes {
