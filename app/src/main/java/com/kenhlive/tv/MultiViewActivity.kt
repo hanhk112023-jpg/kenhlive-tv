@@ -105,7 +105,7 @@ class MultiViewActivity : AppCompatActivity() {
                 else -> resolveStream(s)
             }
             if (url == null) {
-                s.label.text = "${s.group?.matchTitle ?: "} · stream lỗi · OK để chọn phòng khác"
+                s.label.text = "${s.group?.matchTitle ?: ""} · stream lỗi · OK để chọn phòng khác"
                 return@launch
             }
             s.player?.release(); s.fx.detach()
