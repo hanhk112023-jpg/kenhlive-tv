@@ -70,7 +70,7 @@ class MultiViewActivity : AppCompatActivity() {
 
             bindSlot(0, groups[idx0], if (initialUrl != null && idx0 == 0) initialUrl else null)
             if (idx1 != idx0) bindSlot(1, groups[idx1], null)
-            else { slots[1].root.visibility = View.GONE }
+            else showWaitingSecond()   // chỉ 1 trận live: giữ chia đôi + tự thêm khi có trận 2
 
             applyFocus()
         }
@@ -88,21 +88,26 @@ class MultiViewActivity : AppCompatActivity() {
 
     private fun bindSlot(i: Int, g: LiveMatchGroup, knownUrl: String?) {
         val s = slots[i]
+        handler.removeCallbacks(secondWatcher)
         s.group = g
         s.room = g.top
         s.label.text = "${g.matchTitle} · ${g.top.blvName}"
         playInSlot(i, knownUrl ?: "FETCH")
     }
 
-    /** knownUrl == "FETCH" → fetch stream theo roomNum. */
+    /** knownUrl == "FETCH" → fetch stream; lỗi → fallback phòng khác cùng trận rồi trận khác. */
     private fun playInSlot(i: Int, knownUrl: String?) {
         val s = slots[i]
         lifecycleScope.launch {
+            s.label.text = (s.group?.matchTitle ?: "Ô ${i+1}") + " · đang tải stream…"
             val url = when {
-                knownUrl == null || knownUrl == "FETCH" -> s.room?.let { SocoliveRepository.fetchStream(it.roomNum) }
-                else -> knownUrl
+                knownUrl != null && knownUrl != "FETCH" -> knownUrl
+                else -> resolveStream(s)
             }
-            if (url == null) { s.label.text = "${s.label.text} · lỗi stream"; return@launch }
+            if (url == null) {
+                s.label.text = "${s.group?.matchTitle ?: "} · stream lỗi · OK để chọn phòng khác"
+                return@launch
+            }
             s.player?.release(); s.fx.detach()
             s.player = ExoPlayer.Builder(this@MultiViewActivity)
                 .setTrackSelector(Enhancer.buildTrackSelector(this@MultiViewActivity))
@@ -126,16 +131,61 @@ class MultiViewActivity : AppCompatActivity() {
         }
     }
 
+    /** Thử phòng đang chọn → các phòng khác cùng trận → các trận khác (tối đa 8 nguồn). */
+    private suspend fun resolveStream(s: Slot): String? {
+        val g = s.group ?: return null
+        val tried = mutableListOf<Pair<LiveMatchGroup, LiveRoom>>()
+        tried += (g to s.room)
+        tried += g.rooms.filter { it != s.room }.map { g to it }
+        for (og in groups.filter { it !== g }) tried += og.rooms.take(2).map { og to it }
+        for ((og, r) in tried.take(8)) {
+            SocoliveRepository.fetchStream(r.roomNum)?.let {
+                s.group = og; s.room = r; s.label.text = fmtLabel(s); return it
+            }
+        }
+        return null
+    }
+
+    /** Chỉ 1 trận đang live: giữ nguyên chia đôi, ô phải hiện thông báo + tự nạp trận 2 khi xuất hiện. */
+    private fun showWaitingSecond() {
+        val s = slots[1]
+        s.player?.release(); s.player = null; s.fx.detach()
+        s.playerView.player = null
+        s.label.text = "Đang chờ trận live thứ 2…"
+        s.root.visibility = View.VISIBLE
+        s.swapHint.visibility = View.GONE
+        handler.postDelayed(secondWatcher, 20_000)
+    }
+
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val secondWatcher = object : Runnable {
+        override fun run() {
+            lifecycleScope.launch {
+                try {
+                    val gs = SocoliveRepository.groupRooms(SocoliveRepository.fetchLiveRooms())
+                    if (gs.size > 1) {
+                        groups = gs
+                        val cur = slots[0].group
+                        val other = gs.firstOrNull { it.matchTitle != cur?.matchTitle } ?: gs[1]
+                        bindSlot(1, other, null)
+                        Toast.makeText(this@MultiViewActivity, "Đã thêm trận thứ 2", Toast.LENGTH_SHORT).show()
+                    } else handler.postDelayed(this, 20_000)
+                } catch (e: Exception) { handler.postDelayed(this, 20_000) }
+            }
+        }
+    }
+
     // ===== Điều khiển =====
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action != KeyEvent.ACTION_DOWN) return super.dispatchKeyEvent(event)
         when (event.keyCode) {
             KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_UP ->
-                { if (slots[1].root.visibility == View.VISIBLE && focused != 0) { focused = 0; applyFocus(); return true } }
+                { if (focused != 0) { focused = 0; applyFocus(); return true } }
             KeyEvent.KEYCODE_DPAD_RIGHT, KeyEvent.KEYCODE_DPAD_DOWN ->
-                { if (slots[1].root.visibility == View.VISIBLE && focused != 1) { focused = 1; applyFocus(); return true } }
+                { if (focused != 1) { focused = 1; applyFocus(); return true } }
             KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER -> {
-                openRoomPicker(focused); return true
+                if (slots[focused].group != null) openRoomPicker(focused)
+                return true
             }
             KeyEvent.KEYCODE_MENU -> { swapSlots(); return true }
         }
@@ -148,7 +198,7 @@ class MultiViewActivity : AppCompatActivity() {
         slots.forEachIndexed { i, s ->
             val isFocus = i == focused
             s.root.foreground = if (isFocus) focusDrawable() else normalDrawable()
-            s.swapHint.visibility = if (isFocus && slots[1].root.visibility == View.VISIBLE) View.VISIBLE else View.GONE
+            s.swapHint.visibility = if (isFocus && s.group != null) View.VISIBLE else View.GONE
         }
         slots[focused].root.requestFocus()
         applyVolumes()
@@ -174,7 +224,7 @@ class MultiViewActivity : AppCompatActivity() {
     }
 
     private fun swapSlots() {
-        if (slots[1].root.visibility != View.VISIBLE) return
+        if (slots[0].group == null || slots[1].group == null) return
         val (a, b) = slots[0] to slots[1]
         val tmpPlayer = a.player; val tmpRoom = a.room; val tmpGroup = a.group; val tmpMuted = a.muted
         a.player = b.player; a.room = b.room; a.group = b.group; a.muted = b.muted
@@ -244,6 +294,7 @@ class MultiViewActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
+        handler.removeCallbacks(secondWatcher)
         slots.forEach { it.player?.release(); it.player = null; it.fx.detach() }
     }
 }
