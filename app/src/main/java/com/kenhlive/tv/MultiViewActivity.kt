@@ -135,7 +135,7 @@ class MultiViewActivity : AppCompatActivity() {
     private suspend fun resolveStream(s: Slot): String? {
         val g = s.group ?: return null
         val tried = mutableListOf<Pair<LiveMatchGroup, LiveRoom>>()
-        tried += (g to s.room)
+        s.room?.let { tried += (g to it) }
         tried += g.rooms.filter { it != s.room }.map { g to it }
         for (og in groups.filter { it !== g }) tried += og.rooms.take(2).map { og to it }
         for ((og, r) in tried.take(8)) {
@@ -160,6 +160,7 @@ class MultiViewActivity : AppCompatActivity() {
     private val handler = android.os.Handler(android.os.Looper.getMainLooper())
     private val secondWatcher = object : Runnable {
         override fun run() {
+            val self = this
             lifecycleScope.launch {
                 try {
                     val gs = SocoliveRepository.groupRooms(SocoliveRepository.fetchLiveRooms())
@@ -169,8 +170,8 @@ class MultiViewActivity : AppCompatActivity() {
                         val other = gs.firstOrNull { it.matchTitle != cur?.matchTitle } ?: gs[1]
                         bindSlot(1, other, null)
                         Toast.makeText(this@MultiViewActivity, "Đã thêm trận thứ 2", Toast.LENGTH_SHORT).show()
-                    } else handler.postDelayed(this, 20_000)
-                } catch (e: Exception) { handler.postDelayed(this, 20_000) }
+                    } else handler.postDelayed(self, 20_000)
+                } catch (e: Exception) { handler.postDelayed(self, 20_000) }
             }
         }
     }
