@@ -3,9 +3,9 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#000000">
+    android:background="@drawable/bg_main_gradient">
 
-    <!-- Thanh tìm kiếm -->
+    <!-- Thanh tìm kiếm premium -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -13,8 +13,8 @@
         android:gravity="center_vertical"
         android:paddingLeft="24dp"
         android:paddingRight="24dp"
-        android:paddingTop="16dp"
-        android:paddingBottom="12dp">
+        android:paddingTop="20dp"
+        android:paddingBottom="14dp">
 
         <EditText
             android:id="@+id/searchInput"
@@ -24,13 +24,13 @@
             android:hint="Tìm trận đấu, giải, BLV…"
             android:textColorHint="#5A6072"
             android:textColor="#FFFFFF"
-            android:textSize="19sp"
+            android:textSize="18sp"
             android:fontFamily="sans-serif-medium"
             android:background="@drawable/search_input_bg"
             android:paddingLeft="18dp"
             android:paddingRight="18dp"
-            android:paddingTop="13dp"
-            android:paddingBottom="13dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="14dp"
             android:drawableLeft="@android:drawable/ic_menu_search"
             android:drawablePadding="12dp"
             android:inputType="text"
@@ -45,7 +45,7 @@
             android:layout_marginLeft="12dp"
             android:text="✕ XÓA"
             android:textColor="#CFCFCF"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:fontFamily="@font/oswald"
             android:letterSpacing="0.06"
             android:background="@drawable/btn_ghost_bg"
@@ -57,14 +57,13 @@
             android:clickable="true" />
     </LinearLayout>
 
-    <!-- Gợi ý nhanh khi trống -->
     <HorizontalScrollView
         android:id="@+id/chipRow"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingLeft="24dp"
         android:paddingRight="24dp"
-        android:paddingBottom="10dp"
+        android:paddingBottom="12dp"
         android:scrollbars="none">
         <LinearLayout
             android:id="@+id/chipContainer"
@@ -78,9 +77,11 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="26dp"
-        android:layout_marginBottom="8dp"
-        android:textColor="#8890A6"
-        android:textSize="13sp" />
+        android:layout_marginBottom="10dp"
+        android:textColor="#64748B"
+        android:fontFamily="sans-serif-medium"
+        android:textSize="12sp"
+        android:letterSpacing="0.04" />
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -94,15 +95,32 @@
             android:paddingLeft="18dp"
             android:paddingRight="18dp"
             android:clipToPadding="false"
-            android:scrollbars="vertical" />
+            android:scrollbars="none" />
 
-        <TextView
-            android:id="@+id/emptyText"
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:text="Gõ để tìm trận đang live"
-            android:textColor="#5A6072"
-            android:textSize="16sp" />
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+
+            <TextView
+                android:id="@+id/emptyText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Gõ để tìm trận đang live"
+                android:textColor="#5A6072"
+                android:fontFamily="sans-serif-medium"
+                android:textSize="15sp"
+                android:gravity="center" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Thử tìm: Ngoại Hạng Anh, Real, BLV A"
+                android:textColor="#3A3A44"
+                android:textSize="12sp" />
+        </LinearLayout>
     </FrameLayout>
 </LinearLayout>

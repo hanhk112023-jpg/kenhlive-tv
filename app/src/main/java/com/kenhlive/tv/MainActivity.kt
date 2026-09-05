@@ -3,20 +3,13 @@ package com.kenhlive.tv
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.View
-import android.view.Window
-import android.view.WindowInsetsController
-import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import kotlinx.coroutines.CoroutineScope
@@ -24,11 +17,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-/** Shell SportzX-style: topbar gradient + bottom nav glass pill nổi (glow border), ViewPager2 2 tab. */
+/** Shell v5: topbar premium + ViewPager2 3 tab + low RAM handling */
 class MainActivity : AppCompatActivity() {
     private lateinit var viewPager: ViewPager2
-    private var navLive: LinearLayout? = null
-    private var navSchedule: LinearLayout? = null
+    private var navLive: View? = null
+    private var navSchedule: View? = null
+    private var navSearch: View? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,6 +34,12 @@ class MainActivity : AppCompatActivity() {
         viewPager = findViewById(R.id.viewPager)
         navLive = findViewById(R.id.nav_live)
         navSchedule = findViewById(R.id.nav_schedule)
+        navSearch = findViewById(R.id.nav_search)
+
+        // Reduce offscreen limit for low RAM
+        val isLowRam = DeviceMode.isLowRamDevice(this)
+        viewPager.offscreenPageLimit = if (isLowRam) 1 else 2
+
         viewPager.adapter = object : FragmentStateAdapter(this) {
             override fun getItemCount() = 3
             override fun createFragment(position: Int): Fragment = when (position) {
@@ -56,11 +56,11 @@ class MainActivity : AppCompatActivity() {
         val clickSched = View.OnClickListener { viewPager.setCurrentItem(1, true) }
         navLive?.setOnClickListener(clickLive)
         navSchedule?.setOnClickListener(clickSched)
-        findViewById<View>(R.id.nav_search)?.setOnClickListener { viewPager.setCurrentItem(2, true) }
+        navSearch?.setOnClickListener { viewPager.setCurrentItem(2, true) }
         findViewById<View>(R.id.tv_live)?.setOnClickListener(clickLive)
         findViewById<View>(R.id.tv_schedule)?.setOnClickListener(clickSched)
+        findViewById<View>(R.id.tv_search)?.setOnClickListener { viewPager.setCurrentItem(2, true) }
 
-        // deep-link: --ei tab N mở thẳng tab N (0 Live / 1 Lịch / 2 Tìm — CI + QA dùng)
         val tabX = intent?.getIntExtra("tab", -1) ?: -1
         if (tabX in 0..2) {
             viewPager.post { viewPager.setCurrentItem(tabX, false) }
@@ -70,9 +70,13 @@ class MainActivity : AppCompatActivity() {
         UpdateManager.resumePendingInstall(this)
         handleDebugIntent(intent)
         refreshCount()
+
+        // Low RAM log
+        if (isLowRam) {
+            android.util.Log.i("KenhLive", "Low RAM device detected: optimizing")
+        }
     }
 
-    // Debug hook (CI screenshot): am start .../.MainActivity --es open mv|player
     private fun handleDebugIntent(i: Intent?) {
         i?.getStringExtra("open")?.let { target ->
             when (target) {
@@ -85,8 +89,10 @@ class MainActivity : AppCompatActivity() {
                         val r = g?.top
                         if (r != null) {
                             val u = SocoliveRepository.fetchStream(r.roomNum)
-                            if (u != null) startActivity(Intent(this@MainActivity, PlayerActivity::class.java)
-                                .putExtra("url", u).putExtra("name", "${r.matchTitle} · ${r.blvName}"))
+                            if (u != null) startActivity(
+                                Intent(this@MainActivity, PlayerActivity::class.java)
+                                    .putExtra("url", u).putExtra("name", "${r.matchTitle} · ${r.blvName}")
+                            )
                         }
                     } catch (e: Exception) {}
                 }
@@ -106,9 +112,9 @@ class MainActivity : AppCompatActivity() {
     private fun paintNav(pos: Int) {
         navLive?.isSelected = pos == 0
         navSchedule?.isSelected = pos == 1
-        findViewById<View>(R.id.nav_search)?.isSelected = pos == 2
+        navSearch?.isSelected = pos == 2
         val active = 0xFFFFFFFF.toInt()
-        val idle = 0xFFCFCFCF.toInt()
+        val idle = 0xFF9CA3AF.toInt()
         findViewById<TextView>(R.id.tv_live)?.setTextColor(if (pos == 0) active else idle)
         findViewById<TextView>(R.id.tv_schedule)?.setTextColor(if (pos == 1) active else idle)
         findViewById<TextView>(R.id.tv_search)?.setTextColor(if (pos == 2) active else idle)
@@ -138,16 +144,35 @@ class MainActivity : AppCompatActivity() {
         countHandler.removeCallbacks(countTick)
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        countHandler.removeCallbacksAndMessages(null)
+    }
+
     private fun refreshCount() {
         CoroutineScope(Dispatchers.IO).launch {
-            val n = try { SocoliveRepository.fetchLiveRooms().size } catch (e: Exception) { -1 }
+            val n = try {
+                SocoliveRepository.fetchLiveRooms().size
+            } catch (e: Exception) {
+                -1
+            }
             withContext(Dispatchers.Main) {
                 val tv = findViewById<TextView>(R.id.countText)
                 if (n > 0 && tv != null) {
                     tv.visibility = View.VISIBLE
-                    tv.text = "● $n phòng live"
+                    tv.text = "$n LIVE"
                 }
             }
+        }
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level >= TRIM_MEMORY_RUNNING_LOW) {
+            // Clear Coil cache
+            try {
+                coil.Coil.imageLoader(this).memoryCache?.clear()
+            } catch (_: Exception) {}
         }
     }
 }

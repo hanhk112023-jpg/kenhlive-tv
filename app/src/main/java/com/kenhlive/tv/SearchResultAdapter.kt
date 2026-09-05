@@ -10,9 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import coil.transform.CircleCropTransformation
 
-/** Danh sách kết quả tìm kiếm: mỗi dòng = 1 trận (avatar BLV top, meta viewers/phòng, badge giải).
- *  Dùng ListAdapter + DiffUtil: khi query đổi, dòng nào giữ được thì GIỮ nguyên view + focus.
- *  notifyDataSetChanged() cũ destroy view đang focus giữa lúc user bấm D-pad = "nhảy lung tung". */
+/** Danh sách kết quả tìm kiếm v5: tối ưu RAM, DiffUtil giữ focus */
 class SearchResultAdapter(
     private val onClick: (LiveMatchGroup) -> Unit
 ) : ListAdapter<LiveMatchGroup, SearchResultAdapter.VH>(DIFF) {
@@ -45,7 +43,8 @@ class SearchResultAdapter(
         h.meta.text = "${g.top.blvName}${if (g.count > 1) " +${g.count - 1} BLV" else ""} · 👁 ${SocoliveRepository.fmtViewers(g.totalViewers)} · ${g.count} phòng"
         h.league.text = g.league
         h.avatar.load(g.top.avatar) {
-            crossfade(80); transformations(CircleCropTransformation())
+            size(100, 100)
+            transformations(CircleCropTransformation())
             placeholder(R.drawable.logo_placeholder); error(R.drawable.logo_placeholder)
         }
         h.itemView.setOnClickListener { onClick(g) }

@@ -1,10 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Multiview 2 trận TRÁI/PHẢI: 2 ô weightSum=2 chia ĐỀU tuyệt đối,
-     hint bar overlay đè lên (không ăn chiều cao → không lệch ô) -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000">
+    android:background="#000000"
+    android:keepScreenOn="true">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -20,6 +19,11 @@
             android:layout_height="match_parent"
             android:layout_weight="1" />
 
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="#1E1E24" />
+
         <include
             android:id="@+id/slot1"
             layout="@layout/item_multiview_cell"
@@ -28,37 +32,83 @@
             android:layout_weight="1" />
     </LinearLayout>
 
-    <!-- Thanh hint overlay -->
+    <!-- Top hint bar premium -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="top"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="#B3000000"
-        android:paddingLeft="16dp"
-        android:paddingRight="16dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp">
+        android:background="#E6000000"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
 
-        <TextView
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="◫ MULTIVIEW"
-            android:textColor="#FF3B30"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:fontFamily="@font/oswald"
-            android:letterSpacing="0.1" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/badge_live"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp">
+
+            <View
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:background="@drawable/bg_live_dot"
+                android:backgroundTint="#FFFFFF" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="6dp"
+                android:text="MULTIVIEW"
+                android:textColor="#FFFFFF"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/oswald"
+                android:letterSpacing="0.08" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/hintText"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="14dp"
-            android:text="TRÁI/PHẢI: chọn trận · OK: đổi trận · MENU: hoán đổi · BACK: thoát"
-            android:textColor="#CFCFCF"
-            android:textSize="12sp" />
+            android:layout_marginLeft="16dp"
+            android:text="←/→: chọn trận · OK: đổi BLV/trận · MENU: hoán đổi · BACK: thoát"
+            android:textColor="#9CA3AF"
+            android:fontFamily="sans-serif-medium"
+            android:textSize="12sp"
+            android:ellipsize="end"
+            android:maxLines="1" />
+
+        <TextView
+            android:id="@+id/lowRamBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="12dp"
+            android:text="TIẾT KIỆM RAM"
+            android:textColor="#FFB020"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/oswald"
+            android:background="@drawable/room_badge_bg"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
+            android:visibility="gone" />
     </LinearLayout>
+
+    <!-- Center divider focus indicator -->
+    <View
+        android:layout_width="2dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:background="#0DFFFFFF" />
 </FrameLayout>

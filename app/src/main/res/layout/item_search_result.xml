@@ -5,19 +5,24 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:background="@drawable/card_focus_bg"
+    android:background="@drawable/card_live_bg"
     android:padding="14dp"
-    android:layout_marginBottom="10dp"
+    android:layout_marginBottom="8dp"
     android:focusable="true"
     android:clickable="true">
 
-    <ImageView
-        android:id="@+id/srAvatar"
-        android:layout_width="52dp"
-        android:layout_height="52dp"
-        android:scaleType="centerCrop"
-        android:background="@drawable/avatar_mask"
-        android:contentDescription="blv" />
+    <FrameLayout
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:background="@drawable/avatar_mask">
+
+        <ImageView
+            android:id="@+id/srAvatar"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:scaleType="centerCrop"
+            android:contentDescription="blv" />
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="0dp"
@@ -32,7 +37,7 @@
             android:layout_height="wrap_content"
             android:textColor="#FFFFFF"
             android:fontFamily="@font/oswald"
-            android:textSize="18sp"
+            android:textSize="16sp"
             android:textStyle="bold"
             android:maxLines="1"
             android:ellipsize="end" />
@@ -43,7 +48,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="3dp"
             android:textColor="#8890A6"
-            android:textSize="13sp"
+            android:textSize="12sp"
             android:maxLines="1"
             android:ellipsize="end" />
     </LinearLayout>
@@ -54,11 +59,12 @@
         android:layout_height="wrap_content"
         android:layout_marginLeft="10dp"
         android:textColor="#FFFFFF"
-        android:textSize="11sp"
+        android:textSize="10sp"
         android:textStyle="bold"
+        android:fontFamily="@font/oswald"
         android:background="@drawable/badge_live"
-        android:paddingLeft="9dp"
-        android:paddingRight="9dp"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
         android:paddingTop="3dp"
         android:paddingBottom="3dp" />
 </LinearLayout>

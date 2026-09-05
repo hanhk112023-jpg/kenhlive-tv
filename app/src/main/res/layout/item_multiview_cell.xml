@@ -7,9 +7,6 @@
     android:focusable="true"
     android:descendantFocusability="blocksDescendants">
 
-    <!-- TextureView (không phải SurfaceView): SurfaceView + ZOOM tràn ra ngoài ô
-         vì surface hệ thống không clip theo parent → live nạp sau đè live trước.
-         TextureView render trong view hierarchy → clip đúng ô + viền đỏ đè lên được. -->
     <androidx.media3.ui.PlayerView
         android:id="@+id/cellPlayer"
         android:layout_width="match_parent"
@@ -18,60 +15,157 @@
         app:surface_type="texture_view"
         app:use_controller="false" />
 
-    <!-- Label trận + BLV -->
-    <TextView
-        android:id="@+id/cellLabel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="top|left"
-        android:layout_marginLeft="10dp"
-        android:layout_marginTop="46dp"
-        android:textColor="#FFFFFF"
-        android:textSize="14sp"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:maxWidth="260dp"
-        android:textStyle="bold"
-        android:fontFamily="@font/oswald"
-        android:background="#B3000000"
-        android:paddingLeft="10dp"
-        android:paddingRight="10dp"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp" />
+    <!-- Loading overlay -->
+    <LinearLayout
+        android:id="@+id/cellLoading"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="#CC000000"
+        android:visibility="gone">
 
-    <!-- Badge ÂM THANH / TĨNH LẶNG (tap để mute từng ô) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Đang tải stream…"
+            android:textColor="#FFFFFF"
+            android:fontFamily="sans-serif-medium"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/cellLoadingSub"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:textColor="#9CA3AF"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- Top meta bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:orientation="vertical"
+        android:background="@drawable/player_top_bg"
+        android:paddingTop="52dp"
+        android:paddingBottom="12dp"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp">
+
+        <TextView
+            android:id="@+id/cellLabel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/oswald"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:shadowColor="#80000000"
+            android:shadowDy="1"
+            android:shadowRadius="4" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/cellLeague"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FF3B30"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:fontFamily="sans-serif-medium"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/cellViewers"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:textColor="#C0C0C0"
+                android:textSize="11sp"
+                android:visibility="gone" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Audio badge top right -->
     <TextView
         android:id="@+id/cellAudio"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="top|right"
-        android:layout_marginRight="10dp"
-        android:layout_marginTop="46dp"
-        android:text="ÂM THANH"
+        android:layout_marginRight="12dp"
+        android:layout_marginTop="56dp"
+        android:text="🔊 100%"
         android:textColor="#FFFFFF"
         android:textSize="11sp"
-        android:background="#B3000000"
+        android:textStyle="bold"
+        android:fontFamily="sans-serif-medium"
+        android:background="#CC000000"
         android:paddingLeft="10dp"
         android:paddingRight="10dp"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp"
         android:focusable="false" />
 
-    <!-- Gợi ý đổi trận khi ô đang focus -->
+    <!-- Focus indicator border handled by foreground, plus center hint -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:background="#CC000000"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:visibility="gone"
+        android:id="@+id/cellFocusOverlay">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="ĐANG CHỌN"
+            android:textColor="#FF3B30"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/oswald"
+            android:letterSpacing="0.08" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="OK để đổi"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Bottom hint -->
     <TextView
         android:id="@+id/cellSwapHint"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="14dp"
+        android:layout_marginBottom="16dp"
         android:text="OK · đổi trận"
         android:textColor="#FFD166"
         android:textSize="12sp"
         android:textStyle="bold"
-        android:background="#B3000000"
-        android:paddingLeft="12dp"
-        android:paddingRight="12dp"
-        android:paddingTop="5dp"
-        android:paddingBottom="5dp"
+        android:background="#CC000000"
+        android:paddingLeft="14dp"
+        android:paddingRight="14dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"
         android:visibility="gone" />
 </FrameLayout>

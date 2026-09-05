@@ -1,43 +1,69 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_main_gradient">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="8dp"
+        android:padding="4dp"
         android:clipToPadding="false"
-        android:scrollbars="vertical" />
+        android:scrollbars="none"
+        android:overScrollMode="never" />
 
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:orientation="vertical"
-        android:gravity="center_horizontal">
+        android:gravity="center_horizontal"
+        android:padding="24dp">
+
+        <FrameLayout
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:background="@drawable/thumb_round_bg">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center"
+                android:text="◷"
+                android:textColor="#FF3B30"
+                android:textSize="28sp" />
+        </FrameLayout>
 
         <TextView
             android:id="@+id/statusText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:text="Đang tải..."
-            android:textColor="#8890A6"
-            android:textSize="15sp" />
+            android:textColor="#94A3B8"
+            android:fontFamily="sans-serif-medium"
+            android:textSize="15sp"
+            android:gravity="center" />
 
         <TextView
             android:id="@+id/retryBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:padding="10dp"
+            android:layout_marginTop="16dp"
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:paddingTop="10dp"
+            android:paddingBottom="10dp"
             android:text="THỬ LẠI"
-            android:textColor="#FF3B30"
-            android:textSize="14sp"
+            android:textColor="#FFFFFF"
+            android:fontFamily="@font/oswald"
+            android:textSize="13sp"
             android:textStyle="bold"
+            android:letterSpacing="0.06"
+            android:background="@drawable/btn_glass_flat"
             android:focusable="true"
-            android:background="?android:attr/selectableItemBackground"
+            android:clickable="true"
             android:visibility="gone" />
     </LinearLayout>
 </FrameLayout>

@@ -22,6 +22,8 @@ object EnhanceSettings {
     fun audioMode(ctx: Context) = sp(ctx).getInt("aq", AQ_AUTO)
     fun setVideoQuality(ctx: Context, v: Int) = sp(ctx).edit().putInt("vq", v).apply()
     fun setAudioMode(ctx: Context, v: Int) = sp(ctx).edit().putInt("aq", v).apply()
+
+    fun isLowRamVideo(ctx: Context): Boolean = DeviceMode.isLowRamDevice(ctx)
 }
 
 object Enhancer {
@@ -29,40 +31,87 @@ object Enhancer {
     /** TrackSelector theo chế độ hình. */
     fun buildTrackSelector(ctx: Context): DefaultTrackSelector {
         val ts = DefaultTrackSelector(ctx)
-        applyVideo(ts, EnhanceSettings.videoQuality(ctx))
+        applyVideo(ts, EnhanceSettings.videoQuality(ctx), ctx)
         return ts
     }
 
-    fun applyVideo(ts: DefaultTrackSelector, mode: Int) {
+    /** TrackSelector riêng cho MultiView — ép bitrate thấp + resolution thấp để ổn định RAM */
+    fun buildTrackSelectorForMultiView(ctx: Context, isLowRam: Boolean = false): DefaultTrackSelector {
+        val ts = DefaultTrackSelector(ctx)
+        try {
+            val b = ts.buildUponParameters()
+                .setPreferredAudioLanguage("vi")
+                .setForceHighestSupportedBitrate(false)
+            if (isLowRam) {
+                // TV RAM thấp: multiview chỉ 720p max, 1.2Mbps
+                b.setMaxVideoSize(1280, 720)
+                b.setMaxVideoBitrate(1_200_000)
+            } else {
+                // TV thường: multiview 720p-1080p, 2Mbps
+                b.setMaxVideoSize(1920, 1080)
+                b.setMaxVideoBitrate(2_000_000)
+            }
+            ts.setParameters(b.build())
+        } catch (_: Exception) {}
+        return ts
+    }
+
+    fun applyVideo(ts: DefaultTrackSelector, mode: Int, ctx: Context? = null) {
         try {
             val b = ts.buildUponParameters()
             b.setPreferredAudioLanguage("vi")
+            val isLowRam = ctx?.let { DeviceMode.isLowRamDevice(it) } ?: false
             when (mode) {
-                // Cao nhất: ép rendition bitrate cao nhất khả dụng
                 EnhanceSettings.VQ_HIGH -> {
-                    b.setForceHighestSupportedBitrate(true)
-                    b.setMaxVideoBitrate(Int.MAX_VALUE)
+                    if (isLowRam) {
+                        // Low RAM dù chọn Cao nhất vẫn cap 1080p / 3Mbps để tránh OOM
+                        b.setForceHighestSupportedBitrate(false)
+                        b.setMaxVideoSize(1920, 1080)
+                        b.setMaxVideoBitrate(3_000_000)
+                    } else {
+                        b.setForceHighestSupportedBitrate(true)
+                        b.setMaxVideoBitrate(Int.MAX_VALUE)
+                    }
                 }
-                // Ổn định: cap ~1.8Mbps → hết giật trên mạng yếu
                 EnhanceSettings.VQ_STABLE -> {
                     b.setForceHighestSupportedBitrate(false)
-                    b.setMaxVideoBitrate(1_800_000)
+                    b.setMaxVideoBitrate(if (isLowRam) 1_200_000 else 1_800_000)
+                    if (isLowRam) b.setMaxVideoSize(1280, 720)
                 }
                 else -> {
                     b.setForceHighestSupportedBitrate(false)
-                    b.setMaxVideoBitrate(Int.MAX_VALUE)
+                    b.setMaxVideoBitrate(if (isLowRam) 2_000_000 else Int.MAX_VALUE)
+                    if (isLowRam) b.setMaxVideoSize(1920, 1080)
                 }
             }
             ts.setParameters(b.build())
         } catch (e: Exception) { /* giữ tham số hiện tại */ }
     }
 
-    /** Buffer lớn → ít rebuffer, adaptive không tụt chất khi mạng dao động nhẹ. */
-    fun buildLoadControl(): LoadControl =
-        DefaultLoadControl.Builder()
-            .setBufferDurationsMs(25_000, 120_000, 1_500, 4_000)
-            .setPrioritizeTimeOverSizeThresholds(true)
-            .build()
+    /** Buffer tối ưu cho từng chế độ — TV RAM thấp giảm buffer mạnh để tiết kiệm RAM */
+    fun buildLoadControl(ctx: Context? = null, isMultiView: Boolean = false): LoadControl {
+        val isLowRam = ctx?.let { DeviceMode.isLowRamDevice(it) } ?: false
+        return when {
+            isMultiView && isLowRam -> DefaultLoadControl.Builder()
+                .setBufferDurationsMs(8_000, 20_000, 800, 1_500)
+                .setPrioritizeTimeOverSizeThresholds(true)
+                .setBackBuffer(0, false)
+                .build()
+            isMultiView -> DefaultLoadControl.Builder()
+                .setBufferDurationsMs(10_000, 30_000, 1_000, 2_000)
+                .setPrioritizeTimeOverSizeThresholds(true)
+                .setBackBuffer(0, false)
+                .build()
+            isLowRam -> DefaultLoadControl.Builder()
+                .setBufferDurationsMs(10_000, 30_000, 1_000, 2_000)
+                .setPrioritizeTimeOverSizeThresholds(true)
+                .build()
+            else -> DefaultLoadControl.Builder()
+                .setBufferDurationsMs(15_000, 60_000, 1_200, 3_000)
+                .setPrioritizeTimeOverSizeThresholds(true)
+                .build()
+        }
+    }
 
     fun buildMediaItem(url: String): MediaItem = MediaItem.fromUri(url)
 }

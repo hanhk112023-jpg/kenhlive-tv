@@ -3,16 +3,23 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingTop="14dp"
-    android:paddingBottom="4dp">
+    android:paddingTop="16dp"
+    android:paddingBottom="8dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingLeft="16dp"
-        android:paddingRight="16dp">
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:paddingBottom="8dp">
+
+        <View
+            android:layout_width="3dp"
+            android:layout_height="20dp"
+            android:background="@drawable/badge_live"
+            android:layout_marginRight="10dp" />
 
         <TextView
             android:id="@+id/rowTitle"
@@ -21,17 +28,39 @@
             android:layout_height="wrap_content"
             android:textColor="#FFFFFF"
             android:fontFamily="@font/oswald"
-            android:textSize="24sp"
-            android:textStyle="bold" />
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.02" />
+
+        <TextView
+            android:id="@+id/rowCount"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#64748B"
+            android:fontFamily="sans-serif-medium"
+            android:textSize="13sp"
+            android:visibility="gone" />
     </LinearLayout>
 
-    <!-- scroll ngang, clipToPadding=false để card cuối "peek" hở mép trái/phải -->
+    <!-- RecyclerView ngang thay vì HorizontalScrollView để recycle view -> tiết kiệm RAM -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rowRecycler"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:clipToPadding="false"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:overScrollMode="never" />
+
+    <!-- Legacy container giữ để tương thích nếu code cũ fallback -->
     <HorizontalScrollView
         android:id="@+id/rowScroll"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:scrollbars="none"
         android:clipToPadding="false"
+        android:visibility="gone"
         android:paddingLeft="10dp"
         android:paddingRight="0dp">
 

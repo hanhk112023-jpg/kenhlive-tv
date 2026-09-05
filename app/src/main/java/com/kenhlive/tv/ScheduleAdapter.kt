@@ -12,7 +12,7 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import coil.transform.CircleCropTransformation
 
-/** Lịch trình: header ngày (accent bar + count) + card trận xen kẽ tông + hàng BLV chỉ avatar (tap reveal). */
+/** Lịch trình v5: tối ưu RAM, Coil size nhỏ, focus stable */
 class ScheduleAdapter(
     private val onAnchorClick: (AnchorInfo, ScheduleMatch) -> Unit,
     private val onMatchClick: (ScheduleMatch) -> Unit = {}
@@ -69,9 +69,7 @@ class ScheduleAdapter(
             }
             is ScheduleMatch -> {
                 val vh = h as MatchVH
-                // xen kẽ 2 tông nền card (selector có viền đỏ khi focus — chuẩn TV D-pad)
                 vh.itemView.setBackgroundResource(if (pos % 2 == 0) R.drawable.card_a_focus else R.drawable.card_b_focus)
-                // OK/Enter trên card: 1 BLV có phòng → play luôn; nhiều → dialog chọn
                 vh.itemView.setOnClickListener { onMatchClick(item) }
                 vh.name.text = "${item.host} vs ${item.guest}"
                 vh.league.text = item.league
@@ -87,17 +85,18 @@ class ScheduleAdapter(
                 }
                 vh.badge.visibility = View.VISIBLE
                 vh.hostIcon.load(item.hostIcon) {
-                    crossfade(80); error(R.drawable.logo_placeholder); placeholder(R.drawable.logo_placeholder)
+                    size(64, 64)
+                    error(R.drawable.logo_placeholder); placeholder(R.drawable.logo_placeholder)
                 }
                 vh.guestIcon.load(item.guestIcon) {
-                    crossfade(80); error(R.drawable.logo_placeholder); placeholder(R.drawable.logo_placeholder)
+                    size(64, 64)
+                    error(R.drawable.logo_placeholder); placeholder(R.drawable.logo_placeholder)
                 }
-                // crest giải cùng hàng nhỏ
                 vh.crest.load(item.leagueCrest) {
-                    crossfade(60); error(R.drawable.logo_placeholder); placeholder(R.drawable.logo_placeholder)
-                } // dùng leagueCrest nếu có
+                    size(48, 48)
+                    error(R.drawable.logo_placeholder); placeholder(R.drawable.logo_placeholder)
+                }
 
-                // hàng BLV: chỉ avatar tròn (bỏ label tên) → tap reveal tên qua contentDescription
                 vh.anchorRow.removeAllViews()
                 val inf = LayoutInflater.from(vh.anchorRow.context)
                 item.anchors.take(MAX_ANCHORS).forEach { a ->
@@ -105,7 +104,7 @@ class ScheduleAdapter(
                     val img = av.findViewById<ImageView>(R.id.anchorAvatar)
                     img.contentDescription = a.nickName
                     img.load(a.icon) {
-                        crossfade(80)
+                        size(64, 64)
                         transformations(CircleCropTransformation())
                         error(R.drawable.logo_placeholder)
                         placeholder(R.drawable.logo_placeholder)
@@ -113,13 +112,11 @@ class ScheduleAdapter(
                     val live = a.roomNum.isNotBlank()
                     img.alpha = if (live) 1f else 0.4f
                     av.setOnClickListener { if (live) onAnchorClick(a, item) }
-                    // tap-to-reveal: giữ name trong tag, dùng Toast nhỏ khi click
                     av.setOnLongClickListener {
                         android.widget.Toast.makeText(av.context, a.nickName, android.widget.Toast.LENGTH_SHORT).show(); true
                     }
                     vh.anchorRow.addView(av)
                 }
-                // "+N" nếu dư BLV
                 val extra = item.anchors.size - MAX_ANCHORS
                 if (extra > 0) {
                     val av = inf.inflate(R.layout.item_anchor_plus, vh.anchorRow, false)

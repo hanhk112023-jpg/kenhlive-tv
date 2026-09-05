@@ -3,7 +3,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000">
+    android:background="#000000"
+    android:keepScreenOn="true">
 
     <androidx.media3.ui.PlayerView
         android:id="@+id/playerView"
@@ -12,24 +13,29 @@
         android:background="#000000"
         app:use_controller="false" />
 
-    <!-- Top overlay: back + multi + title (tự ẩn khi xem) -->
+    <!-- Top overlay -->
     <LinearLayout
         android:id="@+id/topOverlay"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:padding="14dp"
+        android:padding="16dp"
         android:background="@drawable/player_top_bg">
 
         <TextView
             android:id="@+id/backBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="12dp"
+            android:paddingLeft="14dp"
+            android:paddingRight="14dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
             android:text="← Quay lại"
             android:textColor="#FFFFFF"
-            android:textSize="15sp"
+            android:fontFamily="sans-serif-medium"
+            android:textSize="14sp"
+            android:textStyle="bold"
             android:background="@drawable/btn_glass_flat"
             android:focusable="true"
             android:clickable="true" />
@@ -45,11 +51,12 @@
             android:textSize="12sp"
             android:textStyle="bold"
             android:background="@drawable/btn_glass_flat"
-            android:paddingLeft="13dp"
-            android:paddingRight="13dp"
-            android:paddingTop="7dp"
-            android:paddingBottom="7dp"
-            android:focusable="true" />
+            android:paddingLeft="14dp"
+            android:paddingRight="14dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:focusable="true"
+            android:clickable="true" />
 
         <TextView
             android:id="@+id/qualityBtn"
@@ -62,11 +69,12 @@
             android:textSize="12sp"
             android:textStyle="bold"
             android:background="@drawable/btn_glass_flat"
-            android:paddingLeft="13dp"
-            android:paddingRight="13dp"
-            android:paddingTop="7dp"
-            android:paddingBottom="7dp"
-            android:focusable="true" />
+            android:paddingLeft="14dp"
+            android:paddingRight="14dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:focusable="true"
+            android:clickable="true" />
 
         <TextView
             android:id="@+id/playerTitle"
@@ -74,11 +82,52 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:textColor="#FFFFFF"
-            android:textSize="17sp"
+            android:fontFamily="@font/oswald"
+            android:textSize="16sp"
             android:textStyle="bold"
             android:paddingStart="18dp"
             android:paddingEnd="18dp"
             android:ellipsize="end"
-            android:maxLines="1" />
+            android:maxLines="1"
+            android:shadowColor="#80000000"
+            android:shadowDy="1"
+            android:shadowRadius="4" />
+    </LinearLayout>
+
+    <!-- Bottom info (optional, auto hide with top) -->
+    <LinearLayout
+        android:id="@+id/bottomOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:padding="16dp"
+        android:background="#33000000">
+
+        <View
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:background="@drawable/bg_live_dot" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:text="LIVE"
+            android:textColor="#FF3B30"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/oswald" />
+
+        <TextView
+            android:id="@+id/playerHint"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="16dp"
+            android:text="BACK: thoát · MENU: chất lượng"
+            android:textColor="#8A8A9A"
+            android:textSize="11sp"
+            android:fontFamily="sans-serif" />
     </LinearLayout>
 </FrameLayout>

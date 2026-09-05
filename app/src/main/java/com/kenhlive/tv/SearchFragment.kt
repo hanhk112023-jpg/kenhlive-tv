@@ -24,7 +24,7 @@ import coil.transform.CircleCropTransformation
 import kotlinx.coroutines.launch
 import java.text.Normalizer
 
-/** Tab TÌM KIẾM: lọc trận/BLV/giải đang live theo từ khóa không dấu, gợi ý nhanh giải hot. */
+/** Tab TÌM KIẾM v5: tối ưu RAM, debounce handler cleanup, Coil size nhỏ */
 class SearchFragment : Fragment() {
 
     private lateinit var input: EditText
@@ -50,15 +50,19 @@ class SearchFragment : Fragment() {
         chipRow = v.findViewById(R.id.chipRow)
 
         searchAdapter = SearchResultAdapter { g -> openGroup(g) }
-        resultList.layoutManager = LinearLayoutManager(requireContext())
-        resultList.adapter = searchAdapter
+        resultList.apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            adapter = searchAdapter
+            setHasFixedSize(true)
+            setItemViewCacheSize(6)
+        }
 
         input.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
             override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
             override fun afterTextChanged(s: Editable?) {
                 debounce.removeCallbacksAndMessages(null)
-                debounce.postDelayed({ applyQuery(s?.toString().orEmpty()) }, 250)
+                debounce.postDelayed({ applyQuery(s?.toString().orEmpty()) }, 300)
             }
         })
         input.setOnEditorActionListener { _, actionId, _ ->
@@ -71,6 +75,11 @@ class SearchFragment : Fragment() {
         }
         loadRooms()
         return v
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        debounce.removeCallbacksAndMessages(null)
     }
 
     private fun loadRooms() {
@@ -95,13 +104,13 @@ class SearchFragment : Fragment() {
         }
     }
 
-    /** Chip giải hot: bấm là điền từ khóa luôn (TV keyboard bất tiện). */
     private fun buildChips() {
         chipContainer.removeAllViews()
         val leagues = groups.groupBy { it.league }.entries
             .sortedByDescending { e -> e.value.sumOf { g -> g.totalViewers } }
             .take(8).map { it.key }.filter { it.isNotBlank() }
         if (leagues.isEmpty()) { chipRow.visibility = View.GONE; return }
+        chipRow.visibility = View.VISIBLE
         val inf = LayoutInflater.from(requireContext())
         leagues.forEach { lg ->
             val chip = inf.inflate(R.layout.item_search_chip, chipContainer, false) as TextView
@@ -132,7 +141,6 @@ class SearchFragment : Fragment() {
         searchAdapter.submitList(res)
     }
 
-    /** Bỏ dấu tiếng Việt + lowercase để "real" khớp "Real", "chuc" khớp "Chúc". */
     private fun norm(s: String): String {
         val n = Normalizer.normalize(s, Normalizer.Form.NFD).replace("\\p{Mn}+".toRegex(), "")
         return n.lowercase().replace("đ", "d")
@@ -151,7 +159,8 @@ class SearchFragment : Fragment() {
             opt.findViewById<TextView>(R.id.roomName).text = r.blvName
             opt.findViewById<TextView>(R.id.roomMeta).text = "👁 ${SocoliveRepository.fmtViewers(r.viewers)}"
             opt.findViewById<ImageView>(R.id.roomAvatar).load(r.avatar) {
-                crossfade(80); transformations(CircleCropTransformation())
+                size(80, 80)
+                transformations(CircleCropTransformation())
                 placeholder(R.drawable.logo_placeholder); error(R.drawable.logo_placeholder)
             }
             opt.setOnClickListener { openRoom(r); dlg.dismiss(); (activity as? MainActivity)?.hideKeyboard() }

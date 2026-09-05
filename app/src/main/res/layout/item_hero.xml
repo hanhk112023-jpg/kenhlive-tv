@@ -17,23 +17,56 @@
         android:layout_height="match_parent"
         android:background="@drawable/hero_scrim" />
 
+    <!-- Top live badge -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|left"
+        android:layout_marginLeft="32dp"
+        android:layout_marginTop="24dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/badge_live"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp">
+
+        <View
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:background="@drawable/bg_live_dot"
+            android:backgroundTint="#FFFFFF" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="6dp"
+            android:text="TRỰC TIẾP"
+            android:textColor="#FFFFFF"
+            android:fontFamily="@font/oswald"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.08" />
+    </LinearLayout>
+
     <!-- overlay text trái, đáy -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:gravity="bottom"
-        android:paddingLeft="36dp"
-        android:paddingRight="36dp"
-        android:paddingBottom="30dp">
+        android:paddingLeft="32dp"
+        android:paddingRight="32dp"
+        android:paddingBottom="28dp">
 
         <TextView
             android:id="@+id/heroLeague"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#FF4A40"
+            android:textColor="#FF3B30"
             android:fontFamily="sans-serif-medium"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:textStyle="bold"
             android:letterSpacing="0.12"
             android:shadowColor="#E6000000"
@@ -44,12 +77,13 @@
             android:id="@+id/heroTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:layout_marginRight="220dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginRight="200dp"
             android:textColor="#FFFFFF"
             android:fontFamily="@font/oswald"
-            android:textSize="34sp"
+            android:textSize="36sp"
             android:textStyle="bold"
+            android:lineSpacingExtra="2dp"
             android:shadowColor="#CC000000"
             android:shadowDy="3"
             android:shadowRadius="10"
@@ -60,11 +94,12 @@
             android:id="@+id/heroBlv"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginRight="220dp"
-            android:textColor="#FFFFFF"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="200dp"
+            android:textColor="#F0F0F0"
             android:fontFamily="sans-serif-medium"
-            android:textSize="15sp"
+            android:textSize="14sp"
+            android:textStyle="bold"
             android:maxLines="1"
             android:ellipsize="end" />
 
@@ -72,18 +107,18 @@
             android:id="@+id/heroTagline"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:layout_marginRight="220dp"
-            android:textColor="#D0D0D0"
-            android:fontFamily="sans-serif-medium"
-            android:textSize="14sp"
+            android:layout_marginTop="4dp"
+            android:layout_marginRight="200dp"
+            android:textColor="#A0A0B0"
+            android:fontFamily="sans-serif"
+            android:textSize="13sp"
             android:maxLines="1"
             android:ellipsize="end" />
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="18dp"
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
@@ -95,41 +130,55 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:background="@drawable/btn_hero_play"
-                android:paddingLeft="26dp"
-                android:paddingRight="26dp"
-                android:paddingTop="11dp"
-                android:paddingBottom="11dp"
+                android:paddingLeft="22dp"
+                android:paddingRight="22dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
                 android:clickable="true"
                 android:focusable="true">
-
-                <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/ic_play_triangle"
-                    android:contentDescription="play" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="9dp"
+                    android:text="▶"
+                    android:textColor="#000000"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="8dp"
                     android:text="XEM NGAY"
-                    android:textColor="#FFFFFF"
+                    android:textColor="#000000"
                     android:fontFamily="@font/oswald"
-                    android:textSize="15sp"
+                    android:textSize="14sp"
                     android:textStyle="bold"
                     android:letterSpacing="0.06" />
             </LinearLayout>
 
             <!-- meta: viewers · N phòng -->
-            <TextView
-                android:id="@+id/heroViewers"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="18dp"
-                android:textColor="#FFFFFF"
-                android:fontFamily="@font/oswald"
-                android:textSize="17sp"
-                android:fontFeatureSettings="tnum" />
+                android:layout_marginLeft="16dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/room_badge_bg"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp">
+
+                <TextView
+                    android:id="@+id/heroViewers"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#FFFFFF"
+                    android:fontFamily="sans-serif-medium"
+                    android:textSize="13sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>

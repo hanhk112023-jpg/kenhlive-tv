@@ -1,129 +1,185 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:background="#000000">
+    android:background="@drawable/bg_main_gradient">
 
-    <!-- TOP BAR chuẩn TV: logo + wordmark | tab text underline | live chip -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#11000000" />
+
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="64dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:paddingLeft="28dp"
-        android:paddingRight="28dp">
+        android:layout_height="match_parent"
+        android:orientation="vertical">
 
-        <ImageView
-            android:layout_width="34dp"
-            android:layout_height="34dp"
-            android:src="@mipmap/ic_launcher"
-            android:contentDescription="@string/app_name" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
-            android:text="KênhLive"
-            android:textColor="#FFFFFF"
-            android:fontFamily="@font/oswald"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.02" />
-
-        <Space android:layout_width="36dp" android:layout_height="match_parent" />
-
+        <!-- TOP BAR Premium -->
         <LinearLayout
-            android:id="@+id/nav_live"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:paddingLeft="14dp"
-            android:paddingRight="14dp"
-            android:background="@drawable/tab_underline_bg"
-            android:clickable="true"
-            android:focusable="true"
-            android:nextFocusLeft="@id/nav_live">
-            <TextView
-                android:id="@+id/tv_live"
+            android:layout_width="match_parent"
+            android:layout_height="68dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/topbar_bg"
+            android:paddingLeft="24dp"
+            android:paddingRight="24dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <FrameLayout
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="@drawable/thumb_round_bg">
+
+                    <ImageView
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:src="@mipmap/ic_launcher"
+                        android:contentDescription="@string/app_name" />
+                </FrameLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:text="KênhLive"
+                    android:textColor="#FFFFFF"
+                    android:fontFamily="@font/oswald"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.03" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="20dp"
+                    android:layout_marginLeft="16dp"
+                    android:layout_marginRight="4dp"
+                    android:background="#1E1E24" />
+            </LinearLayout>
+
+            <Space android:layout_width="20dp" android:layout_height="match_parent" />
+
+            <LinearLayout
+                android:id="@+id/nav_live"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:background="@drawable/tab_underline_bg"
+                android:clickable="true"
+                android:focusable="true"
+                android:nextFocusLeft="@id/nav_live">
+                <TextView
+                    android:id="@+id/tv_live"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="TRỰC TIẾP"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/oswald"
+                    android:letterSpacing="0.08"
+                    android:textColor="#FFFFFF" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/nav_schedule"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:background="@drawable/tab_underline_bg"
+                android:clickable="true"
+                android:focusable="true">
+                <TextView
+                    android:id="@+id/tv_schedule"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="LỊCH TRÌNH"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/oswald"
+                    android:letterSpacing="0.08"
+                    android:textColor="#CFCFCF" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/nav_search"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:orientation="vertical"
+                android:gravity="center"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
+                android:background="@drawable/tab_underline_bg"
+                android:clickable="true"
+                android:focusable="true"
+                android:nextFocusRight="@id/nav_search">
+                <TextView
+                    android:id="@+id/tv_search"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="TÌM KIẾM"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/oswald"
+                    android:letterSpacing="0.08"
+                    android:textColor="#CFCFCF" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1" />
+
+            <FrameLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="TRỰC TIẾP"
-                android:textSize="17sp"
-                android:textStyle="bold"
-                android:fontFamily="@font/oswald"
-                android:letterSpacing="0.08"
-                android:textColor="#FFFFFF" />
+                android:background="@drawable/room_badge_bg"
+                android:paddingLeft="12dp"
+                android:paddingRight="12dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp">
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <View
+                        android:layout_width="8dp"
+                        android:layout_height="8dp"
+                        android:background="@drawable/bg_live_dot" />
+
+                    <TextView
+                        android:id="@+id/countText"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="8dp"
+                        android:textColor="#FFFFFF"
+                        android:textSize="13sp"
+                        android:fontFamily="sans-serif-medium"
+                        android:textStyle="bold"
+                        android:singleLine="true"
+                        android:ellipsize="end"
+                        android:maxWidth="180dp"
+                        android:visibility="gone" />
+                </LinearLayout>
+            </FrameLayout>
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/nav_schedule"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:paddingLeft="14dp"
-            android:paddingRight="14dp"
-            android:background="@drawable/tab_underline_bg"
-            android:clickable="true"
-            android:focusable="true">
-            <TextView
-                android:id="@+id/tv_schedule"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="LỊCH TRÌNH"
-                android:textSize="17sp"
-                android:textStyle="bold"
-                android:fontFamily="@font/oswald"
-                android:letterSpacing="0.08"
-                android:textColor="#CFCFCF" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/nav_search"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:paddingLeft="14dp"
-            android:paddingRight="14dp"
-            android:background="@drawable/tab_underline_bg"
-            android:clickable="true"
-            android:focusable="true"
-            android:nextFocusRight="@id/nav_search">
-            <TextView
-                android:id="@+id/tv_search"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="TÌM KIẾM"
-                android:textSize="17sp"
-                android:textStyle="bold"
-                android:fontFamily="@font/oswald"
-                android:letterSpacing="0.08"
-                android:textColor="#CFCFCF" />
-        </LinearLayout>
-
-        <View
-            android:layout_width="0dp"
-            android:layout_height="1dp"
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/viewPager"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
             android:layout_weight="1" />
-
-        <TextView
-            android:id="@+id/countText"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="#DCDCDC"
-            android:textSize="15sp"
-            android:singleLine="true"
-            android:ellipsize="end"
-            android:maxWidth="170dp"
-            android:visibility="gone" />
     </LinearLayout>
-
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/viewPager"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1" />
-</LinearLayout>
+</FrameLayout>

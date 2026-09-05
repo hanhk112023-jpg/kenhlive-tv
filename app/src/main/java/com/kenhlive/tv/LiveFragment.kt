@@ -20,7 +20,7 @@ import coil.load
 import coil.transform.CircleCropTransformation
 import kotlinx.coroutines.launch
 
-/** Trang chủ Netflix-style theo TRẬN: hero top 5 trận + rows cuộn ngang theo giải, click trận mở chọn phòng. */
+/** Trang chủ Netflix-style v5: hero top 5 trận + rows cuộn dọc, mỗi row là RecyclerView ngang recycle */
 class LiveFragment : Fragment() {
     private lateinit var adapter: HomeAdapter
     private lateinit var statusText: TextView
@@ -33,7 +33,7 @@ class LiveFragment : Fragment() {
     private val autoRefresh = object : Runnable {
         override fun run() {
             silentRefresh()
-            refreshHandler.postDelayed(this, 3 * 60_000L) // 3 phút — playlist GH cũng cập nhật 5'
+            refreshHandler.postDelayed(this, 3 * 60_000L)
         }
     }
 
@@ -44,6 +44,15 @@ class LiveFragment : Fragment() {
         statusText = v.findViewById(R.id.statusText)
         retryBtn = v.findViewById(R.id.retryBtn)
         recyclerView = v.findViewById(R.id.recyclerView)
+
+        // Optimize RecyclerView
+        recyclerView.apply {
+            setHasFixedSize(false)
+            setItemViewCacheSize(6)
+            isNestedScrollingEnabled = true
+            // shared pool for nested rows is handled inside HomeAdapter
+        }
+
         retryBtn.setOnClickListener { load() }
         load()
         return v
@@ -61,7 +70,11 @@ class LiveFragment : Fragment() {
         refreshHandler.removeCallbacks(autoRetry)
     }
 
-    /** Fetch lại âm thầm: giữ nguyên vị trí cuộn, chỉ cập nhật dữ liệu. */
+    override fun onDestroyView() {
+        super.onDestroyView()
+        refreshHandler.removeCallbacksAndMessages(null)
+    }
+
     private fun silentRefresh() {
         if (refreshing || !isAdded || !::adapter.isInitialized) return
         refreshing = true
@@ -73,8 +86,10 @@ class LiveFragment : Fragment() {
                     rooms = newRooms; groups = newGroups
                     adapter.submit(newGroups)
                 }
-            } catch (e: Exception) { /* giữ dữ liệu cũ */ }
-            finally { refreshing = false }
+            } catch (e: Exception) {
+            } finally {
+                refreshing = false
+            }
         }
     }
 
@@ -104,7 +119,6 @@ class LiveFragment : Fragment() {
                 statusText.text = "Không tải được danh sách trận\n(kiểm tra kết nối mạng)"
                 statusText.visibility = View.VISIBLE
                 retryBtn.visibility = View.VISIBLE
-                // tự thử lại 1 lần sau 15s (mạng chập chờn hay hồi nhanh)
                 refreshHandler.postDelayed(autoRetry, 15_000)
             }
         }
@@ -114,9 +128,10 @@ class LiveFragment : Fragment() {
         if (isAdded && retryBtn.visibility == View.VISIBLE) load()
     }
 
-    // Mở dialog chọn phòng trong trận (nếu 1 phòng thì play luôn)
     private fun openGroupPicker(g: LiveMatchGroup) {
-        if (g.count == 1) { openRoom(g.top, g.rooms); return }
+        if (g.count == 1) {
+            openRoom(g.top, g.rooms); return
+        }
         val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_room_picker, null)
         view.findViewById<TextView>(R.id.dialogTitle).text = g.matchTitle
         view.findViewById<TextView>(R.id.dialogLeague).text = "${g.league} · ${g.count} phòng live"
@@ -127,7 +142,7 @@ class LiveFragment : Fragment() {
             opt.findViewById<TextView>(R.id.roomName).text = r.blvName
             opt.findViewById<TextView>(R.id.roomMeta).text = "👁 ${SocoliveRepository.fmtViewers(r.viewers)}"
             opt.findViewById<ImageView>(R.id.roomAvatar).load(r.avatar) {
-                crossfade(80); transformations(CircleCropTransformation())
+                transformations(CircleCropTransformation())
                 placeholder(R.drawable.logo_placeholder); error(R.drawable.logo_placeholder)
             }
             opt.setOnClickListener { openRoom(r, g.rooms); dialog?.dismiss() }
@@ -148,16 +163,19 @@ class LiveFragment : Fragment() {
                 Toast.makeText(context, "Stream chưa sẵn sàng — thử lại", Toast.LENGTH_SHORT).show()
                 return@launch
             }
-            startActivity(Intent(requireContext(), PlayerActivity::class.java)
-                .putExtra("url", url)
-                .putExtra("name", "${room.matchTitle} · ${room.blvName}"))
+            startActivity(
+                Intent(requireContext(), PlayerActivity::class.java)
+                    .putExtra("url", url)
+                    .putExtra("name", "${room.matchTitle} · ${room.blvName}")
+            )
         }
     }
 
-    /** Nhấn GIỮ card = mở multiview 2 trận, ô đầu là trận này. */
     private fun toggleMultiGroup(g: LiveMatchGroup) {
-        startActivity(Intent(requireContext(), MultiViewActivity::class.java)
-            .putExtra("initial_room", "${g.top.matchTitle} · ${g.top.blvName}"))
+        startActivity(
+            Intent(requireContext(), MultiViewActivity::class.java)
+                .putExtra("initial_room", "${g.top.matchTitle} · ${g.top.blvName}")
+        )
     }
 
     fun openMultiView() {

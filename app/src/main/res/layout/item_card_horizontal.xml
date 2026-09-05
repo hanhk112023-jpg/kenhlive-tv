@@ -1,118 +1,160 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/cardRoot"
-    android:layout_width="300dp"
+    android:layout_width="280dp"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:layout_margin="8dp"
+    android:layout_margin="6dp"
     android:background="@drawable/card_focus_bg"
-    android:padding="6dp"
+    android:padding="5dp"
     android:focusable="true"
     android:clickable="true">
 
-    <!-- THUMBNAIL 16:9 -->
+    <!-- THUMBNAIL 16:9 premium -->
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="169dp">
+        android:layout_height="158dp"
+        android:background="@drawable/thumb_round_bg">
 
         <ImageView
             android:id="@+id/cardThumb"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="centerCrop"
-            android:background="@drawable/thumb_round_bg"
             android:contentDescription="@string/app_name" />
 
-        <!-- LIVE badge góc trên-trái -->
-        <TextView
+        <!-- Top gradient -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_gravity="top"
+            android:background="@drawable/player_top_bg" />
+
+        <!-- LIVE badge -->
+        <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="top|left"
-            android:layout_margin="8dp"
-            android:text="● LIVE"
-            android:textColor="#FFFFFF"
+            android:layout_margin="10dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
             android:background="@drawable/badge_live"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            android:paddingLeft="9dp"
+            android:paddingRight="9dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp">
 
-        <!-- badge N phòng góc trên-phải -->
+            <View
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:background="@drawable/bg_live_dot"
+                android:backgroundTint="#FFFFFF" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="5dp"
+                android:text="LIVE"
+                android:textColor="#FFFFFF"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:fontFamily="@font/oswald"
+                android:letterSpacing="0.06" />
+        </LinearLayout>
+
+        <!-- badge N phòng -->
         <TextView
             android:id="@+id/roomBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="top|right"
-            android:layout_margin="8dp"
+            android:layout_margin="10dp"
             android:textColor="#FFFFFF"
             android:fontFamily="sans-serif-medium"
-            android:textSize="12sp"
+            android:textSize="11sp"
+            android:textStyle="bold"
             android:background="@drawable/room_badge_bg"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp"
+            android:paddingLeft="9dp"
+            android:paddingRight="9dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
             android:visibility="gone" />
 
-        <!-- scrim đáy + avatar BLV nhỏ + viewers -->
+        <!-- Bottom scrim + meta -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="44dp"
+            android:layout_height="48dp"
             android:layout_gravity="bottom"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:background="@drawable/thumb_bottom_scrim"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp">
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp">
 
-            <ImageView
-                android:id="@+id/cardAvatar"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:scaleType="centerCrop"
-                android:background="@drawable/avatar_mask"
-                android:contentDescription="blv" />
+            <FrameLayout
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:background="@drawable/avatar_mask">
 
-            <TextView
-                android:id="@+id/cardBlv"
+                <ImageView
+                    android:id="@+id/cardAvatar"
+                    android:layout_width="30dp"
+                    android:layout_height="30dp"
+                    android:scaleType="centerCrop"
+                    android:contentDescription="blv" />
+            </FrameLayout>
+
+            <LinearLayout
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="7dp"
-                android:textColor="#FFFFFF"
-                android:fontFamily="sans-serif-medium"
-                android:textSize="13sp"
-                android:ellipsize="end"
-                android:maxLines="1" />
+                android:layout_marginLeft="8dp"
+                android:orientation="vertical">
 
-            <TextView
-                android:id="@+id/cardViewers"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="#FFFFFF"
-                android:fontFamily="@font/oswald"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:fontFeatureSettings="tnum" />
+                <TextView
+                    android:id="@+id/cardBlv"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="#FFFFFF"
+                    android:fontFamily="sans-serif-medium"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:ellipsize="end"
+                    android:maxLines="1" />
+
+                <TextView
+                    android:id="@+id/cardViewers"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#D0D0D0"
+                    android:fontFamily="sans-serif"
+                    android:textSize="11sp"
+                    android:maxLines="1" />
+            </LinearLayout>
         </LinearLayout>
     </FrameLayout>
 
-    <!-- TÊN TRẬN 2 dòng + giải -->
-    <TextView
-        android:id="@+id/cardMatch"
+    <!-- Info below thumb -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="9dp"
-        android:layout_marginLeft="2dp"
-        android:layout_marginRight="2dp"
-        android:textColor="#FFFFFF"
-        android:fontFamily="@font/oswald"
-        android:textSize="17sp"
-        android:textStyle="bold"
-        android:ellipsize="end"
-        android:maxLines="2"
-        android:minLines="2" />
+        android:orientation="vertical"
+        android:paddingLeft="4dp"
+        android:paddingRight="4dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="6dp">
 
+        <TextView
+            android:id="@+id/cardMatch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:fontFamily="@font/oswald"
+            android:textSize="15sp"
+            android:textStyle="bold"
+            android:lineSpacingExtra="1dp"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:minLines="2" />
+    </LinearLayout>
 </LinearLayout>

@@ -1,13 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Left to right dark fade -->
     <item>
         <shape>
-            <gradient android:startColor="#F2000000" android:centerColor="#66000000" android:endColor="#00000000" android:angle="0" />
+            <gradient
+                android:startColor="#F2000000"
+                android:centerColor="#A6000000"
+                android:endColor="#00000000"
+                android:angle="0"
+                android:type="linear" />
         </shape>
     </item>
+    <!-- Bottom up fade -->
     <item>
         <shape>
-            <gradient android:startColor="#00000000" android:endColor="#E6000000" android:angle="270" />
+            <gradient
+                android:startColor="#00000000"
+                android:centerColor="#33000000"
+                android:endColor="#E6000000"
+                android:angle="270"
+                android:type="linear" />
+        </shape>
+    </item>
+    <!-- Subtle vignette -->
+    <item>
+        <shape>
+            <gradient
+                android:startColor="#20000000"
+                android:endColor="#00000000"
+                android:centerX="0.5"
+                android:centerY="0.3"
+                android:gradientRadius="90%"
+                android:type="radial" />
         </shape>
     </item>
 </layer-list>

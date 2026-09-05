@@ -20,24 +20,33 @@ class PlayerActivity : AppCompatActivity() {
     private var player: ExoPlayer? = null
     private val handler = Handler(Looper.getMainLooper())
     private var topOverlay: View? = null
-    private val hideOverlay = Runnable { topOverlay?.visibility = View.GONE }
+    private var bottomOverlay: View? = null
+    private val hideOverlay = Runnable {
+        topOverlay?.visibility = View.GONE
+        bottomOverlay?.visibility = View.GONE
+    }
     private val audioFx = AudioEnhancer(this)
     private var url: String = ""
     private var streamRetries = 0
+    private var isLowRam = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_player)
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+
+        isLowRam = DeviceMode.isLowRamDevice(this)
 
         url = intent.getStringExtra("url") ?: ""
         val name = intent.getStringExtra("name") ?: "Kênh"
 
         topOverlay = findViewById(R.id.topOverlay)
+        bottomOverlay = findViewById(R.id.bottomOverlay)
         findViewById<TextView>(R.id.playerTitle).text = name
 
         player = ExoPlayer.Builder(this)
             .setTrackSelector(Enhancer.buildTrackSelector(this))
-            .setLoadControl(Enhancer.buildLoadControl())
+            .setLoadControl(Enhancer.buildLoadControl(this, isMultiView = false))
             .build().apply {
                 setMediaItem(Enhancer.buildMediaItem(url))
                 prepare()
@@ -45,17 +54,24 @@ class PlayerActivity : AppCompatActivity() {
                 addListener(object : Player.Listener {
                     override fun onPlayerError(error: PlaybackException) {
                         val isNet = error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ||
-                                    error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ||
-                                    error.errorCodeName.startsWith("ERROR_CODE_IO")
+                                error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ||
+                                error.errorCodeName.startsWith("ERROR_CODE_IO")
                         if (isNet && streamRetries < 3) {
-                            // stream hay chập chờn đầu phiên → tự thử lại tối đa 3 lần (2s/4s/6s)
                             streamRetries++
-                            android.widget.Toast.makeText(this@PlayerActivity,
-                                "Mạng chập chờn — tự thử lại lần $streamRetries…", android.widget.Toast.LENGTH_SHORT).show()
+                            android.widget.Toast.makeText(
+                                this@PlayerActivity,
+                                "Mạng chập chờn — tự thử lại lần $streamRetries…", android.widget.Toast.LENGTH_SHORT
+                            ).show()
                             handler.postDelayed({ player?.prepare() }, 2000L * streamRetries)
                         } else {
                             val msg = if (isNet) "Mạng lỗi — thoát ra vào lại sau" else "Stream lỗi: ${error.errorCodeName}"
                             android.widget.Toast.makeText(this@PlayerActivity, msg, android.widget.Toast.LENGTH_LONG).show()
+                        }
+                    }
+
+                    override fun onPlaybackStateChanged(state: Int) {
+                        if (state == Player.STATE_READY) {
+                            // hide loading if any
                         }
                     }
                 })
@@ -64,12 +80,12 @@ class PlayerActivity : AppCompatActivity() {
         pv.player = player
         pv.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
 
-        // audio fx gắn sau khi player có session
         player?.let { p ->
             p.addListener(object : Player.Listener {
-                override fun onEvents(p: Player, events: Player.Events) {
-                    val sid = (p as? ExoPlayer)?.audioSessionId ?: 0
+                override fun onEvents(player: Player, events: Player.Events) {
+                    val sid = (player as? ExoPlayer)?.audioSessionId ?: 0
                     if (sid != 0 && audioFx.notAttached) {
+                        // Low RAM: skip heavy FX if needed? Keep but lightweight
                         audioFx.attach(sid, EnhanceSettings.audioMode(this@PlayerActivity))
                     }
                 }
@@ -87,6 +103,7 @@ class PlayerActivity : AppCompatActivity() {
         }
 
         topOverlay?.visibility = View.VISIBLE
+        bottomOverlay?.visibility = View.VISIBLE
         hideOnce()
     }
 
@@ -95,9 +112,10 @@ class PlayerActivity : AppCompatActivity() {
         val aq = EnhanceSettings.audioMode(this)
         val vqNames = arrayOf("Tự động", "Cao nhất (nét)", "Ổn định (mượt)")
         val aqNames = arrayOf("Chuẩn", "Bass mạnh", "Rõ tiếng BLV", "Ban đêm (êm)", "Tự động (to & hay)")
-        val msg = "Hình: ${vqNames[vq]}\nÂm: ${aqNames[aq]}\n\nChọn hình:\n" +
-            vqNames.mapIndexed { i, n -> if (i == vq) "[x] $n" else "[ ] $n" }.joinToString("\n") +
-            "\n\nChọn âm:\n" + aqNames.mapIndexed { i, n -> if (i == aq) "[x] $n" else "[ ] $n" }.joinToString("\n")
+        val lowRamNote = if (isLowRam) "\n\n⚠ TV RAM thấp: tự giới hạn 1080p/720p để ổn định\n" else ""
+        val msg = "Hình: ${vqNames[vq]}\nÂm: ${aqNames[aq]}$lowRamNote\n\nChọn hình:\n" +
+                vqNames.mapIndexed { i, n -> if (i == vq) "[x] $n" else "[ ] $n" }.joinToString("\n") +
+                "\n\nChọn âm:\n" + aqNames.mapIndexed { i, n -> if (i == aq) "[x] $n" else "[ ] $n" }.joinToString("\n")
         AlertDialog.Builder(this)
             .setTitle("Chất lượng hình & âm")
             .setMessage(msg)
@@ -111,9 +129,9 @@ class PlayerActivity : AppCompatActivity() {
         val next = (EnhanceSettings.videoQuality(this) + 1) % 3
         EnhanceSettings.setVideoQuality(this, next)
         (player?.trackSelector as? androidx.media3.exoplayer.trackselection.DefaultTrackSelector)
-            ?.let { Enhancer.applyVideo(it, next) }
+            ?.let { Enhancer.applyVideo(it, next, this) }
         val names = arrayOf("Tự động", "Cao nhất", "Ổn định")
-        android.widget.Toast.makeText(this, "Hình: ${names[next]}", android.widget.Toast.LENGTH_SHORT).show()
+        android.widget.Toast.makeText(this, "Hình: ${names[next]}${if (isLowRam) " (giới hạn RAM)" else ""}", android.widget.Toast.LENGTH_SHORT).show()
     }
 
     private fun cycleAudio() {
@@ -126,16 +144,25 @@ class PlayerActivity : AppCompatActivity() {
 
     private fun showOverlay() {
         topOverlay?.visibility = View.VISIBLE
+        bottomOverlay?.visibility = View.VISIBLE
         hideOnce()
     }
 
     private fun hideOnce() {
         handler.removeCallbacks(hideOverlay)
-        handler.postDelayed(hideOverlay, 3500)
+        handler.postDelayed(hideOverlay, 4000)
     }
 
     override fun dispatchKeyEvent(e: KeyEvent): Boolean {
         showOverlay()
+        if (e.action == KeyEvent.ACTION_DOWN) {
+            when (e.keyCode) {
+                KeyEvent.KEYCODE_MENU, KeyEvent.KEYCODE_M -> {
+                    showQualityDialog()
+                    return true
+                }
+            }
+        }
         return super.dispatchKeyEvent(e)
     }
 
@@ -144,11 +171,45 @@ class PlayerActivity : AppCompatActivity() {
         return super.dispatchTouchEvent(ev)
     }
 
+    override fun onPause() {
+        super.onPause()
+        handler.removeCallbacks(hideOverlay)
+        try {
+            player?.pause()
+        } catch (_: Exception) {}
+    }
+
     override fun onStop() {
         super.onStop()
         handler.removeCallbacks(hideOverlay)
         audioFx.detach()
-        player?.release()
+        try {
+            player?.release()
+        } catch (_: Exception) {}
         player = null
+        findViewById<PlayerView>(R.id.playerView)?.player = null
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        handler.removeCallbacksAndMessages(null)
+        audioFx.detach()
+        try {
+            player?.release()
+        } catch (_: Exception) {}
+        player = null
+    }
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level >= TRIM_MEMORY_RUNNING_LOW) {
+            // Reduce buffer if needed - player already uses low RAM config
+            if (isLowRam && level >= TRIM_MEMORY_RUNNING_CRITICAL) {
+                try {
+                    player?.pause()
+                    android.widget.Toast.makeText(this, "RAM thấp: tạm dừng để tránh crash", Toast.LENGTH_SHORT).show()
+                } catch (_: Exception) {}
+            }
+        }
     }
 }

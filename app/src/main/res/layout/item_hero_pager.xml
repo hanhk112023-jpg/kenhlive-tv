@@ -6,5 +6,16 @@
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/heroPager"
         android:layout_width="match_parent"
-        android:layout_height="400dp" />
+        android:layout_height="440dp" />
+
+    <!-- Dot indicators -->
+    <LinearLayout
+        android:id="@+id/heroDots"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|right"
+        android:layout_marginRight="32dp"
+        android:layout_marginBottom="28dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical" />
 </FrameLayout>

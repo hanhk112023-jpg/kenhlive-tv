@@ -1,15 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Palette SportzX (đào từ SportzX_3.1v.apk res/values/colors.xml) -->
+    <!-- Palette SportzX + KênhLive Premium v5 -->
     <color name="accent_amber">#FFB020</color>
     <color name="accent_cyan">#00F0FF</color>
     <color name="accent_green">#00E676</color>
     <color name="accent_indigo">#6366F1</color>
     <color name="accent_purple">#9D4EDD</color>
-    <color name="accent_red">#FF2A5F</color>
+    <color name="accent_red">#FF3B30</color>
+    <color name="accent_red_dark">#D92B21</color>
+    <color name="accent_red_glow">#33FF3B30</color>
+
     <color name="text_primary">#F8FAFC</color>
     <color name="text_secondary">#94A3B8</color>
     <color name="text_muted">#64748B</color>
     <color name="text_dark">#0F172A</color>
+
     <color name="bg_deep">#090B14</color>
+    <color name="bg_black">#000000</color>
+    <color name="bg_surface">#121212</color>
+    <color name="bg_surface2">#1A1A1E</color>
+    <color name="bg_card">#15151A</color>
+    <color name="bg_topbar">#0D0D12</color>
+    <color name="bg_topbar_glass">#E60D0D12</color>
+
+    <color name="border_subtle">#1E1E24</color>
+    <color name="border_focus">#FFFFFF</color>
+    <color name="border_focus_red">#FF3B30</color>
+
+    <!-- Gradients for backgrounds -->
+    <color name="gradient_start">#0A0A12</color>
+    <color name="gradient_end">#000000</color>
 </resources>
