@@ -129,7 +129,7 @@ class SearchFragment : Fragment() {
         }
         resultCount.text = if (q.isEmpty()) "${groups.size} trận đang live"
                            else "${res.size} kết quả cho “${qRaw.trim()}”"
-        searchAdapter.submit(res)
+        searchAdapter.submitList(res)
     }
 
     /** Bỏ dấu tiếng Việt + lowercase để "real" khớp "Real", "chuc" khớp "Chúc". */

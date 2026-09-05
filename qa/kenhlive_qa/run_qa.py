@@ -387,6 +387,44 @@ del_n(len(q)+6 if q else 6); time.sleep(2)
 sh(f'{P.a} shell uiautomator dump /sdcard/s3.xml >/dev/null 2>&1')
 sx3 = sh(f'{P.a} shell cat /sdcard/s3.xml 2>/dev/null', timeout=20)
 add_check('Xóa query hiện lại danh sách', sx3.count('srMatch') > 0, f'{sx3.count("srMatch")} dòng')
+
+# ---------- 5.6b D-TRONG TAB TÌM: focus + query đổi khi đang focus dòng kết quả ----------
+# (bug "nhảy lung tung" phiên bản tab Tìm: submitList/DiffUtil phải giữ focus, không destroy view)
+print('[5.6b] D-pad trong tab Tìm kiếm', flush=True)
+sh(f'{P.a} shell input keyevent 4'); time.sleep(1)          # đóng keyboard
+sh(f'{P.a} shell input text "e"'); time.sleep(3)            # query ngắn → nhiều kết quả
+def focused_sr():
+    sh(f'{P.a} shell uiautomator dump /sdcard/sf.xml >/dev/null 2>&1')
+    sf = sh(f'{P.a} shell cat /sdcard/sf.xml 2>/dev/null', timeout=20)
+    mf = _re.search(r'<node[^>]*focused="true"[^>]*/?>', sf)
+    if not mf: return False, None, '?'
+    tag = mf.group(0)
+    mb = _re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', tag)
+    return ('srCard' in tag or 'srMatch' in tag), (mb.groups() if mb else None), tag[:100]
+in_sr = False
+for _ in range(6):
+    P.key('20'); time.sleep(0.5)                            # DOWN từ ô search xuống danh sách
+    in_sr, _, _ = focused_sr()
+    if in_sr: break
+add_check('Tab Tìm — focus vào được dòng kết quả', in_sr, 'srCard nhận focus' if in_sr else 'DOWN 6 lần không tới kết quả')
+if in_sr:
+    ok_b, bb, _ = focused_sr()
+    # gõ thêm ký tự khi focus ĐANG ở dòng kết quả → danh sách lọc lại → focus phải còn trên 1 dòng
+    sh(f'{P.a} shell input keyevent KEYCODE_MOVE_END'); sh(f'{P.a} shell input text "a"'); time.sleep(3)
+    ok_a, ba, what_a = focused_sr()
+    add_check('Tab Tìm — query đổi khi đang focus: không mất focus', ok_a,
+              'vẫn trên dòng kết quả' if ok_a else f'mất/nhảy: {what_a}')
+    if not ok_a: add_finding('Search', 'HIGH', 'Gõ ký tự khi focus dòng kết quả làm mất focus',
+                             what_a, 'SearchResultAdapter phải dùng ListAdapter/DiffUtil (submitList), KHÔNG notifyDataSetChanged')
+    # DOWN x6 trong danh sách — không được văng khỏi vùng kết quả
+    lost = 0
+    for _ in range(6):
+        P.key('20'); time.sleep(0.4)
+        okk, _, _ = focused_sr()
+        if not okk: lost += 1
+    add_check('Tab Tìm — DOWN x6 luôn trên dòng kết quả', lost == 0, f'{lost}/6 lần rời khỏi danh sách')
+    if lost: add_finding('Search', 'MEDIUM', 'DOWN trong kết quả tìm có lúc nhảy ra ngoài', f'{lost}/6', 'kiểm tra focus chain input↔list')
+    sh(f'{P.a} shell input keyevent KEYCODE_MOVE_END'); del_n(2); time.sleep(1)
 cr = P.crashes()
 if cr: add_finding('Search', 'CRITICAL', 'Crash khi tìm kiếm', cr[0]['detail'][:200], 'fix stacktrace')
 
