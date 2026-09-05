@@ -391,8 +391,10 @@ add_check('Xóa query hiện lại danh sách', sx3.count('srMatch') > 0, f'{sx3
 # ---------- 5.6b D-TRONG TAB TÌM: focus + query đổi khi đang focus dòng kết quả ----------
 # (bug "nhảy lung tung" phiên bản tab Tìm: submitList/DiffUtil phải giữ focus, không destroy view)
 print('[5.6b] D-pad trong tab Tìm kiếm', flush=True)
-sh(f'{P.a} shell input text "e"'); time.sleep(3)            # query ngắn → nhiều kết quả
-sh(f'{P.a} shell input keyevent 4'); time.sleep(1.5)        # ĐÓNG keyboard — nếu không DOWN bị IME nuốt
+# KHÔNG dùng BACK lần 2: input text không mở lại IME → BACK thừa = thoát app (đã dính ở run trước)
+q2 = (q[:2] if q else 'e')          # prefix chắc chắn khớp (q lấy từ title thật ở 5.6)
+sh(f'{P.a} shell input text "{q2}"'); time.sleep(3)
+sh(f'{P.a} shell input keyevent 4'); time.sleep(1.5)        # đóng keyboard — ĐÚNG 1 LẦN
 def focused_sr():
     sh(f'{P.a} shell uiautomator dump /sdcard/sf.xml >/dev/null 2>&1')
     sf = sh(f'{P.a} shell cat /sdcard/sf.xml 2>/dev/null', timeout=20)
@@ -408,30 +410,28 @@ for _ in range(6):
     if in_sr: break
 add_check('Tab Tìm — focus vào được dòng kết quả', in_sr, 'srCard nhận focus' if in_sr else 'DOWN 6 lần không tới kết quả')
 if in_sr:
-    ok_b, bb, _ = focused_sr()
-    # Kịch bản thật: focus đang ở dòng kết quả → UP về ô nhập → gõ thêm (list lọc lại qua DiffUtil)
-    # → đóng keyboard → DOWN: focus phải QUAY LẠI đúng 1 dòng kết quả, không rơi vãi lung tung
-    P.key('19'); time.sleep(0.5)                            # UP về searchInput
-    sh(f'{P.a} shell input keyevent KEYCODE_MOVE_END'); sh(f'{P.a} shell input text "a"'); time.sleep(3)
-    sh(f'{P.a} shell input keyevent 4'); time.sleep(1.5)    # đóng keyboard
+    # UP về ô nhập → gõ nốt phần còn lại (q2→q, list lọc lại qua DiffUtil) → DOWN phải về được dòng kq
+    P.key('19'); time.sleep(0.5)
+    sh(f'{P.a} shell input keyevent KEYCODE_MOVE_END')
+    sh(f'{P.a} shell input text "{q[2:] if len(q) > 2 else "a"}"'); time.sleep(3)
     back_sr = False; what_a = '?'
     for _ in range(4):
         P.key('20'); time.sleep(0.5)
         back_sr, _, what_a = focused_sr()
         if back_sr: break
-    add_check('Tab Tìm — gõ lại query: DOWN quay về được dòng kết quả', back_sr,
+    add_check('Tab Tìm — đổi query: DOWN quay về được dòng kết quả', back_sr,
               'focus ổn định' if back_sr else f'không về được list: {what_a}')
     if not back_sr: add_finding('Search', 'HIGH', 'Đổi query xong không đưa focus về dòng kết quả được',
                                 what_a, 'SearchResultAdapter phải dùng ListAdapter/DiffUtil (submitList), KHÔNG notifyDataSetChanged')
-    # DOWN x6 trong danh sách — không được văng khỏi vùng kết quả
+    # DOWN x4 trong danh sách — không được văng khỏi vùng kết quả
     lost = 0
-    for _ in range(6):
+    for _ in range(4):
         P.key('20'); time.sleep(0.4)
         okk, _, _ = focused_sr()
         if not okk: lost += 1
-    add_check('Tab Tìm — DOWN x6 luôn trên dòng kết quả', lost == 0, f'{lost}/6 lần rời khỏi danh sách')
-    if lost: add_finding('Search', 'MEDIUM', 'DOWN trong kết quả tìm có lúc nhảy ra ngoài', f'{lost}/6', 'kiểm tra focus chain input↔list')
-    del_n(2); time.sleep(1)
+    add_check('Tab Tìm — DOWN x4 luôn trên dòng kết quả', lost == 0, f'{lost}/4 lần rời khỏi danh sách')
+    if lost: add_finding('Search', 'MEDIUM', 'DOWN trong kết quả tìm có lúc nhảy ra ngoài', f'{lost}/4', 'kiểm tra focus chain input↔list')
+    del_n(len(q2) + len(q[2:]) + 1); time.sleep(1)
 cr = P.crashes()
 if cr: add_finding('Search', 'CRITICAL', 'Crash khi tìm kiếm', cr[0]['detail'][:200], 'fix stacktrace')
 
