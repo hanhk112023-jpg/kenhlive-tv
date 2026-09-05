@@ -7,11 +7,15 @@
     android:focusable="true"
     android:descendantFocusability="blocksDescendants">
 
+    <!-- TextureView (không phải SurfaceView): SurfaceView + ZOOM tràn ra ngoài ô
+         vì surface hệ thống không clip theo parent → live nạp sau đè live trước.
+         TextureView render trong view hierarchy → clip đúng ô + viền đỏ đè lên được. -->
     <androidx.media3.ui.PlayerView
         android:id="@+id/cellPlayer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="#000000"
+        app:surface_type="texture_view"
         app:use_controller="false" />
 
     <!-- Label trận + BLV -->

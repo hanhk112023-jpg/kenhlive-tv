@@ -140,6 +140,20 @@ if png and png2:
     add_check('Đổi focus trận (DOWN)', d > 0.3, f'pixel diff {d:.1f}%')
     if d <= 0.3: add_finding('Multiview', 'HIGH', 'Bấm DOWN không đổi trận focus', '2 screenshot giống hệt', 'kiểm tra key listener trong MultiViewActivity, focus border update')
 
+# 4b. CHỐNG TRÀN Ô: live nạp sau không được đè live trước (SurfaceView+ZOOM từng gây vậy)
+#     → kiểm viền đỏ ô focus còn nhìn thấy (nhiều px #FF3B30), PIL thuần (QA chỉ cài pillow)
+if png:
+    from PIL import Image as _IM
+    _im = _IM.open(png).convert('RGB'); _w, _h = _im.size
+    _px = _im.load()
+    red = 0
+    for _y in range(0, _h, 2):
+        for _x in range(0, _w, 2):
+            r, g, b = _px[_x, _y]
+            if r > 200 and 30 < g < 110 and 20 < b < 100: red += 1
+    add_check('Viền đỏ ô focus hiển thị đầy đủ (không bị video đè)', red > 1000, f'~{red*4}px đỏ')
+    if red <= 1000: add_finding('Multiview', 'HIGH', 'Video ô sau tràn đè viền đỏ/live ô trước', f'chỉ ~{red*4}px đỏ', 'PlayerView phải dùng surface_type=texture_view (SurfaceView không clip theo ô khi ZOOM)')
+
 # ---------- 5. BACK & RESILIENCE ----------
 print('[5] Nút back', flush=True)
 P.key('4'); time.sleep(2.5)
