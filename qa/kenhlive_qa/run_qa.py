@@ -142,9 +142,10 @@ if png and png2:
 
 # 4b. CHỐNG TRÀN Ô: live nạp sau không được đè live trước (SurfaceView+ZOOM từng gây vậy)
 #     → kiểm viền đỏ ô focus còn nhìn thấy (nhiều px #FF3B30), PIL thuần (QA chỉ cài pillow)
+#     LƯU Ý: shot() trả BYTES png (không phải path) → phải mở qua io.BytesIO
 if png:
     from PIL import Image as _IM
-    _im = _IM.open(png).convert('RGB'); _w, _h = _im.size
+    _im = _IM.open(io.BytesIO(png)).convert('RGB'); _w, _h = _im.size
     _px = _im.load()
     red = 0
     for _y in range(0, _h, 2):
