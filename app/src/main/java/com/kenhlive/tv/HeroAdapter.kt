@@ -27,12 +27,12 @@ class HeroAdapter(
                     it.currentItem = (it.currentItem + 1) % groups.size
                 }
             }
-            handler.postDelayed(this, 5000)
+            handler.postDelayed(this, if (pager?.context?.let { KenhLiveApp.isLowRam(it) } == true) 9000 else 5000)
         }
     }
     private fun hasFocusedChild(): Boolean = pager?.hasFocus() == true
 
-    fun attach(p: ViewPager2) { pager = p; handler.removeCallbacks(auto); handler.postDelayed(auto, 5000) }
+    fun attach(p: ViewPager2) { pager = p; handler.removeCallbacks(auto); handler.postDelayed(auto, if (KenhLiveApp.isLowRam(p.context)) 9000 else 5000) }
     fun detach() { handler.removeCallbacks(auto); pager = null }
 
     inner class HV(v: View) : RecyclerView.ViewHolder(v) {
@@ -60,7 +60,7 @@ class HeroAdapter(
         h.league.text = g.league
         h.viewers.text = "👁 ${SocoliveRepository.fmtViewers(g.totalViewers)}"
         h.cover.load(top.cover.ifBlank { top.avatar }) {
-            crossfade(200)
+            crossfade(if (KenhLiveApp.lowRam) 0 else 200)
             placeholder(R.drawable.hero_fallback)
             error(R.drawable.hero_fallback)
         }

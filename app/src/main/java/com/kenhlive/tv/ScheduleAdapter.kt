@@ -87,14 +87,14 @@ class ScheduleAdapter(
                 }
                 vh.badge.visibility = View.VISIBLE
                 vh.hostIcon.load(item.hostIcon) {
-                    crossfade(80); error(R.drawable.logo_placeholder); placeholder(R.drawable.logo_placeholder)
+                    crossfade(if (KenhLiveApp.lowRam) 0 else 80); error(R.drawable.logo_placeholder); placeholder(R.drawable.logo_placeholder)
                 }
                 vh.guestIcon.load(item.guestIcon) {
-                    crossfade(80); error(R.drawable.logo_placeholder); placeholder(R.drawable.logo_placeholder)
+                    crossfade(if (KenhLiveApp.lowRam) 0 else 80); error(R.drawable.logo_placeholder); placeholder(R.drawable.logo_placeholder)
                 }
                 // crest giải cùng hàng nhỏ
                 vh.crest.load(item.leagueCrest) {
-                    crossfade(60); error(R.drawable.logo_placeholder); placeholder(R.drawable.logo_placeholder)
+                    crossfade(if (KenhLiveApp.lowRam) 0 else 60); error(R.drawable.logo_placeholder); placeholder(R.drawable.logo_placeholder)
                 } // dùng leagueCrest nếu có
 
                 // hàng BLV: chỉ avatar tròn (bỏ label tên) → tap reveal tên qua contentDescription
@@ -105,7 +105,7 @@ class ScheduleAdapter(
                     val img = av.findViewById<ImageView>(R.id.anchorAvatar)
                     img.contentDescription = a.nickName
                     img.load(a.icon) {
-                        crossfade(80)
+                        crossfade(if (KenhLiveApp.lowRam) 0 else 80)
                         transformations(CircleCropTransformation())
                         error(R.drawable.logo_placeholder)
                         placeholder(R.drawable.logo_placeholder)

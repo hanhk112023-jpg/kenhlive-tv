@@ -111,7 +111,7 @@ class MultiViewActivity : AppCompatActivity() {
             s.player?.release(); s.fx.detach()
             s.player = ExoPlayer.Builder(this@MultiViewActivity)
                 .setTrackSelector(Enhancer.buildTrackSelector(this@MultiViewActivity))
-                .setLoadControl(Enhancer.buildLoadControl())
+                .setLoadControl(Enhancer.buildLoadControl(this))
                 .build().apply {
                     setAudioAttributes(
                         AudioAttributes.Builder().setUsage(C.USAGE_MEDIA)
