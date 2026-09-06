@@ -100,6 +100,10 @@ class LiveFragment : Fragment() {
                 )
                 recyclerView.layoutManager = LinearLayoutManager(requireContext())
                 recyclerView.adapter = adapter
+                if (KenhLiveApp.lowRam) {
+                    recyclerView.itemAnimator = null      // đỡ animate ra/vào mỗi lần rebind
+                    recyclerView.setHasFixedSize(true)
+                }
             } catch (e: Exception) {
                 statusText.text = "Không tải được danh sách trận\n(kiểm tra kết nối mạng)"
                 statusText.visibility = View.VISIBLE
@@ -127,7 +131,7 @@ class LiveFragment : Fragment() {
             opt.findViewById<TextView>(R.id.roomName).text = r.blvName
             opt.findViewById<TextView>(R.id.roomMeta).text = "👁 ${SocoliveRepository.fmtViewers(r.viewers)}"
             opt.findViewById<ImageView>(R.id.roomAvatar).load(r.avatar) {
-                crossfade(80); transformations(CircleCropTransformation())
+                crossfade(if (KenhLiveApp.lowRam) 0 else 80); transformations(CircleCropTransformation())
                 placeholder(R.drawable.logo_placeholder); error(R.drawable.logo_placeholder)
             }
             opt.setOnClickListener { openRoom(r, g.rooms); dialog?.dismiss() }

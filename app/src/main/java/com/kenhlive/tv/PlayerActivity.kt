@@ -37,7 +37,7 @@ class PlayerActivity : AppCompatActivity() {
 
         player = ExoPlayer.Builder(this)
             .setTrackSelector(Enhancer.buildTrackSelector(this))
-            .setLoadControl(Enhancer.buildLoadControl())
+            .setLoadControl(Enhancer.buildLoadControl(this))
             .build().apply {
                 setMediaItem(Enhancer.buildMediaItem(url))
                 prepare()

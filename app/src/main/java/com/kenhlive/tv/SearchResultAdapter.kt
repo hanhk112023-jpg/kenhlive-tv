@@ -45,7 +45,7 @@ class SearchResultAdapter(
         h.meta.text = "${g.top.blvName}${if (g.count > 1) " +${g.count - 1} BLV" else ""} · 👁 ${SocoliveRepository.fmtViewers(g.totalViewers)} · ${g.count} phòng"
         h.league.text = g.league
         h.avatar.load(g.top.avatar) {
-            crossfade(80); transformations(CircleCropTransformation())
+            crossfade(if (KenhLiveApp.lowRam) 0 else 80); transformations(CircleCropTransformation())
             placeholder(R.drawable.logo_placeholder); error(R.drawable.logo_placeholder)
         }
         h.itemView.setOnClickListener { onClick(g) }

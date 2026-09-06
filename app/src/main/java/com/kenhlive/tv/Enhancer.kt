@@ -57,12 +57,18 @@ object Enhancer {
         } catch (e: Exception) { /* giữ tham số hiện tại */ }
     }
 
-    /** Buffer lớn → ít rebuffer, adaptive không tụt chất khi mạng dao động nhẹ. */
-    fun buildLoadControl(): LoadControl =
-        DefaultLoadControl.Builder()
-            .setBufferDurationsMs(25_000, 120_000, 1_500, 4_000)
-            .setPrioritizeTimeOverSizeThresholds(true)
-            .build()
+    /** Buffer lớn → ít rebuffer. Máy low-RAM: buffer ngắn hơn (tiết kiệm 60–120MB mỗi player,
+     *  multiview 2 player càng cần) + giới hạn size buffer để không phình heap. */
+    fun buildLoadControl(ctx: Context): LoadControl {
+        val b = DefaultLoadControl.Builder()
+        if (KenhLiveApp.isLowRam(ctx)) {
+            b.setBufferDurationsMs(12_000, 45_000, 1_500, 3_000)
+            b.setTargetBufferBytes(6 * 1024 * 1024) // 6MB/decoder
+        } else {
+            b.setBufferDurationsMs(25_000, 120_000, 1_500, 4_000)
+        }
+        return b.setPrioritizeTimeOverSizeThresholds(true).build()
+    }
 
     fun buildMediaItem(url: String): MediaItem = MediaItem.fromUri(url)
 }

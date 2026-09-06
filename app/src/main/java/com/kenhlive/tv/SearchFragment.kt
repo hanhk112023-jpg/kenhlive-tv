@@ -151,7 +151,7 @@ class SearchFragment : Fragment() {
             opt.findViewById<TextView>(R.id.roomName).text = r.blvName
             opt.findViewById<TextView>(R.id.roomMeta).text = "👁 ${SocoliveRepository.fmtViewers(r.viewers)}"
             opt.findViewById<ImageView>(R.id.roomAvatar).load(r.avatar) {
-                crossfade(80); transformations(CircleCropTransformation())
+                crossfade(if (KenhLiveApp.lowRam) 0 else 80); transformations(CircleCropTransformation())
                 placeholder(R.drawable.logo_placeholder); error(R.drawable.logo_placeholder)
             }
             opt.setOnClickListener { openRoom(r); dlg.dismiss(); (activity as? MainActivity)?.hideKeyboard() }

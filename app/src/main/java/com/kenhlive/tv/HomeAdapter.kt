@@ -161,13 +161,13 @@ class HomeAdapter(
             val badge = card.findViewById<TextView>(R.id.roomBadge)
             // thumbnail = ảnh cover trận (BLV), fallback avatar
             thumb.load(g.top.cover.ifBlank { g.top.avatar }) {
-                crossfade(150)
+                crossfade(if (KenhLiveApp.lowRam) 0 else 150)
                 transformations(RoundedCornersTransformation(14f))
                 placeholder(R.drawable.hero_fallback)
                 error(R.drawable.hero_fallback)
             }
             avatar.load(g.top.avatar) {
-                crossfade(80)
+                crossfade(if (KenhLiveApp.lowRam) 0 else 80)
                 transformations(CircleCropTransformation())
                 placeholder(R.drawable.logo_placeholder)
                 error(R.drawable.logo_placeholder)
