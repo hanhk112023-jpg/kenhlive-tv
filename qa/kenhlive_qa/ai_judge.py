@@ -66,6 +66,10 @@ QUY TẮC NGUỒN (RẤT QUAN TRỌNG — tránh báo oan):
 - "Màn hình đen" nếu có viền letterbox + dải video ở giữa = player đang phát bình thường, KHÔNG phải blank.
 - Số card/section ÍT (1-2 card mỗi hàng, nhiều khoảng trống) khi khung giờ ít trận live = ĐÚNG hành vi, KHÔNG phải lỗi layout. Chỉ báo khi có ≥3 trận mà vẫn xếp lệch.
 - Chữ cắt cụt nằm BÊN TRONG ảnh thumbnail/video (chữ meme bake sẵn) = nguồn phát, không phải text của app.
+- ẢNH ĐẠI DIỆN TRẬN/BLV (avatar, cover, logo đội trong card) là data từ API nguồn — người thật/logo lạ/sai đội = NGUỒN CUNG CẤP, tối đa INFO.
+- VIỀN FOCUS ĐỎ có thể MỎNG (4–8px trên ảnh đã co xuống ~510px) — soi kỹ mép ô trước khi kết luận 'không có focus'. Đã có pixel-check tự động xác nhận viền; nếu bạn không thấy rõ trong ảnh nhỏ, KHÔNG báo quá MEDIUM.
+- Video IPTV mờ/thấp nét = chất lượng nguồn phát → INFO, không phải lỗi app.
+- Chính tả/dấu tiếng Việt: ảnh đã co nhỏ, RẤT DỄ đọc nhầm 'trận'↔'trang', 'i'↔'l'. CHỈ báo lỗi text khi chắc chắn nhìn rõ từng ký tự; nghi ngờ → bỏ qua.
 - CHỈ báo lỗi app ở vùng UI của app: layout, text overlay của app, nút bấm, tab, focus, dialog, danh sách card.
 Trả JSON thuần (mảng, không markdown):
 [{"area":"<màn hình/element>","severity":"CRITICAL|HIGH|MEDIUM|LOW","issue":"<vấn đề cụ thể quan sát thấy>","evidence":"<bằng chứng nhìn thấy trong ảnh>","suggestion":"<gợi ý sửa cụ thể>"}]
