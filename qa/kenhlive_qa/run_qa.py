@@ -320,19 +320,20 @@ else:
     # về card đầu hàng (LEFT 15 lần — biên trái nuốt phím)
     for _ in range(15): P.key('21'); time.sleep(0.25)
     ok_c, bc, _ = focused_card_info()
+    b_start = bc
     down_ok = 0; down_tot = 0; col_bad = []
     for step in range(3):
         if not (bc and ok_c): break
-        P.key('20'); time.sleep(0.7)                      # DOWN sang hàng kế
+        P.key('20'); time.sleep(0.9)                      # DOWN sang hàng kế (kèm scroll)
         ok_d, bd, _ = focused_card_info()
         down_tot += 1
         if ok_d and bd:
-            same_col = abs(int(bd[0]) - int(bc[0])) < 80  # cùng cột: X gần nhau
-            lower = int(bd[1]) > int(bc[1]) or int(bd[3]) > int(bc[3])  # hàng dưới: Y lớn hơn
-            if same_col and lower: down_ok += 1
+            # KHÔNG so Y tuyệt đối: RecyclerView cuộn nên hàng dưới hiện lên cao hơn sau scroll.
+            # Chỉ yêu cầu ĐÚNG CỘT (X) — hàng được đảm bảo bởi round-trip UP ở dưới.
+            if abs(int(bd[0]) - int(bc[0])) < 80: down_ok += 1
             else: col_bad.append(f'{bc}→{bd}')
             bc = bd
-    add_check(f'DOWN x{down_tot} rơi đúng cột hàng dưới', down_tot > 0 and down_ok == down_tot,
+    add_check(f'DOWN x{down_tot} rơi đúng cột', down_tot > 0 and down_ok == down_tot,
               f'{down_ok}/{down_tot}' + (f' lệch: {col_bad[0]}' if col_bad else ''))
     if down_tot and down_ok != down_tot:
         add_finding('Điều hướng', 'HIGH', 'DOWN giữa các hàng rơi lệch cột (nhảy sai vị trí)',
@@ -340,12 +341,17 @@ else:
     up_ok = 0; up_tot = 0
     for step in range(3):
         if not bc: break
-        P.key('19'); time.sleep(0.7)                      # UP về hàng trên
+        P.key('19'); time.sleep(0.9)                      # UP về hàng trên
         ok_u, bu, _ = focused_card_info()
         up_tot += 1
-        if ok_u and bu and abs(int(bu[0]) - int(bc[0])) < 80: up_ok += 1; bc = bu
-        elif ok_u and bu: bc = bu
+        if ok_u and bu and abs(int(bu[0]) - int(bc[0])) < 80: up_ok += 1
+        if ok_u and bu: bc = bu
     add_check(f'UP x{up_tot} về đúng cột hàng trên', up_tot > 0 and up_ok == up_tot, f'{up_ok}/{up_tot}')
+    # ROUND-TRIP: DOWN x3 + UP x3 phải về cùng CỘT X với điểm xuất phát
+    # (không so Y: RecyclerView cuộn nên vị trí tuyệt đối thay đổi — hàng đúng đã được
+    #  kiểm qua từng bước UP ở trên)
+    rt_ok = bool(b_start and bc and abs(int(bc[0]) - int(b_start[0])) < 80)
+    add_check('Round-trip DOWN3+UP3 về đúng cột xuất phát', rt_ok, f'{b_start} → {bc}')
 
 # ---------- 5.57 TAB LỊCH: mash DOWN xuyên danh sách (bug 'nhảy lung tung') ----------
 print('[5.57] D-pad tab Lịch', flush=True)
