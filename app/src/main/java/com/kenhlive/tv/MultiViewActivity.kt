@@ -202,7 +202,24 @@ class MultiViewActivity : AppCompatActivity() {
             s.swapHint.visibility = if (isFocus && s.group != null) View.VISIBLE else View.GONE
         }
         slots[focused].root.requestFocus()
+        syncFocusBorder()
         applyVolumes()
+    }
+
+    /** Khung viền đỏ overlay: đặt đè lên ô focus (trên cả hint bar) → đủ 4 cạnh. */
+    private fun syncFocusBorder() {
+        val border = findViewById<View?>(R.id.focusBorder) ?: return
+        val target = slots[focused].root
+        border.post {
+            if (target.width == 0) return@post
+            border.x = target.x.toFloat()
+            border.y = target.y.toFloat()
+            val lp = border.layoutParams
+            lp.width = target.width
+            lp.height = target.height
+            border.layoutParams = lp
+            border.foreground = focusDrawable()
+        }
     }
 
     private fun focusDrawable(): android.graphics.drawable.Drawable =
