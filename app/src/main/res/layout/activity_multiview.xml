@@ -61,4 +61,11 @@
             android:textColor="#CFCFCF"
             android:textSize="12sp" />
     </LinearLayout>
+
+    <!-- Khung viền focus vẽ TRÊN CÙNG → đè hint bar, cạnh trên không bị che.
+         Activity set bounds + foreground theo ô đang focus. -->
+    <View
+        android:id="@+id/focusBorder"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content" />
 </FrameLayout>
