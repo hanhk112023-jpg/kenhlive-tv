@@ -149,7 +149,7 @@ class HomeAdapter(
     private fun focusHeroPlay(): Boolean {
         val vh = rv?.findViewHolderForAdapterPosition(0) as? HeroVH ?: return false
         val inner = vh.pager.getChildAt(0) as? ViewGroup ?: return false
-        val page = inner.children().toList()
+        val page: View = inner.children.toList()
             .getOrNull(vh.pager.currentItem.coerceAtMost(inner.childCount - 1)) ?: return false
         return page.findViewById<View>(R.id.heroPlay)?.requestFocus() ?: false
     }
