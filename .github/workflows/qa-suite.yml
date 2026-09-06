@@ -65,6 +65,8 @@ jobs:
         run: pip install --quiet pillow
 
       - name: Chạy QA Suite trên Android TV emulator
+        env:
+          NV_API_KEY: ${{ secrets.NV_API_KEY }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
