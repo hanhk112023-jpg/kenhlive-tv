@@ -5,7 +5,6 @@ import android.app.Application
 import android.content.Context
 import coil.ImageLoader
 import coil.ImageLoaderFactory
-import coil.decode.ImageDecoderDecoder
 import coil.memory.MemoryCache
 import coil.disk.DiskCache
 
@@ -44,9 +43,6 @@ class KenhLiveApp : Application(), ImageLoaderFactory {
                     .directory(cacheDir.resolve("img_cache"))
                     .maxSizeBytes(60L * 1024 * 1024)
                     .build()
-            }
-            .components {
-                if (android.os.Build.VERSION.SDK_INT >= 28) add(ImageDecoderDecoder.Factory())
             }
             .build()
 }
