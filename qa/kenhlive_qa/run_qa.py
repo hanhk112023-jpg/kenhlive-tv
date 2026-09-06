@@ -313,6 +313,40 @@ else:
         add_finding('Điều hướng', 'HIGH', 'Bấm RIGHT quá cuối hàng làm focus nhảy đi nơi khác',
                     f'bounds {b0} → {br}', 'nuốt DPAD_RIGHT bằng OnKeyListener trên card cuối')
 
+    # ---------- 5.56b QUÝT DỌC: DOWN/UP giữa các hàng phải rơi đúng CÙNG CỘT ----------
+    # (bug 'nhảy sai vị trí': mỗi hàng HorizontalScrollView offset riêng → focus-search mặc định
+    #  tìm 'gần nhất hình học' rơi vào ô lệch cột/hàng khác)
+    print('[5.56b] DOWN/UP xuyên hàng cùng cột', flush=True)
+    # về card đầu hàng (LEFT 15 lần — biên trái nuốt phím)
+    for _ in range(15): P.key('21'); time.sleep(0.25)
+    ok_c, bc, _ = focused_card_info()
+    down_ok = 0; down_tot = 0; col_bad = []
+    for step in range(3):
+        if not (bc and ok_c): break
+        P.key('20'); time.sleep(0.7)                      # DOWN sang hàng kế
+        ok_d, bd, _ = focused_card_info()
+        down_tot += 1
+        if ok_d and bd:
+            same_col = abs(int(bd[0]) - int(bc[0])) < 80  # cùng cột: X gần nhau
+            lower = int(bd[1]) > int(bc[1]) or int(bd[3]) > int(bc[3])  # hàng dưới: Y lớn hơn
+            if same_col and lower: down_ok += 1
+            else: col_bad.append(f'{bc}→{bd}')
+            bc = bd
+    add_check(f'DOWN x{down_tot} rơi đúng cột hàng dưới', down_tot > 0 and down_ok == down_tot,
+              f'{down_ok}/{down_tot}' + (f' lệch: {col_bad[0]}' if col_bad else ''))
+    if down_tot and down_ok != down_tot:
+        add_finding('Điều hướng', 'HIGH', 'DOWN giữa các hàng rơi lệch cột (nhảy sai vị trí)',
+                    '; '.join(col_bad[:2]), 'tự xử lý DPAD_DOWN: focus ô cùng idx ở RowVH kế tiếp qua findViewHolderForAdapterPosition')
+    up_ok = 0; up_tot = 0
+    for step in range(3):
+        if not bc: break
+        P.key('19'); time.sleep(0.7)                      # UP về hàng trên
+        ok_u, bu, _ = focused_card_info()
+        up_tot += 1
+        if ok_u and bu and abs(int(bu[0]) - int(bc[0])) < 80: up_ok += 1; bc = bu
+        elif ok_u and bu: bc = bu
+    add_check(f'UP x{up_tot} về đúng cột hàng trên', up_tot > 0 and up_ok == up_tot, f'{up_ok}/{up_tot}')
+
 # ---------- 5.57 TAB LỊCH: mash DOWN xuyên danh sách (bug 'nhảy lung tung') ----------
 print('[5.57] D-pad tab Lịch', flush=True)
 sh(f'adb shell am force-stop {PKG}'); time.sleep(1)

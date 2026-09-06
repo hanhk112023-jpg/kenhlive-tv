@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.view.children
 import androidx.lifecycle.LifecycleOwner
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
@@ -37,6 +38,9 @@ class HomeAdapter(
     }
 
     private var rows: List<Pair<String, List<LiveMatchGroup>>> = buildRows(groups)
+    private var rv: RecyclerView? = null
+    override fun onAttachedToRecyclerView(recyclerView: RecyclerView) { rv = recyclerView }
+    override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) { rv = null }
 
     /** Cập nhật dữ liệu mới (auto-refresh 3 phút).
      *  Dùng DiffUtil THEO ROW: chỉ rebind hàng thực sự thay đổi → RecyclerView giữ nguyên
@@ -90,19 +94,64 @@ class HomeAdapter(
             RowVH(inf.inflate(R.layout.item_row, parent, false))
     }
 
-    /** Nuốt phím LEFT ở card đầu / RIGHT ở card cuối hàng.
-     *  Không dùng nextFocusLeftId vì id `cardRoot` trùng lặp giữa các hàng
-     *  → Android nhảy focus sang HÀNG KHÁC (bug "đi 1 hướng nhảy lung tung"). */
-    private fun applyEdgeFocusGuard(card: View, idx: Int, size: Int) {
-        val blockLeft = idx == 0
-        val blockRight = idx == size - 1
-        if (!blockLeft && !blockRight) return
+    /** Tự điều hướng D-pad trên card — KHÔNG để focus-search mặc định của Android quyết:
+     *  mỗi hàng là HorizontalScrollView với offset cuộn RIÊNG, tìm 'gần nhất hình học'
+     *  sẽ rơi vào ô khác cột / hàng khác = bug "nhảy sai vị trí".
+     *  - LEFT/RIGHT ở mép: nuốt (đứng yên tại biên).
+     *  - DOWN/UP: sang hàng kề đúng CÙNG CỘT idx (clamp), tự cuộn hàng đó vào tầm nhìn.
+     *  - UP từ hàng đầu: về nút hero. */
+    private fun applyEdgeFocusGuard(card: View, rowPos: Int, idx: Int, size: Int) {
         card.setOnKeyListener { _, keyCode, ev ->
-            if (ev.action != KeyEvent.ACTION_DOWN) false
-            else if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT && blockLeft) true
-            else if (keyCode == KeyEvent.KEYCODE_DPAD_RIGHT && blockRight) true
-            else false
+            if (ev.action != KeyEvent.ACTION_DOWN) return@setOnKeyListener false
+            when (keyCode) {
+                KeyEvent.KEYCODE_DPAD_LEFT  -> idx == 0
+                KeyEvent.KEYCODE_DPAD_RIGHT -> idx == size - 1
+                KeyEvent.KEYCODE_DPAD_DOWN  -> focusRowCard(rowPos, rowPos + 1, idx)
+                KeyEvent.KEYCODE_DPAD_UP    ->
+                    if (rowPos <= 1) focusHeroPlay()
+                    else focusRowCard(rowPos, rowPos - 1, idx)
+                else -> false
+            }
         }
+    }
+
+    private var pendingFocus: Pair<Int, Int>? = null
+
+    /** Focus ô cùng cột `idx` của hàng `targetPos`; hàng chưa layout thì cuộn RecyclerView
+     *  tới đó rồi retry (tối đa ~1.5s) — không để lọt về focus-search mặc định (= nhảy sai). */
+    private fun focusRowCard(fromPos: Int, targetPos: Int, idx: Int): Boolean {
+        val rvw = rv ?: return false
+        if (targetPos < 0 || targetPos >= itemCount) return true // nuốt phím tại biên dọc
+        focusRowNow(rvw, targetPos, idx)?.let { if (it) return true }
+        pendingFocus = targetPos to idx
+        rvw.smoothScrollBy(0, if (targetPos > fromPos) 480 else -480)
+        rvw.postDelayed({ retryPending(8) }, 220)
+        return true
+    }
+
+    private fun focusRowNow(rvw: RecyclerView, pos: Int, idx: Int): Boolean? {
+        val vh = rvw.findViewHolderForAdapterPosition(pos) as? RowVH ?: return null
+        if (vh.container.childCount == 0) return null
+        val target = vh.container.getChildAt(idx.coerceAtMost(vh.container.childCount - 1))
+        (vh.container.parent as? android.widget.HorizontalScrollView)
+            ?.smoothScrollTo(target.left - 40, 0)
+        return target.requestFocus()
+    }
+
+    private fun retryPending(n: Int) {
+        val (pos, idx) = pendingFocus ?: return
+        val rvw = rv ?: run { pendingFocus = null; return }
+        if (focusRowNow(rvw, pos, idx) == true) { pendingFocus = null; return }
+        if (n > 0) rvw.postDelayed({ retryPending(n - 1) }, 180) else pendingFocus = null
+    }
+
+    /** UP từ hàng đầu tiên → nút ▶ XEM NGAY của hero trang hiện tại. */
+    private fun focusHeroPlay(): Boolean {
+        val vh = rv?.findViewHolderForAdapterPosition(0) as? HeroVH ?: return false
+        val inner = vh.pager.getChildAt(0) as? ViewGroup ?: return false
+        val page = inner.children().toList()
+            .getOrNull(vh.pager.currentItem.coerceAtMost(inner.childCount - 1)) ?: return false
+        return page.findViewById<View>(R.id.heroPlay)?.requestFocus() ?: false
     }
 
     /** Payload "data": cập nhật text viewers tại chỗ, KHÔNG rebuild view → giữ nguyên focus D-pad. */
@@ -152,7 +201,7 @@ class HomeAdapter(
             // Mép hàng: KHÔNG dùng nextFocusLeftId/RightId — mọi card trùng id `cardRoot`
             // nên Android phân giải thành card của HÀNG KHÁC → focus "nhảy lung tung".
             // Thay bằng OnKeyListener nuốt phím ở đúng card biên (xác định, không phụ thuộc id).
-            applyEdgeFocusGuard(card, idx, list.size)
+            applyEdgeFocusGuard(card, pos, idx, list.size)
             val thumb = card.findViewById<ImageView>(R.id.cardThumb)
             val avatar = card.findViewById<ImageView>(R.id.cardAvatar)
             val blv = card.findViewById<TextView>(R.id.cardBlv)
