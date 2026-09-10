@@ -10,7 +10,40 @@ UA   = 'curl/8.5.0'
 
 KILO_BASE = os.environ.get('KILO_API_BASE', 'https://api.kilo.ai/api/gateway/v1/chat/completions')
 KILO_KEY  = os.environ.get('KILO_API_KEY', '')
-KILO_MODEL = os.environ.get('KILO_MODEL', 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free')
+KILO_MODELS_URL = KILO_BASE.rsplit('/v1/',1)[0] + '/v1/models'
+# model vision ưu tiên. Kilo hay đổi danh sách free trong ngày
+# → resolve động từ /v1/models mỗi phiên, cache tại chỗ; env KILO_MODEL vẫn override được.
+PREF = ['nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
+        'nvidia/nemotron-3-ultra-550b-a55b:free',
+        'nvidia/nemotron-3-super-120b-a12b:free',
+        'thinkingmachines/inkling:free',
+        'nex-agi/nex-n2.5-pro:free',
+        'stepfun/step-3.7-flash:free']
+_model_cache = None
+
+def kilo_vision_models():
+    """[model…] còn sống trên Kilo lúc này, theo thứ tự ưu tiên; lỗi → trả PREF."""
+    global _model_cache
+    if _model_cache: return _model_cache
+    try:
+        req = urllib.request.Request(KILO_MODELS_URL,
+            headers={'Authorization':'***' + KILO_KEY, 'User-Agent': UA})
+        data = json.loads(urllib.request.urlopen(req, timeout=25).read().decode()).get('data', [])
+        byid = {m.get('id'): m for m in data}
+        def has_vision(m):
+            a = m.get('architecture') or {}
+            mods = a.get('input_modalities') or a.get('modality') or []
+            if isinstance(mods, str): mods = [mods]
+            return any('image' in str(x) for x in mods)
+        free_vision = [mid for mid, m in byid.items() if m.get('isFree') and has_vision(m)]
+        cands = [m for m in PREF if m in byid and has_vision(byid[m])]
+        # ưu tiên :free trước, model free vision khác nối尾部
+        cands += [m for m in free_vision if m not in cands]
+        _model_cache = cands or PREF
+    except Exception as e:
+        print(f'  (kilo /models fail: {str(e)[:50]} → dùng PREF)', flush=True)
+        _model_cache = PREF
+    return _model_cache
 
 def _msgs(prompt, imgs):
     content = [{"type": "text", "text": prompt}]
@@ -33,16 +66,25 @@ def _post(url, key, payload, timeout):
 
 def _chat_kilo(prompt, imgs=None, max_tokens=4000, temperature=0.1, timeout=170):
     # model reasoning: completion tokens gồm cả reasoning nháp → để max_tokens rộng
-    return _post(KILO_BASE, KILO_KEY, {"model": KILO_MODEL, "temperature": temperature,
-        "max_tokens": max_tokens, "messages": _msgs(prompt, imgs)}, timeout)
+    env = os.environ.get('KILO_MODEL')
+    cands = [env] if env else kilo_vision_models()
+    last = None
+    for m in cands[:3]:
+        try:
+            return _post(KILO_BASE, KILO_KEY, {"model": m, "temperature": temperature,
+                "max_tokens": max_tokens, "messages": _msgs(prompt, imgs)}, timeout)
+        except Exception as e:
+            last = e
+            print(f'  (kilo {m[:40]} fail: {str(e)[:50]} → model next)', flush=True)
+    raise last or Exception('kilo hết model thử')
 
 def _chat(prompt, imgs=None, max_tokens=8000, temperature=0.1, timeout=170):
-    """Kilo nemotron trước (nếu có key), lỗi → glm fallback."""
+    """Kilo (tự dò model vision free còn sống, rotate 3 con) → glm fallback."""
     if KILO_KEY:
         try:
             return _chat_kilo(prompt, imgs, max_tokens=max_tokens, temperature=temperature, timeout=timeout)
         except Exception as e:
-            print(f'  (kilo judge fail: {str(e)[:60]} → glm fallback)', flush=True)
+            print(f'  (kilo judge fail hết candidate: {str(e)[:60]} → glm fallback)', flush=True)
     return _post(BASE, KEY, {"model": 'glm-5.3-flash', "temperature": temperature,
         "max_tokens": max_tokens, "reasoning_effort": "low",
         "messages": _msgs(prompt, imgs)}, timeout)
