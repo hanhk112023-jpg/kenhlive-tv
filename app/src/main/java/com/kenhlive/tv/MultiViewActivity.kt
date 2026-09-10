@@ -181,7 +181,8 @@ class MultiViewActivity : AppCompatActivity() {
                     })
                 }
             s.playerView.player = s.player
-            s.playerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM
+            // FIT trọn khung hình: ZOOM ở ô 1/2 màn crop mất phân nửa trận (user report v5.2.0)
+            s.playerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
             s.fx.attach(s.player!!.audioSessionId, EnhanceSettings.audioMode(this@MultiViewActivity))
             applyVolumes()
         }
@@ -316,8 +317,6 @@ class MultiViewActivity : AppCompatActivity() {
         a.player = b.player; a.group = b.group; a.room = b.room; a.muted = b.muted; a.label.text = b.label.text
         b.player = tp; b.group = tg; b.room = tr; b.muted = tm; b.label.text = tl
         a.playerView.player = a.player; b.playerView.player = b.player
-        a.player?.let { p -> a.playerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM }
-        b.player?.let { p -> b.playerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_ZOOM }
         a.fx.detach(); b.fx.detach()
         a.player?.let { a.fx.attach(it.audioSessionId, EnhanceSettings.audioMode(this@MultiViewActivity)) }
         b.player?.let { b.fx.attach(it.audioSessionId, EnhanceSettings.audioMode(this@MultiViewActivity)) }
