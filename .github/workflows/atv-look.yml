@@ -13,11 +13,11 @@ jobs:
       matrix:
         include:
           - api: 34
-            arch: x86_64   # Android 14 TV
+            arch: x86   # Android 14 TV
           - api: 30
-            arch: x86_64   # Android 11 TV (như QA suite)
+            arch: x86   # Android 11 TV
           - api: 28
-            arch: x86      # Android 9 TV (box cũ)
+            arch: x86   # Android 9 TV (box cũ)
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
@@ -83,6 +83,10 @@ jobs:
             done
             adb shell dumpsys package com.kenhlive.tv | grep versionName
             adb logcat -d -s AndroidRuntime:E | tail -30 > /tmp/look/crash_a${{ matrix.api }}.txt || true
+            N=$(ls -1 /tmp/look/mv*_a${{ matrix.api }}.png 2>/dev/null | wc -l)
+            S=$(stat -c%s /tmp/look/mv2_a${{ matrix.api }}.png 2>/dev/null || echo 0)
+            echo "anh mv: $N files, mv2=$S bytes"
+            [ "$N" -ge 2 ] && [ "$S" -gt 20000 ] || { echo "::error::Khong chup duoc multiview api ${{ matrix.api }}"; exit 1; }
 
       - name: Thu ảnh (kể cả fail)
         if: always()
