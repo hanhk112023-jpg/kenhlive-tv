@@ -130,11 +130,21 @@ class MultiViewActivity : AppCompatActivity() {
     }
 
     private fun applyLayoutChrome() {
+        // 2 ô: XẾP CHỒNG TRÊN/DƯỚI (cell 1920×540 = đúng 16:9, không đen không nhỏ).
+        // 4 ô: 2 hàng × 2 cell (960×540 = cũng đúng 16:9). KHÔNG BAO GIỜ chia trái/phải ở mode 2.
+        val row0 = findViewById<LinearLayout>(R.id.mvRow0)
+        if (layoutN == 4) {
+            row0.orientation = LinearLayout.HORIZONTAL
+            for (i in 0..1) slots[i].root.layoutParams = LinearLayout.LayoutParams(0, FrameLayout.LayoutParams.MATCH_PARENT, 1f)
+        } else {
+            row0.orientation = LinearLayout.VERTICAL
+            for (i in 0..1) slots[i].root.layoutParams = LinearLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, 0, 1f)
+        }
         findViewById<View>(R.id.mvRow1).visibility = if (layoutN == 4) View.VISIBLE else View.GONE
         findViewById<TextView>(R.id.layoutBtn).text = "Bố cục: $layoutN"
         findViewById<TextView>(R.id.hintText).text =
             if (layoutN == 4) "↑↓←→ chọn ô · OK: đổi trận · MENU: hoán đổi · ℹ: 2 ô"
-            else "←→ chọn trận · OK: đổi trận · MENU: hoán đổi · ℹ: 4 ô"
+            else "↑↓ chọn trận · OK: đổi trận · MENU: hoán đổi · ℹ: 4 ô"
         if (layoutN == 2) for (i in 2..3) {
             val s = slots[i]
             if (s.group != null) { s.player?.release(); s.fx.detach(); s.player = null; s.playerView.player = null; s.group = null }
@@ -243,8 +253,8 @@ class MultiViewActivity : AppCompatActivity() {
         when (event.keyCode) {
             KeyEvent.KEYCODE_DPAD_LEFT  -> { moveFocus(-1, 0); return true }
             KeyEvent.KEYCODE_DPAD_RIGHT -> { moveFocus(1, 0); return true }
-            KeyEvent.KEYCODE_DPAD_UP    -> { if (layoutN == 4) moveFocus(0, -1) else moveFocus(-1, 0); return true }
-            KeyEvent.KEYCODE_DPAD_DOWN  -> { if (layoutN == 4) moveFocus(0, 1) else moveFocus(1, 0); return true }
+            KeyEvent.KEYCODE_DPAD_UP    -> { moveFocus(0, -1); return true }
+            KeyEvent.KEYCODE_DPAD_DOWN  -> { moveFocus(0, 1); return true }
             KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER -> {
                 if (slots[focused].group != null) openRoomPicker(focused)
                 return true
@@ -255,14 +265,15 @@ class MultiViewActivity : AppCompatActivity() {
         return super.dispatchKeyEvent(event)
     }
 
-    /** col/row delta trong lưới layoutN. */
+    /** lưới: 2 ô = 1 cột × 2 hàng (dọc); 4 ô = 2×2. Chặn mọi mép — không wrap, không nhảy. */
     private fun moveFocus(dx: Int, dy: Int) {
-        val cols = if (layoutN == 4) 2 else layoutN
-        val row = focused / cols
-        val col = focused % cols
-        val nr = (row + dy + (if (layoutN == 4) 2 else 1)) % (if (layoutN == 4) 2 else 1)
-        val nc = col + dx
-        if (dx != 0 && (nc < 0 || nc >= cols)) return   // chặn ở mép — không nhảy lung tung
+        val cols = if (layoutN == 4) 2 else 1
+        val rows = layoutN / cols
+        val r = focused / cols
+        val c = focused % cols
+        val nr = r + dy
+        val nc = c + dx
+        if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) return
         val t = nr * cols + nc
         if (t in 0 until layoutN) { focused = t; applyFocus() }
     }
