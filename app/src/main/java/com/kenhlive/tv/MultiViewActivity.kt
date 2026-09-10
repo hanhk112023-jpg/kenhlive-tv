@@ -104,7 +104,7 @@ class MultiViewActivity : AppCompatActivity() {
 
     /** group chưa bị ô nào khác chiếm */
     private fun pickUnused(avoidIndex: Int, vararg takenIdx: Int): LiveMatchGroup? {
-        val taken = takenIdx.mapNotNull { slots[it].group?.matchTitle }.toHashSet()
+        val taken = takenIdx.toList().mapNotNull { slots[it].group?.matchTitle }.toHashSet()
         return groups.firstOrNull { it.matchTitle !in taken }
     }
 
@@ -257,7 +257,8 @@ class MultiViewActivity : AppCompatActivity() {
     /** col/row delta trong lưới layoutN. */
     private fun moveFocus(dx: Int, dy: Int) {
         val cols = if (layoutN == 4) 2 else layoutN
-        val row = focused / cols, col = focused % cols
+        val row = focused / cols
+        val col = focused % cols
         val nr = (row + dy + (if (layoutN == 4) 2 else 1)) % (if (layoutN == 4) 2 else 1)
         val nc = col + dx
         if (dx != 0 && (nc < 0 || nc >= cols)) return   // chặn ở mép — không nhảy lung tung
