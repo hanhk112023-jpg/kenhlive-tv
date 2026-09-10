@@ -1,0 +1,98 @@
+name: ATV-Rom-Look
+
+# Chụp multiview/player trên các ROM Android TV thật (image android-tv), nhiều API level
+on:
+  workflow_dispatch:
+
+jobs:
+  look:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - api: 34
+            arch: x86_64   # Android 14 TV
+          - api: 30
+            arch: x86_64   # Android 11 TV (như QA suite)
+          - api: 28
+            arch: x86      # Android 9 TV (box cũ)
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+
+      - name: Build APK
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon -q
+
+      - name: Proxy VN
+        env: { SUB_URL: '${{ secrets.YUNA_SUB_URL }}', STATIC_YAML: '${{ secrets.YUNA_PROXY_YAML }}' }
+        run: |
+          set -euo pipefail
+          VER=v1.19.30
+          curl -sSL -o /tmp/mihomo.gz "https://github.com/MetaCubeX/mihomo/releases/download/${VER}/mihomo-linux-amd64-${VER}.gz"
+          gunzip -f /tmp/mihomo.gz && sudo install -m 0750 /tmp/mihomo /usr/local/bin/mihomo
+          printf '%s\n' "$STATIC_YAML" > /tmp/mihomo_ci.yaml
+          nohup mihomo -f /tmp/mihomo_ci.yaml -d /tmp/mihomo_ci > /tmp/mihomo.log 2>&1 &
+          sleep 4
+          echo "exit IP: $(curl -sS -m 15 -x http://127.0.0.1:7891 https://api.ipify.org || echo '?')"
+
+      - name: KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+
+      - name: Chụp màn hình ATV api ${{ matrix.api }}
+        id: shot
+        uses: reactivecircus/android-emulator-runner@v2
+        continue-on-error: true
+        with:
+          api-level: ${{ matrix.api }}
+          arch: ${{ matrix.arch }}
+          target: android-tv
+          disableAnimations: true
+          script: |
+            adb root; sleep 2
+            adb shell settings put global http_proxy 10.0.2.2:7891
+            adb shell wm size 1920x1080
+            adb install -r app/build/outputs/apk/debug/app-debug.apk
+            mkdir -p /tmp/look
+            # chờ app load live rooms
+            for i in 1 2 3; do
+              adb shell am start -W -n com.kenhlive.tv/.MainActivity >/dev/null 2>&1
+              sleep 18
+              adb exec-out screencap -p > /tmp/look/home_a${{ matrix.api }}.png 2>/dev/null || true
+              # multiview 2
+              adb shell am start -n com.kenhlive.tv/.MainActivity --es open mv >/dev/null 2>&1
+              sleep 25
+              adb exec-out screencap -p > /tmp/look/mv2_a${{ matrix.api }}.png 2>/dev/null || true
+              # D-pad: focus ô dưới rồi chụp
+              adb shell input keyevent 20; sleep 2; adb shell input keyevent 20; sleep 3
+              adb exec-out screencap -p > /tmp/look/mv2f_a${{ matrix.api }}.png 2>/dev/null || true
+              # sang bố cục 4 (KEYCODE_INFO=166)
+              adb shell input keyevent 166; sleep 22
+              adb exec-out screencap -p > /tmp/look/mv4_a${{ matrix.api }}.png 2>/dev/null || true
+              fg=$(adb shell dumpsys window | grep mCurrentFocus || true)
+              echo "round $i focus: $fg"
+              if echo "$fg" | grep -q kenhlive; then break; fi
+              adb logcat -d -s AndroidRuntime:E | tail -20 || true
+            done
+            adb shell dumpsys package com.kenhlive.tv | grep versionName
+            adb logcat -d -s AndroidRuntime:E | tail -30 > /tmp/look/crash_a${{ matrix.api }}.txt || true
+
+      - name: Thu ảnh (kể cả fail)
+        if: always()
+        run: |
+          mkdir -p look_out
+          cp -r /tmp/look/* look_out/ 2>/dev/null || true
+          ls -la look_out/ || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: atv-look-a${{ matrix.api }}
+          path: look_out/
