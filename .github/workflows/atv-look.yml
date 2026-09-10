@@ -56,37 +56,7 @@ jobs:
           target: android-tv
           disableAnimations: true
           script: |
-            adb root; sleep 2
-            adb shell settings put global http_proxy 10.0.2.2:7891
-            adb shell wm size 1920x1080
-            adb install -r app/build/outputs/apk/debug/app-debug.apk
-            mkdir -p /tmp/look
-            # chờ app load live rooms
-            for i in 1 2 3; do
-              adb shell am start -W -n com.kenhlive.tv/.MainActivity >/dev/null 2>&1
-              sleep 18
-              adb exec-out screencap -p > /tmp/look/home_a${{ matrix.api }}.png 2>/dev/null || true
-              # multiview 2
-              adb shell am start -n com.kenhlive.tv/.MainActivity --es open mv >/dev/null 2>&1
-              sleep 25
-              adb exec-out screencap -p > /tmp/look/mv2_a${{ matrix.api }}.png 2>/dev/null || true
-              # D-pad: focus ô dưới rồi chụp
-              adb shell input keyevent 20; sleep 2; adb shell input keyevent 20; sleep 3
-              adb exec-out screencap -p > /tmp/look/mv2f_a${{ matrix.api }}.png 2>/dev/null || true
-              # sang bố cục 4 (KEYCODE_INFO=166)
-              adb shell input keyevent 166; sleep 22
-              adb exec-out screencap -p > /tmp/look/mv4_a${{ matrix.api }}.png 2>/dev/null || true
-              fg=$(adb shell dumpsys window | grep mCurrentFocus || true)
-              echo "round $i focus: $fg"
-              if echo "$fg" | grep -q kenhlive; then break; fi
-              adb logcat -d -s AndroidRuntime:E | tail -20 || true
-            done
-            adb shell dumpsys package com.kenhlive.tv | grep versionName
-            adb logcat -d -s AndroidRuntime:E | tail -30 > /tmp/look/crash_a${{ matrix.api }}.txt || true
-            N=$(ls -1 /tmp/look/mv*_a${{ matrix.api }}.png 2>/dev/null | wc -l)
-            S=$(stat -c%s /tmp/look/mv2_a${{ matrix.api }}.png 2>/dev/null || echo 0)
-            echo "anh mv: $N files, mv2=$S bytes"
-            [ "$N" -ge 2 ] && [ "$S" -gt 20000 ] || { echo "::error::Khong chup duoc multiview api ${{ matrix.api }}"; exit 1; }
+            bash qa/atv_look.sh ${{ matrix.api }}
 
       - name: Thu ảnh (kể cả fail)
         if: always()
