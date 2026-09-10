@@ -148,8 +148,8 @@ class MultiViewActivity : AppCompatActivity() {
         findViewById<View>(R.id.mvRow1).visibility = if (layoutN == 4) View.VISIBLE else View.GONE
         findViewById<TextView>(R.id.layoutBtn).text = "Bố cục: $layoutN"
         findViewById<TextView>(R.id.hintText).text =
-            if (layoutN == 4) "↑↓←→ chọn ô · OK: đổi trận · MENU: hoán đổi · ℹ: 2 ô"
-            else "↑↓ chọn trận · OK: đổi trận · MENU: hoán đổi · ℹ: 4 ô"
+            if (layoutN == 4) "↑↓←→ chọn ô · OK: đổi trận · MENU: hoán đổi · giữ OK: 2 ô"
+            else "↑↓ chọn trận · OK: đổi trận · MENU: hoán đổi · giữ OK: 4 ô"
         if (layoutN == 2) for (i in 2..3) {
             val s = slots[i]
             if (s.group != null) { s.player?.release(); s.fx.detach(); s.player = null; s.playerView.player = null; s.group = null }
@@ -261,7 +261,10 @@ class MultiViewActivity : AppCompatActivity() {
             KeyEvent.KEYCODE_DPAD_UP    -> { moveFocus(0, -1); return true }
             KeyEvent.KEYCODE_DPAD_DOWN  -> { moveFocus(0, 1); return true }
             KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER -> {
-                if (slots[focused].group != null) openRoomPicker(focused)
+                // giữ OK (lặp >=3) = đổi bố cục 2⇄4 — vì phím ℹ không có trên mọi remote
+                // và dispatchKeyEvent nuốt hết arrow nên không D-pad tới được nút "Bố cục".
+                if (event.repeatCount >= 3 && (dialog?.isShowing != true)) { toggleLayout(); return true }
+                if (event.repeatCount < 3 && slots[focused].group != null) openRoomPicker(focused)
                 return true
             }
             KeyEvent.KEYCODE_MENU -> { swapWithNext(); return true }
