@@ -1,31 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Multiview 2 trận TRÁI/PHẢI: 2 ô weightSum=2 chia ĐỀU tuyệt đối,
-     hint bar overlay đè lên (không ăn chiều cao → không lệch ô) -->
+<!-- Multiview: 2 (trái/phải) ⇄ 4 (2x2) — hàng dưới (row1) bật/tắt theo layout.
+     Hint bar overlay; focusBorder vẽ trên cùng. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000000">
 
     <LinearLayout
+        android:id="@+id/mvGrid"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="horizontal"
-        android:weightSum="2"
-        android:baselineAligned="false">
+        android:orientation="vertical">
 
-        <include
-            android:id="@+id/slot0"
-            layout="@layout/item_multiview_cell"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1" />
+        <LinearLayout
+            android:id="@+id/mvRow0"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:weightSum="2"
+            android:baselineAligned="false">
 
-        <include
-            android:id="@+id/slot1"
-            layout="@layout/item_multiview_cell"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1" />
+            <include
+                android:id="@+id/slot0"
+                layout="@layout/item_multiview_cell"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+
+            <include
+                android:id="@+id/slot1"
+                layout="@layout/item_multiview_cell"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/mvRow1"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:orientation="horizontal"
+            android:weightSum="2"
+            android:baselineAligned="false"
+            android:visibility="gone">
+
+            <include
+                android:id="@+id/slot2"
+                layout="@layout/item_multiview_cell"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+
+            <include
+                android:id="@+id/slot3"
+                layout="@layout/item_multiview_cell"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1" />
+        </LinearLayout>
     </LinearLayout>
 
     <!-- Thanh hint overlay -->
@@ -57,13 +91,28 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:layout_marginLeft="14dp"
-            android:text="TRÁI/PHẢI: chọn trận · OK: đổi trận · MENU: hoán đổi · BACK: thoát"
+            android:text="điều hướng: chọn ô · OK: đổi trận · MENU: hoán đổi · BACK: thoát"
             android:textColor="#CFCFCF"
             android:textSize="12sp" />
+
+        <TextView
+            android:id="@+id/layoutBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Bố cục: 2"
+            android:textColor="#F8FAFC"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:background="@drawable/btn_glass_flat"
+            android:paddingLeft="13dp"
+            android:paddingRight="13dp"
+            android:paddingTop="7dp"
+            android:paddingBottom="7dp"
+            android:focusable="true"
+            android:clickable="true" />
     </LinearLayout>
 
-    <!-- Khung viền focus vẽ TRÊN CÙNG → đè hint bar, cạnh trên không bị che.
-         Activity set bounds + foreground theo ô đang focus. -->
+    <!-- Khung viền focus vẽ TRÊN CÙNG → đè hint bar, cạnh trên không bị che. -->
     <View
         android:id="@+id/focusBorder"
         android:layout_width="wrap_content"
