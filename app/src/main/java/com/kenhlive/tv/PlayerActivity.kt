@@ -1,11 +1,16 @@
 package com.kenhlive.tv
 
+import android.app.PictureInPictureParams
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Rect
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.util.Rational
 import android.view.View
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
@@ -78,6 +83,8 @@ class PlayerActivity : AppCompatActivity() {
 
         findViewById<TextView>(R.id.backBtn).setOnClickListener { finish() }
         findViewById<TextView>(R.id.qualityBtn).setOnClickListener { showQualityDialog() }
+        findViewById<TextView>(R.id.pipBtn)?.setOnClickListener { enterPip(manual = true) }
+        if (intent.getBooleanExtra("pip", false)) pv.post { enterPip(manual = false) }
 
         findViewById<TextView>(R.id.multiBtn).setOnClickListener {
             val i = Intent(this, MultiViewActivity::class.java)
@@ -124,6 +131,51 @@ class PlayerActivity : AppCompatActivity() {
         android.widget.Toast.makeText(this, "Âm: ${names[next]}", android.widget.Toast.LENGTH_SHORT).show()
     }
 
+    // ================= PICTURE-IN-PICTURE =================
+    private fun pipSupported(): Boolean =
+        Build.VERSION.SDK_INT >= 26 &&
+        packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)
+
+    fun enterPip(manual: Boolean) {
+        if (!pipSupported()) {
+            if (manual) android.widget.Toast.makeText(this,
+                "Máy không hỗ trợ hình trong hình", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
+        val p = player ?: return
+        if (p.playbackState == Player.STATE_IDLE) { if (manual) return; }
+        try {
+            val b = PictureInPictureParams.Builder().setAspectRatio(Rational(16, 9))
+            if (Build.VERSION.SDK_INT >= 27) {
+                val r = Rect()
+                findViewById<PlayerView>(R.id.playerView).getGlobalVisibleRect(r)
+                if (!r.isEmpty) b.setSourceRectHint(r)
+            }
+            enterPictureInPictureMode(b.build())
+        } catch (e: Exception) {
+            if (manual) android.widget.Toast.makeText(this,
+                "Không mở được PIP: ${e.message}", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    // bấm HOME khi đang xem → tự co thành cửa sổ nổi, tiếng không ngắt
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        if (Build.VERSION.SDK_INT >= 26 && !isInPictureInPictureMode &&
+            (player?.isPlaying == true)) enterPip(manual = false)
+    }
+
+    override fun onPictureInPictureModeChanged(isInPictureInPictureMode: Boolean, newConfig: android.content.res.Configuration) {
+        super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
+        if (isInPictureInPictureMode) {
+            topOverlay?.visibility = View.GONE
+            findViewById<PlayerView>(R.id.playerView)?.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
+        } else {
+            findViewById<PlayerView>(R.id.playerView)?.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+            showOverlay()
+        }
+    }
+
     private fun showOverlay() {
         topOverlay?.visibility = View.VISIBLE
         hideOnce()
@@ -146,9 +198,17 @@ class PlayerActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
+        val inPip = Build.VERSION.SDK_INT >= 26 && isInPictureInPictureMode
+        if (inPip && !isFinishing) return   // đang là cửa sổ nổi → giữ nguyên player
         handler.removeCallbacks(hideOverlay)
         audioFx.detach()
         player?.release()
         player = null
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (Build.VERSION.SDK_INT >= 26 && isInPictureInPictureMode) return
+        player?.release(); player = null
     }
 }
