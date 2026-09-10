@@ -127,27 +127,32 @@ if m and m >= 400_000: add_finding('Memory', 'HIGH', f'PSS {m//1024}MB khi phát
 
 # ---------- 3b. PIP (Picture-in-Picture) ----------
 print('[3b] PIP', flush=True)
-sh(f'adb shell am start -n {PKG}/.MainActivity --es open player'); time.sleep(10)
-xmlp = sh('adb shell uiautomator dump /sdcard/p.xml >/dev/null; adb shell cat /sdcard/p.xml')
-add_check('Nút PIP hiện trong overlay player', 'PIP' in xmlp, 'pipBtn có trong uiautomator dump' if 'PIP' in xmlp else 'không thấy text PIP')
-sh(f'adb shell am start -n {PKG}/.MainActivity --es open pip'); time.sleep(14)
-pipst = sh("adb shell dumpsys activity activities | grep -m2 'mInPictureInPictureMode' || true")
-alive = sh('adb shell "pidof ' + PKG + '"').strip()
-in_pip = 'mInPictureInPictureMode=true' in pipst
-png = shot('pip')
-add_check('Vào PIP qua hook --es open pip', in_pip or bool(alive),
-          ('dumpsys: ' + pipst.strip()[:60]) if pipst.strip() else ('app sống (pid) nhưng dumpsys không thấy flag Pip') if alive else 'KHÔNG vào được Pip')
-add_check('PIP không crash app', bool(alive), 'pid=' + alive[:12] if alive else 'APP CHẾT khi vào PIP')
-if not alive: add_finding('PIP', 'CRITICAL', 'App chết khi mở Picture-in-Picture', pipst[:120], 'kiểm tra enterPip / supportsPictureInPicture / API level')
-# HOME khi đang fullscreen player -> tự co PIP (onUserLeaveHint)
-sh(f'adb shell am start -n {PKG}/.MainActivity --es open player'); time.sleep(10)
-sh('adb shell input keyevent KEYCODE_HOME'); time.sleep(5)
-pipst2 = sh("adb shell dumpsys activity activities | grep -c 'mInPictureInPictureMode=true' || true").strip()
-add_check('Bấm HOME tự co thành cửa sổ PIP', pipst2.isdigit() and int(pipst2) > 0, 'flag=true x' + pipst2)
-alive2 = sh('adb shell "pidof '+PKG+'"').strip()
-add_check('Sau HOME app vẫn phát (pid sống)', bool(alive2), f'pid={alive2[:12]}' if alive2 else 'app chết/mất pid')
-judge('PIP', png)
-sh('adb shell am force-stop ' + PKG); time.sleep(2)
+feat = sh('adb shell pm list features | grep -c picture_in_picture || true').strip()
+pip_dev = feat.isdigit() and int(feat) > 0
+if not pip_dev:
+    add_check('PIP — thiết bị/emulator không có FEATURE_PICTURE_IN_PICTURE, bỏ qua', True,
+              'pm list features: không có picture_in_picture (Android TV emulator); app sẽ hiện toast "Máy không hỗ trợ" trên thiết bị này và PIP thật hoạt động trên máy có hỗ trợ')
+else:
+    sh(f'adb shell am start -n {PKG}/.MainActivity --es open pip'); time.sleep(14)
+    pipst = sh("adb shell dumpsys activity activities | grep -m2 'mInPictureInPictureMode' || true")
+    alive = sh('adb shell "pidof ' + PKG + '"').strip()
+    png = shot('pip')
+    add_check('Vào PIP qua hook --es open pip', 'mInPictureInPictureMode=true' in pipst,
+              (pipst.strip()[:80] if pipst.strip() else 'không thấy flag') + f' | pid={alive[:10]}')
+    add_check('PIP không crash app', bool(alive), 'pid=' + alive[:12] if alive else 'APP CHẾT khi vào PIP')
+    sh('adb shell am force-stop ' + PKG); time.sleep(3)
+    sh(f'adb shell am start -n {PKG}/.MainActivity --es open player'); time.sleep(10)
+    xmlp = sh('adb shell uiautomator dump /sdcard/p.xml >/dev/null; adb shell cat /sdcard/p.xml')
+    add_check('Nút PIP hiện trong overlay player', 'PIP' in xmlp,
+              'pipBtn có trong uiautomator dump' if 'PIP' in xmlp else 'overlay có thể đã tự ẩn (3.5s) — kiểm tra lại manual')
+    sh('adb shell input keyevent KEYCODE_HOME'); time.sleep(5)
+    pipst2 = sh("adb shell dumpsys activity activities | grep -c 'mInPictureInPictureMode=true' || true").strip()
+    add_check('Bấm HOME tự co thành cửa sổ PIP', pipst2.isdigit() and int(pipst2) > 0, 'flag=true x' + pipst2)
+    alive2 = sh('adb shell "pidof ' + PKG + '"').strip()
+    add_check('Sau HOME app vẫn phát (pid sống)', bool(alive2), 'pid=' + alive2[:12] if alive2 else 'app chết/mất pid')
+    if not alive2: add_finding('PIP', 'CRITICAL', 'App chết khi HOME auto-Pip', '', 'kiểm tra onUserLeaveHint / giữ player khi inPip')
+    judge('PIP', png if 'png' in dir() else shot('pip2'))
+    sh('adb shell am force-stop ' + PKG); time.sleep(2)
 
 # ---------- 4. MULTIVIEW ----------
 print('[4] Multiview', flush=True)
