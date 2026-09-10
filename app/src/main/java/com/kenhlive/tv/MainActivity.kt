@@ -77,6 +77,18 @@ class MainActivity : AppCompatActivity() {
         i?.getStringExtra("open")?.let { target ->
             when (target) {
                 "mv" -> startActivity(Intent(this, MultiViewActivity::class.java))
+                "pip" -> CoroutineScope(Dispatchers.Main).launch {
+                    try {
+                        val g = SocoliveRepository.groupRooms(SocoliveRepository.fetchLiveRooms()).firstOrNull()
+                        val r = g?.top
+                        if (r != null) {
+                            val u = SocoliveRepository.fetchStream(r.roomNum)
+                            if (u != null) startActivity(Intent(this@MainActivity, PlayerActivity::class.java)
+                                .putExtra("url", u).putExtra("name", "${r.matchTitle} · ${r.blvName}")
+                                .putExtra("pip", true))
+                        }
+                    } catch (e: Exception) {}
+                }
                 "update" -> UpdateManager.debugForceDialog(this)
                 "search" -> viewPager.post { viewPager.setCurrentItem(2, false) }
                 "player" -> CoroutineScope(Dispatchers.Main).launch {
