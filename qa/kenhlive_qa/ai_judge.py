@@ -1,5 +1,5 @@
 """KenhLive QA — AI vision judge.
-Chính: NVIDIA NIM nemotron-3-nano-omni-30b-a3b-reasoning (vision + reasoning, ổn định hơn glm).
+Chính: Kilo gateway — nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free (vision + reasoning, free).
 Fallback: glm-5.3-flash qua llm-key-proxy.
 Chấm từng screenshot theo rubric UX Android TV + đọc logcat tìm lỗi ẩn. Trả về finding có severity + gợi ý."""
 import base64, json, os, re, time, urllib.request
@@ -8,9 +8,9 @@ BASE = os.environ.get('QA_PROXY', 'https://llm-key-proxy.htuananh153.workers.dev
 KEY  = os.environ.get('QA_PROXY_KEY', 'anhdz')
 UA   = 'curl/8.5.0'
 
-NV_BASE = os.environ.get('NV_API_BASE', 'https://integrate.api.nvidia.com/v1/chat/completions')
-NV_KEY  = os.environ.get('NV_API_KEY', '')
-NV_MODEL = 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning'
+KILO_BASE = os.environ.get('KILO_API_BASE', 'https://api.kilo.ai/api/gateway/v1/chat/completions')
+KILO_KEY  = os.environ.get('KILO_API_KEY', '')
+KILO_MODEL = os.environ.get('KILO_MODEL', 'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free')
 
 def _msgs(prompt, imgs):
     content = [{"type": "text", "text": prompt}]
@@ -31,18 +31,18 @@ def _post(url, key, payload, timeout):
         return (r['choices'][0]['message'].get('content') or '').strip()
     return ''
 
-def _chat_nvidia(prompt, imgs=None, max_tokens=4000, temperature=0.1, timeout=170):
+def _chat_kilo(prompt, imgs=None, max_tokens=4000, temperature=0.1, timeout=170):
     # model reasoning: completion tokens gồm cả reasoning nháp → để max_tokens rộng
-    return _post(NV_BASE, NV_KEY, {"model": NV_MODEL, "temperature": temperature,
+    return _post(KILO_BASE, KILO_KEY, {"model": KILO_MODEL, "temperature": temperature,
         "max_tokens": max_tokens, "messages": _msgs(prompt, imgs)}, timeout)
 
 def _chat(prompt, imgs=None, max_tokens=8000, temperature=0.1, timeout=170):
-    """NVIDIA trước (nếu có key), lỗi → glm fallback."""
-    if NV_KEY:
+    """Kilo nemotron trước (nếu có key), lỗi → glm fallback."""
+    if KILO_KEY:
         try:
-            return _chat_nvidia(prompt, imgs, max_tokens=max_tokens, temperature=temperature, timeout=timeout)
+            return _chat_kilo(prompt, imgs, max_tokens=max_tokens, temperature=temperature, timeout=timeout)
         except Exception as e:
-            print(f'  (nv judge fail: {str(e)[:60]} → glm fallback)', flush=True)
+            print(f'  (kilo judge fail: {str(e)[:60]} → glm fallback)', flush=True)
     return _post(BASE, KEY, {"model": 'glm-5.3-flash', "temperature": temperature,
         "max_tokens": max_tokens, "reasoning_effort": "low",
         "messages": _msgs(prompt, imgs)}, timeout)
