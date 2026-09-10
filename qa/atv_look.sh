@@ -28,7 +28,8 @@ for i in 1 2 3 4; do
   adb shell input keyevent 20; sleep 2
   adb shell input keyevent 20; sleep 3
   adb exec-out screencap -p > $OUT/mv2f_a$API.png
-  adb shell input keyevent 166; sleep 26
+  adb shell am start -n com.kenhlive.tv/.MainActivity --es open mv --ei mv_layout 4 >/dev/null 2>&1
+  sleep 30
   adb exec-out screencap -p > $OUT/mv4_a$API.png
   FG=$(adb shell dumpsys window | grep mCurrentFocus || true)
   echo "round $i focus: $FG"

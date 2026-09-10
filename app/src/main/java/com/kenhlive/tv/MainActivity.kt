@@ -76,7 +76,8 @@ class MainActivity : AppCompatActivity() {
     private fun handleDebugIntent(i: Intent?) {
         i?.getStringExtra("open")?.let { target ->
             when (target) {
-                "mv" -> startActivity(Intent(this, MultiViewActivity::class.java))
+                "mv" -> startActivity(Intent(this, MultiViewActivity::class.java)
+                    .putExtra("mv_layout", i.getIntExtra("mv_layout", 0)))
                 "pip" -> CoroutineScope(Dispatchers.Main).launch {
                     try {
                         val g = SocoliveRepository.groupRooms(SocoliveRepository.fetchLiveRooms()).firstOrNull()
