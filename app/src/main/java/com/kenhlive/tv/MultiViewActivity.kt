@@ -63,8 +63,13 @@ class MultiViewActivity : AppCompatActivity() {
                                findViewById(R.id.slot2), findViewById(R.id.slot3))
         slots = Array(4) { i -> Slot(slotRoots[i], i) }
 
-        layoutN = if (KenhLiveApp.lowRam) 2
-                  else getSharedPreferences("mv", MODE_PRIVATE).getInt("layout", 2)
+        // debug hook QA: --ei mv_layout 4 ép bố cục 4 (vượt khoá lowRam để chụp ảnh CI)
+        val forceLayout = intent.getIntExtra("mv_layout", 0)
+        layoutN = when {
+            forceLayout in intArrayOf(2, 4) -> forceLayout
+            KenhLiveApp.lowRam -> 2
+            else -> getSharedPreferences("mv", MODE_PRIVATE).getInt("layout", 2)
+        }
         findViewById<TextView>(R.id.layoutBtn)?.setOnClickListener { toggleLayout() }
 
         slots.forEachIndexed { i, s ->

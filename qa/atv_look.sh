@@ -22,7 +22,7 @@ for i in 1 2 3 4; do
     else break; fi
   done
   adb exec-out screencap -p > $OUT/home_a$API.png
-  adb shell am start -n com.kenhlive.tv/.MainActivity --es open mv >/dev/null 2>&1
+  adb shell am start -n com.kenhlive.tv/.MainActivity --es open mv --ei mv_layout 2 >/dev/null 2>&1
   sleep 28
   adb exec-out screencap -p > $OUT/mv2_a$API.png
   adb shell input keyevent 20; sleep 2
