@@ -89,6 +89,32 @@ def _chat(prompt, imgs=None, max_tokens=8000, temperature=0.1, timeout=170):
         "max_tokens": max_tokens, "reasoning_effort": "low",
         "messages": _msgs(prompt, imgs)}, timeout)
 
+def detail_imgs(jpeg):
+    """Mô phỏng Python-tool của benchmark V*: tự crop+zoom vùng chi tiết mảnh
+    (viền focus đỏ) trước khi gửi model → nemotron đọc đúng độ dày/màu thay vì suy đoán.
+    Trả [] nếu PIL lỗi hoặc không thấy viền đỏ."""
+    try:
+        import io
+        from PIL import Image
+        im = Image.open(io.BytesIO(jpeg)).convert('RGB')
+        W, H = im.size; px = im.load()
+        def isred(q): return q[0] > 170 and q[1] < 110 and q[2] < 120 and q[0] - max(q[1], q[2]) > 70
+        rows = [y for y in range(0, H, 2) if sum(isred(px[x, y]) for x in range(0, W, 3)) > (W//3) * 0.10]
+        cols = [x for x in range(0, W, 2) if sum(isred(px[x, y]) for y in range(0, H, 3)) > (H//3) * 0.10]
+        out = []
+        f = lambda img: (lambda b: (img.save(b, 'JPEG', quality=85), b.getvalue())[1])(io.BytesIO())
+        if rows:  # dải viền ngang → phóng 2x
+            y0, y1 = max(0, rows[0]-90), min(H, rows[-1]+90+1)
+            c = im.crop((0, y0, W, y1)); c = c.resize((c.width*2, c.height*2), Image.LANCZOS)
+            out.append(f(c))
+        if cols:  # dải viền dọc
+            x0, x1 = max(0, cols[0]-90), min(W, cols[-1]+90+1)
+            c = im.crop((x0, 0, x1, H)); c = c.resize((int(c.width*2.5), int(c.height*1.2)), Image.LANCZOS)
+            out.append(f(c))
+        return out[:2]
+    except Exception:
+        return []
+
 def _jclean(s):
     m = re.search(r'\[.*\]|\{.*\}', s, re.S)
     if not m: return None
@@ -109,7 +135,7 @@ QUY TẮC NGUỒN (RẤT QUAN TRỌNG — tránh báo oan):
 - Số card/section ÍT (1-2 card mỗi hàng, nhiều khoảng trống) khi khung giờ ít trận live = ĐÚNG hành vi, KHÔNG phải lỗi layout. Chỉ báo khi có ≥3 trận mà vẫn xếp lệch.
 - Chữ cắt cụt nằm BÊN TRONG ảnh thumbnail/video (chữ meme bake sẵn) = nguồn phát, không phải text của app.
 - ẢNH ĐẠI DIỆN TRẬN/BLV (avatar, cover, logo đội trong card) là data từ API nguồn — người thật/logo lạ/sai đội = NGUỒN CUNG CẤP, tối đa INFO.
-- VIỀN FOCUS ĐỎ có thể MỎNG (4–8px trên ảnh đã co xuống ~510px) — soi kỹ mép ô trước khi kết luận 'không có focus'. Đã có pixel-check tự động xác nhận viền; nếu bạn không thấy rõ trong ảnh nhỏ, KHÔNG báo quá MEDIUM.
+- VIỀN FOCUS ĐỎ mỏng ~4–5px là THIẾT KẾ (đã có lớp shadow đen lót). Nếu có ảnh CROP+ZOOM kèm theo, đo độ dày/độ liền từ ảnh zoom đó. Không báo 'không có focus' khi ảnh zoom thấy viền đỏ liền mạch.
 - Video IPTV mờ/thấp nét = chất lượng nguồn phát → INFO, không phải lỗi app.
 - Chính tả/dấu tiếng Việt: ảnh đã co nhỏ, RẤT DỄ đọc nhầm 'trận'↔'trang', 'i'↔'l'. CHỈ báo lỗi text khi chắc chắn nhìn rõ từng ký tự; nghi ngờ → bỏ qua.
 - CHỈ báo lỗi app ở vùng UI của app: layout, text overlay của app, nút bấm, tab, focus, dialog, danh sách card.
@@ -120,7 +146,9 @@ Nếu màn hình hoàn hảo trả []. CHỈ báo lỗi NHÌN THẤY thật tron
 def judge_screen(label, jpeg):
     """AI chấm 1 screenshot → list findings."""
     try:
-        raw = _chat(JUDGE_SYS + f"\n\nĐây là màn hình '{label}' của app. Chấm theo rubric.", [jpeg], max_tokens=8000)
+        imgs = [jpeg] + detail_imgs(jpeg)[:1]   # chỉ+n 1 ảnh zoom — 2 ảnh làm latency nhân đôi
+        extra = " (Ảnh sau là vùng viền focus đã CROP+ZOOM — soi chi tiết bằng ảnh đó, đừng đoán từ ảnh nhỏ.)" if len(imgs) > 1 else ""
+        raw = _chat(JUDGE_SYS + f"\n\nĐây là màn hình '{label}' của app. Chấm theo rubric." + extra, imgs, max_tokens=6000, timeout=320)
         f = _jclean(raw)
         return f if isinstance(f, list) else []
     except Exception as e:
