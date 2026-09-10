@@ -312,10 +312,16 @@ class MultiViewActivity : AppCompatActivity() {
         }
     }
 
-    private fun focusDrawable(): android.graphics.drawable.Drawable =
-        android.graphics.drawable.GradientDrawable().apply {
-            setColor(0x00000000); setStroke(8, 0xFFFF3B30.toInt())
+    /** Viền mảnh 4px + nền đen mờ 10px đằng sau: mỏng hơn mà vẫn nổi trên áo trắng/cỏ sáng. */
+    private fun focusDrawable(): android.graphics.drawable.Drawable {
+        val back = android.graphics.drawable.GradientDrawable().apply {
+            setColor(0x00000000); setStroke(10, 0x99000000.toInt())
         }
+        val line = android.graphics.drawable.GradientDrawable().apply {
+            setColor(0x00000000); setStroke(4, 0xFFFF3B30.toInt())
+        }
+        return android.graphics.drawable.LayerDrawable(arrayOf(back, line))
+    }
     private fun normalDrawable(): android.graphics.drawable.Drawable =
         android.graphics.drawable.GradientDrawable().apply {
             setColor(0x00000000); setStroke(2, 0xFF262626.toInt())
