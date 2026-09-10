@@ -12,9 +12,15 @@ adb shell wm size 1920x1080
 adb install -r app/build/outputs/apk/debug/app-debug.apk >/dev/null 2>&1
 adb logcat -c
 
-for i in 1 2 3; do
+for i in 1 2 3 4; do
   adb shell am start -W -n com.kenhlive.tv/.MainActivity >/dev/null 2>&1
   sleep 20
+  # nếu rơi màn lỗi mạng → bấm THỬ LẠI (giữa màn) tối đa 2 lần
+  for k in 1 2; do
+    if adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1 && adb shell cat /sdcard/u.xml | grep -q 'KHƠNG\|Không tải\|THỬ LẠI\|THU LAI'; then
+      echo "round $i: màn lỗi mạng -> tap THỬ LẠI"; adb shell input tap 960 640; sleep 15
+    else break; fi
+  done
   adb exec-out screencap -p > $OUT/home_a$API.png
   adb shell am start -n com.kenhlive.tv/.MainActivity --es open mv >/dev/null 2>&1
   sleep 28
@@ -26,7 +32,12 @@ for i in 1 2 3; do
   adb exec-out screencap -p > $OUT/mv4_a$API.png
   FG=$(adb shell dumpsys window | grep mCurrentFocus || true)
   echo "round $i focus: $FG"
-  if echo "$FG" | grep -q kenhlive; then break; fi
+  # OK khi có 2 ảnh mv khác nhau (video đổi frame = có traffic) VÀ app foreground
+  if echo "$FG" | grep -q kenhlive && cmp -s <(adb exec-out screencap -p) /dev/null || true; then :; fi
+  if echo "$FG" | grep -q kenhlive; then
+    a=$(adb exec-out screencap -p | md5sum); sleep 4; b=$(adb exec-out screencap -p | md5sum)
+    if ! grep -q 'Không tải' <(adb shell uiautomator dump /sdcard/v.xml >/dev/null 2>&1; adb shell cat /sdcard/v.xml 2>/dev/null); then break; fi
+  fi
   adb shell am force-stop com.kenhlive.tv || true
   sleep 3
 done
