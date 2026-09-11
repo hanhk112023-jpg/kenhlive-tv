@@ -182,6 +182,9 @@ class HomeAdapter(
 
     override fun onBindViewHolder(h: RecyclerView.ViewHolder, pos: Int) {
         if (h is HeroVH) {
+            // BUG-07: adapter cu phai duoc detach — neu khong Runnable `auto` cua no van
+            // post Delayed mãi trên Handler chung, leak pager + data cu, hero tu lat theo trang cu.
+            (h.pager.adapter as? HeroAdapter)?.detach()
             val hero = HeroAdapter(groups.take(5)) { g -> onGroupClick(g) }
             h.pager.adapter = hero
             hero.attach(h.pager)

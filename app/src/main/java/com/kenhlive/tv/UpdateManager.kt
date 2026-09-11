@@ -274,7 +274,8 @@ object UpdateManager {
             val resolvers = pm.queryIntentActivities(probe, 0)
             val installer = resolvers.firstOrNull { ri ->
                 val n = (ri.activityInfo.packageName + ri.activityInfo.name).lowercase()
-                !n.contains("documentsui") && !n.contains("filemanager") && !n.contains("file") &&
+                // BUG-20: denylist cu, bo `contains("file")` qua rong (loai ca installer that co "file" trong ten)
+                !n.contains("documentsui") && !n.contains("filemanager") && !n.contains("filebrowser") &&
                     !n.contains("explorer") && !n.contains("archive")
             } ?: resolvers.firstOrNull()
             if (installer != null) {

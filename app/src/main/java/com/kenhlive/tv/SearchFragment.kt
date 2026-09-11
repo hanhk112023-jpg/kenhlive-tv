@@ -35,6 +35,7 @@ class SearchFragment : Fragment() {
     private lateinit var chipRow: View
     private lateinit var searchAdapter: SearchResultAdapter
 
+    private var sfDialog: androidx.appcompat.app.AlertDialog? = null
     private var rooms = listOf<LiveRoom>()
     private var groups = listOf<LiveMatchGroup>()
     private var loaded = false
@@ -75,7 +76,9 @@ class SearchFragment : Fragment() {
 
     private fun loadRooms() {
         if (loaded) return
-        lifecycleScope.launch {
+        // BUG-13: trong ViewPager2 view co the bi destroy som hon fragment ->
+        // lifecycleScope (fragment scope) van chay tiep va cham requireView() da chet.
+        viewLifecycleOwner.lifecycleScope.launch {
             try {
                 rooms = SocoliveRepository.fetchLiveRooms()
                 groups = SocoliveRepository.groupRooms(rooms)
@@ -145,7 +148,10 @@ class SearchFragment : Fragment() {
         view.findViewById<TextView>(R.id.dialogLeague).text = "${g.league} · ${g.count} phòng live"
         val list = view.findViewById<LinearLayout>(R.id.roomList)
         val inf = LayoutInflater.from(requireContext())
+        sfDialog?.dismiss()
         val dlg = androidx.appcompat.app.AlertDialog.Builder(requireContext()).setView(view).create()
+        sfDialog = dlg
+        dlg.setOnDismissListener { if (sfDialog === dlg) sfDialog = null }
         g.rooms.forEach { r ->
             val opt = inf.inflate(R.layout.item_room_option, list, false)
             opt.findViewById<TextView>(R.id.roomName).text = r.blvName
@@ -171,5 +177,12 @@ class SearchFragment : Fragment() {
                 .putExtra("url", url)
                 .putExtra("name", "${room.matchTitle} · ${room.blvName}"))
         }
+    }
+
+    /** BUG-10: dismiss dialog picker khi view bi destroy — chong "Activity has leaked window". */
+    override fun onDestroyView() {
+        sfDialog?.dismiss()
+        sfDialog = null
+        super.onDestroyView()
     }
 }

@@ -7,12 +7,30 @@ android {
     namespace 'com.kenhlive.tv'
     compileSdk 34
 
+    // BUG-01: keystore KHÔNG còn trong git — CI cung cấp qua secret KEYSTORE_B64 (file) +
+    // KEYSTORE_PASSWORD (pass). Build local thiếu secret -> tự sinh keystore tạm (dev-only,
+    // chữ ký khác — chỉ dùng test, không phát hành).
+    def ksFile = rootProject.file('keystore/kenhlive.jks')
+    def ksB64 = (System.getenv('KEYSTORE_B64') ?: '').trim()
+    if (ksB64) {
+        ksFile.parentFile.mkdirs()
+        ksFile.bytes = Base64.decoder.decode(ksB64)
+    } else if (!ksFile.exists()) {
+        ksFile.parentFile.mkdirs()
+        ['keytool', '-genkeypair', '-alias', 'kenhlive', '-keyalg', 'RSA', '-keysize', '2048',
+         '-validity', '3650', '-dname', 'CN=KenhLive Dev',
+         '-storepass', 'android', '-keypass', 'android', '-keystore', ksFile.absolutePath].execute().waitFor()
+    }
+    def ksPass = System.getenv('KEYSTORE_PASSWORD') ?: 'android'
     signingConfigs {
         kenhlive {
-            storeFile rootProject.file('keystore/kenhlive.jks')
-            storePassword 'kenhlive2026'
+            storeFile ksFile
+            storePassword ksPass
             keyAlias 'kenhlive'
-            keyPassword 'kenhlive2026'
+            keyPassword ksPass
+            enableV1Signing true   // BUG-01 fix: đủ bộ ký, chống downgrade APK
+            enableV2Signing true
+            enableV3Signing true
         }
     }
 
@@ -20,8 +38,8 @@ android {
         applicationId "com.kenhlive.tv"
         minSdk 21
         targetSdk 34
-        versionCode 62
-        versionName "5.2.5"
+        versionCode 63
+        versionName "5.3.0"
     }
 
     buildTypes {
@@ -34,6 +52,7 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.kenhlive   // BUG-02: release ký đàng hoàng (trước unsigned)
         }
     }
     compileOptions {
@@ -66,4 +85,7 @@ dependencies {
 
     // Coil — nhẹ hơn Glide, Kotlin-first
     implementation 'io.coil-kt:coil:2.5.0'
+
+    // BUG-09: UpdateManager gọi thẳng okhttp — khai báo tường minh, không ăn may transitively từ Coil
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
 }

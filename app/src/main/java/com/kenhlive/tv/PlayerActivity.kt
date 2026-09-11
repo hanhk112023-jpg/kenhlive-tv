@@ -40,6 +40,29 @@ class PlayerActivity : AppCompatActivity() {
         topOverlay = findViewById(R.id.topOverlay)
         findViewById<TextView>(R.id.playerTitle).text = name
 
+        initPlayer()
+        val pv = findViewById<PlayerView>(R.id.playerView)
+
+        findViewById<TextView>(R.id.backBtn).setOnClickListener { finish() }
+        findViewById<TextView>(R.id.qualityBtn).setOnClickListener { showQualityDialog() }
+        findViewById<TextView>(R.id.pipBtn)?.setOnClickListener { enterPip(manual = true) }
+        if (intent.getBooleanExtra("pip", false)) pv.post { enterPip(manual = false) }
+
+        findViewById<TextView>(R.id.multiBtn).setOnClickListener {
+            val i = Intent(this, MultiViewActivity::class.java)
+            i.putExtra("initial_room", name)
+            i.putExtra("initial_url", url)
+            startActivity(i)
+        }
+
+        topOverlay?.visibility = View.VISIBLE
+        hideOnce()
+    }
+
+    /** Dung ExoPlayer tu `url` — goi o onCreate VA onStart (BUG-04: onStop release khi
+     *  nguoi dung bo app ngoai PiP; quay lai phai dung lai, khong de man den tinh). */
+    private fun initPlayer() {
+        if (url.isBlank()) return
         player = ExoPlayer.Builder(this)
             .setTrackSelector(Enhancer.buildTrackSelector(this))
             .setLoadControl(Enhancer.buildLoadControl(this))
@@ -63,12 +86,16 @@ class PlayerActivity : AppCompatActivity() {
                             android.widget.Toast.makeText(this@PlayerActivity, msg, android.widget.Toast.LENGTH_LONG).show()
                         }
                     }
+                    override fun onPlaybackStateChanged(state: Int) {
+                        // BUG-06: phat OK thi reset budget retry — loi mang ngan sau nay van duoc tu hoi phuc
+                        if (state == Player.STATE_READY) streamRetries = 0
+                    }
                 })
             }
-        val pv = findViewById<PlayerView>(R.id.playerView)
-        pv.player = player
-        pv.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
-
+        findViewById<PlayerView>(R.id.playerView).apply {
+            player = this@PlayerActivity.player
+            resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
+        }
         // audio fx gắn sau khi player có session
         player?.let { p ->
             p.addListener(object : Player.Listener {
@@ -80,21 +107,11 @@ class PlayerActivity : AppCompatActivity() {
                 }
             })
         }
+    }
 
-        findViewById<TextView>(R.id.backBtn).setOnClickListener { finish() }
-        findViewById<TextView>(R.id.qualityBtn).setOnClickListener { showQualityDialog() }
-        findViewById<TextView>(R.id.pipBtn)?.setOnClickListener { enterPip(manual = true) }
-        if (intent.getBooleanExtra("pip", false)) pv.post { enterPip(manual = false) }
-
-        findViewById<TextView>(R.id.multiBtn).setOnClickListener {
-            val i = Intent(this, MultiViewActivity::class.java)
-            i.putExtra("initial_room", name)
-            i.putExtra("initial_url", url)
-            startActivity(i)
-        }
-
-        topOverlay?.visibility = View.VISIBLE
-        hideOnce()
+    override fun onStart() {
+        super.onStart()
+        if (player == null && url.isNotBlank()) initPlayer()
     }
 
     private fun showQualityDialog() {
@@ -126,9 +143,12 @@ class PlayerActivity : AppCompatActivity() {
     private fun cycleAudio() {
         val next = (EnhanceSettings.audioMode(this) + 1) % 5
         EnhanceSettings.setAudioMode(this, next)
-        player?.let { audioFx.attach(it.audioSessionId, next) }
+        val sid = player?.audioSessionId ?: 0
+        if (sid != 0) audioFx.attach(sid, next)
+        // BUG-12: sid==0 thi listener onEvents se tu attach khi co am — toast noi dung that
         val names = arrayOf("Chuẩn", "Bass mạnh", "Rõ tiếng BLV", "Ban đêm", "Tự động (to & hay)")
-        android.widget.Toast.makeText(this, "Âm: ${names[next]}", android.widget.Toast.LENGTH_SHORT).show()
+        val suffix = if (sid == 0) " — áp dụng khi có âm thanh" else ""
+        android.widget.Toast.makeText(this, "Âm: ${names[next]}$suffix", android.widget.Toast.LENGTH_SHORT).show()
     }
 
     // ================= PICTURE-IN-PICTURE =================

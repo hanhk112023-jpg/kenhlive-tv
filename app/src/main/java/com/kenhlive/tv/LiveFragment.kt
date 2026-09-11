@@ -169,4 +169,12 @@ class LiveFragment : Fragment() {
     }
 
     private var dialog: AlertDialog? = null
+
+    /** BUG-10: dialog Android dung activity context — fragment view bi destroy (tab vuong
+     *  xa trong ViewPager2) ma de nguyen la window leak, AndroidRuntime bao "leaked window". */
+    override fun onDestroyView() {
+        dialog?.dismiss()
+        dialog = null
+        super.onDestroyView()
+    }
 }

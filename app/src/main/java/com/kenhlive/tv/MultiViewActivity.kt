@@ -339,8 +339,11 @@ class MultiViewActivity : AppCompatActivity() {
         val a = slots[focused]; val b = slots[other]
         if (a.group == null || b.group == null) return
         val tp = a.player; val tg = a.group; val tr = a.room; val tm = a.muted; val tl = a.label.text
+        val tr2 = a.retry; val tb = a.bufferingSince
         a.player = b.player; a.group = b.group; a.room = b.room; a.muted = b.muted; a.label.text = b.label.text
+        a.retry = b.retry; a.bufferingSince = b.bufferingSince
         b.player = tp; b.group = tg; b.room = tr; b.muted = tm; b.label.text = tl
+        b.retry = tr2; b.bufferingSince = tb
         a.playerView.player = a.player; b.playerView.player = b.player
         a.fx.detach(); b.fx.detach()
         a.player?.let { a.fx.attach(it.audioSessionId, EnhanceSettings.audioMode(this@MultiViewActivity)) }
@@ -436,5 +439,25 @@ class MultiViewActivity : AppCompatActivity() {
         handler.removeCallbacks(secondWatcher)
         handler.removeCallbacks(watchdog)
         slots.forEach { it.player?.release(); it.player = null; it.fx.detach() }
+    }
+
+    /** BUG-05: onStop release sạch 4 player (pin/wake) — quay lại phải dựng lại TỪNG Ô theo
+     *  group/room đã lưu, nếu không lưới toàn ô đen đến khi thoát vào lại. */
+    override fun onStart() {
+        super.onStart()
+        if (groups.isEmpty()) return   // chưa load xong thì onCreate lo
+        var rebuilt = false
+        slots.take(layoutN).forEachIndexed { i, sl ->
+            if (sl.player == null && sl.group != null) {
+                playInSlot(slots.indexOf(sl), null)   // null -> resolveStream uu tien sl.room cu
+                rebuilt = true
+            }
+        }
+        if (rebuilt) {
+            handler.removeCallbacks(watchdog)
+            handler.postDelayed(watchdog, 15_000)
+            handler.removeCallbacks(secondWatcher)
+            handler.postDelayed(secondWatcher, 20_000)
+        }
     }
 }

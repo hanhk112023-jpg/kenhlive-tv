@@ -61,12 +61,14 @@ object Enhancer {
      *  multiview 2 player càng cần) + giới hạn size buffer để không phình heap. */
     fun buildLoadControl(ctx: Context): LoadControl {
         val b = DefaultLoadControl.Builder()
+        // BUG-16: truoc day low-RAM dat prioritizeTime=true -> Exo bat ket 45s (~10MB/stream),
+        // cap 6MB bi bo qua, multiview 4 o van phinh heap. May thap: cap BUOC bang size.
         if (KenhLiveApp.isLowRam(ctx)) {
-            b.setBufferDurationsMs(12_000, 45_000, 1_500, 3_000)
-            b.setTargetBufferBytes(6 * 1024 * 1024) // 6MB/decoder
-        } else {
-            b.setBufferDurationsMs(25_000, 120_000, 1_500, 4_000)
+            b.setBufferDurationsMs(10_000, 20_000, 1_500, 3_000)
+            b.setTargetBufferBytes(6 * 1024 * 1024) // 6MB/decoder — cap that
+            return b.setPrioritizeTimeOverSizeThresholds(false).build()
         }
+        b.setBufferDurationsMs(25_000, 120_000, 1_500, 4_000)
         return b.setPrioritizeTimeOverSizeThresholds(true).build()
     }
 

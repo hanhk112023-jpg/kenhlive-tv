@@ -19,7 +19,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentActivity
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
-import kotlinx.coroutines.CoroutineScope
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -78,7 +78,7 @@ class MainActivity : AppCompatActivity() {
             when (target) {
                 "mv" -> startActivity(Intent(this, MultiViewActivity::class.java)
                     .putExtra("mv_layout", i.getIntExtra("mv_layout", 0)))
-                "pip" -> CoroutineScope(Dispatchers.Main).launch {
+                "pip" -> lifecycleScope.launch {
                     try {
                         val g = SocoliveRepository.groupRooms(SocoliveRepository.fetchLiveRooms()).firstOrNull()
                         val r = g?.top
@@ -92,7 +92,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 "update" -> UpdateManager.debugForceDialog(this)
                 "search" -> viewPager.post { viewPager.setCurrentItem(2, false) }
-                "player" -> CoroutineScope(Dispatchers.Main).launch {
+                "player" -> lifecycleScope.launch {
                     try {
                         val g = SocoliveRepository.groupRooms(SocoliveRepository.fetchLiveRooms()).firstOrNull()
                         val r = g?.top
@@ -152,8 +152,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun refreshCount() {
-        CoroutineScope(Dispatchers.IO).launch {
-            val n = try { SocoliveRepository.fetchLiveRooms().size } catch (e: Exception) { -1 }
+        lifecycleScope.launch {
+            val n = try { withContext(Dispatchers.IO) { SocoliveRepository.fetchLiveRooms().size } } catch (e: Exception) { -1 }
             withContext(Dispatchers.Main) {
                 val tv = findViewById<TextView>(R.id.countText)
                 if (n > 0 && tv != null) {

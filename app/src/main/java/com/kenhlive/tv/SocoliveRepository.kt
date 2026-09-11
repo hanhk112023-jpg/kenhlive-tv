@@ -1,6 +1,8 @@
 package com.kenhlive.tv
 
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -177,21 +179,27 @@ object SocoliveRepository {
             }
         }
 
-        // hôm nay + days ngày tới
+        // hôm nay + days ngày tới — BUG-18: song song hoá (tu 7 × 36s worst-case xuong ~ max 1 ngay)
         val cal = Calendar.getInstance(TZ)
         val fmtKey = SimpleDateFormat("yyyyMMdd", Locale.US)
         fmtKey.timeZone = TZ
-        for (i in 0 until days) {
-            val key = fmtKey.format(cal.time)
+        val keys = (0 until days).map { val k = fmtKey.format(cal.time); cal.add(Calendar.DATE, 1); k }
+        val bodies = keys.map { k ->
+            async {
+                try {
+                    val now = stamp()
+                    get("$API/match/matches_$k.json?callback=matches&v=$now&_=$now")
+                } catch (_: Exception) { null }
+            }
+        }.awaitAll()
+        for ((idx, body) in bodies.withIndex()) {
+            if (body == null) continue
             try {
-                val now = stamp()
-                val body = get("$API/match/matches_$key.json?callback=matches&v=$now&_=$now")
                 val arr = JSONObject(stripJsonp(body)).optJSONArray("data")
                 if (arr != null) for (j in 0 until arr.length()) {
                     arr.optJSONObject(j)?.let { addMatch(it) }
                 }
             } catch (_: Exception) { }
-            cal.add(Calendar.DATE, 1)
         }
 
         byDay.map { (k, list) ->
