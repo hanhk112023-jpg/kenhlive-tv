@@ -79,7 +79,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="◫ MULTIVIEW"
-            android:textColor="#FF3B30"
+            android:textColor="#00E676"
             android:textSize="14sp"
             android:textStyle="bold"
             android:fontFamily="@font/oswald"

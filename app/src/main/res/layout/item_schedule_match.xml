@@ -23,7 +23,7 @@
             android:layout_height="wrap_content"
             android:minWidth="54dp"
             android:gravity="center"
-            android:textColor="#FFB800"
+            android:textColor="#00F0FF"
             android:fontFamily="@font/oswald"
             android:textSize="16sp"
             android:textStyle="bold"

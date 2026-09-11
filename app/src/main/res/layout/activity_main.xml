@@ -17,7 +17,7 @@
         <ImageView
             android:layout_width="34dp"
             android:layout_height="34dp"
-            android:src="@mipmap/ic_launcher"
+            android:src="@drawable/ic_logo_kl"
             android:contentDescription="@string/app_name" />
 
         <TextView
@@ -113,7 +113,8 @@
             android:id="@+id/countText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#DCDCDC"
+            android:textColor="#00E676"
+            android:textStyle="bold"
             android:textSize="15sp"
             android:singleLine="true"
             android:ellipsize="end"

@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Palette SportzX (đào từ SportzX_3.1v.apk res/values/colors.xml) -->
+    <!-- ===== KenhLive v6 brand: deep black + bright green + electric blue ===== -->
+    <color name="brand_green">#FF00E676</color>
+    <color name="brand_green_dark">#FF00B25C</color>
+    <color name="brand_green_glow">#4000E676</color>
+    <color name="brand_green_soft">#1400E676</color>
+    <color name="brand_blue">#FF00F0FF</color>
+    <color name="bg_base">#FF000000</color>
+    <color name="bg_card">#FF0D1117</color>
+    <color name="bg_card_alt">#FF111721</color>
+    <color name="bg_elevated">#F2141A23</color>
+    <color name="bg_topbar">#F005080C</color>
+
     <color name="accent_amber">#FFB020</color>
     <color name="accent_cyan">#00F0FF</color>
     <color name="accent_green">#00E676</color>
@@ -10,6 +21,8 @@
     <color name="text_primary">#F8FAFC</color>
     <color name="text_secondary">#94A3B8</color>
     <color name="text_muted">#64748B</color>
-    <color name="text_dark">#0F172A</color>
-    <color name="bg_deep">#090B14</color>
+    <color name="live_red">#FFFF3B30</color>
+    <color name="divider">#1AFFFFFF</color>
+    <color name="skeleton">#14FFFFFF</color>
+    <color name="skeleton_hi">#26FFFFFF</color>
 </resources>
