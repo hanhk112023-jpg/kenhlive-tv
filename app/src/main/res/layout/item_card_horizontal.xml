@@ -38,7 +38,7 @@
             android:paddingRight="9dp"
             android:paddingTop="3dp"
             android:paddingBottom="3dp"
-            android:textSize="11sp"
+            android:textSize="13sp"
             android:textStyle="bold"
             android:letterSpacing="0.06" />
 
@@ -51,7 +51,7 @@
             android:layout_margin="9dp"
             android:textColor="#EAF2F8"
             android:fontFamily="sans-serif-medium"
-            android:textSize="11sp"
+            android:textSize="13sp"
             android:background="@drawable/pill_glass"
             android:paddingLeft="9dp"
             android:paddingRight="9dp"
@@ -87,7 +87,7 @@
                 android:textColor="#FFFFFF"
                 android:shadowColor="#D9000000" android:shadowRadius="7"
                 android:fontFamily="sans-serif-medium"
-                android:textSize="14sp"
+                android:textSize="16sp"
                 android:ellipsize="end"
                 android:maxLines="1" />
 
@@ -97,7 +97,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="6dp"
                 android:textColor="#DCE6F0"
-                android:textSize="11sp"
+                android:textSize="13sp"
                 android:fontFamily="sans-serif-medium"
                 android:fontFeatureSettings="tnum"
                 android:background="@drawable/pill_glass"
@@ -117,7 +117,7 @@
         android:layout_marginRight="2dp"
         android:textColor="#F8FAFC"
         android:fontFamily="sans-serif-medium"
-        android:textSize="16sp"
+        android:textSize="18sp"
         android:maxLines="1"
         android:ellipsize="end" />
 </LinearLayout>
