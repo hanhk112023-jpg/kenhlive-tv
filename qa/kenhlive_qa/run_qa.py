@@ -47,7 +47,9 @@ def shot(label):
     if png is None:
         add_finding(label, 'HIGH', 'Không chụp được screenshot', 'screencap trả rỗng', 'kiểm tra adb/emulator')
         return None
-    path = f'{args.out}/shots/{len(shots)+1:02d}_{label.replace(" ","_").lower()}.jpg'
+    import re as _re
+    safe = _re.sub(r'[^a-z0-9_.-]', '', label.replace(' ', '_').lower())
+    path = f'{args.out}/shots/{len(shots)+1:02d}_{safe}.jpg'
     try:
         from PIL import Image
         im = Image.open(io.BytesIO(png)).convert('RGB'); im.thumbnail((860, 860))
@@ -65,7 +67,8 @@ def judge(label, png):
         jpeg = buf.getvalue()
         # agent mode (model cam tool do dac): anh goc full-res + png path cho tool
         raw = Image.open(io.BytesIO(png))
-        apng = f'{args.out}/shots/raw_{len(shots):02d}_{label.replace(" ","_").lower()}.png'
+        import re as _re
+        apng = f"{args.out}/shots/raw_{len(shots):02d}_" + _re.sub(r'[^a-z0-9_.-]', '', label.replace(' ', '_').lower()) + '.png'
         raw.save(apng)
         res = []
         if os.environ.get('QA_AGENT', '1') == '1':
