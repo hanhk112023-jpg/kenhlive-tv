@@ -118,6 +118,12 @@ class HomeAdapter(
      *  - DOWN/UP: sang hàng kề đúng CÙNG CỘT idx (clamp), tự cuộn hàng đó vào tầm nhìn.
      *  - UP từ hàng đầu: về nút hero. */
     private fun applyEdgeFocusGuard(card: View, rowPos: Int, idx: Int, size: Int) {
+        // Chuyen dong focus: phong to nhe + bong den (style Netflix TV) thay vi vien do tinh
+        card.setOnFocusChangeListener { v, has ->
+            v.animate().scaleX(if (has) 1.07f else 1.0f).scaleY(if (has) 1.07f else 1.0f)
+                .setDuration(140).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+            v.elevation = if (has) 18f else 0f
+        }
         card.setOnKeyListener { _, keyCode, ev ->
             if (ev.action != KeyEvent.ACTION_DOWN) return@setOnKeyListener false
             when (keyCode) {
@@ -226,6 +232,11 @@ class HomeAdapter(
         val (league, list) = rows[pos - 1]
         val vh = h as RowVH
         vh.title.text = league
+        // cho phep card scale 1.07 lo ra ngoai container/scrollview (neu khong bi clip mat vien bong)
+        vh.container.clipChildren = false
+        vh.container.clipToPadding = false
+        (vh.container.parent as? View)?.let { it.clipChildren = false; it.clipToPadding = false }
+        vh.itemView.clipChildren = false
         // Nếu hàng này ĐANG chứa view được focus → nhớ vị trí con để khôi phục sau khi rebuild.
         // Không làm vậy: removeAllViews destroy view focused → Android xóa focus →
         // phím D-pad kế tiếp nhảy đi lung tung (bug báo cáo).

@@ -289,8 +289,13 @@ class MultiViewActivity : AppCompatActivity() {
     private fun requestFocusSlot(i: Int) { if (i < layoutN) { focused = i; applyFocus() } }
 
     private fun applyFocus() {
-        active.forEachIndexed { i, s ->
+        active.forEach { s ->
             val isFocus = s.index == focused
+            // ô focus PHONG TO nhe + nhô lên trước (elevation), ô kia thu về —
+            // chuyển động thay cho khung đỏ tĩnh (user: 'làm phóng to hoặc gì đó')
+            s.root.animate().scaleX(if (isFocus) 1.035f else 1.0f).scaleY(if (isFocus) 1.035f else 1.0f)
+                .setDuration(150).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+            s.root.elevation = if (isFocus) 14f else 0f
             s.root.foreground = if (isFocus) focusDrawable() else normalDrawable()
             s.swapHint.visibility = if (isFocus && s.group != null) View.VISIBLE else View.GONE
         }
@@ -304,21 +309,27 @@ class MultiViewActivity : AppCompatActivity() {
         val target = slots[focused].root
         border.post {
             if (target.width == 0) return@post
-            border.x = target.x.toFloat(); border.y = target.y.toFloat()
+            // border tro theo kich thuoc THAT cua o (scale 1.035 xung quanh tam) va truot den vi tri moi
+            val sc = 1.035f
+            val w = (target.width * sc).toInt(); val h = (target.height * sc).toInt()
+            val cx = target.x + target.width / 2f; val cy = target.y + target.height / 2f
             val lp = border.layoutParams
-            lp.width = target.width; lp.height = target.height
-            border.layoutParams = lp
+            if (lp.width != w || lp.height != h) { lp.width = w; lp.height = h; border.layoutParams = lp }
             border.foreground = focusDrawable()
+            border.animate()
+                .x(cx - w / 2f).y(cy - h / 2f)
+                .setDuration(160).setInterpolator(android.view.animation.DecelerateInterpolator())
+                .start()
         }
     }
 
-    /** Viền mảnh 4px + nền đen mờ 10px đằng sau: mỏng hơn mà vẫn nổi trên áo trắng/cỏ sáng. */
+    /** Vien TRANG sang + bong den lot: hon voi nang cap do phong to cua o focus. */
     private fun focusDrawable(): android.graphics.drawable.Drawable {
         val back = android.graphics.drawable.GradientDrawable().apply {
-            setColor(0x00000000); setStroke(10, 0x99000000.toInt())
+            setColor(0x00000000); setStroke(12, 0xB3000000.toInt()); cornerRadius = 12f
         }
         val line = android.graphics.drawable.GradientDrawable().apply {
-            setColor(0x00000000); setStroke(4, 0xFFFF3B30.toInt())
+            setColor(0x00000000); setStroke(5, 0xFFFFFFFF.toInt()); cornerRadius = 12f
         }
         return android.graphics.drawable.LayerDrawable(arrayOf(back, line))
     }

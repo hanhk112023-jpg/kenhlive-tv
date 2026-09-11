@@ -53,6 +53,7 @@ class SearchFragment : Fragment() {
         searchAdapter = SearchResultAdapter { g -> openGroup(g) }
         resultList.layoutManager = LinearLayoutManager(requireContext())
         resultList.itemAnimator = null   // focus nhay khi DiffUtil animate giua luc bam D-pad
+        resultList.clipChildren = false; resultList.clipToPadding = false
         resultList.adapter = searchAdapter
 
         input.addTextChangedListener(object : TextWatcher {

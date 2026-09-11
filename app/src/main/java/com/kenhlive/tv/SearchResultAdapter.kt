@@ -49,5 +49,11 @@ class SearchResultAdapter(
             placeholder(R.drawable.logo_placeholder); error(R.drawable.logo_placeholder)
         }
         h.itemView.setOnClickListener { onClick(g) }
+        // chuyen dong focus thay vien do (dong nhat the he card moi)
+        h.itemView.setOnFocusChangeListener { v, has ->
+            v.animate().scaleX(if (has) 1.02f else 1.0f).scaleY(if (has) 1.02f else 1.0f)
+                .setDuration(130).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+            v.elevation = if (has) 12f else 0f
+        }
     }
 }

@@ -81,6 +81,7 @@ class ScheduleFragment : Fragment() {
         v.findViewById<RecyclerView>(R.id.recyclerView).apply {
             layoutManager = LinearLayoutManager(requireContext())
             itemAnimator = null   // D-pad mash giua luc diff animate = focus nhay (cung ly do tab Live)
+            clipChildren = false; clipToPadding = false
             adapter = this@ScheduleFragment.adapter
         }
         load()

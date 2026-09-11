@@ -71,6 +71,12 @@ class ScheduleAdapter(
                 val vh = h as MatchVH
                 // xen kẽ 2 tông nền card (selector có viền đỏ khi focus — chuẩn TV D-pad)
                 vh.itemView.setBackgroundResource(if (pos % 2 == 0) R.drawable.card_a_focus else R.drawable.card_b_focus)
+                // chuyen dong focus thay vien do: phong to nhe + bong (dong nhat voi card Live)
+                vh.itemView.setOnFocusChangeListener { v, has ->
+                    v.animate().scaleX(if (has) 1.015f else 1.0f).scaleY(if (has) 1.015f else 1.0f)
+                        .setDuration(130).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
+                    v.elevation = if (has) 12f else 0f
+                }
                 // OK/Enter trên card: 1 BLV có phòng → play luôn; nhiều → dialog chọn
                 vh.itemView.setOnClickListener { onMatchClick(item) }
                 vh.name.text = "${item.host} vs ${item.guest}"

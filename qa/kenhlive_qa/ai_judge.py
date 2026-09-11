@@ -102,8 +102,12 @@ def detail_imgs(jpeg):
         im = Image.open(io.BytesIO(jpeg)).convert('RGB')
         W, H = im.size; px = im.load()
         def isred(q): return q[0] > 170 and q[1] < 110 and q[2] < 120 and q[0] - max(q[1], q[2]) > 70
+        def iswhite(q): return q[0] > 225 and q[1] > 225 and q[2] > 225
+        # vien trang hien hanh: duong ngang doc mong >80% chieu (khong bat noi dung trang rong)
         rows = [y for y in range(0, H, 2) if sum(isred(px[x, y]) for x in range(0, W, 3)) > (W//3) * 0.10]
         cols = [x for x in range(0, W, 2) if sum(isred(px[x, y]) for y in range(0, H, 3)) > (H//3) * 0.10]
+        wrows = [y for y in range(0, H, 1) if sum(iswhite(px[x, y]) for x in range(0, W, 2)) > (W//2) * 0.80 and (y == 0 or not iswhite(px[0, y-1]))]
+        if not rows and not cols and wrows: rows = wrows[:6]
         out = []
         f = lambda img: (lambda b: (img.save(b, 'JPEG', quality=85), b.getvalue())[1])(io.BytesIO())
         if rows:  # dải viền ngang → phóng 2x
@@ -138,7 +142,7 @@ QUY TẮC NGUỒN (RẤT QUAN TRỌNG — tránh báo oan):
 - Số card/section ÍT (1-2 card mỗi hàng, nhiều khoảng trống) khi khung giờ ít trận live = ĐÚNG hành vi, KHÔNG phải lỗi layout. Chỉ báo khi có ≥3 trận mà vẫn xếp lệch.
 - Chữ cắt cụt nằm BÊN TRONG ảnh thumbnail/video (chữ meme bake sẵn) = nguồn phát, không phải text của app.
 - ẢNH ĐẠI DIỆN TRẬN/BLV (avatar, cover, logo đội trong card) là data từ API nguồn — người thật/logo lạ/sai đội = NGUỒN CUNG CẤP, tối đa INFO.
-- VIỀN FOCUS ĐỎ mỏng ~4–5px là THIẾT KẾ (đã có lớp shadow đen lót). Nếu có ảnh CROP+ZOOM kèm theo, đo độ dày/độ liền từ ảnh zoom đó. Không báo 'không có focus' khi ảnh zoom thấy viền đỏ liền mạch.
+- Ô FOCUS được nhận diện bằng 3 dấu hiệu THIẾT KẾ: phóng to ~1.03–1.07 lần + viền TRẮNG 5px (lót shadow đen) + nhô elevation. KHÔNG còn viền đỏ. Không báo 'không có focus' nếu thấy ảnh zoom có đường kẻ trắng liền mạch quanh ô; cũng KHÔNG báo lỗi vì thiếu viền đỏ.
 - Video IPTV mờ/thấp nét = chất lượng nguồn phát → INFO, không phải lỗi app.
 - Chính tả/dấu tiếng Việt: ảnh đã co nhỏ, RẤT DỄ đọc nhầm 'trận'↔'trang', 'i'↔'l'. CHỈ báo lỗi text khi chắc chắn nhìn rõ từng ký tự; nghi ngờ → bỏ qua.
 - CHỈ báo lỗi app ở vùng UI của app: layout, text overlay của app, nút bấm, tab, focus, dialog, danh sách card.
