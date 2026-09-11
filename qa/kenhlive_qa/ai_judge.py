@@ -68,15 +68,17 @@ def _chat_kilo(prompt, imgs=None, max_tokens=4000, temperature=0.1, timeout=170)
     # model reasoning: completion tokens gồm cả reasoning nháp → để max_tokens rộng
     env = os.environ.get('KILO_MODEL')
     cands = [env] if env else kilo_vision_models()
-    last = None
+    last = None; t0 = time.time()
     for m in cands[:3]:
+        left = timeout - (time.time() - t0)
+        if left < 20: break          # hết ngân sách thời gian -> trả về cho fallback glm
         try:
             return _post(KILO_BASE, KILO_KEY, {"model": m, "temperature": temperature,
-                "max_tokens": max_tokens, "messages": _msgs(prompt, imgs)}, timeout)
+                "max_tokens": max_tokens, "messages": _msgs(prompt, imgs)}, int(left))
         except Exception as e:
             last = e
             print(f'  (kilo {m[:40]} fail: {str(e)[:50]} → model next)', flush=True)
-    raise last or Exception('kilo hết model thử')
+    raise last or Exception('kilo hết model/thời gian thử')
 
 def _chat(prompt, imgs=None, max_tokens=8000, temperature=0.1, timeout=170):
     """Kilo (tự dò model vision free còn sống, rotate 3 con) → glm fallback."""
