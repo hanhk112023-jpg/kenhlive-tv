@@ -235,8 +235,8 @@ class HomeAdapter(
         // cho phep card scale 1.07 lo ra ngoai container/scrollview (neu khong bi clip mat vien bong)
         vh.container.clipChildren = false
         vh.container.clipToPadding = false
-        (vh.container.parent as? View)?.let { it.clipChildren = false; it.clipToPadding = false }
-        vh.itemView.clipChildren = false
+        (vh.container.parent as? ViewGroup)?.let { it.clipChildren = false; it.clipToPadding = false }
+        (vh.itemView as? ViewGroup)?.clipChildren = false
         // Nếu hàng này ĐANG chứa view được focus → nhớ vị trí con để khôi phục sau khi rebuild.
         // Không làm vậy: removeAllViews destroy view focused → Android xóa focus →
         // phím D-pad kế tiếp nhảy đi lung tung (bug báo cáo).
