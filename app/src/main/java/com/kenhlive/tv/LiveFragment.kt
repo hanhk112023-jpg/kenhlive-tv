@@ -61,6 +61,9 @@ class LiveFragment : Fragment() {
         refreshHandler.removeCallbacks(autoRetry)
     }
 
+    /** QA hook (`--es open refresh`): ep auto-refresh chay NGAY — tam thoi bo qua gio han 3'. */
+    fun debugForceRefresh() { if (isAdded && ::adapter.isInitialized) silentRefresh() }
+
     /** Fetch lại âm thầm: giữ nguyên vị trí cuộn, chỉ cập nhật dữ liệu. */
     private fun silentRefresh() {
         if (refreshing || !isAdded || !::adapter.isInitialized) return

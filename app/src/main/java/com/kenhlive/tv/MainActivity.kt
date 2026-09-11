@@ -91,6 +91,14 @@ class MainActivity : AppCompatActivity() {
                     } catch (e: Exception) {}
                 }
                 "update" -> UpdateManager.debugForceDialog(this)
+                "refresh" -> {
+                    // QA: mo tab Live + ep silentRefresh (do focus giu duoc qua rebind)
+                    viewPager.setCurrentItem(0, false)
+                    viewPager.postDelayed({
+                        supportFragmentManager.fragments.filterIsInstance<LiveFragment>()
+                            .firstOrNull { it.isAdded }?.debugForceRefresh()
+                    }, 400)
+                }
                 "search" -> viewPager.post { viewPager.setCurrentItem(2, false) }
                 "player" -> lifecycleScope.launch {
                     try {

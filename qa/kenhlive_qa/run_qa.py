@@ -401,6 +401,42 @@ else:
     add_check('Round-trip DOWN3+UP3 về đúng cột xuất phát', rt_ok, f'{b_start} → {bc}')
 
 # ---------- 5.57 TAB LỊCH: mash DOWN xuyên danh sách (bug 'nhảy lung tung') ----------
+
+# ---------- 5.58 FOCUS GIỮA LÚC AUTO-REFRESH (bug user: 'lên xuống/ngang chưa fix hoàn toàn') ----------
+# Kich ban that: user dang o giua danh sach, auto-refresh 3' chay -> rebind hang ->
+# focus mat luc -> phim tiep theo nhay lung tung. Hook `--es open refresh` ep silentRefresh ngay.
+print('[5.58] D-pad qua auto-refresh', flush=True)
+sh(f'adb shell am force-stop {PKG}'); time.sleep(1)
+sh(f'adb shell am start -n {PKG}/.MainActivity --ei tab 0'); time.sleep(12)
+in_c58 = False
+for _ in range(4):
+    P.key('20'); time.sleep(0.45)
+    in_c58, _ = focused_is_card()
+    if in_c58: break
+if not in_c58:
+    add_check('5.58 — vào card trước khi refresh', False, 'DOWN không tới cardRoot')
+else:
+    ok_a, ba, _ = focused_card_info()
+    # ep auto-refresh chay trong luc focus dang nam tren card
+    sh(f'adb shell am start -n {PKG}/.MainActivity --es open refresh'); time.sleep(6)
+    ok_b, bb, _ = focused_card_info()
+    survived = ok_a and ok_b and bb and abs(int(bb[1]) - int(ba[1])) < 90 and abs(int(bb[0]) - int(ba[0])) < 400
+    add_check('Refresh — focus KHÔNG rơi về tab bar', survived,
+              'giu duoc card' if survived else f'{ba} → {bb}')
+    if not survived:
+        add_finding('Điều hướng', 'HIGH', 'Auto-refresh làm rơi focus khỏi card đang xem',
+                    f'trước {ba} sau {bb}', 'HomeAdapter.submit doc currentFocusSlot TRUOC dispatchUpdatesTo + rebind xong requestFocus lai dung o (pendingRestore)')
+    # bam tiep 3 DOWN + 2 RIGHT — khong duoc vao vung tab bar / hero (tag phai cardRoot)
+    esc58 = 0; where58 = ''
+    for k in ('20','20','20','22','22'):
+        P.key(k); time.sleep(0.5)
+        ok_k, tag_k = focused_is_card()
+        if not ok_k: esc58 += 1; where58 = tag_k
+    add_check('Refresh — phím sau đó vẫn trong vùng card', esc58 == 0,
+              'không lần nào văng' if esc58 == 0 else f'{esc58}/5 văng: {where58}')
+    if esc58:
+        add_finding('Điều hướng', 'HIGH', 'Sau auto-refresh, bấm D-pad focus nhảy lung tung', where58,
+                    'phuc hoi focus o cu the trong onBindViewHolder (pendingRestore) + nuot phim bien OnKeyListener phai duoc gan lai sau rebind')
 print('[5.57] D-pad tab Lịch', flush=True)
 sh(f'adb shell am force-stop {PKG}'); time.sleep(1)
 sh(f'adb shell am start -n {PKG}/.MainActivity --ei tab 1'); time.sleep(14)

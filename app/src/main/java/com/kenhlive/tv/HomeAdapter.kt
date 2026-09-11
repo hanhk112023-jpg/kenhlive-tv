@@ -42,11 +42,28 @@ class HomeAdapter(
     override fun onAttachedToRecyclerView(recyclerView: RecyclerView) { rv = recyclerView }
     override fun onDetachedFromRecyclerView(recyclerView: RecyclerView) { rv = null }
 
+    /** (rowPos, idx) cua card dang giu focus — DOC THOI DIEM submit() (truoc khi dispatch
+     *  destroy VH), mot lan dung. Truoc day auto-refresh rebind full hang khi VH dang focus
+     *  bi detach -> mat focus (khong co gi de phuc hoi vi VH moi khong con thuoc VH cu)
+     *  -> phim D-pad tiep theo roi vong focus-search mac dinh = "nhay lung tung" con sot. */
+    private var pendingRestore: Pair<Int, Int>? = null
+
+    private fun currentFocusSlot(): Pair<Int, Int>? {
+        val rvw = rv ?: return null
+        for (pos in 0 until itemCount) {
+            val vh = rvw.findViewHolderForAdapterPosition(pos) as? RowVH ?: continue
+            val i = focusedChildIndex(vh.container)
+            if (i >= 0) return pos to i
+        }
+        return null
+    }
+
     /** Cập nhật dữ liệu mới (auto-refresh 3 phút).
      *  Dùng DiffUtil THEO ROW: chỉ rebind hàng thực sự thay đổi → RecyclerView giữ nguyên
      *  ViewHolder + focus đang có. notifyDataSetChanged() cũ destroy mọi view giữa lúc
      *  user đang bấm D-pad = nguồn lỗi "đi 1 hướng nhảy lung tung". */
     fun submit(newGroups: List<LiveMatchGroup>) {
+        pendingRestore = currentFocusSlot()
         val oldRows = rows
         groups = newGroups
         val newRows = buildRows(groups)
@@ -145,8 +162,24 @@ class HomeAdapter(
         if (n > 0) rvw.postDelayed({ retryPending(n - 1) }, 180) else pendingFocus = null
     }
 
-    /** UP từ hàng đầu tiên → nút ▶ XEM NGAY của hero trang hiện tại. */
+    /** UP từ hàng đầu tiên → nút ▶ XEM NGAY của hero trang hiện tại.
+     *  Hero chua duoc layout (user dang cuon xuong xa) -> CUON LEN + retry thay vi
+     *  tra false (false = de Android focus-search mac dinh nat di tab bar/noi khac). */
+    private var pendingHeroFocus = false
     private fun focusHeroPlay(): Boolean {
+        val rvw = rv ?: return false
+        if (tryHeroPlay()) return true
+        pendingHeroFocus = true
+        rvw.smoothScrollToPosition(0)
+        rvw.postDelayed({ retryHeroFocus(8) }, 240)
+        return true
+    }
+    private fun retryHeroFocus(n: Int) {
+        if (!pendingHeroFocus) return
+        if (tryHeroPlay()) { pendingHeroFocus = false; return }
+        if (n > 0) rv?.postDelayed({ retryHeroFocus(n - 1) }, 180) else pendingHeroFocus = false
+    }
+    private fun tryHeroPlay(): Boolean {
         val vh = rv?.findViewHolderForAdapterPosition(0) as? HeroVH ?: return false
         val inner = vh.pager.getChildAt(0) as? ViewGroup ?: return false
         val page: View = inner.children.toList()
@@ -196,7 +229,8 @@ class HomeAdapter(
         // Nếu hàng này ĐANG chứa view được focus → nhớ vị trí con để khôi phục sau khi rebuild.
         // Không làm vậy: removeAllViews destroy view focused → Android xóa focus →
         // phím D-pad kế tiếp nhảy đi lung tung (bug báo cáo).
-        val focusedIdx = focusedChildIndex(vh.container)
+        val focusedIdx = if (pendingRestore?.first == pos) { val i = pendingRestore!!.second; pendingRestore = null; i }
+                         else focusedChildIndex(vh.container)
         vh.container.removeAllViews()
         val inf = LayoutInflater.from(vh.container.context)
         list.forEachIndexed { idx, g ->
@@ -240,7 +274,7 @@ class HomeAdapter(
             vh.container.getChildAt(focusedIdx).requestFocus()
             vh.itemView.post {
                 val c = vh.container
-                if (c.hasFocus() && c.focusedChild == null) {
+                if (c.focusedChild == null && !c.hasFocus()) {
                     c.getChildAt(focusedIdx.coerceAtMost(c.childCount - 1)).requestFocus()
                 }
             }
