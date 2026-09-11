@@ -10,8 +10,9 @@
     android:focusable="true"
     android:clickable="true">
 
-    <!-- THUMBNAIL 16:9 chuan (330x186) -->
+    <!-- THUMBNAIL 16:9 theo ti le card -->
     <FrameLayout
+        android:id="@+id/cardThumbBox"
         android:layout_width="match_parent"
         android:layout_height="186dp">
 

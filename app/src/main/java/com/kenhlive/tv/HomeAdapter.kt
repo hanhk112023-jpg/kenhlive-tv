@@ -105,8 +105,14 @@ class HomeAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inf = LayoutInflater.from(parent.context)
-        return if (viewType == TYPE_HERO)
-            HeroVH(inf.inflate(R.layout.item_hero_pager, parent, false))
+        return if (viewType == TYPE_HERO) {
+            val hv = inf.inflate(R.layout.item_hero_pager, parent, false)
+            // hero ~42% chieu cao man hinh (dp co dinh teo tren emulator density thap)
+            hv.findViewById<View>(R.id.heroPager)?.let { hp ->
+                hp.layoutParams = hp.layoutParams.apply {
+                    height = (parent.resources.displayMetrics.heightPixels * 0.42f).toInt() } }
+            HeroVH(hv)
+        }
         else
             RowVH(inf.inflate(R.layout.item_row, parent, false))
     }
@@ -244,8 +250,16 @@ class HomeAdapter(
                          else focusedChildIndex(vh.container)
         vh.container.removeAllViews()
         val inf = LayoutInflater.from(vh.container.context)
+        // Card theo TI LE MAN HINH (~3.5 card lo ra moi hang, kieu Netflix TV):
+        // dp co dinh teo lai tren emulator density thap -> 3/4 man trong.
+        val screenW = vh.container.resources.displayMetrics.widthPixels
+        val cardW = (screenW * 0.27f).toInt().coerceAtLeast(240)
+        val thumbH = ((cardW - 14 * vh.container.resources.displayMetrics.density) * 9f / 16f).toInt()
         list.forEachIndexed { idx, g ->
             val card = inf.inflate(R.layout.item_card_horizontal, vh.container, false)
+            card.layoutParams = card.layoutParams.apply { width = cardW }
+            card.findViewById<View>(R.id.cardThumbBox)?.let { tb ->
+                tb.layoutParams = tb.layoutParams.apply { height = thumbH } }
             // Mép hàng: KHÔNG dùng nextFocusLeftId/RightId — mọi card trùng id `cardRoot`
             // nên Android phân giải thành card của HÀNG KHÁC → focus "nhảy lung tung".
             // Thay bằng OnKeyListener nuốt phím ở đúng card biên (xác định, không phụ thuộc id).
