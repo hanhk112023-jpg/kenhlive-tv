@@ -13,7 +13,8 @@ KILO_KEY  = os.environ.get('KILO_API_KEY', '')
 KILO_MODELS_URL = KILO_BASE.rsplit('/v1/',1)[0] + '/v1/models'
 # model vision ưu tiên. Kilo hay đổi danh sách free trong ngày
 # → resolve động từ /v1/models mỗi phiên, cache tại chỗ; env KILO_MODEL vẫn override được.
-PREF = ['nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
+PREF = ['stepfun/step-3.7-flash:free',
+        'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
         'nvidia/nemotron-3-ultra-550b-a55b:free',
         'nvidia/nemotron-3-super-120b-a12b:free',
         'thinkingmachines/inkling:free',
@@ -187,3 +188,117 @@ def judge_perf(metrics):
         return f if isinstance(f, list) else []
     except Exception:
         return []
+
+
+# ================= AGENTIC JUDGE (model cam tool crop/zoom/measure) =================
+# Y tuong benchmark V*: thay thay 1-shot, cho model TU vong lap: goi tool -> nhan ket qua
+# (text + anh zoom) -> do lai. Tool chay local (qa_tools.py), mien phi, khong ton token upstream.
+import qa_tools
+
+AGENT_SYS = JUDGE_SYS + """
+
+BAN CO QUYEN DUNG TOOL tren file anh duoc cap (duong dan trong tin nhan):
+- zoom: cắt + phóng to vùng chứa viền/đường kẻ/chữ nhỏ TRƯỚC khi kết luận về nó
+- scan_color / measure: định lượng độ dày (px) cua vien mau — dùng số đo, không ước lượng bằng mắt
+- pixel: kiểm tra màu thật cua 1 diem
+- diff: kiem tra 2 anh giong nhau hay khac (ảnh nhận "không đổi sau khi bấm")
+- ui_dump / logcat: neu duoc cap thiet bi — doc text/focus that thay vi OCR
+Quy trinh bat buoc khi danh gia vien/duong ke/chu nho: scan_color -> measure (hoac zoom scale>=4 đọc ảnh) -> RỒI mới kết luận JSON.
+KET LUAN CUOI CUNG bat buoc la MANG JSON (kieu [{"area":...}]) — kh phai object don. Tối đa 5 lượt tool. Neu tool loi 2 lan cung loai -> ket luan bang mat va ghi ro "khong do duoc"."""
+
+def _coerce(x):
+    """dict bất kỳ (model hay trả key tiếng Việt/khác schema) -> finding chuẩn 5 key."""
+    if not isinstance(x, dict): return None
+    if x.get('issue'):
+        return {"area": str(x.get("area",""))[:80], "severity": str(x.get("severity","LOW")).upper() if str(x.get("severity","")).upper() in ("CRITICAL","HIGH","MEDIUM","LOW","INFO") else "LOW",
+                "issue": str(x["issue"])[:300], "evidence": str(x.get("evidence",""))[:300], "suggestion": str(x.get("suggestion",""))[:300]}
+    # khong co 'issue': lap len chu + gia tri thanh text
+    txt = "; ".join(f"{k}={v}" for k, v in x.items() if isinstance(v, (str, int, float, list)))
+    if not txt: return None
+    return {"area": str(x.get("area", x.get("khu_vuc", "tool-result")))[:80], "severity": "INFO",
+            "issue": txt[:300], "evidence": "đo bằng tool", "suggestion": ""}
+
+def _norm_findings(f):
+    """list→list chuẩn hoá; dict→wrap (Step hay tra {'ket_luan':{...}}); khac→None."""
+    if isinstance(f, list):
+        out = [_coerce(x) for x in f]; out = [x for x in out if x]
+        return out or None
+    if isinstance(f, dict):
+        inner = f.get('ket_luan') or f.get('findings') or f.get('result') or f.get('ketluan')
+        if isinstance(inner, list): return _norm_findings(inner)
+        if isinstance(inner, dict): return [_coerce(inner)] or None
+        c = _coerce(f)
+        return [c] if c else None
+    return None
+
+def judge_screen_agent(label, png_path, jpeg=None, max_rounds=6, timeout=None):
+    """Judge agentic: tra (findings, notes). jpeg = anh toan man hinh goi y (model thay
+    tong the roi moi dung tool do chi tiet). Loai model chet -> []."""
+    timeout = timeout or int(os.environ.get('QA_AGENT_TIMEOUT', '260'))
+    cands = ([os.environ['KILO_MODEL']] if os.environ.get('KILO_MODEL') else kilo_vision_models())[:2]
+    first = [{"type": "text", "text": f"Đây là màn hình '{label}' của app. Ảnh gốc để tool đo: {png_path}. Chấm theo rubric hệ thống; khi xong trả MẢNG JSON findings (rỗng [] nếu không có lỗi app)."}]
+    if jpeg:
+        first.append({"type": "image_url", "image_url": {"url": "data:image/jpeg;base64," + base64.b64encode(jpeg).decode()}})
+    messages = [{"role": "system", "content": AGENT_SYS}, {"role": "user", "content": first}]
+    notes = []
+    t0 = time.time()
+    for model in cands:
+        try:
+            msgs = list(messages); used = 0; img_files = []
+            while used <= max_rounds:
+                if time.time() - t0 > timeout: raise Exception(f'het ngan sach {timeout}s')
+                payload = {"model": model, "temperature": 0.1, "max_tokens": 6000, "messages": msgs,
+                           "tools": qa_tools.SCHEMAS, "tool_choice": "auto"}
+                out = _post_obj(KILO_BASE, KILO_KEY, payload, min(150, int(timeout - (time.time() - t0)) + 10))
+                tc = out.get('tool_calls') or []
+                if not tc:
+                    f = _norm_findings(_jclean(out.get('content') or ''))
+                    if f is not None:
+                        return f, notes + [f'agent={model.split("/")[1][:24]} rounds={used}']
+                    notes.append(f'{model[:24]}: tra loi khong phai findings (round {used})')
+                    break
+                used += 1
+                msgs.append({"role": "assistant", "content": out.get('content') or "", "tool_calls":
+                    [{"id": t.get('id') or f"c{i}", "type": "function",
+                      "function": {"name": t['function']['name'], "arguments": t['function']['arguments']}}
+                     for i, t in enumerate(tc)]})
+                for i, t in enumerate(tc):
+                    try:
+                        args = json.loads(t['function'].get('arguments') or '{}')
+                    except Exception:
+                        args = {}
+                    r = qa_tools.run(t['function']['name'], args)
+                    content = [{"type": "text", "text": r['text']}]
+                    if r.get('image'):
+                        b64 = base64.b64encode(open(r['image'], 'rb').read()).decode()
+                        content.append({"type": "image_url", "image_url": {"url": f"data:image/png;base64,{b64}"}})
+                        img_files.append(r['image'])
+                    msgs.append({"role": "tool", "tool_call_id": t.get('id') or f"c{i}", "content": content})
+            # het vong tool -> ep ket luan JSON khong cho goi tool nua
+            try:
+                msgs.append({"role": "user", "content": "Bạn đã dùng hết lượt tool. KHÔNG gọi tool nữa — trả MẢNG JSON kết luận NGAY dựa trên số đo đã nhận được (các vòng đỏ/viền đã đo bằng measure, không đoán bằng mắt)."})
+                out = _post_obj(KILO_BASE, KILO_KEY, {"model": model, "temperature": 0.1,
+                    "max_tokens": 4000, "messages": msgs}, 90)
+                f = _norm_findings(_jclean(out.get('content') or ''))
+                if f is not None:
+                    return f, notes + [f'agent={model.split("/")[1][:24]} forced-after-{max_rounds}']
+            except Exception as e:
+                pass
+            notes.append(f'{model[:28]}: dung tool {max_rounds} luot van chua ket luan')
+        except Exception as e:
+            notes.append(f'{model[:28]} fail: {str(e)[:70]}')
+    return [], notes
+
+def _post_obj(url, key, payload, timeout):
+    """Nhu _post nhung tra nguyen message dict (giu tool_calls)."""
+    req = urllib.request.Request(url, data=json.dumps(payload).encode(),
+        headers={"Content-Type": "application/json", "Authorization": "***" + key, "User-Agent": UA})
+    for attempt in range(2):
+        try:
+            r = json.loads(urllib.request.urlopen(req, timeout=timeout).read().decode())
+            if 'error' in r: raise Exception(str(r['error'])[:100])
+            return r['choices'][0]['message']
+        except Exception:
+            if attempt: raise
+            time.sleep(3)
+    return {}

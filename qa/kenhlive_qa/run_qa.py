@@ -62,8 +62,23 @@ def judge(label, png):
     try:
         from PIL import Image
         buf = io.BytesIO(); Image.open(io.BytesIO(png)).convert('RGB').save(buf, 'JPEG', quality=55)
-        from ai_judge import judge_screen
-        for f in judge_screen(label, buf.getvalue()):
+        jpeg = buf.getvalue()
+        # agent mode (model cam tool do dac): anh goc full-res + png path cho tool
+        raw = Image.open(io.BytesIO(png))
+        apng = f'{args.out}/shots/raw_{len(shots):02d}_{label.replace(" ","_").lower()}.png'
+        raw.save(apng)
+        res = []
+        if os.environ.get('QA_AGENT', '1') == '1':
+            try:
+                from ai_judge import judge_screen_agent
+                res, notes = judge_screen_agent(label, apng, jpeg=jpeg)
+                if notes: print('    (agent:', '; '.join(notes)[:110], ')', flush=True)
+            except Exception as e:
+                print('    (agent fail:', str(e)[:60], '→ 1-shot)', flush=True)
+        if not res:
+            from ai_judge import judge_screen
+            res = judge_screen(label, jpeg)
+        for f in res:
             if isinstance(f, dict) and f.get('issue'): findings.append({**f, 'area': f"{label} · {f.get('area','')}"})
     except Exception as e:
         print('  (ai judge skip:', str(e)[:60], ')', flush=True)
