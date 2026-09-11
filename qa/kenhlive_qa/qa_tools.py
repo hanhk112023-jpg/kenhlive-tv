@@ -90,6 +90,22 @@ def t_diff(a):
     tot = len(range(0, H, 3)) * len(range(0, W, 3))
     return {"text": f"pixel-diff = {100.0 * n / tot:.2f}% (0% = 2 ảnh giống hệt)"}
 
+def t_ocr(a):
+    """OCR deterministic bang tesseract (lang vie): doc dung chu cua app, model khoi tuong thuat 'thieu dau'."""
+    try:
+        import pytesseract
+        im = _load(a)
+        x, y = int(a.get('x', 0)), int(a.get('y', 0))
+        w = min(int(a.get('w', im.width)), im.width - x); h = min(int(a.get('h', im.height)), im.height - y)
+        c = im.crop((x, y, x + w, y + h))
+        c = c.resize((c.width * 3, c.height * 3), Image.LANCZOS)  # tesseract doc tot hon khi >~300px dong
+        txt = pytesseract.image_to_string(c, lang=a.get('lang', 'vie'), config='--psm ' + str(a.get('psm', 6))).strip()
+        return {"text": f"OCR vung ({x},{y},{w}x{h}) [chu that cua app, khong phai video nguồn]:\n{txt[:1500] or '(trong)'}"}
+    except ImportError:
+        return {"text": "pytesseract chưa cài (pip install pytesseract; cần binary tesseract + lang vie)"}
+    except Exception as e:
+        return {"text": f"ocr lỗi: {str(e)[:100]}"}
+
 def t_logcat(a):
     try:
         import subprocess
@@ -126,6 +142,7 @@ TOOLS = {
     'measure':     (t_measure, "Đo ĐỘ DÀY px của 1 đường viền. axis='x': quét DỌC theo cột pos (dùng đo viền NGANG — pos chọn là 1 hàng giữa viền, vd dòng quét qua mép trên video). axis='y': quét NGANG theo hàng pos (đo viền DỌC). Kết quả = list độ dài các đoạn màu liên tiếp theo px."),
     'diff':        (t_diff,    "So 2 screenshot (path + path2), trả % pixel khác nhau — xác nhận màn hình có đổi sau thao tác."),
     'logcat':      (t_logcat,  "100 dòng logcat gần nhất khớp regex pattern (mặc định E/|FATAL|Exception)."),
+    'ocr':         (t_ocr,    "OCR đọc CHÍNH XÁC chữ trong vùng (x,y,w,h) bằng tesseract lang vie — dùng để xác nhận text/thiếu dấu trước khi báo lỗi chữ. Chữ trong thumbnail/video (đã crop sẵn) là nguồn phát, chỉ OCR text của app."),
     'ui_dump':     (t_ui_dump, "UI hierarchy thật của thiết bị đang adb kết nối: class, bounds, text, focus. Đọc text/nút chính xác thay vì OCR."),
 }
 
