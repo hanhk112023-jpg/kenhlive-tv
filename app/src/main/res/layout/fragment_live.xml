@@ -30,14 +30,15 @@
             android:id="@+id/retryBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:padding="10dp"
+            android:layout_marginTop="16dp"
+            android:paddingLeft="26dp" android:paddingRight="26dp"
+            android:paddingTop="11dp" android:paddingBottom="11dp"
             android:text="THỬ LẠI"
-            android:textColor="#00E676"
+            android:textColor="#04140B"
             android:textSize="14sp"
             android:textStyle="bold"
             android:focusable="true"
-            android:background="?android:attr/selectableItemBackground"
+            android:background="@drawable/btn_hero_play"
             android:visibility="gone" />
     </LinearLayout>
 </FrameLayout>
