@@ -128,7 +128,7 @@ class MainActivity : AppCompatActivity() {
         navLive?.isSelected = pos == 0
         navSchedule?.isSelected = pos == 1
         findViewById<View>(R.id.nav_search)?.isSelected = pos == 2
-        val active = 0xFFFFFFFF.toInt()
+        val active = 0xFF00E676.toInt()
         val idle = 0xFFCFCFCF.toInt()
         findViewById<TextView>(R.id.tv_live)?.setTextColor(if (pos == 0) active else idle)
         findViewById<TextView>(R.id.tv_schedule)?.setTextColor(if (pos == 1) active else idle)

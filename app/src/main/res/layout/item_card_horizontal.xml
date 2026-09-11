@@ -116,7 +116,7 @@
         android:layout_marginRight="2dp"
         android:textColor="#F8FAFC"
         android:fontFamily="sans-serif-medium"
-        android:textSize="15sp"
+        android:textSize="16sp"
         android:maxLines="1"
         android:ellipsize="end" />
 </LinearLayout>
