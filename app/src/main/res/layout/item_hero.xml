@@ -17,42 +17,45 @@
         android:layout_height="match_parent"
         android:background="@drawable/hero_scrim" />
 
-    <!-- overlay text trái, đáy -->
+    <!-- overlay text trai, day -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:gravity="bottom"
-        android:paddingLeft="36dp"
-        android:paddingRight="36dp"
-        android:paddingBottom="30dp">
+        android:paddingLeft="40dp"
+        android:paddingRight="40dp"
+        android:paddingBottom="34dp">
 
+        <!-- chip giai dau -->
         <TextView
             android:id="@+id/heroLeague"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textColor="#00E676"
-            android:fontFamily="sans-serif-medium"
-            android:textSize="14sp"
+            android:fontFamily="sans-serif-black"
+            android:textSize="12sp"
             android:textStyle="bold"
-            android:letterSpacing="0.12"
-            android:shadowColor="#E6000000"
-            android:shadowDy="2"
-            android:shadowRadius="6" />
+            android:letterSpacing="0.14"
+            android:background="@drawable/pill_glass"
+            android:paddingLeft="10dp" android:paddingRight="10dp"
+            android:paddingTop="4dp" android:paddingBottom="4dp"
+            android:shadowColor="#E6000000" android:shadowRadius="6" />
 
         <TextView
             android:id="@+id/heroTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:layout_marginRight="220dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginRight="240dp"
             android:textColor="#FFFFFF"
             android:fontFamily="@font/oswald"
-            android:textSize="34sp"
+            android:textSize="38sp"
             android:textStyle="bold"
-            android:shadowColor="#CC000000"
+            android:letterSpacing="0.01"
+            android:shadowColor="#E6000000"
             android:shadowDy="3"
-            android:shadowRadius="10"
+            android:shadowRadius="12"
             android:ellipsize="end"
             android:maxLines="2" />
 
@@ -61,10 +64,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
-            android:layout_marginRight="220dp"
-            android:textColor="#FFFFFF"
+            android:layout_marginRight="240dp"
+            android:textColor="#F1F5F9"
             android:fontFamily="sans-serif-medium"
-            android:textSize="15sp"
+            android:textSize="16sp"
+            android:shadowColor="#CC000000" android:shadowRadius="6"
             android:maxLines="1"
             android:ellipsize="end" />
 
@@ -72,22 +76,22 @@
             android:id="@+id/heroTagline"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
-            android:layout_marginRight="220dp"
-            android:textColor="#E2E8F0"
-            android:fontFamily="sans-serif-medium"
-            android:textSize="14sp"
+            android:layout_marginTop="3dp"
+            android:layout_marginRight="240dp"
+            android:textColor="#B9C4D2"
+            android:textSize="13sp"
+            android:shadowColor="#CC000000" android:shadowRadius="6"
             android:maxLines="1"
             android:ellipsize="end" />
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="20dp"
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <!-- CTA chính: Xem ngay -->
+            <!-- CTA: play tron + chu -->
             <LinearLayout
                 android:id="@+id/heroPlay"
                 android:layout_width="wrap_content"
@@ -95,10 +99,10 @@
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:background="@drawable/btn_hero_play"
-                android:paddingLeft="26dp"
-                android:paddingRight="26dp"
-                android:paddingTop="11dp"
-                android:paddingBottom="11dp"
+                android:paddingLeft="28dp"
+                android:paddingRight="28dp"
+                android:paddingTop="13dp"
+                android:paddingBottom="13dp"
                 android:clickable="true"
                 android:focusable="true">
 
@@ -111,24 +115,24 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="9dp"
+                    android:layout_marginLeft="10dp"
                     android:text="XEM NGAY"
                     android:textColor="#04140B"
                     android:fontFamily="@font/oswald"
-                    android:textSize="15sp"
+                    android:textSize="16sp"
                     android:textStyle="bold"
-                    android:letterSpacing="0.06" />
+                    android:letterSpacing="0.08" />
             </LinearLayout>
 
-            <!-- meta: viewers · N phòng -->
             <TextView
                 android:id="@+id/heroViewers"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="18dp"
+                android:layout_marginLeft="20dp"
                 android:textColor="#FFFFFF"
                 android:fontFamily="@font/oswald"
-                android:textSize="17sp"
+                android:textSize="18sp"
+                android:shadowColor="#CC000000" android:shadowRadius="6"
                 android:fontFeatureSettings="tnum" />
         </LinearLayout>
     </LinearLayout>

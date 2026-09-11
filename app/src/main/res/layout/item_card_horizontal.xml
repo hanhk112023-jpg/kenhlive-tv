@@ -1,19 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/cardRoot"
-    android:layout_width="300dp"
+    android:layout_width="344dp"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:layout_margin="8dp"
+    android:layout_margin="7dp"
     android:background="@drawable/card_focus_bg"
-    android:padding="6dp"
+    android:padding="7dp"
     android:focusable="true"
     android:clickable="true">
 
-    <!-- THUMBNAIL 16:9 -->
+    <!-- THUMBNAIL 16:9 chuan (330x186) -->
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="169dp">
+        android:layout_height="186dp">
 
         <ImageView
             android:id="@+id/cardThumb"
@@ -23,54 +23,56 @@
             android:background="@drawable/thumb_round_bg"
             android:contentDescription="@string/app_name" />
 
-        <!-- LIVE badge góc trên-trái -->
+        <!-- LIVE pill xan, chu den -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="top|left"
-            android:layout_margin="8dp"
+            android:layout_margin="9dp"
             android:text="● LIVE"
-            android:textColor="#FFFFFF"
+            android:textColor="#04140B"
+            android:fontFamily="sans-serif-black"
             android:background="@drawable/badge_live"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
+            android:paddingLeft="9dp"
+            android:paddingRight="9dp"
             android:paddingTop="3dp"
             android:paddingBottom="3dp"
-            android:textSize="12sp"
-            android:textStyle="bold" />
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.06" />
 
-        <!-- badge N phòng góc trên-phải -->
+        <!-- badge N phong: kinh toi -->
         <TextView
             android:id="@+id/roomBadge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="top|right"
-            android:layout_margin="8dp"
-            android:textColor="#FFFFFF"
+            android:layout_margin="9dp"
+            android:textColor="#EAF2F8"
             android:fontFamily="sans-serif-medium"
-            android:textSize="12sp"
-            android:background="@drawable/room_badge_bg"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
+            android:textSize="11sp"
+            android:background="@drawable/pill_glass"
+            android:paddingLeft="9dp"
+            android:paddingRight="9dp"
             android:paddingTop="3dp"
             android:paddingBottom="3dp"
             android:visibility="gone" />
 
-        <!-- scrim đáy + avatar BLV nhỏ + viewers -->
+        <!-- scrim day + avatar + BLV + viewers pill -->
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="52dp"
+            android:layout_height="54dp"
             android:layout_gravity="bottom"
             android:orientation="horizontal"
             android:gravity="center_vertical"
             android:background="@drawable/thumb_bottom_scrim"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp">
+            android:paddingLeft="9dp"
+            android:paddingRight="9dp">
 
             <ImageView
                 android:id="@+id/cardAvatar"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
                 android:scaleType="centerCrop"
                 android:background="@drawable/avatar_mask"
                 android:contentDescription="blv" />
@@ -80,9 +82,9 @@
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="7dp"
+                android:layout_marginLeft="8dp"
                 android:textColor="#FFFFFF"
-                android:shadowColor="#CC000000" android:shadowRadius="6"
+                android:shadowColor="#D9000000" android:shadowRadius="7"
                 android:fontFamily="sans-serif-medium"
                 android:textSize="14sp"
                 android:ellipsize="end"
@@ -92,15 +94,19 @@
                 android:id="@+id/cardViewers"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#FFFFFF"
-                android:fontFamily="@font/oswald"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:fontFeatureSettings="tnum" />
+                android:layout_marginLeft="6dp"
+                android:textColor="#DCE6F0"
+                android:textSize="11sp"
+                android:fontFamily="sans-serif-medium"
+                android:fontFeatureSettings="tnum"
+                android:background="@drawable/pill_glass"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp" />
         </LinearLayout>
     </FrameLayout>
 
-    <!-- TÊN TRẬN 2 dòng + giải -->
     <TextView
         android:id="@+id/cardMatch"
         android:layout_width="match_parent"
@@ -108,12 +114,9 @@
         android:layout_marginTop="9dp"
         android:layout_marginLeft="2dp"
         android:layout_marginRight="2dp"
-        android:textColor="#FFFFFF"
-        android:fontFamily="@font/oswald"
-        android:textSize="17sp"
-        android:textStyle="bold"
-        android:ellipsize="end"
-        android:maxLines="2"
-        android:minLines="2" />
-
+        android:textColor="#F8FAFC"
+        android:fontFamily="sans-serif-medium"
+        android:textSize="15sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
 </LinearLayout>
