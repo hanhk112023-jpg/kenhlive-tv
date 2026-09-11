@@ -3,13 +3,13 @@
     <!-- scrim trai day dan (chu de tren anh) -->
     <item>
         <shape>
-            <gradient android:startColor="#F7000000" android:centerColor="#B0000000" android:endColor="#1A000000" android:angle="0" />
+            <gradient android:startColor="#DE000000" android:centerColor="#8A000000" android:endColor="#00000000" android:angle="0" />
         </shape>
     </item>
     <!-- scrim day san -->
     <item>
         <shape>
-            <gradient android:startColor="#00000000" android:centerColor="#66000000" android:endColor="#F2000000" android:angle="270" />
+            <gradient android:startColor="#00000000" android:centerColor="#59000000" android:endColor="#E0000000" android:angle="270" />
         </shape>
     </item>
 </layer-list>
