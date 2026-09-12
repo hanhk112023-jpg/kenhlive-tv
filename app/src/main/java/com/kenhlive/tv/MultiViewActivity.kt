@@ -1,16 +1,15 @@
 package com.kenhlive.tv
 
-import android.app.AlertDialog
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.view.KeyEvent
-import android.view.LayoutInflater
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.media3.common.AudioAttributes
@@ -20,15 +19,15 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import com.kenhlive.tv.ui.RoomPickerDialog
 import kotlinx.coroutines.launch
 
 /**
- * Multiview v3 — ĐÚNG như tên: xem NHIỀU trận cùng lúc.
- * - Bố cục 2 (trái/phải) hoặc 4 (2×2), nút ℹ/chạm "Bố cục" để đổi (máy RAM thấp khoá ở 2)
- * - CẢ các ô đều có tiếng: ô focus 100%, ô khác 55% (layout 2) / 40% (layout 4); mute riêng từng ô
- * - ỔN ĐỊNH: mỗi slot tự phục hồi — lỗi/đứng hình → thử lại cùng phòng (backoff, tối đa 5 lần)
- *   → hết nguồn mới báo OK chọn trận; watchdog 15s phát hiện buffer treo
- * - ←→↑↓: di chuyển 2 chiều giữa các ô · OK: đổi trận/BLV · MENU: hoán đổi với ô kế · BACK: thoát
+ * Multiview v4 — xem NHIỀU trận cùng lúc (2 hoặc 4 ô).
+ * - CẢ các ô đều có tiếng: ô focus 100%, ô khác 55% (2 ô) / 40% (4 ô); mute riêng từng ô
+ * - ỔN ĐỊNH: mỗi ô tự phục hồi (backoff 2·4·6·8·10s, tối đa 5 lần) + watchdog 15s
+ * - TV: ←→↑↓ chuyển ô · OK đổi trận · giữ OK/MENU/INFO đổi bố cục · BACK thoát
+ * - Phone: chạm ô để focus, chạm loa để mute
  */
 class MultiViewActivity : AppCompatActivity() {
 
@@ -59,26 +58,23 @@ class MultiViewActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_multiview)
 
-        val slotRoots = listOf(findViewById<FrameLayout>(R.id.slot0), findViewById(R.id.slot1),
-                               findViewById(R.id.slot2), findViewById(R.id.slot3))
+        val slotRoots = listOf(
+            findViewById<FrameLayout>(R.id.slot0), findViewById(R.id.slot1),
+            findViewById(R.id.slot2), findViewById(R.id.slot3)
+        )
         slots = Array(4) { i -> Slot(slotRoots[i], i) }
 
-        // debug hook QA: --ei mv_layout 4 ép bố cục 4 (vượt khoá lowRam để chụp ảnh CI)
         val forceLayout = intent.getIntExtra("mv_layout", 0)
         layoutN = when {
             forceLayout in intArrayOf(2, 4) -> forceLayout
-            KenhLiveApp.lowRam -> 2
+            DeviceMode.lowRam -> 2
             else -> getSharedPreferences("mv", MODE_PRIVATE).getInt("layout", 2)
         }
         findViewById<TextView>(R.id.layoutBtn)?.setOnClickListener { toggleLayout() }
 
         slots.forEachIndexed { i, s ->
             s.root.setOnClickListener { requestFocusSlot(i) }
-            s.audioBadge.setOnClickListener {
-                s.muted = !s.muted
-                s.audioBadge.text = if (s.muted) "TĨNH LẶNG" else "ÂM THANH"
-                applyVolumes()
-            }
+            s.audioBadge.setOnClickListener { toggleMute(s) }
         }
         applyLayoutChrome()
 
@@ -86,10 +82,11 @@ class MultiViewActivity : AppCompatActivity() {
         val initialUrl = intent.getStringExtra("initial_url")
 
         lifecycleScope.launch {
-            groups = try { SocoliveRepository.groupRooms(SocoliveRepository.fetchLiveRooms()) }
-                     catch (e: Exception) { emptyList() }
+            groups = try {
+                SocoliveRepository.groupRooms(SocoliveRepository.fetchLiveRooms())
+            } catch (_: Exception) { emptyList() }
             if (groups.isEmpty()) {
-                Toast.makeText(this@MultiViewActivity, "Không load được trận live — thoát ra vào lại", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@MultiViewActivity, R.string.mv_load_error, Toast.LENGTH_LONG).show()
                 finish(); return@launch
             }
             val wantMatch = initialRoomName?.substringBefore(" · ")
@@ -100,14 +97,20 @@ class MultiViewActivity : AppCompatActivity() {
             if (second != null) bindSlot(1, second, null) else showWaitingSecond()
             if (layoutN == 4) {
                 val t = pickUnused(2, 0, 1); val f = pickUnused(3, 0, 1, 2)
-                if (t != null) bindSlot(2, t, null); if (f != null) bindSlot(3, f, null)
+                if (t != null) bindSlot(2, t, null)
+                if (f != null) bindSlot(3, f, null)
             }
             applyFocus()
             handler.postDelayed(watchdog, 15_000)
         }
     }
 
-    /** group chưa bị ô nào khác chiếm */
+    private fun toggleMute(s: Slot) {
+        s.muted = !s.muted
+        s.audioBadge.text = getString(if (s.muted) R.string.mv_audio_off else R.string.mv_audio_on)
+        applyVolumes()
+    }
+
     private fun pickUnused(avoidIndex: Int, vararg takenIdx: Int): LiveMatchGroup? {
         val taken = takenIdx.toList().mapNotNull { slots[it].group?.matchTitle }.toHashSet()
         return groups.firstOrNull { it.matchTitle !in taken }
@@ -115,8 +118,8 @@ class MultiViewActivity : AppCompatActivity() {
 
     // ===== BỐ CỤC 2 ⇄ 4 =====
     private fun toggleLayout() {
-        if (KenhLiveApp.lowRam) {
-            Toast.makeText(this, "Máy RAM thấp — giữ bố cục 2 trận để mượt", Toast.LENGTH_SHORT).show(); return
+        if (DeviceMode.lowRam) {
+            Toast.makeText(this, R.string.mv_lowram_lock, Toast.LENGTH_SHORT).show(); return
         }
         layoutN = if (layoutN == 2) 4 else 2
         getSharedPreferences("mv", MODE_PRIVATE).edit().putInt("layout", layoutN).apply()
@@ -124,10 +127,12 @@ class MultiViewActivity : AppCompatActivity() {
         if (layoutN == 4) {
             if (groups.isEmpty()) return
             val t = pickUnused(2, 0, 1); val f = pickUnused(3, 0, 1, 2)
-            if (t == null && slots[2].group == null) Toast.makeText(this, "Chưa đủ trận live cho 4 ô", Toast.LENGTH_SHORT).show()
+            if (t == null && slots[2].group == null) {
+                Toast.makeText(this, R.string.mv_not_enough, Toast.LENGTH_SHORT).show()
+            }
             if (t != null && slots[2].group?.matchTitle != t.matchTitle) bindSlot(2, t, null)
             if (f != null && slots[3].group?.matchTitle != f.matchTitle) bindSlot(3, f, null)
-            if (focused >= layoutN) { focused = 0 }
+            if (focused >= layoutN) focused = 0
             applyFocus()
         } else {
             if (focused >= 2) { focused = 0; applyFocus() }
@@ -135,24 +140,33 @@ class MultiViewActivity : AppCompatActivity() {
     }
 
     private fun applyLayoutChrome() {
-        // 2 ô: XẾP CHỒNG TRÊN/DƯỚI (cell 1920×540 = đúng 16:9, không đen không nhỏ).
-        // 4 ô: 2 hàng × 2 cell (960×540 = cũng đúng 16:9). KHÔNG BAO GIỜ chia trái/phải ở mode 2.
         val row0 = findViewById<LinearLayout>(R.id.mvRow0)
         if (layoutN == 4) {
             row0.orientation = LinearLayout.HORIZONTAL
-            for (i in 0..1) slots[i].root.layoutParams = LinearLayout.LayoutParams(0, FrameLayout.LayoutParams.MATCH_PARENT, 1f)
+            for (i in 0..1) {
+                slots[i].root.layoutParams =
+                    LinearLayout.LayoutParams(0, FrameLayout.LayoutParams.MATCH_PARENT, 1f)
+            }
         } else {
             row0.orientation = LinearLayout.VERTICAL
-            for (i in 0..1) slots[i].root.layoutParams = LinearLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, 0, 1f)
+            for (i in 0..1) {
+                slots[i].root.layoutParams =
+                    LinearLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, 0, 1f)
+            }
         }
         findViewById<View>(R.id.mvRow1).visibility = if (layoutN == 4) View.VISIBLE else View.GONE
-        findViewById<TextView>(R.id.layoutBtn).text = "Bố cục: $layoutN"
-        findViewById<TextView>(R.id.hintText).text =
-            if (layoutN == 4) "↑↓←→ chọn ô · OK: đổi trận · MENU: hoán đổi · giữ OK: 2 ô"
-            else "↑↓ chọn trận · OK: đổi trận · MENU: hoán đổi · giữ OK: 4 ô"
+        findViewById<TextView>(R.id.layoutBtn).text = getString(R.string.mv_layout_btn, layoutN)
+        findViewById<TextView>(R.id.hintText).text = getString(
+            if (DeviceMode.isTv) {
+                if (layoutN == 4) R.string.mv_hint_4 else R.string.mv_hint_2
+            } else R.string.mv_hint_phone
+        )
         if (layoutN == 2) for (i in 2..3) {
             val s = slots[i]
-            if (s.group != null) { s.player?.release(); s.fx.detach(); s.player = null; s.playerView.player = null; s.group = null }
+            if (s.group != null) {
+                s.player?.release(); s.fx.detach(); s.player = null
+                s.playerView.player = null; s.group = null
+            }
         }
     }
 
@@ -168,10 +182,11 @@ class MultiViewActivity : AppCompatActivity() {
         val s = slots[i]
         handler.removeCallbacks(secondWatcher)
         lifecycleScope.launch {
-            s.label.text = (s.group?.matchTitle ?: "Ô ${i+1}") + " · đang tải stream…"
+            s.label.text = (s.group?.matchTitle ?: getString(R.string.mv_slot, i + 1)) +
+                " " + getString(R.string.mv_loading_stream)
             val url = if (knownUrl != null && knownUrl != "FETCH") knownUrl else resolveStream(s)
             if (url == null) {
-                s.label.text = "${s.group?.matchTitle ?: ""} · hết nguồn · OK để chọn trận"
+                s.label.text = "${s.group?.matchTitle ?: ""} ${getString(R.string.mv_stream_missing)}"
                 return@launch
             }
             s.player?.release(); s.fx.detach()
@@ -181,7 +196,8 @@ class MultiViewActivity : AppCompatActivity() {
                 .build().apply {
                     setAudioAttributes(
                         AudioAttributes.Builder().setUsage(C.USAGE_MEDIA)
-                            .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE).build(), false)
+                            .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE).build(), false
+                    )
                     volume = 0f
                     setMediaItem(Enhancer.buildMediaItem(url))
                     prepare()
@@ -189,21 +205,20 @@ class MultiViewActivity : AppCompatActivity() {
                     addListener(object : Player.Listener {
                         override fun onPlayerError(error: PlaybackException) { slotRecover(i, "lỗi sóng") }
                         override fun onPlaybackStateChanged(state: Int) {
-                            if (state == Player.STATE_BUFFERING) { if (s.bufferingSince == 0L) s.bufferingSince = System.currentTimeMillis() }
-                            else s.bufferingSince = 0L
+                            if (state == Player.STATE_BUFFERING) {
+                                if (s.bufferingSince == 0L) s.bufferingSince = System.currentTimeMillis()
+                            } else s.bufferingSince = 0L
                             if (state == Player.STATE_READY) s.retry = 0
                         }
                     })
                 }
             s.playerView.player = s.player
-            // FIT trọn khung hình: ZOOM ở ô 1/2 màn crop mất phân nửa trận (user report v5.2.0)
             s.playerView.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FIT
             s.fx.attach(s.player!!.audioSessionId, EnhanceSettings.audioMode(this@MultiViewActivity))
             applyVolumes()
         }
     }
 
-    /** Lỗi/đứng → reload lại CÙNG phòng trước (giữ trận người dùng chọn), backoff 2·4·6·8·10s. */
     private fun slotRecover(i: Int, why: String) {
         val s = slots[i]
         if (s.group == null || s.player == null) return
@@ -220,14 +235,14 @@ class MultiViewActivity : AppCompatActivity() {
         }, 2000L * s.retry)
     }
 
-    /** Watchdog: buffer treo >30s hoặc IDLE không lý do → recover. */
     private val watchdog = object : Runnable {
         override fun run() {
             val self = this
             for (s in active) {
                 val p = s.player ?: continue
                 if (p.playbackState == Player.STATE_BUFFERING &&
-                    s.bufferingSince > 0 && System.currentTimeMillis() - s.bufferingSince > 30_000) {
+                    s.bufferingSince > 0 && System.currentTimeMillis() - s.bufferingSince > 30_000
+                ) {
                     s.bufferingSince = 0; slotRecover(s.index, "kẹt hình")
                 } else if (p.playbackState == Player.STATE_IDLE) {
                     slotRecover(s.index, "rơi sóng")
@@ -237,7 +252,6 @@ class MultiViewActivity : AppCompatActivity() {
         }
     }
 
-    /** fetch chain: phòng đang chọn → phòng khác cùng trận → trận khác (tối đa 8). */
     private suspend fun resolveStream(s: Slot): String? {
         val g = s.group ?: return null
         val tried = mutableListOf<Pair<LiveMatchGroup, LiveRoom>>()
@@ -256,13 +270,11 @@ class MultiViewActivity : AppCompatActivity() {
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
         if (event.action != KeyEvent.ACTION_DOWN) return super.dispatchKeyEvent(event)
         when (event.keyCode) {
-            KeyEvent.KEYCODE_DPAD_LEFT  -> { moveFocus(-1, 0); return true }
+            KeyEvent.KEYCODE_DPAD_LEFT -> { moveFocus(-1, 0); return true }
             KeyEvent.KEYCODE_DPAD_RIGHT -> { moveFocus(1, 0); return true }
-            KeyEvent.KEYCODE_DPAD_UP    -> { moveFocus(0, -1); return true }
-            KeyEvent.KEYCODE_DPAD_DOWN  -> { moveFocus(0, 1); return true }
+            KeyEvent.KEYCODE_DPAD_UP -> { moveFocus(0, -1); return true }
+            KeyEvent.KEYCODE_DPAD_DOWN -> { moveFocus(0, 1); return true }
             KeyEvent.KEYCODE_DPAD_CENTER, KeyEvent.KEYCODE_ENTER, KeyEvent.KEYCODE_NUMPAD_ENTER -> {
-                // giữ OK (lặp >=3) = đổi bố cục 2⇄4 — vì phím ℹ không có trên mọi remote
-                // và dispatchKeyEvent nuốt hết arrow nên không D-pad tới được nút "Bố cục".
                 if (event.repeatCount >= 3 && (dialog?.isShowing != true)) { toggleLayout(); return true }
                 if (event.repeatCount < 3 && slots[focused].group != null) openRoomPicker(focused)
                 return true
@@ -273,7 +285,6 @@ class MultiViewActivity : AppCompatActivity() {
         return super.dispatchKeyEvent(event)
     }
 
-    /** lưới: 2 ô = 1 cột × 2 hàng (dọc); 4 ô = 2×2. Chặn mọi mép — không wrap, không nhảy. */
     private fun moveFocus(dx: Int, dy: Int) {
         val cols = if (layoutN == 4) 2 else 1
         val rows = layoutN / cols
@@ -291,9 +302,7 @@ class MultiViewActivity : AppCompatActivity() {
     private fun applyFocus() {
         active.forEach { s ->
             val isFocus = s.index == focused
-            // ô focus PHONG TO nhe + nhô lên trước (elevation), ô kia thu về —
-            // chuyển động thay cho khung đỏ tĩnh (user: 'làm phóng to hoặc gì đó')
-            s.root.animate().scaleX(if (isFocus) 1.035f else 1.0f).scaleY(if (isFocus) 1.035f else 1.0f)
+            s.root.animate().scaleX(if (isFocus) 1.035f else 1f).scaleY(if (isFocus) 1.035f else 1f)
                 .setDuration(150).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
             s.root.elevation = if (isFocus) 14f else 0f
             s.root.foreground = if (isFocus) focusDrawable() else normalDrawable()
@@ -309,7 +318,6 @@ class MultiViewActivity : AppCompatActivity() {
         val target = slots[focused].root
         border.post {
             if (target.width == 0) return@post
-            // border tro theo kich thuoc THAT cua o (scale 1.035 xung quanh tam) va truot den vi tri moi
             val sc = 1.035f
             val w = (target.width * sc).toInt(); val h = (target.height * sc).toInt()
             val cx = target.x + target.width / 2f; val cy = target.y + target.height / 2f
@@ -323,7 +331,6 @@ class MultiViewActivity : AppCompatActivity() {
         }
     }
 
-    /** Vien TRANG sang + bong den lot: hon voi nang cap do phong to cua o focus. */
     private fun focusDrawable(): android.graphics.drawable.Drawable {
         val back = android.graphics.drawable.GradientDrawable().apply {
             setColor(0x00000000); setStroke(12, 0xB3000000.toInt()); cornerRadius = 12f
@@ -333,6 +340,7 @@ class MultiViewActivity : AppCompatActivity() {
         }
         return android.graphics.drawable.LayerDrawable(arrayOf(back, line))
     }
+
     private fun normalDrawable(): android.graphics.drawable.Drawable =
         android.graphics.drawable.GradientDrawable().apply {
             setColor(0x00000000); setStroke(2, 0xFF262626.toInt())
@@ -351,18 +359,19 @@ class MultiViewActivity : AppCompatActivity() {
         if (a.group == null || b.group == null) return
         val tp = a.player; val tg = a.group; val tr = a.room; val tm = a.muted; val tl = a.label.text
         val tr2 = a.retry; val tb = a.bufferingSince
-        a.player = b.player; a.group = b.group; a.room = b.room; a.muted = b.muted; a.label.text = b.label.text
+        a.player = b.player; a.group = b.group; a.room = b.room; a.muted = b.muted
+        a.label.text = b.label.text
         a.retry = b.retry; a.bufferingSince = b.bufferingSince
         b.player = tp; b.group = tg; b.room = tr; b.muted = tm; b.label.text = tl
         b.retry = tr2; b.bufferingSince = tb
         a.playerView.player = a.player; b.playerView.player = b.player
         a.fx.detach(); b.fx.detach()
-        a.player?.let { a.fx.attach(it.audioSessionId, EnhanceSettings.audioMode(this@MultiViewActivity)) }
-        b.player?.let { b.fx.attach(it.audioSessionId, EnhanceSettings.audioMode(this@MultiViewActivity)) }
-        a.audioBadge.text = if (a.muted) "TĨNH LẶNG" else "ÂM THANH"
-        b.audioBadge.text = if (b.muted) "TĨNH LẶNG" else "ÂM THANH"
+        a.player?.let { a.fx.attach(it.audioSessionId, EnhanceSettings.audioMode(this)) }
+        b.player?.let { b.fx.attach(it.audioSessionId, EnhanceSettings.audioMode(this)) }
+        a.audioBadge.text = getString(if (a.muted) R.string.mv_audio_off else R.string.mv_audio_on)
+        b.audioBadge.text = getString(if (b.muted) R.string.mv_audio_off else R.string.mv_audio_on)
         applyVolumes()
-        Toast.makeText(this, "Đã hoán đổi 2 ô", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, R.string.mv_swapped, Toast.LENGTH_SHORT).show()
     }
 
     private fun fmtLabel(s: Slot): String =
@@ -373,7 +382,7 @@ class MultiViewActivity : AppCompatActivity() {
         val s = slots[1]
         s.player?.release(); s.player = null; s.fx.detach()
         s.playerView.player = null
-        s.label.text = "Đang chờ trận live thứ 2…"
+        s.label.text = getString(R.string.mv_waiting_2)
         s.root.visibility = View.VISIBLE
         s.swapHint.visibility = View.GONE
         handler.postDelayed(secondWatcher, 20_000)
@@ -386,7 +395,7 @@ class MultiViewActivity : AppCompatActivity() {
                 try {
                     val gs = SocoliveRepository.groupRooms(SocoliveRepository.fetchLiveRooms())
                     if (gs.isNotEmpty()) groups = gs
-                    val need = if (layoutN == 4) listOf(0,1,2,3) else listOf(0,1)
+                    val need = if (layoutN == 4) listOf(0, 1, 2, 3) else listOf(0, 1)
                     var changed = false
                     for (i in need) {
                         if (slots[i].group == null) {
@@ -394,9 +403,11 @@ class MultiViewActivity : AppCompatActivity() {
                             if (g != null) { bindSlot(i, g, null); changed = true }
                         }
                     }
-                    if (changed) { Toast.makeText(this@MultiViewActivity, "Đã thêm trận", Toast.LENGTH_SHORT).show(); applyFocus() }
-                    else handler.postDelayed(self, 20_000)
-                } catch (e: Exception) { handler.postDelayed(self, 20_000) }
+                    if (changed) {
+                        Toast.makeText(this@MultiViewActivity, R.string.mv_added, Toast.LENGTH_SHORT).show()
+                        applyFocus()
+                    } else handler.postDelayed(self, 20_000)
+                } catch (_: Exception) { handler.postDelayed(self, 20_000) }
             }
         }
     }
@@ -404,45 +415,19 @@ class MultiViewActivity : AppCompatActivity() {
     private fun openRoomPicker(i: Int) {
         val s = slots[i]
         val g = s.group ?: return
-        val view = LayoutInflater.from(this).inflate(R.layout.dialog_room_picker, null)
-        view.findViewById<TextView>(R.id.dialogTitle).text = g.matchTitle
-        view.findViewById<TextView>(R.id.dialogLeague).text = "${g.league} · ${g.count} phòng · chọn BLV hoặc trận khác"
-        val list = view.findViewById<LinearLayout>(R.id.roomList)
-        val inf = LayoutInflater.from(this)
-
-        g.rooms.forEach { r ->
-            val opt = inf.inflate(R.layout.item_room_option, list, false)
-            opt.findViewById<TextView>(R.id.roomName).text = r.blvName
-            opt.findViewById<TextView>(R.id.roomMeta).text = "${SocoliveRepository.fmtViewers(r.viewers)} lượt xem · LIVE"
-            opt.setOnClickListener {
+        dialog?.dismiss()
+        dialog = RoomPickerDialog.show(
+            this, g,
+            onPickRoom = { r ->
                 s.room = r; s.label.text = fmtLabel(s); s.retry = 0
                 playInSlot(i, "FETCH")
-                dialog?.dismiss()
+            },
+            otherGroups = groups,
+            onPickGroup = { og ->
+                s.group = og; s.room = og.top; s.retry = 0; s.label.text = fmtLabel(s)
+                playInSlot(i, "FETCH")
             }
-            list.addView(opt)
-        }
-        val other = groups.filter { it !== g }.take(6)
-        if (other.isNotEmpty()) {
-            val div = TextView(this).apply {
-                text = "ĐỔI SANG TRẬN KHÁC"
-                setTextColor(0xFF94A3B8.toInt()); textSize = 12f
-                setPadding(24, 18, 24, 8)
-            }
-            list.addView(div)
-            other.forEach { og ->
-                val opt = inf.inflate(R.layout.item_room_option, list, false)
-                opt.findViewById<TextView>(R.id.roomName).text = og.matchTitle
-                opt.findViewById<TextView>(R.id.roomMeta).text = "${og.league} · ${og.count} phòng · ${SocoliveRepository.fmtViewers(og.totalViewers)} lượt xem"
-                opt.setOnClickListener {
-                    s.group = og; s.room = og.top; s.retry = 0; s.label.text = fmtLabel(s)
-                    playInSlot(i, "FETCH")
-                    dialog?.dismiss()
-                }
-                list.addView(opt)
-            }
-        }
-        dialog = AlertDialog.Builder(this).setView(view).create()
-        dialog?.show()
+        )
     }
 
     override fun onStop() {
@@ -452,15 +437,13 @@ class MultiViewActivity : AppCompatActivity() {
         slots.forEach { it.player?.release(); it.player = null; it.fx.detach() }
     }
 
-    /** BUG-05: onStop release sạch 4 player (pin/wake) — quay lại phải dựng lại TỪNG Ô theo
-     *  group/room đã lưu, nếu không lưới toàn ô đen đến khi thoát vào lại. */
     override fun onStart() {
         super.onStart()
-        if (groups.isEmpty()) return   // chưa load xong thì onCreate lo
+        if (groups.isEmpty()) return
         var rebuilt = false
         slots.take(layoutN).forEachIndexed { i, sl ->
             if (sl.player == null && sl.group != null) {
-                playInSlot(slots.indexOf(sl), null)   // null -> resolveStream uu tien sl.room cu
+                playInSlot(i, null)
                 rebuilt = true
             }
         }
@@ -470,5 +453,11 @@ class MultiViewActivity : AppCompatActivity() {
             handler.removeCallbacks(secondWatcher)
             handler.postDelayed(secondWatcher, 20_000)
         }
+    }
+
+    override fun onDestroy() {
+        dialog?.dismiss()
+        dialog = null
+        super.onDestroy()
     }
 }

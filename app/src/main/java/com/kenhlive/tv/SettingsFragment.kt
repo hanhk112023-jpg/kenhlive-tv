@@ -81,7 +81,7 @@ class SettingsFragment : Fragment() {
                 ) { UpdateManager.checkAndUpdate(requireActivity()) },
                 SettingsAdapter.Item.Row(
                     R.drawable.ic_info, getString(R.string.settings_version),
-                    value = BuildConfig.VERSION_NAME, chevron = false
+                    value = versionName(), chevron = false
                 ) {
                     Toast.makeText(ctx, getString(R.string.settings_about_body), Toast.LENGTH_LONG).show()
                 }
@@ -130,6 +130,10 @@ class SettingsFragment : Fragment() {
             .setOnDismissListener { dialog = null }
             .show()
     }
+
+    private fun versionName(): String = try {
+        requireContext().packageManager.getPackageInfo(requireContext().packageName, 0).versionName ?: ""
+    } catch (_: Exception) { "" }
 
     private fun clearCache() {
         val ctx = requireContext()

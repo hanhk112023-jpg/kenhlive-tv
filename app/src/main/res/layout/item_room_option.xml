@@ -4,66 +4,65 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:background="@drawable/room_option_bg"
-    android:padding="10dp"
+    android:background="@drawable/bg_card"
+    android:foreground="@drawable/fg_focus"
+    android:padding="@dimen/sp_item_pad"
     android:layout_marginBottom="8dp"
-    android:clickable="true"
-    android:focusable="true">
+    android:focusable="true"
+    android:clickable="true">
 
-    <FrameLayout
-        android:layout_width="46dp"
-        android:layout_height="46dp"
-        android:background="@drawable/avatar_ring">
-
-        <FrameLayout
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:layout_gravity="center"
-            android:background="@drawable/avatar_bg">
-
-            <ImageView
-                android:id="@+id/roomAvatar"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                android:background="@drawable/avatar_mask"
-                android:contentDescription="blv" />
-        </FrameLayout>
-    </FrameLayout>
+    <ImageView
+        android:id="@+id/roomAvatar"
+        android:layout_width="@dimen/avatar_s"
+        android:layout_height="@dimen/avatar_s"
+        android:scaleType="centerCrop"
+        android:background="@drawable/bg_circle"
+        android:contentDescription="@string/cd_blv" />
 
     <LinearLayout
         android:layout_width="0dp"
-        android:layout_weight="1"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:paddingLeft="11dp">
+        android:layout_weight="1"
+        android:layout_marginLeft="12dp"
+        android:orientation="vertical">
 
         <TextView
             android:id="@+id/roomName"
-            android:layout_width="wrap_content"
+            style="@style/KL.Text.Title"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#FFFFFF"
-            android:fontFamily="@font/oswald"
-            android:textSize="15sp"
-            android:textStyle="bold" />
+            android:maxLines="1"
+            android:ellipsize="end" />
 
         <TextView
             android:id="@+id/roomMeta"
-            android:layout_width="wrap_content"
+            style="@style/KL.Text.Meta"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:textColor="#8890A6"
-            android:textSize="11sp"
-            android:fontFeatureSettings="tnum" />
+            android:maxLines="1"
+            android:ellipsize="end" />
     </LinearLayout>
 
     <TextView
         android:id="@+id/roomLive"
+        style="@style/KL.Text.Badge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="· LIVE"
-        android:textColor="#00E676"
-        android:textSize="10sp"
-        android:textStyle="bold"
-        android:layout_marginRight="4dp" />
+        android:background="@drawable/bg_badge_live"
+        android:paddingLeft="9dp"
+        android:paddingRight="9dp"
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp"
+        android:text="@string/sched_live"
+        android:textColor="#FFFFFFFF"
+        android:visibility="gone" />
+
+    <ImageView
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:layout_marginLeft="10dp"
+        android:src="@drawable/ic_chevron_right"
+        android:contentDescription="@null"
+        android:alpha="0.6" />
 </LinearLayout>

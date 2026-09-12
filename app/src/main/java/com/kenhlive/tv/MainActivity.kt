@@ -3,146 +3,115 @@ package com.kenhlive.tv
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.View
-import android.view.Window
 import android.view.WindowInsetsController
 import android.widget.ImageView
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.addCallback
+import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
-import androidx.viewpager2.adapter.FragmentStateAdapter
-import androidx.viewpager2.widget.ViewPager2
 import androidx.lifecycle.lifecycleScope
-import kotlinx.coroutines.Dispatchers
+import com.kenhlive.tv.viewmodel.LiveViewModel
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
-/** Shell SportzX-style: topbar gradient + bottom nav glass pill nổi (glow border), ViewPager2 2 tab. */
+/**
+ * Shell ứng dụng — 1 codebase, 2 hình hài:
+ * - PHONE: top app bar + bottom navigation (4 mục), fragment show/hide giữ state
+ * - TV:    navigation rail trái (D-pad), cùng id/fragment → chung logic
+ * Layout chọn tự động qua resource qualifier (layout/ vs layout-television/).
+ */
 class MainActivity : AppCompatActivity() {
-    private lateinit var viewPager: ViewPager2
-    private var navLive: LinearLayout? = null
-    private var navSchedule: LinearLayout? = null
+
+    private val vm: LiveViewModel by viewModels()
+    private var current = 0
+    private val navViews = mutableListOf<View>()
+    private val fragments = arrayOf("tab_live", "tab_schedule", "tab_search", "tab_settings")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         window.statusBarColor = Color.BLACK
         window.navigationBarColor = Color.BLACK
-        if (android.os.Build.VERSION.SDK_INT >= 30) window.insetsController?.setSystemBarsAppearance(0, 0)
-
-        viewPager = findViewById(R.id.viewPager)
-        navLive = findViewById(R.id.nav_live)
-        navSchedule = findViewById(R.id.nav_schedule)
-        viewPager.adapter = object : FragmentStateAdapter(this) {
-            override fun getItemCount() = 3
-            override fun createFragment(position: Int): Fragment = when (position) {
-                0 -> LiveFragment()
-                1 -> ScheduleFragment()
-                else -> SearchFragment()
-            }
+        if (android.os.Build.VERSION.SDK_INT >= 30) {
+            window.insetsController?.setSystemBarsAppearance(0, 0)
         }
-        viewPager.registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
-            override fun onPageSelected(pos: Int) = paintNav(pos)
-        })
 
-        val clickLive = View.OnClickListener { viewPager.setCurrentItem(0, true) }
-        val clickSched = View.OnClickListener { viewPager.setCurrentItem(1, true) }
-        navLive?.setOnClickListener(clickLive)
-        navSchedule?.setOnClickListener(clickSched)
-        findViewById<View>(R.id.nav_search)?.setOnClickListener { viewPager.setCurrentItem(2, true) }
-        findViewById<View>(R.id.tv_live)?.setOnClickListener(clickLive)
-        findViewById<View>(R.id.tv_schedule)?.setOnClickListener(clickSched)
+        setupNav()
 
-        // deep-link: --ei tab N mở thẳng tab N (0 Live / 1 Lịch / 2 Tìm — CI + QA dùng)
+        // deep-link: --ei tab N mở thẳng tab N (0 Live / 1 Lịch / 2 Tìm / 3 Cài đặt — CI + QA)
         val tabX = intent?.getIntExtra("tab", -1) ?: -1
-        if (tabX in 0..2) {
-            viewPager.post { viewPager.setCurrentItem(tabX, false) }
-        }
+        showTab(if (tabX in 0..3) tabX else 0, animate = false)
 
-        // UX TV: BACK o man hinh dau -> hoi thoat, khong vang thang ra Launcher
+        // BACK: tab khác → về Live trước; tab Live → dialog xác nhận thoát (UX TV)
         onBackPressedDispatcher.addCallback(this) {
-            androidx.appcompat.app.AlertDialog.Builder(this@MainActivity)
-                .setTitle("Thoát KênhLive?")
-                .setPositiveButton("Thoát") { _, _ -> finishAffinity() }
-                .setNegativeButton("Ở lại", null)
+            if (current != 0) { showTab(0); return@addCallback }
+            AlertDialog.Builder(this@MainActivity)
+                .setTitle(R.string.dialog_exit_title)
+                .setPositiveButton(R.string.dialog_exit_yes) { _, _ -> finishAffinity() }
+                .setNegativeButton(R.string.dialog_exit_no, null)
                 .show()
         }
+
+        lifecycleScope.launch {
+            vm.state.collect { st ->
+                val tv = findViewById<TextView>(R.id.countText) ?: return@collect
+                if (st is UiState.Success && st.data.isNotEmpty()) {
+                    val rooms = st.data.sumOf { it.count }
+                    tv.visibility = View.VISIBLE
+                    tv.text = getString(R.string.live_rooms_count, rooms)
+                }
+            }
+        }
+        vm.load()
 
         UpdateManager.checkAndUpdate(this)
         UpdateManager.resumePendingInstall(this)
         handleDebugIntent(intent)
-        refreshCount()
     }
 
-    // Debug hook (CI screenshot): am start .../.MainActivity --es open mv|player
-    private fun handleDebugIntent(i: Intent?) {
-        i?.getStringExtra("open")?.let { target ->
-            when (target) {
-                "mv" -> startActivity(Intent(this, MultiViewActivity::class.java)
-                    .putExtra("mv_layout", i.getIntExtra("mv_layout", 0)))
-                "pip" -> lifecycleScope.launch {
-                    try {
-                        val g = SocoliveRepository.groupRooms(SocoliveRepository.fetchLiveRooms()).firstOrNull()
-                        val r = g?.top
-                        if (r != null) {
-                            val u = SocoliveRepository.fetchStream(r.roomNum)
-                            if (u != null) startActivity(Intent(this@MainActivity, PlayerActivity::class.java)
-                                .putExtra("url", u).putExtra("name", "${r.matchTitle} · ${r.blvName}")
-                                .putExtra("pip", true))
-                        }
-                    } catch (e: Exception) {}
-                }
-                "update" -> UpdateManager.debugForceDialog(this)
-                "refresh" -> {
-                    // QA: mo tab Live + ep silentRefresh (do focus giu duoc qua rebind)
-                    viewPager.setCurrentItem(0, false)
-                    viewPager.postDelayed({
-                        supportFragmentManager.fragments.filterIsInstance<LiveFragment>()
-                            .firstOrNull { it.isAdded }?.debugForceRefresh()
-                    }, 400)
-                }
-                "search" -> viewPager.post { viewPager.setCurrentItem(2, false) }
-                "player" -> lifecycleScope.launch {
-                    try {
-                        val g = SocoliveRepository.groupRooms(SocoliveRepository.fetchLiveRooms()).firstOrNull()
-                        val r = g?.top
-                        if (r != null) {
-                            val u = SocoliveRepository.fetchStream(r.roomNum)
-                            if (u != null) startActivity(Intent(this@MainActivity, PlayerActivity::class.java)
-                                .putExtra("url", u).putExtra("name", "${r.matchTitle} · ${r.blvName}"))
-                        }
-                    } catch (e: Exception) {}
-                }
-                else -> {}
-            }
+    private fun setupNav() {
+        val defs = listOf(
+            R.id.nav_live to Pair(R.drawable.ic_nav_live, R.string.nav_live),
+            R.id.nav_schedule to Pair(R.drawable.ic_nav_schedule, R.string.nav_schedule),
+            R.id.nav_search to Pair(R.drawable.ic_nav_search, R.string.nav_search),
+            R.id.nav_settings to Pair(R.drawable.ic_nav_settings, R.string.nav_settings)
+        )
+        navViews.clear()
+        defs.forEachIndexed { i, (id, def) ->
+            val v = findViewById<View>(id) ?: return@forEachIndexed
+            v.findViewById<ImageView>(R.id.navIcon)?.setImageResource(def.first)
+            v.findViewById<TextView>(R.id.navLabel)?.setText(def.second)
+            v.setOnClickListener { showTab(i) }
+            navViews.add(v)
         }
+        // TV: rail là điểm focus đầu tiên khi mở app
+        if (DeviceMode.isTv) navViews.firstOrNull()?.post { navViews.firstOrNull()?.requestFocus() }
     }
 
-    override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-        val tabX = intent.getIntExtra("tab", -1)
-        if (tabX in 0..2) viewPager.post { viewPager.setCurrentItem(tabX, false) }
-        handleDebugIntent(intent)
-    }
-
-    private fun paintNav(pos: Int) {
-        navLive?.isSelected = pos == 0
-        navSchedule?.isSelected = pos == 1
-        findViewById<View>(R.id.nav_search)?.isSelected = pos == 2
-        val active = 0xFF00E676.toInt()
-        val idle = 0xFFCFCFCF.toInt()
-        findViewById<TextView>(R.id.tv_live)?.setTextColor(if (pos == 0) active else idle)
-        findViewById<TextView>(R.id.tv_schedule)?.setTextColor(if (pos == 1) active else idle)
-        findViewById<TextView>(R.id.tv_search)?.setTextColor(if (pos == 2) active else idle)
+    private fun showTab(pos: Int, animate: Boolean = true) {
+        current = pos
+        navViews.forEachIndexed { i, v -> v.isSelected = i == pos }
+        val tx = supportFragmentManager.beginTransaction()
+        if (animate) tx.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
+        fragments.forEachIndexed { i, tag ->
+            var f = supportFragmentManager.findFragmentByTag(tag)
+            if (i == pos) {
+                if (f == null) {
+                    f = when (i) {
+                        0 -> LiveFragment()
+                        1 -> ScheduleFragment()
+                        2 -> SearchFragment()
+                        else -> SettingsFragment()
+                    }
+                    tx.add(R.id.fragmentContainer, f, tag)
+                } else tx.show(f)
+            } else if (f != null) tx.hide(f)
+        }
+        tx.commit()
     }
 
     fun hideKeyboard() {
@@ -150,35 +119,55 @@ class MainActivity : AppCompatActivity() {
         currentFocus?.let { imm.hideSoftInputFromWindow(it.windowToken, 0) }
     }
 
-    private val countHandler = Handler(Looper.getMainLooper())
-    private val countTick = object : Runnable {
-        override fun run() {
-            refreshCount()
-            countHandler.postDelayed(this, 3 * 60_000L)
-        }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        countHandler.removeCallbacks(countTick)
-        countHandler.postDelayed(countTick, 3 * 60_000L)
-    }
-
-    override fun onPause() {
-        super.onPause()
-        countHandler.removeCallbacks(countTick)
-    }
-
-    private fun refreshCount() {
-        lifecycleScope.launch {
-            val n = try { withContext(Dispatchers.IO) { SocoliveRepository.fetchLiveRooms().size } } catch (e: Exception) { -1 }
-            withContext(Dispatchers.Main) {
-                val tv = findViewById<TextView>(R.id.countText)
-                if (n > 0 && tv != null) {
-                    tv.visibility = View.VISIBLE
-                    tv.text = "● $n phòng live"
+    // ===== debug hooks (CI screenshot / QA) =====
+    private fun handleDebugIntent(i: Intent?) {
+        i?.getStringExtra("open")?.let { target ->
+            when (target) {
+                "mv" -> startActivity(
+                    Intent(this, MultiViewActivity::class.java)
+                        .putExtra("mv_layout", i.getIntExtra("mv_layout", 0))
+                )
+                "pip" -> lifecycleScope.launch { openPlayer(pip = true) }
+                "update" -> UpdateManager.debugForceDialog(this)
+                "refresh" -> {
+                    showTab(0, animate = false)
+                    lifecycleScope.launch {
+                        kotlinx.coroutines.delay(400)
+                        supportFragmentManager.fragments.filterIsInstance<LiveFragment>()
+                            .firstOrNull { it.isAdded }?.debugForceRefresh()
+                    }
                 }
+                "search" -> showTab(2, animate = false)
+                "settings" -> showTab(3, animate = false)
+                "player" -> lifecycleScope.launch { openPlayer(pip = false) }
+                else -> {}
             }
         }
+    }
+
+    private suspend fun openPlayer(pip: Boolean) {
+        try {
+            val g = SocoliveRepository.groupRooms(SocoliveRepository.fetchLiveRooms()).firstOrNull()
+            val r = g?.top
+            if (r != null) {
+                val u = SocoliveRepository.fetchStream(r.roomNum)
+                if (u != null) {
+                    startActivity(
+                        Intent(this@MainActivity, PlayerActivity::class.java)
+                            .putExtra("url", u)
+                            .putExtra("name", "${r.matchTitle} · ${r.blvName}")
+                            .putExtra("pip", pip)
+                    )
+                }
+            }
+        } catch (_: Exception) { }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        val tabX = intent.getIntExtra("tab", -1)
+        if (tabX in 0..3) showTab(tabX, animate = false)
+        handleDebugIntent(intent)
     }
 }

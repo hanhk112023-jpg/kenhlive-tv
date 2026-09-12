@@ -10,27 +10,21 @@ import coil.disk.DiskCache
 
 /**
  * Tối ưu RAM cho TV box/điện thoại yếu (1–2GB):
- * - Memory cache ảnh: 12% heap (mặc định Coil 25%) — ảnh vốn downsample theo view size
- * - RGB565 trên máy low-RAM: giảm 50% bộ nhớ mỗi bitmap (mất chút dải màu, ảnh thumbnail không đáng kể)
+ * - Memory cache ảnh: 8% (low-RAM) / 15% heap — ảnh vốn downsample theo view size
  * - Disk cache giới hạn 60MB
+ * - Khởi động DeviceMode + Http một lần duy nhất
  */
 class KenhLiveApp : Application(), ImageLoaderFactory {
 
     companion object {
-        @Volatile var lowRam = false; private set
-        fun isLowRam(ctx: Context): Boolean {
-            if (!lowRam) {
-                val am = ctx.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-                lowRam = am.isLowRamDevice ||
-                    (Runtime.getRuntime().maxMemory() / 1024 / 1024) < 192 // heap < 192MB
-            }
-            return lowRam
-        }
+        val lowRam: Boolean get() = DeviceMode.lowRam
+        fun isLowRam(ctx: Context): Boolean = DeviceMode.lowRam
     }
 
     override fun onCreate() {
         super.onCreate()
-        isLowRam(this)
+        DeviceMode.init(this)
+        Http.init(this)
     }
 
     override fun newImageLoader(): ImageLoader =

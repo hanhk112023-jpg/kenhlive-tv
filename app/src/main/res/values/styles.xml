@@ -1,5 +1,157 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- ============================================================
+     KÊNH LIVE — component styles (phone + TV share these;
+     sizes resolve from dimens qualifiers)
+     ============================================================ -->
 <resources>
+    <!-- ===== typography ===== -->
+    <style name="KL.Text.Display" parent="">
+        <item name="android:textSize">@dimen/ts_display</item>
+        <item name="android:textColor">@color/kl_text_1</item>
+        <item name="android:fontFamily">@font/oswald</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.01</item>
+        <item name="android:lineSpacingExtra">2dp</item>
+    </style>
+
+    <style name="KL.Text.Section" parent="">
+        <item name="android:textSize">@dimen/ts_section</item>
+        <item name="android:textColor">@color/kl_text_1</item>
+        <item name="android:fontFamily">@font/oswald</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.05</item>
+    </style>
+
+    <style name="KL.Text.Title" parent="">
+        <item name="android:textSize">@dimen/ts_title</item>
+        <item name="android:textColor">@color/kl_text_1</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0.01</item>
+    </style>
+
+    <style name="KL.Text.Body" parent="">
+        <item name="android:textSize">@dimen/ts_body</item>
+        <item name="android:textColor">@color/kl_text_2</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <style name="KL.Text.Meta" parent="">
+        <item name="android:textSize">@dimen/ts_meta</item>
+        <item name="android:textColor">@color/kl_text_3</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:fontFeatureSettings">tnum</item>
+    </style>
+
+    <style name="KL.Text.Nav" parent="">
+        <item name="android:textSize">@dimen/ts_nav</item>
+        <item name="android:textColor">@color/kl_text_2</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0.03</item>
+        <item name="android:maxLines">1</item>
+    </style>
+
+    <style name="KL.Text.Button" parent="">
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textSize">@dimen/ts_button</item>
+        <item name="android:fontFamily">@font/oswald</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:maxLines">1</item>
+    </style>
+
+    <style name="KL.Text.Chip" parent="">
+        <item name="android:textSize">@dimen/ts_chip</item>
+        <item name="android:textColor">@color/kl_text_2</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <style name="KL.Text.Badge" parent="">
+        <item name="android:textSize">@dimen/ts_meta</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.06</item>
+        <item name="android:fontFamily">sans-serif-black</item>
+        <item name="android:maxLines">1</item>
+    </style>
+
+    <!-- ===== controls ===== -->
+    <style name="KL.Button.Primary" parent="">
+        <item name="android:background">@drawable/bg_button_primary</item>
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textColor">@color/kl_on_brand</item>
+        <item name="android:textSize">@dimen/ts_button</item>
+        <item name="android:fontFamily">@font/oswald</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:paddingLeft">@dimen/btn_pad_x</item>
+        <item name="android:paddingRight">@dimen/btn_pad_x</item>
+        <item name="android:minHeight">@dimen/btn_h</item>
+        <item name="android:gravity">center</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+    </style>
+
+    <style name="KL.Button.Ghost" parent="">
+        <item name="android:background">@drawable/bg_button_ghost</item>
+        <item name="android:textColor">@color/kl_text_1</item>
+        <item name="android:textSize">@dimen/ts_button</item>
+        <item name="android:fontFamily">@font/oswald</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:paddingLeft">@dimen/btn_pad_x</item>
+        <item name="android:paddingRight">@dimen/btn_pad_x</item>
+        <item name="android:minHeight">@dimen/btn_h</item>
+        <item name="android:gravity">center</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+    </style>
+
+    <style name="KL.IconButton" parent="">
+        <item name="android:background">@drawable/bg_icon_button</item>
+        <item name="android:padding">10dp</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+        <item name="android:scaleType">centerInside</item>
+    </style>
+
+    <style name="KL.Card" parent="">
+        <item name="android:background">@drawable/bg_card</item>
+        <item name="android:foreground">@drawable/fg_focus</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+    </style>
+
+    <style name="KL.Input" parent="">
+        <item name="android:background">@drawable/bg_input</item>
+        <item name="android:textColor">@color/kl_text_1</item>
+        <item name="android:textColorHint">@color/kl_text_3</item>
+        <item name="android:textSize">@dimen/ts_body</item>
+        <item name="android:minHeight">@dimen/input_h</item>
+        <item name="android:paddingLeft">16dp</item>
+        <item name="android:paddingRight">16dp</item>
+        <item name="android:drawablePadding">12dp</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:imeOptions">actionSearch</item>
+        <item name="android:inputType">text</item>
+    </style>
+
+    <style name="KL.Chip" parent="">
+        <item name="android:background">@drawable/bg_chip</item>
+        <item name="android:textColor">@color/kl_text_2</item>
+        <item name="android:textSize">@dimen/ts_chip</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:minHeight">@dimen/chip_h</item>
+        <item name="android:paddingLeft">16dp</item>
+        <item name="android:paddingRight">16dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+    </style>
+
+    <!-- legacy -->
     <style name="TabText" parent="TextAppearance.Design.Tab">
         <item name="android:textSize">13sp</item>
         <item name="android:textStyle">bold</item>

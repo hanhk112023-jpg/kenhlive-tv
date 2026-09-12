@@ -10,9 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import coil.transform.CircleCropTransformation
 
-/** Danh sách kết quả tìm kiếm: mỗi dòng = 1 trận (avatar BLV top, meta viewers/phòng, badge giải).
- *  Dùng ListAdapter + DiffUtil: khi query đổi, dòng nào giữ được thì GIỮ nguyên view + focus.
- *  notifyDataSetChanged() cũ destroy view đang focus giữa lúc user bấm D-pad = "nhảy lung tung". */
+/** Kết quả tìm kiếm: mỗi dòng = 1 trận. DiffUtil giữ view + focus khi query đổi. */
 class SearchResultAdapter(
     private val onClick: (LiveMatchGroup) -> Unit
 ) : ListAdapter<LiveMatchGroup, SearchResultAdapter.VH>(DIFF) {
@@ -22,8 +20,7 @@ class SearchResultAdapter(
             override fun areItemsTheSame(a: LiveMatchGroup, b: LiveMatchGroup) =
                 a.league == b.league && a.matchTitle == b.matchTitle
             override fun areContentsTheSame(a: LiveMatchGroup, b: LiveMatchGroup) =
-                a.matchTitle == b.matchTitle && a.count == b.count &&
-                    a.totalViewers == b.totalViewers && a.top.blvName == b.top.blvName
+                a.count == b.count && a.totalViewers == b.totalViewers && a.top.blvName == b.top.blvName
         }
     }
 
@@ -37,23 +34,23 @@ class SearchResultAdapter(
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH =
         VH(LayoutInflater.from(parent.context).inflate(R.layout.item_search_result, parent, false))
 
-    override fun getItemCount() = currentList.size
-
     override fun onBindViewHolder(h: VH, pos: Int) {
         val g = currentList[pos]
+        val ctx = h.itemView.context
         h.match.text = g.matchTitle
-        h.meta.text = "${g.top.blvName}${if (g.count > 1) " +${g.count - 1} BLV" else ""} · 👁 ${SocoliveRepository.fmtViewers(g.totalViewers)} · ${g.count} phòng"
+        h.meta.text = "${g.top.blvName}${if (g.count > 1) " ${ctx.getString(R.string.live_blv_more, g.count - 1)}" else ""}" +
+            " · ${SocoliveRepository.fmtViewers(g.totalViewers)} · ${ctx.getString(R.string.live_rooms_badge, g.count)}"
         h.league.text = g.league
         h.avatar.load(g.top.avatar) {
-            crossfade(if (KenhLiveApp.lowRam) 0 else 80); transformations(CircleCropTransformation())
+            crossfade(if (DeviceMode.lowRam) 0 else 80); transformations(CircleCropTransformation())
             placeholder(R.drawable.logo_placeholder); error(R.drawable.logo_placeholder)
         }
         h.itemView.setOnClickListener { onClick(g) }
-        // chuyen dong focus thay vien do (dong nhat the he card moi)
         h.itemView.setOnFocusChangeListener { v, has ->
-            v.animate().scaleX(if (has) 1.02f else 1.0f).scaleY(if (has) 1.02f else 1.0f)
-                .setDuration(130).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
-            v.elevation = if (has) 12f else 0f
+            v.animate().scaleX(if (has) 1.02f else 1f).scaleY(if (has) 1.02f else 1f)
+                .setDuration(130).start()
+            v.elevation = if (has) 10f else 0f
         }
+        h.itemView.contentDescription = g.matchTitle
     }
 }

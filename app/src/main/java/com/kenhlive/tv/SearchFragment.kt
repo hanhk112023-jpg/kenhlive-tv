@@ -2,8 +2,6 @@ package com.kenhlive.tv
 
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.LayoutInflater
@@ -11,180 +9,136 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
 import android.widget.EditText
-import android.widget.ImageView
+import android.widget.HorizontalScrollView
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import coil.load
-import coil.transform.CircleCropTransformation
+import com.kenhlive.tv.ui.RoomPickerDialog
+import com.kenhlive.tv.ui.StateBinder
+import com.kenhlive.tv.viewmodel.SearchViewModel
 import kotlinx.coroutines.launch
-import java.text.Normalizer
 
-/** Tab TÌM KIẾM: lọc trận/BLV/giải đang live theo từ khóa không dấu, gợi ý nhanh giải hot. */
+/**
+ * TÌM KIẾM: lọc trận/BLV/giải đang live theo từ khoá không dấu + chip giải hot.
+ * TV: chip focusable để remote chọn nhanh không cần bàn phím.
+ */
 class SearchFragment : Fragment() {
 
+    private val vm: SearchViewModel by viewModels()
     private lateinit var input: EditText
     private lateinit var resultList: RecyclerView
-    private lateinit var emptyText: TextView
     private lateinit var resultCount: TextView
     private lateinit var chipContainer: LinearLayout
-    private lateinit var chipRow: View
+    private lateinit var chipRow: HorizontalScrollView
+    private lateinit var state: StateBinder
     private lateinit var searchAdapter: SearchResultAdapter
-
-    private var sfDialog: androidx.appcompat.app.AlertDialog? = null
-    private var rooms = listOf<LiveRoom>()
-    private var groups = listOf<LiveMatchGroup>()
-    private var loaded = false
-    private val debounce = Handler(Looper.getMainLooper())
+    private var dialog: AlertDialog? = null
+    private var syncing = false
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, s: Bundle?): View {
         val v = inflater.inflate(R.layout.fragment_search, container, false)
         input = v.findViewById(R.id.searchInput)
         resultList = v.findViewById(R.id.resultList)
-        emptyText = v.findViewById(R.id.emptyText)
         resultCount = v.findViewById(R.id.resultCount)
         chipContainer = v.findViewById(R.id.chipContainer)
         chipRow = v.findViewById(R.id.chipRow)
+        state = StateBinder(v)
 
         searchAdapter = SearchResultAdapter { g -> openGroup(g) }
         resultList.layoutManager = LinearLayoutManager(requireContext())
-        resultList.itemAnimator = null   // focus nhay khi DiffUtil animate giua luc bam D-pad
-        resultList.clipChildren = false; resultList.clipToPadding = false
+        resultList.itemAnimator = null
+        resultList.clipChildren = false
+        resultList.clipToPadding = false
         resultList.adapter = searchAdapter
 
         input.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
             override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
             override fun afterTextChanged(s: Editable?) {
-                debounce.removeCallbacksAndMessages(null)
-                debounce.postDelayed({ applyQuery(s?.toString().orEmpty()) }, 250)
+                if (!syncing) vm.setQuery(s?.toString().orEmpty())
             }
         })
         input.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                applyQuery(input.text.toString()); true
+                vm.setQuery(input.text.toString()); true
             } else false
         }
-        v.findViewById<TextView>(R.id.clearBtn).setOnClickListener {
-            input.setText(""); applyQuery("")
+        v.findViewById<ImageButton>(R.id.clearBtn).setOnClickListener {
+            input.setText("")
+            vm.setQuery("")
         }
-        loadRooms()
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            vm.source.collect { st ->
+                state.render(st, R.string.state_loading) { vm.load(force = true) }
+            }
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            vm.result.collect { r ->
+                searchAdapter.submitList(r.groups)
+                val q = r.query
+                resultCount.text = if (q.isEmpty())
+                    getString(R.string.search_count_all, r.groups.size)
+                else getString(R.string.search_count_result, r.groups.size, q)
+                if (r.chips.isNotEmpty() && chipContainer.childCount == 0) buildChips(r.chips)
+            }
+        }
+        vm.load()
         return v
     }
 
-    private fun loadRooms() {
-        if (loaded) return
-        // BUG-13: trong ViewPager2 view co the bi destroy som hon fragment ->
-        // lifecycleScope (fragment scope) van chay tiep va cham requireView() da chet.
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                rooms = SocoliveRepository.fetchLiveRooms()
-                groups = SocoliveRepository.groupRooms(rooms)
-                loaded = true
-                buildChips()
-                applyQuery(input.text.toString())
-            } catch (e: Exception) {
-                emptyText.text = "Không tải được danh sách — bấm ĐỂ THỬ LẠI"
-                emptyText.visibility = View.VISIBLE
-                emptyText.isFocusable = true
-                emptyText.setOnClickListener {
-                    emptyText.text = "Đang tải..."
-                    loaded = false
-                    loadRooms()
-                }
-            }
-        }
-    }
-
-    /** Chip giải hot: bấm là điền từ khóa luôn (TV keyboard bất tiện). */
-    private fun buildChips() {
+    private fun buildChips(leagues: List<String>) {
         chipContainer.removeAllViews()
-        val leagues = groups.groupBy { it.league }.entries
-            .sortedByDescending { e -> e.value.sumOf { g -> g.totalViewers } }
-            .take(8).map { it.key }.filter { it.isNotBlank() }
         if (leagues.isEmpty()) { chipRow.visibility = View.GONE; return }
         val inf = LayoutInflater.from(requireContext())
         leagues.forEach { lg ->
             val chip = inf.inflate(R.layout.item_search_chip, chipContainer, false) as TextView
             chip.text = lg
-            chip.setOnClickListener { input.setText(lg); applyQuery(lg) }
+            chip.setOnClickListener {
+                syncing = true
+                input.setText(lg)
+                syncing = false
+                vm.setQuery(lg)
+                (activity as? MainActivity)?.hideKeyboard()
+            }
             chipContainer.addView(chip)
         }
     }
 
-    private fun applyQuery(qRaw: String) {
-        if (!loaded) return
-        val q = norm(qRaw.trim())
-        val res: List<LiveMatchGroup> = if (q.isEmpty()) {
-            emptyText.text = "Gõ để tìm trận đang live"
-            emptyText.visibility = if (groups.isEmpty()) View.VISIBLE else View.GONE
-            groups
-        } else {
-            val r = groups.filter { g ->
-                norm(g.matchTitle).contains(q) || norm(g.league).contains(q) ||
-                    g.rooms.any { norm(it.blvName).contains(q) }
-            }
-            emptyText.text = "Không tìm thấy “${qRaw.trim()}”"
-            emptyText.visibility = if (r.isEmpty()) View.VISIBLE else View.GONE
-            r
-        }
-        resultCount.text = if (q.isEmpty()) "${groups.size} trận đang live"
-                           else "${res.size} kết quả cho “${qRaw.trim()}”"
-        searchAdapter.submitList(res)
-    }
-
-    /** Bỏ dấu tiếng Việt + lowercase để "real" khớp "Real", "chuc" khớp "Chúc". */
-    private fun norm(s: String): String {
-        val n = Normalizer.normalize(s, Normalizer.Form.NFD).replace("\\p{Mn}+".toRegex(), "")
-        return n.lowercase().replace("đ", "d")
-    }
-
     private fun openGroup(g: LiveMatchGroup) {
         if (g.count == 1) { openRoom(g.top); return }
-        val view = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_room_picker, null)
-        view.findViewById<TextView>(R.id.dialogTitle).text = g.matchTitle
-        view.findViewById<TextView>(R.id.dialogLeague).text = "${g.league} · ${g.count} phòng live"
-        val list = view.findViewById<LinearLayout>(R.id.roomList)
-        val inf = LayoutInflater.from(requireContext())
-        sfDialog?.dismiss()
-        val dlg = androidx.appcompat.app.AlertDialog.Builder(requireContext()).setView(view).create()
-        sfDialog = dlg
-        dlg.setOnDismissListener { if (sfDialog === dlg) sfDialog = null }
-        g.rooms.forEach { r ->
-            val opt = inf.inflate(R.layout.item_room_option, list, false)
-            opt.findViewById<TextView>(R.id.roomName).text = r.blvName
-            opt.findViewById<TextView>(R.id.roomMeta).text = "👁 ${SocoliveRepository.fmtViewers(r.viewers)}"
-            opt.findViewById<ImageView>(R.id.roomAvatar).load(r.avatar) {
-                crossfade(if (KenhLiveApp.lowRam) 0 else 80); transformations(CircleCropTransformation())
-                placeholder(R.drawable.logo_placeholder); error(R.drawable.logo_placeholder)
-            }
-            opt.setOnClickListener { openRoom(r); dlg.dismiss(); (activity as? MainActivity)?.hideKeyboard() }
-            list.addView(opt)
-        }
-        dlg.show()
+        dialog?.dismiss()
+        dialog = RoomPickerDialog.show(requireContext(), g, onPickRoom = { r ->
+            openRoom(r)
+            (activity as? MainActivity)?.hideKeyboard()
+        })
     }
 
     private fun openRoom(room: LiveRoom) {
         viewLifecycleOwner.lifecycleScope.launch {
             val url = SocoliveRepository.fetchStream(room.roomNum)
             if (url == null) {
-                Toast.makeText(context, "Stream chưa sẵn sàng — thử lại", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), R.string.stream_not_ready, Toast.LENGTH_SHORT).show()
                 return@launch
             }
-            startActivity(Intent(requireContext(), PlayerActivity::class.java)
-                .putExtra("url", url)
-                .putExtra("name", "${room.matchTitle} · ${room.blvName}"))
+            startActivity(
+                Intent(requireContext(), PlayerActivity::class.java)
+                    .putExtra("url", url)
+                    .putExtra("name", "${room.matchTitle} · ${room.blvName}")
+            )
         }
     }
 
-    /** BUG-10: dismiss dialog picker khi view bi destroy — chong "Activity has leaked window". */
     override fun onDestroyView() {
-        sfDialog?.dismiss()
-        sfDialog = null
+        dialog?.dismiss()
+        dialog = null
         super.onDestroyView()
     }
 }
