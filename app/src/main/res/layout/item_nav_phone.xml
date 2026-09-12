@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="0dp"
+    android:layout_height="match_parent"
+    android:layout_weight="1"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="@drawable/bg_nav_item"
+    android:foreground="@drawable/fg_focus"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp"
+    android:clickable="true"
+    android:focusable="false">
+
+    <ImageView
+        android:id="@+id/navIcon"
+        android:layout_width="@dimen/nav_icon"
+        android:layout_height="@dimen/nav_icon"
+        android:contentDescription="@null" />
+
+    <TextView
+        android:id="@+id/navLabel"
+        style="@style/KL.Text.Nav"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="3dp" />
+</LinearLayout>

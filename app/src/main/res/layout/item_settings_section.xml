@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingTop="@dimen/sp_row_gap"
+    android:paddingBottom="8dp">
+
+    <View
+        android:layout_width="4dp"
+        android:layout_height="16dp"
+        android:background="@drawable/accent_bar"
+        android:layout_marginRight="9dp" />
+
+    <TextView
+        android:id="@+id/sectionTitle"
+        style="@style/KL.Text.Section"
+        android:layout_width="0dp"
+        android:layout_weight="1"
+        android:layout_height="wrap_content" />
+</LinearLayout>

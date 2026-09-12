@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ============================================================
+     KÊNH LIVE — DESIGN TOKENS (single source of truth)
+     Phone + TV share the same palette; only sizes/spacing change
+     via values/dimens.xml vs values-television/dimens.xml.
+     ============================================================ -->
+<resources>
+    <!-- brand -->
+    <color name="kl_brand">#FF00E676</color>
+    <color name="kl_brand_pressed">#FF00B25C</color>
+    <color name="kl_brand_dim">#3300E676</color>
+    <color name="kl_brand_soft">#1400E676</color>
+    <color name="kl_on_brand">#FF04140B</color>
+    <color name="kl_cyan">#FF00F0FF</color>
+    <color name="kl_amber">#FFFFB020</color>
+
+    <!-- surfaces (dark, layered) -->
+    <color name="kl_bg">#FF05080C</color>
+    <color name="kl_bg_deep">#FF000000</color>
+    <color name="kl_surface_1">#FF0D131B</color>
+    <color name="kl_surface_2">#FF131B25</color>
+    <color name="kl_surface_3">#FF1A2430</color>
+    <color name="kl_surface_translucent">#E60B1016</color>
+    <color name="kl_border">#1FFFFFFF</color>
+    <color name="kl_border_soft">#12FFFFFF</color>
+
+    <!-- text -->
+    <color name="kl_text_1">#FFF8FAFC</color>
+    <color name="kl_text_2">#B9C4D4</color>
+    <color name="kl_text_3">#7C8AA0</color>
+    <color name="kl_text_disabled">#4A5568</color>
+
+    <!-- states -->
+    <color name="kl_live">#FFFF3B30</color>
+    <color name="kl_error">#FFFF5A52</color>
+    <color name="kl_focus_ring">#FFFFFFFF</color>
+    <color name="kl_focus_glow">#59FFFFFF</color>
+    <color name="kl_pressed_overlay">#26FFFFFF</color>
+
+    <!-- scrims -->
+    <color name="kl_scrim_start">#E6000000</color>
+    <color name="kl_scrim_mid">#66000000</color>
+    <color name="kl_scrim_end">#00000000</color>
+
+    <!-- legacy aliases kept for compatibility with existing refs -->
+    <color name="brand_green">@color/kl_brand</color>
+    <color name="brand_green_dark">@color/kl_brand_pressed</color>
+    <color name="brand_green_glow">#4000E676</color>
+    <color name="brand_green_soft">@color/kl_brand_soft</color>
+    <color name="brand_blue">@color/kl_cyan</color>
+    <color name="bg_base">@color/kl_bg_deep</color>
+    <color name="bg_card">@color/kl_surface_1</color>
+    <color name="bg_card_alt">@color/kl_surface_2</color>
+    <color name="bg_elevated">#F2141A23</color>
+    <color name="bg_topbar">#F005080C</color>
+    <color name="accent_amber">@color/kl_amber</color>
+    <color name="accent_cyan">@color/kl_cyan</color>
+    <color name="accent_green">@color/kl_brand</color>
+    <color name="accent_indigo">#6366F1</color>
+    <color name="accent_purple">#9D4EDD</color>
+    <color name="accent_red">#FF2A5F</color>
+    <color name="text_primary">@color/kl_text_1</color>
+    <color name="text_secondary">@color/kl_text_2</color>
+    <color name="text_muted">@color/kl_text_3</color>
+    <color name="live_red">@color/kl_live</color>
+    <color name="divider">@color/kl_border_soft</color>
+    <color name="skeleton">#14FFFFFF</color>
+    <color name="skeleton_hi">#26FFFFFF</color>
+</resources>

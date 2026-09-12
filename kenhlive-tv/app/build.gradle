@@ -1,0 +1,104 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.kenhlive.tv'
+    compileSdk 34
+
+    // BUG-01: keystore KHÔNG còn trong git — CI cung cấp qua secret KEYSTORE_B64 (file) +
+    // KEYSTORE_PASSWORD (pass). Build local thiếu secret -> tự sinh keystore tạm (dev-only,
+    // chữ ký khác — chỉ dùng test, không phát hành).
+    def ksFile = rootProject.file('keystore/kenhlive.jks')
+    def ksB64 = (System.getenv('KEYSTORE_B64') ?: '').trim()
+    if (ksB64) {
+        ksFile.parentFile.mkdirs()
+        ksFile.bytes = Base64.decoder.decode(ksB64)
+    } else if (!ksFile.exists()) {
+        ksFile.parentFile.mkdirs()
+        ['keytool', '-genkeypair', '-alias', 'kenhlive', '-keyalg', 'RSA', '-keysize', '2048',
+         '-validity', '3650', '-dname', 'CN=KenhLive Dev',
+         '-storepass', 'android', '-keypass', 'android', '-keystore', ksFile.absolutePath].execute().waitFor()
+    }
+    def ksPass = System.getenv('KEYSTORE_PASSWORD') ?: 'android'
+    signingConfigs {
+        kenhlive {
+            storeFile ksFile
+            storePassword ksPass
+            keyAlias 'kenhlive'
+            keyPassword ksPass
+            enableV1Signing true   // BUG-01 fix: đủ bộ ký, chống downgrade APK
+            enableV2Signing true
+            enableV3Signing true
+        }
+    }
+
+    defaultConfig {
+        applicationId "com.kenhlive.tv"
+        minSdk 21
+        targetSdk 34
+        versionCode 67
+        versionName "6.0.0"
+    }
+
+    buildTypes {
+        debug {
+            minifyEnabled false
+            shrinkResources false
+            signingConfig signingConfigs.kenhlive
+        }
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.kenhlive   // BUG-02: release ký đàng hoàng (trước unsigned)
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+    lint {
+        abortOnError false
+    }
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.recyclerview:recyclerview:1.3.2'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+
+    // lifecycle: ViewModel + StateFlow + lifecycleScope (state management chuẩn)
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
+    implementation 'androidx.activity:activity-ktx:1.8.2'
+    implementation 'androidx.fragment:fragment-ktx:1.6.2'
+
+    // Media3 ExoPlayer (HLS playback)
+    implementation 'androidx.media3:media3-exoplayer:1.3.0'
+    implementation 'androidx.media3:media3-exoplayer-hls:1.3.0'
+    implementation 'androidx.media3:media3-ui:1.3.0'
+
+    // Material (dialogs, ripple)
+    implementation 'com.google.android.material:material:1.11.0'
+
+    // coroutines
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3'
+
+    // Coil — nhẹ hơn Glide, Kotlin-first
+    implementation 'io.coil-kt:coil:2.5.0'
+
+    // BUG-09: network khai báo tường minh (repository + UpdateManager)
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3'
+}

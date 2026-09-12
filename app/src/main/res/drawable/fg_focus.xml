@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <layer-list>
+            <item>
+                <shape android:shape="rectangle">
+                    <corners android:radius="@dimen/rd_card" />
+                    <stroke android:width="@dimen/focus_glow_w" android:color="@color/kl_focus_glow" />
+                </shape>
+            </item>
+            <item>
+                <shape android:shape="rectangle">
+                    <corners android:radius="@dimen/rd_card" />
+                    <stroke android:width="@dimen/focus_ring_w" android:color="@color/kl_focus_ring" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+    <item><color android:color="#00000000" /></item>
+</selector>

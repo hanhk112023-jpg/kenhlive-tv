@@ -1,77 +1,71 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Ô multiview. TextureView (không phải SurfaceView): SurfaceView + ZOOM tràn ra ngoài ô
+     vì surface hệ thống không clip theo parent → live nạp sau đè live trước.
+     TextureView render trong view hierarchy → clip đúng ô + viền focus đè lên được. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/mv_cell_bg"
+    android:background="@color/kl_bg_deep"
     android:focusable="true"
+    android:clickable="true"
     android:descendantFocusability="blocksDescendants">
 
-    <!-- TextureView (không phải SurfaceView): SurfaceView + ZOOM tràn ra ngoài ô
-         vì surface hệ thống không clip theo parent → live nạp sau đè live trước.
-         TextureView render trong view hierarchy → clip đúng ô + viền đỏ đè lên được. -->
     <androidx.media3.ui.PlayerView
         android:id="@+id/cellPlayer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#000000"
+        android:background="@color/kl_bg_deep"
         app:surface_type="texture_view"
         app:use_controller="false" />
 
-    <!-- Label trận + BLV -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:layout_gravity="top"
+        android:background="@drawable/bg_overlay_top" />
+
     <TextView
         android:id="@+id/cellLabel"
+        style="@style/KL.Text.Meta"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="top|left"
-        android:layout_marginLeft="10dp"
-        android:layout_marginTop="46dp"
-        android:textColor="#FFFFFF"
-        android:textSize="14sp"
+        android:layout_marginLeft="12dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginRight="90dp"
+        android:textColor="@color/kl_text_1"
         android:maxLines="1"
         android:ellipsize="end"
-        android:maxWidth="260dp"
-        android:textStyle="bold"
-        android:fontFamily="@font/oswald"
-        android:background="#B3000000"
-        android:paddingLeft="10dp"
-        android:paddingRight="10dp"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp" />
+        android:maxWidth="320dp" />
 
-    <!-- Badge ÂM THANH / TĨNH LẶNG (tap để mute từng ô) -->
     <TextView
         android:id="@+id/cellAudio"
+        style="@style/KL.Text.Badge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="top|right"
-        android:layout_marginRight="10dp"
-        android:layout_marginTop="46dp"
-        android:text="ÂM THANH"
-        android:textColor="#FFFFFF"
-        android:textSize="11sp"
-        android:background="#B3000000"
-        android:paddingLeft="10dp"
-        android:paddingRight="10dp"
+        android:layout_marginRight="12dp"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/bg_badge_glass"
+        android:paddingLeft="9dp"
+        android:paddingRight="9dp"
         android:paddingTop="4dp"
         android:paddingBottom="4dp"
-        android:focusable="false" />
+        android:textColor="@color/kl_text_1" />
 
-    <!-- Gợi ý đổi trận khi ô đang focus -->
     <TextView
         android:id="@+id/cellSwapHint"
+        style="@style/KL.Text.Meta"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="14dp"
-        android:text="OK · đổi trận"
-        android:textColor="#FFD166"
-        android:textSize="12sp"
-        android:textStyle="bold"
-        android:background="#B3000000"
-        android:paddingLeft="12dp"
-        android:paddingRight="12dp"
-        android:paddingTop="5dp"
-        android:paddingBottom="5dp"
+        android:layout_gravity="bottom|left"
+        android:layout_margin="10dp"
+        android:background="@drawable/bg_badge_glass"
+        android:paddingLeft="9dp"
+        android:paddingRight="9dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:text="@string/mv_swap_hint"
         android:visibility="gone" />
 </FrameLayout>

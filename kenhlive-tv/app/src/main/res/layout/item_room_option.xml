@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="@drawable/bg_card"
+    android:foreground="@drawable/fg_focus"
+    android:padding="@dimen/sp_item_pad"
+    android:layout_marginBottom="8dp"
+    android:focusable="true"
+    android:clickable="true">
+
+    <ImageView
+        android:id="@+id/roomAvatar"
+        android:layout_width="@dimen/avatar_s"
+        android:layout_height="@dimen/avatar_s"
+        android:scaleType="centerCrop"
+        android:background="@drawable/bg_circle"
+        android:contentDescription="@string/cd_blv" />
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginLeft="12dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/roomName"
+            style="@style/KL.Text.Title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/roomMeta"
+            style="@style/KL.Text.Meta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:maxLines="1"
+            android:ellipsize="end" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/roomLive"
+        style="@style/KL.Text.Badge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/bg_badge_live"
+        android:paddingLeft="9dp"
+        android:paddingRight="9dp"
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp"
+        android:text="@string/sched_live"
+        android:textColor="#FFFFFFFF"
+        android:visibility="gone" />
+
+    <ImageView
+        android:layout_width="18dp"
+        android:layout_height="18dp"
+        android:layout_marginLeft="10dp"
+        android:src="@drawable/ic_chevron_right"
+        android:contentDescription="@null"
+        android:alpha="0.6" />
+</LinearLayout>

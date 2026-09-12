@@ -3,55 +3,46 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingTop="18dp"
-    android:paddingBottom="6dp">
+    android:paddingTop="@dimen/sp_row_gap">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingLeft="20dp"
-        android:paddingRight="20dp">
+        android:paddingLeft="@dimen/sp_screen_margin"
+        android:paddingRight="@dimen/sp_screen_margin">
 
         <View
             android:layout_width="4dp"
-            android:layout_height="18dp"
+            android:layout_height="16dp"
             android:background="@drawable/accent_bar"
-            android:layout_marginRight="10dp" />
+            android:layout_marginRight="9dp" />
 
         <TextView
             android:id="@+id/rowTitle"
+            style="@style/KL.Text.Section"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:textColor="#FFFFFF"
-            android:fontFamily="@font/oswald"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.04" />
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/rowCount"
+            style="@style/KL.Text.Meta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
     </LinearLayout>
 
-    <!-- scroll ngang, clipToPadding=false de card cuoi "peek" ho mep -->
-    <HorizontalScrollView
-        android:id="@+id/rowScroll"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rowList"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:scrollbars="none"
+        android:layout_marginTop="10dp"
         android:clipToPadding="false"
-        android:paddingLeft="13dp"
-        android:paddingRight="0dp">
-
-        <LinearLayout
-            android:id="@+id/rowContainer"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal" />
-    </HorizontalScrollView>
-
-    <View
-        android:id="@+id/rowProgress"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:visibility="gone" />
+        android:clipChildren="false"
+        android:paddingLeft="@dimen/sp_screen_margin"
+        android:paddingRight="@dimen/sp_screen_margin"
+        android:scrollbars="none" />
 </LinearLayout>

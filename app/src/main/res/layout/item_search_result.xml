@@ -5,60 +5,58 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:background="@drawable/card_focus_bg"
-    android:padding="14dp"
-    android:layout_marginBottom="10dp"
+    android:background="@drawable/bg_card"
+    android:foreground="@drawable/fg_focus"
+    android:padding="@dimen/sp_item_pad"
+    android:layout_marginBottom="8dp"
     android:focusable="true"
     android:clickable="true">
 
     <ImageView
         android:id="@+id/srAvatar"
-        android:layout_width="52dp"
-        android:layout_height="52dp"
+        android:layout_width="@dimen/avatar_s"
+        android:layout_height="@dimen/avatar_s"
         android:scaleType="centerCrop"
-        android:background="@drawable/avatar_mask"
-        android:contentDescription="blv" />
+        android:background="@drawable/bg_circle"
+        android:contentDescription="@string/cd_blv" />
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:orientation="vertical"
-        android:layout_marginLeft="14dp">
+        android:layout_marginLeft="12dp"
+        android:orientation="vertical">
 
         <TextView
             android:id="@+id/srMatch"
+            style="@style/KL.Text.Title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#FFFFFF"
-            android:fontFamily="@font/oswald"
-            android:textSize="18sp"
-            android:textStyle="bold"
             android:maxLines="1"
             android:ellipsize="end" />
 
         <TextView
             android:id="@+id/srMeta"
+            style="@style/KL.Text.Meta"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:textColor="#8890A6"
-            android:textSize="13sp"
+            android:layout_marginTop="2dp"
             android:maxLines="1"
             android:ellipsize="end" />
     </LinearLayout>
 
     <TextView
         android:id="@+id/srLeague"
+        style="@style/KL.Text.Meta"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="10dp"
-        android:textColor="#FFFFFF"
-        android:textSize="11sp"
-        android:textStyle="bold"
-        android:background="@drawable/badge_live"
+        android:layout_marginLeft="8dp"
+        android:background="@drawable/bg_badge_glass"
         android:paddingLeft="9dp"
         android:paddingRight="9dp"
         android:paddingTop="3dp"
-        android:paddingBottom="3dp" />
+        android:paddingBottom="3dp"
+        android:maxWidth="140dp"
+        android:maxLines="1"
+        android:ellipsize="end" />
 </LinearLayout>

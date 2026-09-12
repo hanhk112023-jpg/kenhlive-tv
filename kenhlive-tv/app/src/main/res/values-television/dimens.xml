@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ANDROID TV (10-foot): bigger type, looser spacing, side rail navigation. -->
+<resources>
+    <dimen name="sp_screen_margin">40dp</dimen>
+    <dimen name="sp_row_gap">30dp</dimen>
+    <dimen name="sp_card_gap">16dp</dimen>
+    <dimen name="sp_item_pad">18dp</dimen>
+
+    <dimen name="rd_card">18dp</dimen>
+    <dimen name="rd_input">14dp</dimen>
+    <dimen name="rd_dialog">24dp</dimen>
+
+    <dimen name="topbar_h">72dp</dimen>
+    <dimen name="bottomnav_h">0dp</dimen>
+    <dimen name="rail_w">196dp</dimen>
+    <dimen name="hero_h">396dp</dimen>
+    <dimen name="card_w">352dp</dimen>
+    <dimen name="card_thumb_h">198dp</dimen>
+
+    <dimen name="ts_display">44sp</dimen>
+    <dimen name="ts_hero_meta">16sp</dimen>
+    <dimen name="ts_section">22sp</dimen>
+    <dimen name="ts_title">20sp</dimen>
+    <dimen name="ts_body">17sp</dimen>
+    <dimen name="ts_meta">15sp</dimen>
+    <dimen name="ts_nav">16sp</dimen>
+    <dimen name="ts_button">17sp</dimen>
+    <dimen name="ts_chip">16sp</dimen>
+    <dimen name="ts_empty">20sp</dimen>
+
+    <dimen name="btn_h">52dp</dimen>
+    <dimen name="btn_pad_x">26dp</dimen>
+    <dimen name="nav_icon">26dp</dimen>
+    <dimen name="chip_h">42dp</dimen>
+    <dimen name="input_h">56dp</dimen>
+    <dimen name="avatar_s">44dp</dimen>
+    <dimen name="crest_s">24dp</dimen>
+    <dimen name="empty_img_w">340dp</dimen>
+    <dimen name="empty_img_h">200dp</dimen>
+    <dimen name="focus_ring_w">3dp</dimen>
+    <dimen name="focus_glow_w">9dp</dimen>
+    <dimen name="sched_avatar">34dp</dimen>
+</resources>
