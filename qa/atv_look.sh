@@ -12,13 +12,23 @@ adb shell wm size 1920x1080
 adb install -r app/build/outputs/apk/debug/app-debug.apk >/dev/null 2>&1
 adb logcat -c
 
+wait_ready() {
+  # toi da 120s: de man hinh vao ONG (v6 retry fetch + proxy nua chet co the keo dai)
+  for w in $(seq 1 12); do
+    D=$(adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1; adb shell cat /sdcard/u.xml 2>/dev/null)
+    if echo "$D" | grep -qE 'XEM NGAY|phòng live|Hôm nay'; then return 0; fi
+    if echo "$D" | grep -qE 'Không tải|THỬ LẠI|Sân vắng'; then return 1; fi
+    sleep 10
+  done; return 2
+}
 for i in 1 2 3 4; do
   adb shell am start -W -n com.kenhlive.tv/.MainActivity >/dev/null 2>&1
-  sleep 20
+  sleep 12
+  wait_ready; RC=$?; echo "round $i ready rc=$RC"
   # nếu rơi màn lỗi mạng → bấm THỬ LẠI (giữa màn) tối đa 2 lần
   for k in 1 2; do
-    if adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1 && adb shell cat /sdcard/u.xml | grep -q 'KHƠNG\|Không tải\|THỬ LẠI\|THU LAI'; then
-      echo "round $i: màn lỗi mạng -> tap THỬ LẠI"; adb shell input tap 960 640; sleep 15
+    if [ "$RC" = "1" ] && adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1 && adb shell cat /sdcard/u.xml | grep -q 'KHƠNG\|Không tải\|THỬ LẠI\|THU LAI'; then
+      echo "round $i: màn lỗi mạng -> tap THỬ LẠI"; adb shell input tap 960 640; sleep 15; wait_ready; RC=$?
     else break; fi
   done
   adb exec-out screencap -p > $OUT/home_a$API.png
