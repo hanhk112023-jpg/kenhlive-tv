@@ -52,6 +52,7 @@
             android:fontFamily="@font/oswald"
             android:textSize="44sp"
             android:textStyle="bold"
+            android:minLines="2"
             android:letterSpacing="0.01"
             android:shadowColor="#E6000000"
             android:shadowDy="3"

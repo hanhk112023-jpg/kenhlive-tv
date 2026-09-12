@@ -13,6 +13,7 @@ import android.view.WindowInsetsController
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.activity.addCallback
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
@@ -64,6 +65,15 @@ class MainActivity : AppCompatActivity() {
         val tabX = intent?.getIntExtra("tab", -1) ?: -1
         if (tabX in 0..2) {
             viewPager.post { viewPager.setCurrentItem(tabX, false) }
+        }
+
+        // UX TV: BACK o man hinh dau -> hoi thoat, khong vang thang ra Launcher
+        onBackPressedDispatcher.addCallback(this) {
+            androidx.appcompat.app.AlertDialog.Builder(this@MainActivity)
+                .setTitle("Thoát KênhLive?")
+                .setPositiveButton("Thoát") { _, _ -> finishAffinity() }
+                .setNegativeButton("Ở lại", null)
+                .show()
         }
 
         UpdateManager.checkAndUpdate(this)

@@ -73,7 +73,13 @@ go  "BACK khoi MV"         4  4
 sleep 3
 adb shell screenrecord --stop >/dev/null 2>&1; wait $RECPID 2>/dev/null || true; sleep 2
 adb pull /sdcard/rec.mp4 $OUT/rec.mp4 >/dev/null 2>&1 || true
-adb logcat -d -s AndroidRuntime:E | tail -20 > $OUT/crash_a$API.txt
+adb logcat -d -s AndroidRuntime:E | tail -40 > $OUT/crash_a$API.txt
+# === bang chung phan biet crash vs finish-binh-thuong ===
+adb logcat -d | grep -E 'ActivityTaskManager: (START|DISPLAYED)|libc.*SIGSEGV|F DEBUG|am_crash' | tail -60 > $OUT/activity_trace.txt || true
+adb shell dumpsys activity activities | grep -E 'mResumedActivity|topResumedActivity|mFocusedApp' >> $OUT/activity_trace.txt 2>/dev/null || true
+adb logcat -d -b events | grep -E 'am_(crash|anr|proc_died|native_crash)' | tail -20 > $OUT/events.txt || true
+adb shell "ls /data/system/dropbox/ 2>/dev/null | grep -iE 'crash|anr|tomb' | head -10" > $OUT/dropbox.txt || true
+adb shell "dumpsys meminfo com.kenhlive.tv" | head -8 > $OUT/meminfo.txt || true
 echo "===== TIMELINE ====="; cat $TL
 SZ=$(stat -c%s $OUT/rec.mp4 2>/dev/null || echo 0)
 echo "KET-QUA rec=$SZ bytes"

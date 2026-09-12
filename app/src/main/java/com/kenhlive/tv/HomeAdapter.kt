@@ -47,6 +47,21 @@ class HomeAdapter(
      *  bi detach -> mat focus (khong co gi de phuc hoi vi VH moi khong con thuoc VH cu)
      *  -> phim D-pad tiep theo roi vong focus-search mac dinh = "nhay lung tung" con sot. */
     private var pendingRestore: Pair<Int, Int>? = null
+    /** O gan cung duoc focus (rowPos, idx) — dung khi quay ve tu Player/MV (Android da xoa focus). */
+    var lastFocusSlot: Pair<Int, Int>? = null
+        private set
+
+    /** Goi tu LiveFragment.onResume: dat lai focus vung card cu. */
+    fun restoreLastFocus() {
+        val (rowPos, idx) = lastFocusSlot ?: return
+        rv?.post {
+            val vh = rv?.findViewHolderForAdapterPosition(rowPos) as? RowVH ?: return@post
+            vh.container.getChildAtOrNull(idx)?.requestFocus()
+        }
+    }
+
+    private fun android.view.ViewGroup.getChildAtOrNull(i: Int) =
+        if (i in 0 until childCount) getChildAt(i) else null
 
     private fun currentFocusSlot(): Pair<Int, Int>? {
         val rvw = rv ?: return null
@@ -129,6 +144,14 @@ class HomeAdapter(
             v.animate().scaleX(if (has) 1.07f else 1.0f).scaleY(if (has) 1.07f else 1.0f)
                 .setDuration(140).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
             v.elevation = if (has) 18f else 0f
+            // vien trang 5dp noi troi (hanh vi giong multiview) — ca thumbnail den cung thay ro
+            val d = android.graphics.drawable.GradientDrawable().apply {
+                setColor(0x00000000)
+                setStroke(if (has) 5 else 1, if (has) 0xFFFFFFFF.toInt() else 0x1AFFFFFF)
+                cornerRadius = 18 * v.resources.displayMetrics.density
+            }
+            v.foreground = d
+            lastFocusSlot = if (has) rowPos to idx else lastFocusSlot
         }
         card.setOnKeyListener { _, keyCode, ev ->
             if (ev.action != KeyEvent.ACTION_DOWN) return@setOnKeyListener false
