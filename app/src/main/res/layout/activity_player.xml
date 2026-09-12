@@ -12,6 +12,28 @@
         android:background="#000000"
         app:use_controller="false" />
 
+    <!-- Chi bao khi buffer: thay mau den khi mo stream -->
+    <LinearLayout
+        android:id="@+id/bufferBox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone">
+        <ProgressBar
+            android:layout_width="54dp"
+            android:layout_height="54dp"
+            android:indeterminateTint="#00E676" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Đang tải luồng…"
+            android:textColor="#B9C4D2"
+            android:textSize="15sp" />
+    </LinearLayout>
+
     <!-- Top overlay: back + multi + title (tự ẩn khi xem) -->
     <LinearLayout
         android:id="@+id/topOverlay"

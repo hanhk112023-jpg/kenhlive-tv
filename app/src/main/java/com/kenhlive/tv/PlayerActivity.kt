@@ -89,6 +89,9 @@ class PlayerActivity : AppCompatActivity() {
                     override fun onPlaybackStateChanged(state: Int) {
                         // BUG-06: phat OK thi reset budget retry — loi mang ngan sau nay van duoc tu hoi phuc
                         if (state == Player.STATE_READY) streamRetries = 0
+                        // nemotron-omni QA: thay man den luc buffer -> chi bao ro
+                        findViewById<View>(R.id.bufferBox)?.visibility =
+                            if (state == Player.STATE_BUFFERING) View.VISIBLE else View.GONE
                     }
                 })
             }
