@@ -5,15 +5,12 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
-import android.view.WindowInsetsController
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.activity.addCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import com.kenhlive.tv.viewmodel.LiveViewModel
 import kotlinx.coroutines.launch
@@ -29,7 +26,7 @@ class MainActivity : AppCompatActivity() {
     private val vm: LiveViewModel by viewModels()
     private var current = 0
     private val navViews = mutableListOf<View>()
-    private val fragments = arrayOf("tab_live", "tab_schedule", "tab_search", "tab_settings")
+    private val tabTags = arrayOf("tab_live", "tab_schedule", "tab_search", "tab_settings")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -97,7 +94,7 @@ class MainActivity : AppCompatActivity() {
         navViews.forEachIndexed { i, v -> v.isSelected = i == pos }
         val tx = supportFragmentManager.beginTransaction()
         if (animate) tx.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
-        fragments.forEachIndexed { i, tag ->
+        tabTags.forEachIndexed { i, tag ->
             var f = supportFragmentManager.findFragmentByTag(tag)
             if (i == pos) {
                 if (f == null) {
