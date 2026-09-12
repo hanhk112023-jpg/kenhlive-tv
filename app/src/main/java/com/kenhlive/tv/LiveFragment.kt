@@ -53,6 +53,8 @@ class LiveFragment : Fragment() {
         super.onResume()
         refreshHandler.removeCallbacks(autoRefresh)
         refreshHandler.postDelayed(autoRefresh, 3 * 60_000L)
+        // Quay ve tu Player/MV: Android da clear focus -> dat lai dung card cu
+        if (::adapter.isInitialized) adapter.restoreLastFocus()
     }
 
     override fun onPause() {
@@ -62,11 +64,6 @@ class LiveFragment : Fragment() {
     }
 
     /** QA hook (`--es open refresh`): ep auto-refresh chay NGAY — tam thoi bo qua gio han 3'. */
-    override fun onResume() {
-        super.onResume()
-        // Quay ve tu Player/MV: Android da clear focus -> dat lai dung card cu
-        if (::adapter.isInitialized) adapter.restoreLastFocus()
-    }
 
     fun debugForceRefresh() { if (isAdded && ::adapter.isInitialized) silentRefresh() }
 
