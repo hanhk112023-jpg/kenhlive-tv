@@ -16,11 +16,16 @@ focus() { adb shell dumpsys window 2>/dev/null | grep -m1 -o 'com.kenhlive.tv/[^
 mark()  { echo "$(($(date +%s)-T0))s|$1|$(focus)" >> $TL; }
 key()   { adb shell input keyevent $1; }
 go()    { local name="$1" code="$2" wait="$3"; key "$code"; sleep "$wait"; mark "$name"; }
+ensure() {  # mo lai app neu bi BACK thoat
+  local fg=$(focus)
+  case "$fg" in *kenhlive*) : ;; *) adb shell am start -n com.kenhlive.tv/.MainActivity >/dev/null 2>&1; sleep 14; key 20; sleep 3; mark "RE-OPEN: $1";; esac
+}
 
 adb shell am start -W -n com.kenhlive.tv/.MainActivity >/dev/null 2>&1
 mark "BOOT"; sleep 24
 
-adb shell screenrecord --bit-rate 8000000 --time-limit 175 --bugreport $OUT/rec.mp4 &
+adb shell rm -f /sdcard/rec.mp4
+adb shell screenrecord --bit-rate 8000000 --time-limit 240 /sdcard/rec.mp4 &
 RECPID=$!; sleep 2
 
 # ===== HOME: di chuan hero -> card -> hang -> qua lai =====
@@ -42,21 +47,21 @@ go  "BACK: ra player"      4  4
 FG=$(focus); case "$FG" in *kenhlive*) : ;; *) adb shell am start -n com.kenhlive.tv/.MainActivity >/dev/null 2>&1; sleep 12; key 20; sleep 2; mark "RE-OPEN+DOWN";; esac
 
 # ===== TAB LICH TRINH =====
-go  "RIGHT -> LICH TRINH"  22 6
+ensure "truoc LICH"; go  "RIGHT -> LICH TRINH"  22 6
 go  "DOWN danh sach"       20 2
 go  "DOWN"                 20 2
 go  "DOWN"                 20 2
 go  "UP"                   19 2
 
 # ===== TAB TIM KIEM =====
-go  "RIGHT -> TIM KIEM"    22 6
+ensure "truoc TIM"; go  "RIGHT -> TIM KIEM"    22 6
 adb shell input text "real" >/dev/null 2>&1; sleep 9; mark "TYPE real"
 go  "DOWN qua ket qua"     20 2
 go  "DOWN"                 20 2
 go  "BACK"                 4  3
 
 # ===== ve HOME, LONGPRESS -> MULTIVIEW =====
-go  "LEFT -> TRUC TIEP"    21 6
+ensure "truoc MV"; go  "LEFT -> TRUC TIEP"    21 6
 key 21; sleep 2; key 20; sleep 2
 adb shell input keyevent --longpress 23 >/dev/null 2>&1 || adb shell input keyevent --duration-key 1200 23 >/dev/null 2>&1
 sleep 22; mark "LONGPRESS -> MULTIVIEW"
@@ -65,7 +70,7 @@ go  "MV: di o3"            22 3
 go  "MV: ve o1"            19 3
 go  "BACK khoi MV"         4  4
 
-sleep 2
+sleep 3
 adb shell screenrecord --stop >/dev/null 2>&1; wait $RECPID 2>/dev/null || true; sleep 2
 adb pull /sdcard/rec.mp4 $OUT/rec.mp4 >/dev/null 2>&1 || true
 adb logcat -d -s AndroidRuntime:E | tail -20 > $OUT/crash_a$API.txt
