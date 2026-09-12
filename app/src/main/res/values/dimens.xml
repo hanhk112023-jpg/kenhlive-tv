@@ -43,7 +43,7 @@
     <dimen name="crest_s">18dp</dimen>
     <dimen name="empty_img_w">220dp</dimen>
     <dimen name="empty_img_h">132dp</dimen>
-    <dimen name="focus_ring_w">2dp</dimen>
+    <dimen name="focus_ring_w">3dp</dimen>
     <dimen name="focus_glow_w">6dp</dimen>
     <dimen name="sched_avatar">26dp</dimen>
 </resources>

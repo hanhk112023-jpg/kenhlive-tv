@@ -142,7 +142,7 @@ QUY TẮC NGUỒN (RẤT QUAN TRỌNG — tránh báo oan):
 - Số card/section ÍT (1-2 card mỗi hàng, nhiều khoảng trống) khi khung giờ ít trận live = ĐÚNG hành vi, KHÔNG phải lỗi layout. Chỉ báo khi có ≥3 trận mà vẫn xếp lệch.
 - Chữ cắt cụt nằm BÊN TRONG ảnh thumbnail/video (chữ meme bake sẵn) = nguồn phát, không phải text của app.
 - ẢNH ĐẠI DIỆN TRẬN/BLV (avatar, cover, logo đội trong card) là data từ API nguồn — người thật/logo lạ/sai đội = NGUỒN CUNG CẤP, tối đa INFO.
-- Ô FOCUS được nhận diện bằng 3 dấu hiệu THIẾT KẾ: phóng to ~1.03–1.07 lần + viền TRẮNG 5px (lót shadow đen) + nhô elevation. KHÔNG còn viền đỏ. Không báo 'không có focus' nếu thấy ảnh zoom có đường kẻ trắng liền mạch quanh ô; cũng KHÔNG báo lỗi vì thiếu viền đỏ.
+- Ô FOCUS được nhận diện bằng: phóng to ~1.03–1.07 lần + viền TRẮNG mỏng 2–3dp kèm GLOW trắng mờ bao ngoài (thiết kế v6 'ring+glow', KHÔNG phải stroke 5px) + nhô elevation; multiview vẫn viền trắng 5px. KHÔNG còn viền đỏ. Không báo 'không có focus'/'viền quá mảnh'/'thiếu viền trắng 5px' nếu thấy đường kẻ trắng liền mạch + quầng sáng quanh ô; ảnh burned-in trên cover BLV (chữ vàng cắt đỉnh...) là DATA NGUỒN -> INFO, không phải lỗi layout.
 - Video IPTV mờ/thấp nét = chất lượng nguồn phát → INFO, không phải lỗi app.
 - Chính tả/dấu tiếng Việt: ảnh đã co nhỏ, RẤT DỄ đọc nhầm 'trận'↔'trang', 'i'↔'l'. CHỈ báo lỗi text khi chắc chắn nhìn rõ từng ký tự; nghi ngờ → bỏ qua.
 - CHỈ báo lỗi app ở vùng UI của app: layout, text overlay của app, nút bấm, tab, focus, dialog, danh sách card.

@@ -70,6 +70,8 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:layout_marginRight="120dp"
+            android:includeFontPadding="false"
+            android:paddingTop="6dp"
             android:maxLines="2"
             android:ellipsize="end"
             android:shadowColor="#E6000000"

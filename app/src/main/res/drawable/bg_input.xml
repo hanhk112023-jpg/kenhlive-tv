@@ -4,7 +4,7 @@
         <shape android:shape="rectangle">
             <solid android:color="@color/kl_surface_2" />
             <corners android:radius="@dimen/rd_input" />
-            <stroke android:width="@dimen/focus_ring_w" android:color="@color/kl_brand" />
+            <stroke android:width="3dp" android:color="@color/kl_focus_ring" />
         </shape>
     </item>
     <item>
