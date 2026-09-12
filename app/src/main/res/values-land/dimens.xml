@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Landscape phone: shorter hero, wider cards -->
+<resources>
+    <dimen name="hero_h">210dp</dimen>
+    <dimen name="card_w">248dp</dimen>
+    <dimen name="card_thumb_h">140dp</dimen>
+    <dimen name="topbar_h">52dp</dimen>
+    <dimen name="bottomnav_h">58dp</dimen>
+</resources>

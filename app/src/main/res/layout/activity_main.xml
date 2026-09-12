@@ -3,109 +3,30 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#000000">
+    android:background="@color/kl_bg_deep">
 
-    <!-- TOP BAR chuẩn TV: logo + wordmark | tab text underline | live chip -->
+    <!-- TOP APP BAR -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="64dp"
+        android:layout_height="@dimen/topbar_h"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingLeft="28dp"
-        android:paddingRight="28dp">
+        android:background="@drawable/bg_topbar"
+        android:paddingLeft="@dimen/sp_screen_margin"
+        android:paddingRight="@dimen/sp_screen_margin">
 
         <ImageView
-            android:layout_width="34dp"
-            android:layout_height="34dp"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
             android:src="@drawable/ic_logo_kl"
-            android:contentDescription="@string/app_name" />
+            android:contentDescription="@string/cd_logo" />
 
         <TextView
+            style="@style/KL.Text.Section"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
-            android:text="KênhLive"
-            android:textColor="#FFFFFF"
-            android:fontFamily="@font/oswald"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.02" />
-
-        <Space android:layout_width="36dp" android:layout_height="match_parent" />
-
-        <LinearLayout
-            android:id="@+id/nav_live"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:paddingLeft="14dp"
-            android:paddingRight="14dp"
-            android:background="@drawable/tab_underline_bg"
-            android:clickable="true"
-            android:focusable="true"
-            android:nextFocusLeft="@id/nav_live">
-            <TextView
-                android:id="@+id/tv_live"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:maxLines="1"
-                android:text="TRỰC TIẾP"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:fontFamily="@font/oswald"
-                android:letterSpacing="0.08"
-                android:textColor="#FFFFFF" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/nav_schedule"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:paddingLeft="14dp"
-            android:paddingRight="14dp"
-            android:background="@drawable/tab_underline_bg"
-            android:clickable="true"
-            android:focusable="true">
-            <TextView
-                android:id="@+id/tv_schedule"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:maxLines="1"
-                android:text="LỊCH TRÌNH"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:fontFamily="@font/oswald"
-                android:letterSpacing="0.08"
-                android:textColor="#CFCFCF" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/nav_search"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:paddingLeft="14dp"
-            android:paddingRight="14dp"
-            android:background="@drawable/tab_underline_bg"
-            android:clickable="true"
-            android:focusable="true"
-            android:nextFocusRight="@id/nav_search">
-            <TextView
-                android:id="@+id/tv_search"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:maxLines="1"
-                android:text="TÌM KIẾM"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:fontFamily="@font/oswald"
-                android:letterSpacing="0.08"
-                android:textColor="#CFCFCF" />
-        </LinearLayout>
+            android:layout_marginLeft="9dp"
+            android:text="@string/app_name" />
 
         <View
             android:layout_width="0dp"
@@ -114,25 +35,44 @@
 
         <TextView
             android:id="@+id/countText"
+            style="@style/KL.Text.Meta"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="#00E676"
-            android:textStyle="bold"
-            android:textSize="16sp"
-            android:singleLine="true"
+            android:background="@drawable/bg_badge_brand"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:textColor="@color/kl_brand"
+            android:maxLines="1"
             android:ellipsize="end"
-            android:maxWidth="170dp"
+            android:maxWidth="150dp"
             android:visibility="gone" />
     </LinearLayout>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#14FFFFFF" />
+        android:background="@color/kl_border_soft" />
 
-    <androidx.viewpager2.widget.ViewPager2
-        android:id="@+id/viewPager"
+    <FrameLayout
+        android:id="@+id/fragmentContainer"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />
+
+    <!-- BOTTOM NAVIGATION -->
+    <LinearLayout
+        android:id="@+id/bottomNav"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/bottomnav_h"
+        android:orientation="horizontal"
+        android:background="@color/kl_surface_1"
+        android:baselineAligned="false">
+
+        <include layout="@layout/item_nav_phone" android:id="@+id/nav_live" />
+        <include layout="@layout/item_nav_phone" android:id="@+id/nav_schedule" />
+        <include layout="@layout/item_nav_phone" android:id="@+id/nav_search" />
+        <include layout="@layout/item_nav_phone" android:id="@+id/nav_settings" />
+    </LinearLayout>
 </LinearLayout>

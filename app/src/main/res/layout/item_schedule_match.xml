@@ -1,150 +1,125 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/schedCard"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:id="@+id/schedCard"
-    android:orientation="vertical"
-    android:padding="13dp"
-    android:layout_margin="5dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="@drawable/bg_card"
+    android:foreground="@drawable/fg_focus"
+    android:padding="@dimen/sp_item_pad"
+    android:layout_marginBottom="8dp"
     android:focusable="true"
-    android:clickable="true"
-    android:descendantFocusability="blocksDescendants"
-    android:background="@drawable/card_a_focus">
+    android:clickable="true">
 
+    <!-- time / live badge -->
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="56dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
 
         <TextView
             android:id="@+id/matchTime"
+            style="@style/KL.Text.Title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:minWidth="54dp"
-            android:gravity="center"
-            android:textColor="#00F0FF"
-            android:fontFamily="@font/oswald"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:fontFeatureSettings="tnum"
-            android:background="@drawable/time_pill"
-            android:paddingLeft="9dp"
-            android:paddingRight="9dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="4dp" />
-
-        <ImageView
-            android:id="@+id/hostIcon"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_marginLeft="11dp"
-            android:scaleType="fitCenter"
-            android:contentDescription="@string/app_name" />
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingLeft="10dp"
-            android:paddingRight="10dp"
-            android:gravity="center_vertical">
-
-            <TextView
-                android:id="@+id/matchName"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="#FFFFFF"
-                android:fontFamily="@font/oswald"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:ellipsize="end"
-                android:maxLines="1" />
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginTop="2dp">
-
-                <ImageView
-                    android:id="@+id/leagueCrest"
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:scaleType="fitCenter"
-                    android:contentDescription="crest" />
-
-                <TextView
-                    android:id="@+id/matchLeague"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginLeft="5dp"
-                    android:textColor="#8890A6"
-                    android:fontFamily="sans-serif-medium"
-                    android:textSize="11sp"
-                    android:ellipsize="end"
-                    android:maxLines="1" />
-            </LinearLayout>
-        </LinearLayout>
-
-        <ImageView
-            android:id="@+id/guestIcon"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:layout_marginRight="8dp"
-            android:scaleType="fitCenter"
-            android:contentDescription="@string/app_name" />
+            android:fontFeatureSettings="tnum" />
 
         <TextView
             android:id="@+id/statusBadge"
+            style="@style/KL.Text.Badge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="10sp"
-            android:textStyle="bold"
-            android:background="@drawable/badge_live"
-            android:paddingLeft="9dp"
-            android:paddingRight="9dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp" />
+            android:layout_marginTop="4dp"
+            android:paddingLeft="7dp"
+            android:paddingRight="7dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:visibility="gone" />
     </LinearLayout>
 
+    <!-- crest + teams -->
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:layout_marginTop="11dp">
-
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#1A1E28"
-            android:layout_marginBottom="9dp" />
+        android:layout_weight="1"
+        android:layout_marginLeft="10dp"
+        android:orientation="vertical">
 
         <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="BLV"
-            android:textColor="#6B7490"
-            android:fontFamily="sans-serif-medium"
-            android:textSize="9sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.1"
-            android:paddingLeft="2dp"
-            android:paddingBottom="7dp" />
-
-        <HorizontalScrollView
+            android:id="@+id/matchName"
+            style="@style/KL.Text.Title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:scrollbars="none"
-            android:clipToPadding="false">
+            android:maxLines="2"
+            android:ellipsize="end" />
 
-            <LinearLayout
-                android:id="@+id/anchorRow"
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/leagueCrest"
+                android:layout_width="@dimen/crest_s"
+                android:layout_height="@dimen/crest_s"
+                android:contentDescription="@null" />
+
+            <TextView
+                android:id="@+id/matchLeague"
+                style="@style/KL.Text.Meta"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="6dp"
+                android:maxLines="1"
+                android:ellipsize="end" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- anchors + team crests -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="right">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/hostIcon"
+                android:layout_width="@dimen/sched_avatar"
+                android:layout_height="@dimen/sched_avatar"
+                android:contentDescription="@null" />
+
+            <TextView
+                style="@style/KL.Text.Meta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal" />
-        </HorizontalScrollView>
+                android:layout_marginLeft="6dp"
+                android:layout_marginRight="6dp"
+                android:text="–" />
+
+            <ImageView
+                android:id="@+id/guestIcon"
+                android:layout_width="@dimen/sched_avatar"
+                android:layout_height="@dimen/sched_avatar"
+                android:contentDescription="@null" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/anchorRow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical" />
     </LinearLayout>
 </LinearLayout>

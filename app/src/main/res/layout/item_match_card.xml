@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/cardRoot"
+    android:layout_width="@dimen/card_w"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_marginRight="@dimen/sp_card_gap"
+    android:background="@drawable/bg_card"
+    android:foreground="@drawable/fg_focus"
+    android:padding="7dp"
+    android:focusable="true"
+    android:clickable="true">
+
+    <FrameLayout
+        android:id="@+id/cardThumbBox"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/card_thumb_h">
+
+        <ImageView
+            android:id="@+id/cardThumb"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:background="@drawable/bg_skeleton"
+            android:contentDescription="@string/cd_match" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|left"
+            android:layout_margin="8dp"
+            style="@style/KL.Text.Badge"
+            android:text="@string/sched_live"
+            android:textColor="#FFFFFFFF"
+            android:background="@drawable/bg_badge_live"
+            android:paddingLeft="9dp"
+            android:paddingRight="9dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp" />
+
+        <TextView
+            android:id="@+id/roomBadge"
+            style="@style/KL.Text.Meta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|right"
+            android:layout_margin="8dp"
+            android:textColor="@color/kl_text_1"
+            android:background="@drawable/bg_badge_glass"
+            android:paddingLeft="9dp"
+            android:paddingRight="9dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
+            android:visibility="gone" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_gravity="bottom"
+            android:background="@drawable/bg_overlay_bottom" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingBottom="7dp">
+
+            <ImageView
+                android:id="@+id/cardAvatar"
+                android:layout_width="26dp"
+                android:layout_height="26dp"
+                android:scaleType="centerCrop"
+                android:background="@drawable/bg_circle"
+                android:contentDescription="@string/cd_blv" />
+
+            <TextView
+                android:id="@+id/cardBlv"
+                style="@style/KL.Text.Meta"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="7dp"
+                android:textColor="@color/kl_text_1"
+                android:maxLines="1"
+                android:ellipsize="end" />
+
+            <ImageView
+                android:layout_width="13dp"
+                android:layout_height="13dp"
+                android:src="@drawable/ic_eye"
+                android:contentDescription="@string/cd_viewers"
+                android:alpha="0.85" />
+
+            <TextView
+                android:id="@+id/cardViewers"
+                style="@style/KL.Text.Meta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="4dp"
+                android:textColor="@color/kl_text_1" />
+        </LinearLayout>
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/cardMatch"
+        style="@style/KL.Text.Title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginLeft="3dp"
+        android:layout_marginRight="3dp"
+        android:layout_marginBottom="3dp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+</LinearLayout>

@@ -1,4 +1,128 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">KênhLive</string>
+    <string name="app_tagline">Bóng đá trực tiếp</string>
+
+    <!-- navigation -->
+    <string name="nav_live">Trực tiếp</string>
+    <string name="nav_schedule">Lịch trình</string>
+    <string name="nav_search">Tìm kiếm</string>
+    <string name="nav_settings">Cài đặt</string>
+    <string name="nav_multiview">Đa màn hình</string>
+
+    <!-- live -->
+    <string name="live_hero_cta">Xem ngay</string>
+    <string name="live_rooms_count">● %1$d phòng live</string>
+    <string name="live_loading">Đang tải trận đấu…</string>
+    <string name="live_empty_title">Sân vắng bóng</string>
+    <string name="live_empty_body">Hiện không có trận nào đang live</string>
+    <string name="live_error_title">Không tải được danh sách trận</string>
+    <string name="live_error_body">Kiểm tra kết nối mạng rồi thử lại</string>
+    <string name="action_retry">Thử lại</string>
+    <string name="live_rooms_badge">%1$d phòng</string>
+    <string name="live_blv_more">+%1$d BLV</string>
+    <string name="live_longpress_hint">Giữ OK để mở đa màn hình</string>
+
+    <!-- schedule -->
+    <string name="sched_loading">Đang tải lịch thi đấu…</string>
+    <string name="sched_empty_title">Sân vắng bóng</string>
+    <string name="sched_empty_body">Không có trận nào 7 ngày tới</string>
+    <string name="sched_error_title">Không tải được lịch</string>
+    <string name="sched_error_body">Kiểm tra kết nối mạng rồi thử lại</string>
+    <string name="sched_matches_count">%1$d trận</string>
+    <string name="sched_live">Live</string>
+    <string name="sched_no_room">Trận chưa có phòng live</string>
+
+    <!-- search -->
+    <string name="search_hint">Tìm trận đấu, giải, BLV…</string>
+    <string name="search_clear">Xóa</string>
+    <string name="search_idle">Gõ để tìm trận đang live</string>
+    <string name="search_empty">Không tìm thấy “%1$s”</string>
+    <string name="search_count_all">%1$d trận đang live</string>
+    <string name="search_count_result">%1$d kết quả cho “%2$s”</string>
+    <string name="search_error">Không tải được danh sách — bấm thử lại</string>
+    <string name="search_suggest">Gợi ý nhanh</string>
+
+    <!-- player -->
+    <string name="player_default_name">Kênh</string>
+    <string name="player_buffering">Đang tải luồng…</string>
+    <string name="player_retry">Mạng chập chờn — tự thử lại lần %1$d…</string>
+    <string name="player_net_error">Mạng lỗi — thoát ra vào lại sau</string>
+    <string name="player_stream_error">Stream lỗi: %1$s</string>
+    <string name="player_quality_title">Chất lượng hình &amp; âm</string>
+    <string name="player_video_label">Hình ảnh</string>
+    <string name="player_audio_label">Âm thanh</string>
+    <string name="player_video_changed">Hình: %1$s</string>
+    <string name="player_audio_changed">Âm: %1$s</string>
+    <string name="player_audio_pending"> — áp dụng khi có âm thanh</string>
+    <string name="player_pip_unsupported">Máy không hỗ trợ hình trong hình</string>
+    <string name="player_pip_failed">Không mở được PIP: %1$s</string>
+    <string name="player_hint_tv">↑↓←→ di chuyển · OK chọn · BACK thoát</string>
+    <string name="player_hint_phone">Chạm để hiện điều khiển</string>
+
+    <!-- multiview -->
+    <string name="mv_title">Đa màn hình</string>
+    <string name="mv_layout_btn">Bố cục: %1$d</string>
+    <string name="mv_hint_2">↑↓ chọn trận · OK: đổi trận · MENU: hoán đổi · giữ OK: 4 ô</string>
+    <string name="mv_hint_4">↑↓←→ chọn ô · OK: đổi trận · MENU: hoán đổi · giữ OK: 2 ô</string>
+    <string name="mv_hint_phone">Chạm ô để chọn · chạm loa để tắt/bật tiếng</string>
+    <string name="mv_load_error">Không load được trận live — thoát ra vào lại</string>
+    <string name="mv_waiting_2">Đang chờ trận live thứ 2…</string>
+    <string name="mv_stream_missing">· hết nguồn · OK để chọn trận</string>
+    <string name="mv_loading_stream">· đang tải stream…</string>
+    <string name="mv_not_enough">Chưa đủ trận live cho 4 ô</string>
+    <string name="mv_added">Đã thêm trận</string>
+    <string name="mv_swapped">Đã hoán đổi 2 ô</string>
+    <string name="mv_lowram_lock">Máy RAM thấp — giữ bố cục 2 trận để mượt</string>
+    <string name="mv_audio_on">Âm thanh</string>
+    <string name="mv_audio_off">Tĩnh lặng</string>
+    <string name="mv_slot">Ô %1$d</string>
+    <string name="mv_swap_hint">OK: đổi trận · MENU: hoán đổi</string>
+
+    <!-- room picker -->
+    <string name="picker_rooms_meta">%1$s · %2$d phòng live</string>
+    <string name="picker_other_matches">Đổi sang trận khác</string>
+    <string name="picker_viewers_live">%1$s lượt xem · LIVE</string>
+    <string name="picker_other_meta">%1$s · %2$d phòng · %3$s lượt xem</string>
+    <string name="stream_not_ready">Stream chưa sẵn sàng — thử lại</string>
+
+    <!-- settings -->
+    <string name="settings_title">Cài đặt</string>
+    <string name="settings_section_playback">Hình ảnh &amp; âm thanh</string>
+    <string name="settings_section_view">Trải nghiệm xem</string>
+    <string name="settings_section_app">Ứng dụng</string>
+    <string name="settings_video_quality">Chất lượng hình</string>
+    <string name="settings_audio_mode">Chế độ âm thanh</string>
+    <string name="settings_mv_layout">Bố cục đa màn hình</string>
+    <string name="settings_clear_cache">Xóa bộ nhớ đệm ảnh</string>
+    <string name="settings_clear_cache_done">Đã xóa bộ nhớ đệm ảnh</string>
+    <string name="settings_check_update">Kiểm tra cập nhật</string>
+    <string name="settings_version">Phiên bản</string>
+    <string name="settings_about">Giới thiệu</string>
+    <string name="settings_about_body">KênhLive tổng hợp các phòng phát trực tiếp bóng đá tiếng Việt. Chất lượng phụ thuộc nguồn phát của từng BLV.</string>
+    <string name="vq_auto">Tự động</string>
+    <string name="vq_high">Cao nhất (nét)</string>
+    <string name="vq_stable">Ổn định (mượt)</string>
+    <string name="aq_standard">Chuẩn</string>
+    <string name="aq_bass">Bass mạnh</string>
+    <string name="aq_dialog">Rõ tiếng BLV</string>
+    <string name="aq_night">Ban đêm (êm)</string>
+    <string name="aq_auto">Tự động (to &amp; hay)</string>
+    <string name="mv_layout_2">2 trận (mượt)</string>
+    <string name="mv_layout_4">4 trận (2×2)</string>
+
+    <!-- generic states -->
+    <string name="state_loading">Đang tải…</string>
+    <string name="state_error_generic">Có lỗi xảy ra</string>
+    <string name="dialog_exit_title">Thoát KênhLive?</string>
+    <string name="dialog_exit_yes">Thoát</string>
+    <string name="dialog_exit_no">Ở lại</string>
+    <string name="dialog_close">Đóng</string>
+    <string name="cd_back">Quay lại</string>
+    <string name="cd_logo">KênhLive</string>
+    <string name="cd_play">Phát</string>
+    <string name="cd_viewers">Lượt xem</string>
+    <string name="cd_match">Trận đấu</string>
+    <string name="cd_blv">Bình luận viên</string>
+    <string name="cd_empty">Không có dữ liệu</string>
 </resources>

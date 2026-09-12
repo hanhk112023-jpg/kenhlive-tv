@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/kl_brand_soft" />
+            <corners android:radius="10dp" />
+            <stroke android:width="2dp" android:color="@color/kl_brand" />
+        </shape>
+    </item>
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle"><solid android:color="@color/kl_pressed_overlay" /><corners android:radius="10dp" /></shape>
+    </item>
+    <item><color android:color="#00000000" /></item>
+</selector>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PHONE (default) spacing / type scale. TV overrides in values-television. -->
+<resources>
+    <!-- grid & spacing -->
+    <dimen name="sp_screen_margin">16dp</dimen>
+    <dimen name="sp_row_gap">18dp</dimen>
+    <dimen name="sp_card_gap">10dp</dimen>
+    <dimen name="sp_item_pad">12dp</dimen>
+
+    <!-- radii -->
+    <dimen name="rd_card">14dp</dimen>
+    <dimen name="rd_pill">999dp</dimen>
+    <dimen name="rd_input">12dp</dimen>
+    <dimen name="rd_dialog">20dp</dimen>
+
+    <!-- chrome -->
+    <dimen name="topbar_h">56dp</dimen>
+    <dimen name="bottomnav_h">64dp</dimen>
+    <dimen name="rail_w">0dp</dimen>          <!-- unused on phone -->
+    <dimen name="hero_h">236dp</dimen>
+    <dimen name="card_w">216dp</dimen>
+    <dimen name="card_thumb_h">122dp</dimen>
+
+    <!-- type scale -->
+    <dimen name="ts_display">28sp</dimen>
+    <dimen name="ts_hero_meta">13sp</dimen>
+    <dimen name="ts_section">15sp</dimen>
+    <dimen name="ts_title">16sp</dimen>
+    <dimen name="ts_body">14sp</dimen>
+    <dimen name="ts_meta">12sp</dimen>
+    <dimen name="ts_nav">11sp</dimen>
+    <dimen name="ts_button">14sp</dimen>
+    <dimen name="ts_chip">13sp</dimen>
+    <dimen name="ts_empty">16sp</dimen>
+
+    <!-- controls -->
+    <dimen name="btn_h">44dp</dimen>
+    <dimen name="btn_pad_x">18dp</dimen>
+    <dimen name="nav_icon">22dp</dimen>
+    <dimen name="chip_h">34dp</dimen>
+    <dimen name="input_h">48dp</dimen>
+    <dimen name="avatar_s">34dp</dimen>
+    <dimen name="crest_s">18dp</dimen>
+    <dimen name="empty_img_w">220dp</dimen>
+    <dimen name="empty_img_h">132dp</dimen>
+    <dimen name="focus_ring_w">2dp</dimen>
+    <dimen name="focus_glow_w">6dp</dimen>
+    <dimen name="sched_avatar">26dp</dimen>
+</resources>

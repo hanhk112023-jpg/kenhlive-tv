@@ -10,131 +10,120 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="centerCrop"
-        android:contentDescription="@string/app_name" />
+        android:background="@drawable/bg_skeleton"
+        android:contentDescription="@string/cd_match" />
 
     <View
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/hero_scrim" />
+        android:background="@drawable/bg_hero_scrim" />
 
-    <!-- overlay text trai, day -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:gravity="bottom"
-        android:paddingLeft="40dp"
-        android:paddingRight="40dp"
-        android:paddingBottom="34dp">
-
-        <!-- chip giai dau -->
-        <TextView
-            android:id="@+id/heroLeague"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textColor="#00E676"
-            android:fontFamily="sans-serif-black"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.14"
-            android:background="@drawable/pill_glass"
-            android:paddingLeft="10dp" android:paddingRight="10dp"
-            android:paddingTop="4dp" android:paddingBottom="4dp"
-            android:shadowColor="#E6000000" android:shadowRadius="6" />
-
-        <TextView
-            android:id="@+id/heroTitle"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:layout_marginRight="240dp"
-            android:textColor="#FFFFFF"
-            android:fontFamily="@font/oswald"
-            android:textSize="44sp"
-            android:textStyle="bold"
-            android:minLines="2"
-            android:letterSpacing="0.01"
-            android:shadowColor="#E6000000"
-            android:shadowDy="3"
-            android:shadowRadius="12"
-            android:ellipsize="end"
-            android:maxLines="2" />
-
-        <TextView
-            android:id="@+id/heroBlv"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginRight="240dp"
-            android:textColor="#F1F5F9"
-            android:fontFamily="sans-serif-medium"
-            android:textSize="18sp"
-            android:shadowColor="#CC000000" android:shadowRadius="6"
-            android:maxLines="1"
-            android:ellipsize="end" />
-
-        <TextView
-            android:id="@+id/heroTagline"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:layout_marginRight="240dp"
-            android:textColor="#CBD5E1"
-            android:textSize="15sp"
-            android:shadowColor="#CC000000" android:shadowRadius="6"
-            android:maxLines="1"
-            android:ellipsize="end" />
+        android:paddingLeft="@dimen/sp_screen_margin"
+        android:paddingRight="@dimen/sp_screen_margin"
+        android:paddingBottom="26dp">
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <!-- CTA: play tron + chu -->
+            <TextView
+                android:id="@+id/heroLeague"
+                style="@style/KL.Text.Badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_badge_brand"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:textColor="@color/kl_brand"
+                android:maxWidth="260dp"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/heroViewers"
+                style="@style/KL.Text.Meta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:background="@drawable/bg_badge_glass"
+                android:drawableLeft="@drawable/ic_eye"
+                android:drawablePadding="6dp"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp"
+                android:textColor="@color/kl_text_1" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/heroTitle"
+            style="@style/KL.Text.Display"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:layout_marginRight="120dp"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:shadowColor="#E6000000"
+            android:shadowDy="2"
+            android:shadowRadius="10" />
+
+        <TextView
+            android:id="@+id/heroBlv"
+            style="@style/KL.Text.Body"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:layout_marginRight="120dp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textColor="@color/kl_text_2"
+            android:shadowColor="#CC000000"
+            android:shadowRadius="6" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
             <LinearLayout
                 android:id="@+id/heroPlay"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:background="@drawable/btn_hero_play"
-                android:paddingLeft="28dp"
-                android:paddingRight="28dp"
-                android:paddingTop="13dp"
-                android:paddingBottom="13dp"
+                android:background="@drawable/bg_button_primary"
+                android:paddingLeft="@dimen/btn_pad_x"
+                android:paddingRight="@dimen/btn_pad_x"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
                 android:clickable="true"
                 android:focusable="true">
 
                 <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
-                    android:src="@drawable/ic_play_triangle"
-                    android:contentDescription="play" />
+                    android:layout_width="15dp"
+                    android:layout_height="15dp"
+                    android:src="@drawable/ic_play"
+                    android:contentDescription="@string/cd_play" />
 
                 <TextView
+                    style="@style/KL.Text.Button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="10dp"
-                    android:text="XEM NGAY"
-                    android:textColor="#04140B"
-                    android:fontFamily="@font/oswald"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
-                    android:letterSpacing="0.08" />
+                    android:layout_marginLeft="9dp"
+                    android:text="@string/live_hero_cta"
+                    android:textColor="@color/kl_on_brand" />
             </LinearLayout>
-
-            <TextView
-                android:id="@+id/heroViewers"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="20dp"
-                android:textColor="#FFFFFF"
-                android:fontFamily="@font/oswald"
-                android:textSize="18sp"
-                android:shadowColor="#CC000000" android:shadowRadius="6"
-                android:fontFeatureSettings="tnum" />
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>

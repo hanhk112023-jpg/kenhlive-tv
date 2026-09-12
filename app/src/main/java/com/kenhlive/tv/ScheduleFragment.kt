@@ -2,138 +2,90 @@ package com.kenhlive.tv
 
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.view.LayoutInflater
-import android.view.ViewGroup
 import android.view.View
-import android.widget.TextView
+import android.view.ViewGroup
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.kenhlive.tv.ui.RoomPickerDialog
+import com.kenhlive.tv.ui.StateBinder
+import com.kenhlive.tv.viewmodel.ScheduleViewModel
 import kotlinx.coroutines.launch
 
+/** LỊCH TRÌNH 7 ngày: header ngày + card trận; OK → chọn BLV có phòng live. */
 class ScheduleFragment : Fragment() {
+
+    private val vm: ScheduleViewModel by viewModels()
     private lateinit var adapter: ScheduleAdapter
-    private lateinit var statusText: TextView
-    private lateinit var emptyTitle: TextView
-    private lateinit var emptyState: View
-    private lateinit var retryBtn: TextView
-    private var loadedOnce = false
-    private val refreshHandler = Handler(Looper.getMainLooper())
-    private var refreshing = false
-    private val autoRefresh = object : Runnable {
-        override fun run() {
-            silentRefresh()
-            refreshHandler.postDelayed(this, 10 * 60_000L) // lịch đổi chậm — 10 phút
+    private lateinit var state: StateBinder
+    private var dialog: AlertDialog? = null
+
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, s: Bundle?): View {
+        val v = inflater.inflate(R.layout.fragment_schedule, container, false)
+        state = StateBinder(v)
+        adapter = ScheduleAdapter(onMatchClick = { m -> onMatchTap(m) })
+        v.findViewById<RecyclerView>(R.id.schedList).apply {
+            layoutManager = LinearLayoutManager(requireContext())
+            itemAnimator = null
+            clipChildren = false
+            clipToPadding = false
+            adapter = this@ScheduleFragment.adapter
         }
+        viewLifecycleOwner.lifecycleScope.launch {
+            vm.state.collect { st ->
+                state.render(st, R.string.sched_loading) { vm.load(force = true) }
+                if (st is UiState.Success) adapter.submitList(st.data)
+            }
+        }
+        vm.load()
+        return v
     }
 
     override fun onResume() {
         super.onResume()
-        refreshHandler.removeCallbacks(autoRefresh)
-        refreshHandler.postDelayed(autoRefresh, 10 * 60_000L)
+        vm.startAutoRefresh()
     }
 
     override fun onPause() {
         super.onPause()
-        refreshHandler.removeCallbacks(autoRefresh)
+        vm.stopAutoRefresh()
     }
 
-    /** Fetch lại lịch âm thầm, không hiện "Đang tải" — giữ nguyên vị trí cuộn. */
-    private fun silentRefresh() {
-        if (refreshing || !isAdded || !::adapter.isInitialized || !loadedOnce) return
-        refreshing = true
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                val days = SocoliveRepository.fetchSchedule(7)
-                val items = mutableListOf<Any>()
-                for (d in days) {
-                    if (d.matches.isEmpty()) continue
-                    items.add(SocoliveRepository.dayLabel(d.date))
-                    items.addAll(d.matches)
-                }
-                if (items.isNotEmpty() && isAdded) {
-                    emptyState.visibility = View.GONE
-                    statusText.visibility = View.GONE
-                    adapter.submitList(items)
-                }
-            } catch (e: Exception) { /* giữ dữ liệu cũ */ }
-            finally { refreshing = false }
-        }
-    }
-
-    override fun onCreateView(
-        inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?
-    ): View {
-        val v = inflater.inflate(R.layout.fragment_matches, container, false)
-        statusText = v.findViewById(R.id.statusText)
-        emptyTitle = v.findViewById(R.id.emptyTitle)
-        emptyState = v.findViewById(R.id.emptyState)
-        retryBtn = v.findViewById(R.id.retryBtn)
-        retryBtn.setOnClickListener { load() }
-        adapter = ScheduleAdapter(
-            onAnchorClick = { anchor, match -> openAnchor(anchor, match) },
-            onMatchClick = { match -> onMatchTap(match) }
-        )
-        v.findViewById<RecyclerView>(R.id.recyclerView).apply {
-            layoutManager = LinearLayoutManager(requireContext())
-            itemAnimator = null   // D-pad mash giua luc diff animate = focus nhay (cung ly do tab Live)
-            clipChildren = false; clipToPadding = false
-            adapter = this@ScheduleFragment.adapter
-        }
-        load()
-        return v
-    }
-
-    private fun load() {
-        emptyState.visibility = View.VISIBLE
-        statusText.visibility = View.VISIBLE
-        retryBtn.visibility = View.GONE
-        statusText.text = "Đang tải lịch thi đấu..."
-        viewLifecycleOwner.lifecycleScope.launch {
-            try {
-                val days = SocoliveRepository.fetchSchedule(7)
-                val items = mutableListOf<Any>()
-                for (d in days) {
-                    if (d.matches.isEmpty()) continue
-                    items.add(SocoliveRepository.dayLabel(d.date))
-                    items.addAll(d.matches)
-                }
-                if (items.isEmpty()) {
-                    emptyTitle.text = "Sân vắng bóng"
-                    statusText.text = "Không có trận nào 7 ngày tới"
-                    retryBtn.visibility = View.GONE
-                    emptyState.visibility = View.VISIBLE
-                    return@launch
-                }
-                emptyState.visibility = View.GONE
-                statusText.visibility = View.GONE
-                adapter.submitList(items)
-                loadedOnce = true
-            } catch (e: Exception) {
-                emptyState.visibility = View.VISIBLE
-                emptyTitle.text = "Không tải được lịch"
-                statusText.text = "Kiểm tra kết nối mạng rồi thử lại"
-                retryBtn.visibility = View.VISIBLE
-            }
-        }
-    }
-
-    /** OK trên card lịch: chọn BLV có phòng live (1 → play, nhiều → dialog). */
     private fun onMatchTap(match: ScheduleMatch) {
         val live = match.anchors.filter { it.roomNum.isNotBlank() }
         when {
-            live.isEmpty() -> Toast.makeText(context, "Trận chưa có phòng live", Toast.LENGTH_SHORT).show()
+            live.isEmpty() ->
+                Toast.makeText(requireContext(), R.string.sched_no_room, Toast.LENGTH_SHORT).show()
             live.size == 1 -> openAnchor(live.first(), match)
             else -> {
-                val names = live.map { it.nickName }.toTypedArray()
-                androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                    .setTitle("${match.host} vs ${match.guest}")
-                    .setItems(names) { _, i -> openAnchor(live[i], match) }
-                    .show()
+                // picker: dựng group ảo từ các anchor có phòng
+                val groups = live.map { a ->
+                    LiveMatchGroup(
+                        league = match.league,
+                        matchTitle = "${match.host} vs ${match.guest}",
+                        rooms = listOf(
+                            LiveRoom(
+                                roomNum = a.roomNum, blvName = a.nickName, avatar = a.icon,
+                                viewers = 0, matchTitle = "${match.host} vs ${match.guest}", league = match.league
+                            )
+                        )
+                    )
+                }
+                val pseudo = groups.first()
+                dialog?.dismiss()
+                dialog = RoomPickerDialog.show(
+                    requireContext(),
+                    pseudo.copy(rooms = groups.map { it.top }),
+                    onPickRoom = { r ->
+                        val a = live.firstOrNull { it.roomNum == r.roomNum } ?: live.first()
+                        openAnchor(a, match)
+                    }
+                )
             }
         }
     }
@@ -142,12 +94,20 @@ class ScheduleFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             val url = SocoliveRepository.fetchStream(anchor.roomNum)
             if (url == null) {
-                Toast.makeText(context, "Stream chưa sẵn sàng — thử lại", Toast.LENGTH_SHORT).show()
+                Toast.makeText(requireContext(), R.string.stream_not_ready, Toast.LENGTH_SHORT).show()
                 return@launch
             }
-            startActivity(Intent(requireContext(), PlayerActivity::class.java)
-                .putExtra("url", url)
-                .putExtra("name", "${match.host} vs ${match.guest} · ${anchor.nickName}"))
+            startActivity(
+                Intent(requireContext(), PlayerActivity::class.java)
+                    .putExtra("url", url)
+                    .putExtra("name", "${match.host} vs ${match.guest} · ${anchor.nickName}")
+            )
         }
+    }
+
+    override fun onDestroyView() {
+        dialog?.dismiss()
+        dialog = null
+        super.onDestroyView()
     }
 }

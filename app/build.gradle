@@ -38,8 +38,8 @@ android {
         applicationId "com.kenhlive.tv"
         minSdk 21
         targetSdk 34
-        versionCode 66
-        versionName "5.4.0"
+        versionCode 67
+        versionName "6.0.0"
     }
 
     buildTypes {
@@ -65,19 +65,32 @@ android {
     lint {
         abortOnError false
     }
+    buildFeatures {
+        buildConfig true
+    }
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
 }
 
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'androidx.core:core-ktx:1.12.0'
     implementation 'androidx.recyclerview:recyclerview:1.3.2'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+
+    // lifecycle: ViewModel + StateFlow + lifecycleScope (state management chuẩn)
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.2'
+    implementation 'androidx.activity:activity-ktx:1.8.2'
+    implementation 'androidx.fragment:fragment-ktx:1.6.2'
 
     // Media3 ExoPlayer (HLS playback)
     implementation 'androidx.media3:media3-exoplayer:1.3.0'
     implementation 'androidx.media3:media3-exoplayer-hls:1.3.0'
     implementation 'androidx.media3:media3-ui:1.3.0'
 
-    // Material (TabLayout)
+    // Material (dialogs, ripple)
     implementation 'com.google.android.material:material:1.11.0'
 
     // coroutines
@@ -86,6 +99,9 @@ dependencies {
     // Coil — nhẹ hơn Glide, Kotlin-first
     implementation 'io.coil-kt:coil:2.5.0'
 
-    // BUG-09: UpdateManager gọi thẳng okhttp — khai báo tường minh, không ăn may transitively từ Coil
+    // BUG-09: network khai báo tường minh (repository + UpdateManager)
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+
+    testImplementation 'junit:junit:4.13.2'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3'
 }

@@ -4,38 +4,25 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:paddingTop="20dp"
-    android:paddingBottom="10dp"
-    android:paddingLeft="18dp"
-    android:paddingRight="18dp">
+    android:paddingTop="@dimen/sp_row_gap"
+    android:paddingBottom="8dp">
 
-    <!-- chấm nhấn -->
     <View
         android:layout_width="4dp"
-        android:layout_height="18dp"
-        android:background="@drawable/accent_bar" />
+        android:layout_height="16dp"
+        android:background="@drawable/accent_bar"
+        android:layout_marginRight="9dp" />
 
     <TextView
         android:id="@+id/dayLabel"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="10dp"
-        android:textColor="#FFFFFF"
-        android:textSize="17sp"
-        android:textStyle="bold" />
-
-    <View
+        style="@style/KL.Text.Section"
         android:layout_width="0dp"
         android:layout_weight="1"
-        android:layout_height="1dp"
-        android:layout_marginLeft="12dp"
-        android:background="#1E2436" />
+        android:layout_height="wrap_content" />
 
     <TextView
         android:id="@+id/dayCount"
+        style="@style/KL.Text.Meta"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="12dp"
-        android:textColor="#8890A6"
-        android:textSize="12sp" />
+        android:layout_height="wrap_content" />
 </LinearLayout>

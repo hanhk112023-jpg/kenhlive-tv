@@ -3,10 +3,10 @@ package com.kenhlive.tv
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
-import java.net.HttpURLConnection
-import java.net.URL
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -20,11 +20,10 @@ data class LiveRoom(
     val avatar: String,
     val viewers: Int,
     val matchTitle: String,   // "A vs B"
-    val league: String,        // "CHA FACup"
-    val cover: String = ""     // ảnh nền phòng (hero banner)
+    val league: String,       // "CHA FACup"
+    val cover: String = ""    // ảnh nền phòng (hero banner)
 )
 
-/** 1 BLV phát 1 trận. */
 /** Gộp nhiều phòng cùng 1 trận (cùng giải + tên trận). */
 data class LiveMatchGroup(
     val league: String,
@@ -57,170 +56,135 @@ data class ScheduleMatch(
 
 data class DaySchedule(val date: Date, val matches: List<ScheduleMatch>)
 
-/** Gọi thẳng API Socolive (json.vnres.co). */
+/**
+ * Nguồn dữ liệu Socolive (json.vnres.co).
+ * - Single-flight: nhiều màn hình cùng gọi liveRooms() chỉ sinh 1 request
+ * - Cache TTL 60s: chuyển tab/rotation không bắn lại mạng
+ * - Lịch 7 ngày fetch song song (BUG-18 giữ nguyên)
+ */
 object SocoliveRepository {
     private const val API = "https://json.vnres.co"
-    private const val UA = "Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Mobile Safari/537.36"
     private val TZ = TimeZone.getTimeZone("Asia/Ho_Chi_Minh")
+    private const val LIVE_TTL_MS = 60_000L
+
+    private val liveMutex = Mutex()
+    @Volatile private var liveCache: List<LiveRoom>? = null
+    @Volatile private var liveCacheAt = 0L
+    @Volatile private var scheduleCache: List<DaySchedule>? = null
+    @Volatile private var scheduleCacheAt = 0L
+    private const val SCHEDULE_TTL_MS = 5 * 60_000L
 
     private fun stamp(): String = (System.currentTimeMillis() / 1000).toString()
 
-    private fun getOnce(url: String): String {
-        val conn = URL(url).openConnection() as HttpURLConnection
-        conn.connectTimeout = 8000
-        conn.readTimeout = 12000
-        conn.setRequestProperty("User-Agent", UA)
-        conn.setRequestProperty("Referer", "https://vnres.co/")
-        conn.setRequestProperty("Accept", "application/json, text/plain, */*")
-        val code = conn.responseCode
-        if (code != 200) { conn.disconnect(); throw java.io.IOException("HTTP $code") }
-        return conn.inputStream.bufferedReader().use { it.readText() }
-    }
-
-    /** Retry 2 lần với backoff — mạng TV chập chờn, lỗi transient là chuyện thường. */
-    private fun get(url: String): String {
-        var last: Exception? = null
-        repeat(3) { i ->
-            try { return getOnce(url) }
-            catch (e: Exception) { last = e; if (i < 2) Thread.sleep(400L * (i + 1)) }
-        }
-        throw last ?: RuntimeException("network error")
-    }
-
-    fun stripJsonp(raw: String): String {
-        val s = raw.trim()
-        val open = s.indexOf('(')
-        val close = s.lastIndexOf(')')
-        return if (open > 0 && close > open) s.substring(open + 1, close) else s
-    }
+    fun invalidateLive() { liveCache = null }
 
     // ---------- TAB TRỰC TIẾP ----------
-    suspend fun fetchLiveRooms(): List<LiveRoom> = withContext(Dispatchers.IO) {
-        val now = stamp()
-        val body = get("$API/all_live_rooms.json?callback=rooms&v=$now&_=$now")
-        val data = JSONObject(stripJsonp(body)).optJSONObject("data") ?: JSONObject()
-        val seen = mutableSetOf<String>()
-        val out = mutableListOf<LiveRoom>()
-        for (key in data.keys()) {
-            val arr = data.optJSONArray(key) ?: continue
-            for (i in 0 until arr.length()) {
-                val r = arr.optJSONObject(i) ?: continue
-                val num = r.optString("roomNum", "")
-                if (num.isBlank() || r.optInt("liveStatus", 0) != 1 || num in seen) continue
-                seen.add(num)
-                val a = r.optJSONObject("anchor") ?: JSONObject()
-                val rawTitle = r.optString("title", "Live").trim()
-                val idx = rawTitle.indexOf(':')
-                val league = if (idx > 0) rawTitle.substring(0, idx).trim() else "SocoLive"
-                val match = if (idx > 0) rawTitle.substring(idx + 1).trim() else rawTitle
-                out.add(
-                    LiveRoom(
-                        roomNum = num,
-                        blvName = a.optString("nickName", "BLV"),
-                        avatar = a.optString("icon", "").ifBlank { a.optString("cutOutIcon", "") },
-                        viewers = r.optInt("viewCount", 0),
-                        matchTitle = match,
-                        league = league,
-                        cover = r.optString("cover", "")
-                    )
-                )
+    /** force=true bỏ qua cache (pull-to-refresh / retry). */
+    suspend fun fetchLiveRooms(force: Boolean = false): List<LiveRoom> {
+        if (!force) {
+            val c = liveCache
+            if (c != null && System.currentTimeMillis() - liveCacheAt < LIVE_TTL_MS) return c
+        }
+        return liveMutex.withLock {
+            // kiểm tra lại trong lock: request song song chỉ đi 1 lần
+            val c = liveCache
+            if (!force && c != null && System.currentTimeMillis() - liveCacheAt < LIVE_TTL_MS) return@withLock c
+            withContext(Dispatchers.IO) {
+                val now = stamp()
+                val body = Http.getWithRetry("$API/all_live_rooms.json?callback=rooms&v=$now&_=$now")
+                SocoliveParser.parseLiveRooms(body)
+            }.also {
+                liveCache = it
+                liveCacheAt = System.currentTimeMillis()
             }
         }
-        out.sortedByDescending { it.viewers }
     }
 
-    /** Gom phòng live theo trận (giải + tên trận), sort phòng theo viewers. */
-    fun groupRooms(rooms: List<LiveRoom>): List<LiveMatchGroup> =
-        rooms.groupBy { it.league to it.matchTitle }
-            .values
-            .map { g -> LiveMatchGroup(g.first().league, g.first().matchTitle, g.sortedByDescending { it.viewers }) }
-            .sortedByDescending { it.totalViewers }
+    /** Gom phòng live theo trận — alias giữ compat, logic trong parser. */
+    fun groupRooms(rooms: List<LiveRoom>): List<LiveMatchGroup> = SocoliveParser.groupRooms(rooms)
 
     // ---------- TAB LỊCH TRÌNH ----------
-    suspend fun fetchSchedule(days: Int = 7): List<DaySchedule> = withContext(Dispatchers.IO) {
-        val byDay = linkedMapOf<String, MutableList<ScheduleMatch>>()
-        val seen = mutableSetOf<String>()
-
-        fun addMatch(m: JSONObject) {
-            val host = m.optString("hostName", "").trim()
-            val guest = m.optString("guestName", "").trim()
-            if (host.isBlank() && guest.isBlank()) return
-            val sid = m.optString("scheduleId", "")
-            val key = sid.ifBlank { "$host-$guest-${m.optLong("matchTime", 0)}" }
-            if (key in seen) return
-            seen.add(key)
-            val anchors = mutableListOf<AnchorInfo>()
-            val arr = m.optJSONArray("anchors")
-            if (arr != null) for (i in 0 until arr.length()) {
-                val a = arr.optJSONObject(i) ?: continue
-                val room = a.optJSONObject("anchor")?.optString("roomNum", "") ?: ""
-                val icon = a.optString("icon", "").ifBlank { a.optString("cutOutIcon", "") }
-                anchors.add(AnchorInfo(a.optString("nickName", "BLV"), icon, room))
-            }
-            val timeMs = m.optLong("matchTime", 0L)
-            val cal = Calendar.getInstance(TZ)
-            if (timeMs > 0) {
-                cal.time = Date(timeMs)
-                val dayKey = SimpleDateFormat("yyyyMMdd", Locale.US).apply { timeZone = TZ }.format(cal.time)
-                byDay.getOrPut(dayKey) { mutableListOf() }.add(
-                    ScheduleMatch(
-                        scheduleId = key, host = host, guest = guest,
-                        league = m.optString("subCateName", ""),
-                        category = m.optString("categoryName", ""),
-                        matchTimeMs = timeMs,
-                        hostIcon = m.optString("hostIcon", ""),
-                        guestIcon = m.optString("guestIcon", ""),
-                        anchors = anchors,
-                        // crest giải (fallback: categoryIcon rồi hostIcon)
-                        leagueCrest = m.optString("categoryIcon", "")
-                            .ifBlank { m.optString("hostIcon", "") }
-                    )
-                )
-            }
+    suspend fun fetchSchedule(days: Int = 7, force: Boolean = false): List<DaySchedule> {
+        if (!force) {
+            val c = scheduleCache
+            if (c != null && System.currentTimeMillis() - scheduleCacheAt < SCHEDULE_TTL_MS) return c
         }
+        val result = withContext(Dispatchers.IO) {
+            val byDay = linkedMapOf<String, MutableList<ScheduleMatch>>()
+            val seen = mutableSetOf<String>()
 
-        // hôm nay + days ngày tới — BUG-18: song song hoá (tu 7 × 36s worst-case xuong ~ max 1 ngay)
-        val cal = Calendar.getInstance(TZ)
-        val fmtKey = SimpleDateFormat("yyyyMMdd", Locale.US)
-        fmtKey.timeZone = TZ
-        val keys = (0 until days).map { val k = fmtKey.format(cal.time); cal.add(Calendar.DATE, 1); k }
-        val bodies = keys.map { k ->
-            async {
-                try {
-                    val now = stamp()
-                    get("$API/match/matches_$k.json?callback=matches&v=$now&_=$now")
-                } catch (_: Exception) { null }
-            }
-        }.awaitAll()
-        for ((idx, body) in bodies.withIndex()) {
-            if (body == null) continue
-            try {
-                val arr = JSONObject(stripJsonp(body)).optJSONArray("data")
-                if (arr != null) for (j in 0 until arr.length()) {
-                    arr.optJSONObject(j)?.let { addMatch(it) }
+            fun addMatch(m: JSONObject) {
+                val host = m.optString("hostName", "").trim()
+                val guest = m.optString("guestName", "").trim()
+                if (host.isBlank() && guest.isBlank()) return
+                val sid = m.optString("scheduleId", "")
+                val key = sid.ifBlank { "$host-$guest-${m.optLong("matchTime", 0)}" }
+                if (key in seen) return
+                seen.add(key)
+                val anchors = mutableListOf<AnchorInfo>()
+                val arr = m.optJSONArray("anchors")
+                if (arr != null) for (i in 0 until arr.length()) {
+                    val a = arr.optJSONObject(i) ?: continue
+                    val room = a.optJSONObject("anchor")?.optString("roomNum", "") ?: ""
+                    val icon = a.optString("icon", "").ifBlank { a.optString("cutOutIcon", "") }
+                    anchors.add(AnchorInfo(a.optString("nickName", "BLV"), icon, room))
                 }
-            } catch (_: Exception) { }
-        }
+                val timeMs = m.optLong("matchTime", 0L)
+                if (timeMs > 0) {
+                    val dayKey = SimpleDateFormat("yyyyMMdd", Locale.US).apply { timeZone = TZ }
+                        .format(Date(timeMs))
+                    byDay.getOrPut(dayKey) { mutableListOf() }.add(
+                        ScheduleMatch(
+                            scheduleId = key, host = host, guest = guest,
+                            league = m.optString("subCateName", ""),
+                            category = m.optString("categoryName", ""),
+                            matchTimeMs = timeMs,
+                            hostIcon = m.optString("hostIcon", ""),
+                            guestIcon = m.optString("guestIcon", ""),
+                            anchors = anchors,
+                            leagueCrest = m.optString("categoryIcon", "")
+                                .ifBlank { m.optString("hostIcon", "") }
+                        )
+                    )
+                }
+            }
 
-        byDay.map { (k, list) ->
-            val date = SimpleDateFormat("yyyyMMdd", Locale.US).apply { timeZone = TZ }.parse(k)!!
-            val sorted = list.sortedWith(
-                compareBy({ it.isLive.not() }, { leagueWeight(it.league) }, { it.matchTimeMs })
-            )
-            DaySchedule(date, sorted)
-        }.sortedBy { it.date }
+            val cal = Calendar.getInstance(TZ)
+            val fmtKey = SimpleDateFormat("yyyyMMdd", Locale.US)
+            fmtKey.timeZone = TZ
+            val keys = (0 until days).map { val k = fmtKey.format(cal.time); cal.add(Calendar.DATE, 1); k }
+            val bodies = keys.map { k ->
+                async {
+                    try {
+                        val now = stamp()
+                        Http.getWithRetry("$API/match/matches_$k.json?callback=matches&v=$now&_=$now")
+                    } catch (_: Exception) { null }
+                }
+            }.awaitAll()
+            for (body in bodies) {
+                if (body == null) continue
+                try { SocoliveParser.parseScheduleDay(body, ::addMatch) } catch (_: Exception) { }
+            }
+
+            byDay.map { (k, list) ->
+                val date = SimpleDateFormat("yyyyMMdd", Locale.US).apply { timeZone = TZ }.parse(k)!!
+                val sorted = list.sortedWith(
+                    compareBy({ it.isLive.not() }, { leagueWeight(it.league) }, { it.matchTimeMs })
+                )
+                DaySchedule(date, sorted)
+            }.sortedBy { it.date }
+        }
+        scheduleCache = result
+        scheduleCacheAt = System.currentTimeMillis()
+        return result
     }
 
-    /** Stream URL từ roomNum: hdM3u8 → m3u8 → hdFlv → flv. */
+    /** Stream URL từ roomNum. */
     suspend fun fetchStream(roomNum: String): String? = withContext(Dispatchers.IO) {
         try {
             val now = stamp()
-            val body = get("$API/room/$roomNum/detail.json?callback=detail&v=$now&_=$now")
-            val data = JSONObject(stripJsonp(body)).optJSONObject("data") ?: return@withContext null
-            val stream = data.optJSONObject("stream") ?: return@withContext null
-            listOf("hdM3u8", "m3u8", "hdFlv", "flv").firstNotNullOfOrNull { k ->
-                stream.optString(k, "").takeIf { it.isNotBlank() }
-            }
+            val body = Http.getWithRetry("$API/room/$roomNum/detail.json?callback=detail&v=$now&_=$now")
+            SocoliveParser.parseStream(body)
         } catch (_: Exception) { null }
     }
 
@@ -229,6 +193,7 @@ object SocoliveRepository {
         "Ngoại Hạng Anh", "La Liga", "Serie A", "Bundesliga", "Ligue 1",
         "Champions League", "Châu Âu", "World Cup", "AFF", "ASEAN", "V-League"
     )
+
     fun leagueWeight(league: String): Int {
         LEAGUE_ORDER.forEachIndexed { i, name ->
             if (league.contains(name, ignoreCase = true)) return i
@@ -247,10 +212,9 @@ object SocoliveRepository {
         val cal = Calendar.getInstance(TZ)
         cal.time = d
         val today = Calendar.getInstance(TZ)
-        val todayKey = SimpleDateFormat("yyyyMMdd", Locale.US).apply { timeZone = TZ }.format(today.time)
-        val thisKey = SimpleDateFormat("yyyyMMdd", Locale.US).apply { timeZone = TZ }.format(d)
+        val fmt = SimpleDateFormat("yyyyMMdd", Locale.US).apply { timeZone = TZ }
         return when {
-            thisKey == todayKey -> "Hôm nay"
+            fmt.format(d) == fmt.format(today.time) -> "Hôm nay"
             cal.timeInMillis - today.timeInMillis in 1..86400000L -> "Ngày mai"
             else -> SimpleDateFormat("EEEE, dd/MM", Locale("vi")).apply { timeZone = TZ }.format(d)
                 .replaceFirstChar { it.uppercase() }

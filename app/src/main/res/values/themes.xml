@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- One brand theme for phone + TV; chrome differences come from layouts/dimens -->
+    <style name="Theme.KenhLive" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/kl_bg_deep</item>
+        <item name="android:colorBackground">@color/kl_bg_deep</item>
+        <item name="android:statusBarColor">@color/kl_bg_deep</item>
+        <item name="android:navigationBarColor">@color/kl_bg_deep</item>
+        <item name="android:windowContentOverlay">@null</item>
+        <item name="colorAccent">@color/kl_brand</item>
+        <item name="colorPrimary">@color/kl_brand</item>
+        <item name="colorPrimaryDark">@color/kl_bg_deep</item>
+        <item name="android:windowAnimationStyle">@style/KL.WindowAnim</item>
+        <item name="alertDialogTheme">@style/Theme.KenhLive.Dialog</item>
+        <item name="android:dialogTheme">@style/Theme.KenhLive.Dialog</item>
+    </style>
+
+    <style name="Theme.KenhLive.Dialog" parent="Theme.AppCompat.Dialog.Alert">
+        <item name="android:windowBackground">@drawable/bg_dialog</item>
+        <item name="android:textColorPrimary">@color/kl_text_1</item>
+        <item name="android:textColor">@color/kl_text_1</item>
+        <item name="android:textColorAlertDialogListItem">@color/kl_text_1</item>
+        <item name="textColorAlertDialogListItem">@color/kl_text_1</item>
+        <item name="android:colorAccent" >@color/kl_brand</item>
+        <item name="colorAccent">@color/kl_brand</item>
+        <item name="buttonBarPositiveButtonStyle">@style/KL.DialogButton</item>
+        <item name="buttonBarNegativeButtonStyle">@style/KL.DialogButton</item>
+        <item name="buttonBarNeutralButtonStyle">@style/KL.DialogButton</item>
+    </style>
+
+    <style name="KL.DialogButton" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <item name="android:textColor">@color/kl_brand</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:background">@drawable/bg_dialog_button</item>
+        <item name="android:minHeight">44dp</item>
+        <item name="android:paddingLeft">16dp</item>
+        <item name="android:paddingRight">16dp</item>
+    </style>
+
+    <style name="KL.WindowAnim" parent="@android:style/Animation.Activity">
+        <item name="android:activityOpenEnterAnimation">@android:anim/fade_in</item>
+        <item name="android:activityOpenExitAnimation">@android:anim/fade_out</item>
+        <item name="android:activityCloseEnterAnimation">@android:anim/fade_in</item>
+        <item name="android:activityCloseExitAnimation">@android:anim/fade_out</item>
+    </style>
+</resources>

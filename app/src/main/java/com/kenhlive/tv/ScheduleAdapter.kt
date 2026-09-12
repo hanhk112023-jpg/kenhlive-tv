@@ -12,10 +12,9 @@ import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import coil.transform.CircleCropTransformation
 
-/** Lịch trình: header ngày (accent bar + count) + card trận xen kẽ tông + hàng BLV chỉ avatar (tap reveal). */
+/** Lịch trình: header ngày + card trận. Card focusable chuẩn D-pad (phóng nhẹ + viền). */
 class ScheduleAdapter(
-    private val onAnchorClick: (AnchorInfo, ScheduleMatch) -> Unit,
-    private val onMatchClick: (ScheduleMatch) -> Unit = {}
+    private val onMatchClick: (ScheduleMatch) -> Unit
 ) : ListAdapter<Any, RecyclerView.ViewHolder>(DIFF) {
 
     companion object {
@@ -52,10 +51,8 @@ class ScheduleAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         val inf = LayoutInflater.from(parent.context)
-        return if (viewType == TYPE_DAY)
-            DayVH(inf.inflate(R.layout.item_day_header, parent, false))
-        else
-            MatchVH(inf.inflate(R.layout.item_schedule_match, parent, false))
+        return if (viewType == TYPE_DAY) DayVH(inf.inflate(R.layout.item_day_header, parent, false))
+        else MatchVH(inf.inflate(R.layout.item_schedule_match, parent, false))
     }
 
     override fun onBindViewHolder(h: RecyclerView.ViewHolder, pos: Int) {
@@ -65,75 +62,70 @@ class ScheduleAdapter(
                 vh.tv.text = item
                 var n = 0
                 for (j in pos + 1 until itemCount) { if (getItem(j) !is ScheduleMatch) break; n++ }
-                vh.count.text = if (n > 0) "$n trận" else ""
+                vh.count.text = if (n > 0) h.itemView.context.getString(R.string.sched_matches_count, n) else ""
             }
             is ScheduleMatch -> {
                 val vh = h as MatchVH
-                // xen kẽ 2 tông nền card (selector có viền đỏ khi focus — chuẩn TV D-pad)
-                vh.itemView.setBackgroundResource(if (pos % 2 == 0) R.drawable.card_a_focus else R.drawable.card_b_focus)
-                // chuyen dong focus thay vien do: phong to nhe + bong (dong nhat voi card Live)
+                val ctx = h.itemView.context
                 vh.itemView.setOnFocusChangeListener { v, has ->
-                    v.animate().scaleX(if (has) 1.015f else 1.0f).scaleY(if (has) 1.015f else 1.0f)
-                        .setDuration(130).setInterpolator(android.view.animation.DecelerateInterpolator()).start()
-                    v.elevation = if (has) 12f else 0f
+                    v.animate().scaleX(if (has) 1.015f else 1f).scaleY(if (has) 1.015f else 1f)
+                        .setDuration(130).start()
+                    v.elevation = if (has) 10f else 0f
                 }
-                // OK/Enter trên card: 1 BLV có phòng → play luôn; nhiều → dialog chọn
                 vh.itemView.setOnClickListener { onMatchClick(item) }
                 vh.name.text = "${item.host} vs ${item.guest}"
                 vh.league.text = item.league
                 vh.time.text = SocoliveRepository.formatTime(item.matchTimeMs)
+                vh.badge.visibility = View.VISIBLE
                 if (item.isLive) {
-                    vh.badge.text = "● LIVE"
+                    vh.badge.text = ctx.getString(R.string.sched_live).uppercase()
                     vh.badge.setTextColor(0xFFFFFFFF.toInt())
-                    vh.badge.setBackgroundResource(R.drawable.badge_live)
+                    vh.badge.setBackgroundResource(R.drawable.bg_badge_live)
+                    vh.time.setTextColor(ctx.getColorCompat(R.color.kl_live))
                 } else {
                     vh.badge.text = SocoliveRepository.formatTime(item.matchTimeMs)
-                    vh.badge.setTextColor(0xFF9AA4C0.toInt())
-                    vh.badge.setBackgroundResource(R.drawable.badge_grey)
+                    vh.badge.setTextColor(ctx.getColorCompat(R.color.kl_text_3))
+                    vh.badge.setBackgroundResource(R.drawable.bg_badge_glass)
+                    vh.time.setTextColor(ctx.getColorCompat(R.color.kl_text_1))
                 }
-                vh.badge.visibility = View.VISIBLE
                 vh.hostIcon.load(item.hostIcon) {
-                    crossfade(if (KenhLiveApp.lowRam) 0 else 80); error(R.drawable.logo_placeholder); placeholder(R.drawable.logo_placeholder)
+                    crossfade(if (DeviceMode.lowRam) 0 else 80)
+                    error(R.drawable.logo_placeholder); placeholder(R.drawable.logo_placeholder)
                 }
                 vh.guestIcon.load(item.guestIcon) {
-                    crossfade(if (KenhLiveApp.lowRam) 0 else 80); error(R.drawable.logo_placeholder); placeholder(R.drawable.logo_placeholder)
+                    crossfade(if (DeviceMode.lowRam) 0 else 80)
+                    error(R.drawable.logo_placeholder); placeholder(R.drawable.logo_placeholder)
                 }
-                // crest giải cùng hàng nhỏ
                 vh.crest.load(item.leagueCrest) {
-                    crossfade(if (KenhLiveApp.lowRam) 0 else 60); error(R.drawable.logo_placeholder); placeholder(R.drawable.logo_placeholder)
-                } // dùng leagueCrest nếu có
-
-                // hàng BLV: chỉ avatar tròn (bỏ label tên) → tap reveal tên qua contentDescription
+                    crossfade(if (DeviceMode.lowRam) 0 else 60)
+                    error(R.drawable.logo_placeholder); placeholder(R.drawable.logo_placeholder)
+                }
                 vh.anchorRow.removeAllViews()
-                val inf = LayoutInflater.from(vh.anchorRow.context)
+                val inf = LayoutInflater.from(ctx)
                 item.anchors.take(MAX_ANCHORS).forEach { a ->
                     val av = inf.inflate(R.layout.item_anchor_avatar, vh.anchorRow, false)
-                    val img = av.findViewById<ImageView>(R.id.anchorAvatar)
+                    val img = av as ImageView
                     img.contentDescription = a.nickName
                     img.load(a.icon) {
-                        crossfade(if (KenhLiveApp.lowRam) 0 else 80)
+                        crossfade(if (DeviceMode.lowRam) 0 else 80)
                         transformations(CircleCropTransformation())
                         error(R.drawable.logo_placeholder)
                         placeholder(R.drawable.logo_placeholder)
                     }
-                    val live = a.roomNum.isNotBlank()
-                    img.alpha = if (live) 1f else 0.4f
-                    av.setOnClickListener { if (live) onAnchorClick(a, item) }
-                    // tap-to-reveal: giữ name trong tag, dùng Toast nhỏ khi click
-                    av.setOnLongClickListener {
-                        android.widget.Toast.makeText(av.context, a.nickName, android.widget.Toast.LENGTH_SHORT).show(); true
-                    }
+                    img.alpha = if (a.roomNum.isNotBlank()) 1f else 0.4f
                     vh.anchorRow.addView(av)
                 }
-                // "+N" nếu dư BLV
                 val extra = item.anchors.size - MAX_ANCHORS
                 if (extra > 0) {
                     val av = inf.inflate(R.layout.item_anchor_plus, vh.anchorRow, false)
-                    val txt = av.findViewById<TextView>(R.id.anchorPlus)
-                    txt.text = "+$extra"
+                    av.findViewById<TextView>(R.id.anchorPlus).text = "+$extra"
                     vh.anchorRow.addView(av)
                 }
+                vh.itemView.contentDescription = "${item.host} vs ${item.guest}, ${item.league}"
             }
         }
     }
 }
+
+internal fun android.content.Context.getColorCompat(id: Int): Int =
+    androidx.core.content.ContextCompat.getColor(this, id)
