@@ -96,7 +96,7 @@
     <string name="settings_mv_layout">Bố cục đa màn hình</string>
     <string name="settings_clear_cache">Xóa bộ nhớ đệm ảnh</string>
     <string name="settings_clear_cache_done">Đã xóa bộ nhớ đệm ảnh</string>
-    <string name="settings_check_update">Kiểm cập cập nhật</string>
+    <string name="settings_check_update">Kiểm tra cập nhật</string>
     <string name="settings_version">Phiên bản</string>
     <string name="settings_about">Giới thiệu</string>
     <string name="settings_about_body">KênhLive tổng hợp các phòng phát trực tiếp bóng đá tiếng Việt. Chất lượng phụ thuộc nguồn phát của từng BLV.</string>

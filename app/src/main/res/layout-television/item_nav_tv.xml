@@ -16,11 +16,13 @@
         android:id="@+id/navIcon"
         android:layout_width="@dimen/nav_icon"
         android:layout_height="@dimen/nav_icon"
+        android:tint="@color/csl_nav_icon"
         android:contentDescription="@null" />
 
     <TextView
         android:id="@+id/navLabel"
         style="@style/KL.Text.Nav"
+        android:textColor="@color/csl_nav_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginLeft="12dp"
