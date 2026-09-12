@@ -70,6 +70,11 @@ go  "MV: di o3"            22 3
 go  "MV: ve o1"            19 3
 go  "BACK khoi MV"         4  4
 
+# ===== UX MOI: BACK o top-level -> dialog xac nhan thoat =====
+adb shell input keyevent 4; sleep 2; mark "BACK top-level -> DIALOG?"
+adb exec-out screencap -p > $OUT/back_dialog_a$API.png
+adb shell input keyevent 4; sleep 2; mark "BACK dismiss dialog"
+
 sleep 3
 adb shell screenrecord --stop >/dev/null 2>&1; wait $RECPID 2>/dev/null || true; sleep 2
 adb pull /sdcard/rec.mp4 $OUT/rec.mp4 >/dev/null 2>&1 || true
