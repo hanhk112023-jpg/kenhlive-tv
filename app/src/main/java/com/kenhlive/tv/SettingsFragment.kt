@@ -137,8 +137,8 @@ class SettingsFragment : Fragment() {
 
     private fun clearCache() {
         val ctx = requireContext()
-        coil.imageLoader(ctx).memoryCache?.clear()
-        coil.imageLoader(ctx).diskCache?.clear()
+        coil.Coil.imageLoader(ctx).memoryCache?.clear()
+        coil.Coil.imageLoader(ctx).diskCache?.clear()
         Http.get().cache?.evictAll()
         Toast.makeText(ctx, getString(R.string.settings_clear_cache_done), Toast.LENGTH_SHORT).show()
     }
