@@ -1,0 +1,78 @@
+name: UI-Tour
+# Quay video toan bo giao dien app (4 tab + rail FPT + player + multiview + dialog) tren ROM ATV 34
+
+on:
+  workflow_dispatch:
+
+jobs:
+  tour:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '17' }
+
+      - name: Build APK
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon -q
+
+      - name: Set up proxy VN
+        env:
+          SUB_URL: ${{ secrets.YUNA_SUB_URL }}
+          STATIC_YAML: ${{ secrets.YUNA_PROXY_YAML }}
+        run: |
+          set -euo pipefail
+          MH=$(ls /usr/local/bin/mihomo 2>/dev/null || true)
+          if [ -z "$MH" ]; then
+            VER=v1.19.30
+            curl -sSL -o /tmp/mihomo.gz "https://github.com/MetaCubeX/mihomo/releases/download/${VER}/mihomo-linux-amd64-${VER}.gz"
+            gunzip -f /tmp/mihomo.gz && install -m 0750 /tmp/mihomo /usr/local/bin/mihomo
+          fi
+          if [ -n "$STATIC_YAML" ]; then
+            printf '%s\n' "$STATIC_YAML" > /tmp/mihomo_ci.yaml
+          else
+            OK=0
+            for try in 1 2 3 4; do
+              if curl -sSL -m 40 -H 'User-Agent: clash-verge/1.6.6' -o /tmp/sub_full.yaml "$SUB_URL" && [ -s /tmp/sub_full.yaml ] && grep -q "proxies" /tmp/sub_full.yaml; then OK=1; break; fi
+              sleep 20
+            done
+            [ "$OK" = "1" ] || { echo "::error::Khong tai duoc subscription"; exit 1; }
+            python3 qa/ci_sub_to_yaml.py
+          fi
+          nohup mihomo -f /tmp/mihomo_ci.yaml -d /tmp/mihomo_ci > /tmp/mihomo.log 2>&1 &
+          sleep 4
+          echo "exit IP: $(curl -sS -m 15 -x http://127.0.0.1:7891 https://api.ipify.org || echo '?')"
+
+      - name: KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+
+      - name: Quay tour UI
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86
+          target: android-tv
+          disableAnimations: true
+          script: bash qa/ui_tour.sh
+
+      - name: Thu kq
+        if: always()
+        run: |
+          mkdir -p tour_out && cp -r /tmp/tour/* tour_out/ 2>/dev/null || true
+          ls -la tour_out/
+          SZ=$(stat -c%s tour_out/rec.mp4 2>/dev/null || echo 0)
+          [ "$SZ" -gt 100000 ] || { echo "artifact khong co video (=$SZ)"; exit 1; }
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ui-tour-video
+          path: tour_out/
