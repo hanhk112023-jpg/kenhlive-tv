@@ -19,6 +19,7 @@ import androidx.media3.common.Player
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
+import com.kenhlive.tv.ui.applyTvDensity
 import com.kenhlive.tv.ui.RoomPickerDialog
 import kotlinx.coroutines.launch
 
@@ -56,6 +57,7 @@ class MultiViewActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        applyTvDensity()
         setContentView(R.layout.activity_multiview)
 
         val slotRoots = listOf(

@@ -11,6 +11,7 @@ import androidx.activity.addCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.kenhlive.tv.ui.applyTvDensity
 import androidx.lifecycle.lifecycleScope
 import com.kenhlive.tv.viewmodel.LiveViewModel
 import kotlinx.coroutines.launch
@@ -33,6 +34,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        applyTvDensity()
         setContentView(R.layout.activity_main)
         window.statusBarColor = Color.BLACK
         window.navigationBarColor = Color.BLACK
