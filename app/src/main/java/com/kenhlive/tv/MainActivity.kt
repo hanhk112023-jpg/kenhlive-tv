@@ -131,7 +131,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun isDescendant(root: View, v: View?): Boolean {
-        var p: View? = v.parent as? View
+        var p: View? = v?.parent as? View
         while (p != null) { if (p === root) return true; p = p.parent as? View }
         return false
     }
