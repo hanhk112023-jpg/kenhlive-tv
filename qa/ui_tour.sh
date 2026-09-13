@@ -30,8 +30,8 @@ mark()  { echo "$(($(date +%s)-T0))s|$1|$(focus)" >> $TL; }
 key()   { adb shell input keyevent $1; }
 go()    { local n="$1" c="$2" w="$3"; key "$c"; sleep "$w"; mark "$n"; }
 relaunch(){ adb shell am start -n com.kenhlive.tv/.MainActivity --ei tab "$1" >/dev/null 2>&1; sleep 14; mark "RELAUNCH tab$1"; }
-startrec(){ adb shell rm -f /sdcard/$1; adb shell screenrecord --bit-rate 6000000 --time-limit 200 /sdcard/$1 & REC_PID=$!; }
-stoprec() { adb shell screenrecord --stop >/dev/null 2>&1; wait $REC_PID 2>/dev/null || true; sleep 3; adb pull /sdcard/$1 $OUT/$1 >/dev/null 2>&1 || true; }
+startrec(){ REC_CUR="$1"; adb shell rm -f /sdcard/$REC_CUR; adb shell screenrecord --bit-rate 6000000 --time-limit 200 /sdcard/$REC_CUR & REC_PID=$!; }
+stoprec() { local f="${1:-${REC_CUR:-rec1.mp4}}"; adb shell screenrecord --stop >/dev/null 2>&1; wait $REC_PID 2>/dev/null || true; sleep 3; adb pull /sdcard/$f $OUT/$f >/dev/null 2>&1 || true; }
 
 # ==================== DOAN 1 ====================
 startrec rec1.mp4; sleep 2; mark "MO APP: Bong da (Sport Zone full-man)"
