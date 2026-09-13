@@ -58,7 +58,9 @@ class LiveFragment : Fragment() {
             vm.state.collect { st ->
                 if (st is UiState.Success) liveGroups = st.data
                 rebuild()
-                if (st is UiState.Loading || st is UiState.Error)
+                // Error/Loading khi CHUA co du lieu moi/ cu -> lap overlay;
+                // da co du lieu (liveGroups khong rong) -> GIU noi dung kieu FPT, im lang retry nen
+                if ((st is UiState.Loading || st is UiState.Error) && liveGroups.isEmpty())
                     state.render(st, R.string.live_loading) { vm.load(force = true); svm.load(force = true) }
             }
         }
