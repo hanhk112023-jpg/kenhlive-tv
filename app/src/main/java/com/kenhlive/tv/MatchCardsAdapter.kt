@@ -92,7 +92,7 @@ class MatchCardsAdapter(
                 else inf.inflate(R.layout.item_fixture_card, parent, false)
         // do 10-foot: width = 30% chieu rong man (mat du dung o moi density/ROM)
         val px = parent.context.resources.displayMetrics.widthPixels
-        val target = (px * if (DeviceMode.isTv) 0.30f else 0.62f).toInt()
+        val target = (px * if (DeviceMode.isTv) 0.33f else 0.62f).toInt()
         val lp = v.layoutParams
         lp.width = target
         v.layoutParams = lp
