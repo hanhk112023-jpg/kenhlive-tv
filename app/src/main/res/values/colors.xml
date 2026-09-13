@@ -15,20 +15,20 @@
     <color name="kl_amber">#FFFFB020</color>
 
     <!-- surfaces (dark, layered) -->
-    <color name="kl_bg">#FF05080C</color>
+    <color name="kl_bg">#FF000000</color>
     <color name="kl_bg_deep">#FF000000</color>
-    <color name="kl_surface_1">#FF0D131B</color>
-    <color name="kl_surface_2">#FF131B25</color>
-    <color name="kl_surface_3">#FF1A2430</color>
-    <color name="kl_surface_translucent">#E60B1016</color>
+    <color name="kl_surface_1">#FF0E0E11</color>
+    <color name="kl_surface_2">#FF17171B</color>
+    <color name="kl_surface_3">#FF1F1F24</color>
+    <color name="kl_surface_translucent">#E60A0A0C</color>
     <color name="kl_border">#1FFFFFFF</color>
     <color name="kl_border_soft">#12FFFFFF</color>
 
     <!-- text -->
     <color name="kl_text_1">#FFF8FAFC</color>
-    <color name="kl_text_2">#B9C4D4</color>
-    <color name="kl_text_3">#7C8AA0</color>
-    <color name="kl_text_disabled">#4A5568</color>
+    <color name="kl_text_2">#FFC9C9CF</color>
+    <color name="kl_text_3">#FF9B9BA4</color>
+    <color name="kl_text_disabled">#FF5C5C66</color>
 
     <!-- states -->
     <color name="kl_live">#FFFF3B30</color>
@@ -51,8 +51,8 @@
     <color name="bg_base">@color/kl_bg_deep</color>
     <color name="bg_card">@color/kl_surface_1</color>
     <color name="bg_card_alt">@color/kl_surface_2</color>
-    <color name="bg_elevated">#F2141A23</color>
-    <color name="bg_topbar">#F005080C</color>
+    <color name="bg_elevated">#F21A1A1F</color>
+    <color name="bg_topbar">#F0000000</color>
     <color name="accent_amber">@color/kl_amber</color>
     <color name="accent_cyan">@color/kl_cyan</color>
     <color name="accent_green">@color/kl_brand</color>

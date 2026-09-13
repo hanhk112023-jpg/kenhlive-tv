@@ -46,4 +46,10 @@
     <dimen name="focus_ring_w">3dp</dimen>
     <dimen name="focus_glow_w">6dp</dimen>
     <dimen name="sched_avatar">26dp</dimen>
+    <dimen name="ts_fx_league">11sp</dimen>
+    <dimen name="ts_fx_meta">11sp</dimen>
+    <dimen name="ts_fx_team">14sp</dimen>
+    <dimen name="ts_fx_time">22sp</dimen>
+    <dimen name="ts_card_tag">13sp</dimen>
+    <dimen name="ts_card_room">15sp</dimen>
 </resources>

@@ -17,7 +17,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textColor="@color/kl_text_3"
-        android:textSize="11sp"
+        android:textSize="@dimen/ts_fx_meta"
         android:maxLines="1"
         android:ellipsize="end" />
 
@@ -36,7 +36,7 @@
             android:layout_height="wrap_content"
             android:gravity="right"
             android:textColor="@color/kl_text_1"
-            android:textSize="14sp"
+            android:textSize="@dimen/ts_fx_team"
             android:fontFamily="sans-serif-medium"
             android:maxLines="3"
             android:ellipsize="end" />
@@ -56,7 +56,7 @@
                 android:layout_height="wrap_content"
                 android:textColor="@color/kl_text_1"
                 android:fontFamily="@font/oswald"
-                android:textSize="22sp"
+                android:textSize="@dimen/ts_fx_time"
                 android:textStyle="bold"
                 android:fontFeatureSettings="tnum" />
 
@@ -65,7 +65,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="@color/kl_text_3"
-                android:textSize="11sp"
+                android:textSize="@dimen/ts_fx_meta"
                 android:fontFeatureSettings="tnum" />
         </LinearLayout>
 
@@ -76,7 +76,7 @@
             android:layout_height="wrap_content"
             android:gravity="left"
             android:textColor="@color/kl_text_1"
-            android:textSize="14sp"
+            android:textSize="@dimen/ts_fx_team"
             android:fontFamily="sans-serif-medium"
             android:maxLines="3"
             android:ellipsize="end" />
@@ -103,7 +103,7 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="6dp"
             android:textColor="#FFFFFF"
-            android:textSize="11sp"
+            android:textSize="@dimen/ts_fx_meta"
             android:textStyle="bold"
             android:fontFeatureSettings="tnum"
             android:background="@drawable/bg_badge_live_red"
