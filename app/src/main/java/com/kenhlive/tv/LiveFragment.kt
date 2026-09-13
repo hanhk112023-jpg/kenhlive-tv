@@ -35,7 +35,7 @@ class LiveFragment : Fragment() {
     private var selLeague = 0
 
     private var liveGroups: List<LiveMatchGroup> = listOf()
-    private var days: List<DaySchedule> = listOf()
+    private var daysLabeled: LinkedHashMap<String, MutableList<ScheduleMatch>> = LinkedHashMap()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, s: Bundle?): View {
         val v = inflater.inflate(R.layout.fragment_live, container, false)
@@ -67,8 +67,15 @@ class LiveFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             svm.state.collect { st ->
                 if (st is UiState.Success) {
-                    @Suppress("UNCHECKED_CAST")
-                    days = (st.data as? List<DaySchedule>) ?: days
+                    // ScheduleViewModel tra danh sach FLATTEN (String header ngay | ScheduleMatch)
+                    val flat = st.data
+                    val grouped = LinkedHashMap<String, MutableList<ScheduleMatch>>()
+                    var cur = ""
+                    for (o in flat) when (o) {
+                        is String -> { cur = o; grouped.putIfAbsent(o, mutableListOf()) }
+                        is ScheduleMatch -> grouped.getOrPut(cur) { mutableListOf() }.add(o)
+                    }
+                    daysLabeled = grouped
                     rebuild()
                 }
             }
@@ -84,7 +91,7 @@ class LiveFragment : Fragment() {
     private fun rebuild() {
         if (!::adapter.isInitialized) return
         // danh sach giai (thu tu viewers ghep) — chip = Tong hop + toi da 12 giai
-        val leagues = (liveGroups.map { it.league } + days.flatMap { d -> d.matches.map { leagueOf(it) } })
+        val leagues = (liveGroups.map { it.league } + daysLabeled.values.flatten().map { leagueOf(it) })
             .filter { it.isNotBlank() }
             .distinct()
             .take(12)
@@ -95,7 +102,7 @@ class LiveFragment : Fragment() {
         else liveGroups.filter { it.league == leagueLabels[selLeague] }
 
         val now = System.currentTimeMillis()
-        val upcoming = days.flatMap { it.matches }
+        val upcoming = daysLabeled.values.flatten()
             .filter { it.matchTimeMs in (now - 30 * 60_000L)..(now + 24 * 3600_000L) && !it.isLive || (it.isLive && it.hasRoom && liveGroups.none { g -> g.matchTitle == "${it.host} vs ${it.guest}" }) }
             .sortedBy { it.matchTimeMs }
         val upFiltered = if (selLeague == 0) upcoming
@@ -105,15 +112,15 @@ class LiveFragment : Fragment() {
         items.add(SportAdapter.ChipsItem(leagueLabels, selLeague))
         items.add(SportAdapter.HeroItem(lg))
         items.add(SportAdapter.RailItem(lg, upFiltered))
-        for (d in days) {
-            val ms = if (selLeague == 0) d.matches else d.matches.filter { leagueOf(it) == leagueLabels[selLeague] }
+        for ((label, ms0) in daysLabeled) {
+            val ms = if (selLeague == 0) ms0 else ms0.filter { leagueOf(it) == leagueLabels[selLeague] }
             if (ms.isEmpty()) continue
-            items.add(SocoliveRepository.dayLabel(d.date))
+            items.add(label)
             items.addAll(ms)
         }
         adapter.submitList(items)
         if (items.size > 3) state.hide()
-        else if (liveGroups.isEmpty() && days.isEmpty()) state.render(UiState.Empty("Sân vắng bóng", "Hiện không có trận nào đang live"), R.string.live_loading)
+        else if (liveGroups.isEmpty() && daysLabeled.isEmpty()) state.render(UiState.Empty("Sân vắng bóng", "Hiện không có trận nào đang live"), R.string.live_loading)
     }
 
     override fun onResume() {
