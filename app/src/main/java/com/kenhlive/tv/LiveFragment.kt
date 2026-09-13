@@ -62,6 +62,7 @@ class LiveFragment : Fragment() {
                 // da co du lieu (liveGroups khong rong) -> GIU noi dung kieu FPT, im lang retry nen
                 if ((st is UiState.Loading || st is UiState.Error) && liveGroups.isEmpty())
                     state.render(st, R.string.live_loading) { vm.load(force = true); svm.load(force = true) }
+                else state.hide() // an spinner ton dong khi data da ve giua chung
             }
         }
         viewLifecycleOwner.lifecycleScope.launch {
