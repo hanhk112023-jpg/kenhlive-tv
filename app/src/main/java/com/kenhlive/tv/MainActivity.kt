@@ -130,6 +130,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    /** FPT-style: focus dang sat canh trai man hinh (<= ~150dp tu mép) -> LEFT mo rail. */
+    private fun atLeftEdge(f: View): Boolean {
+        val loc = IntArray(2); f.getLocationOnScreen(loc)
+        val limit = (resources.displayMetrics.density * 150).toInt()
+        return loc[0] <= limit
+    }
+
     private fun isDescendant(root: View, v: View?): Boolean {
         var p: View? = v?.parent as? View
         while (p != null) { if (p === root) return true; p = p.parent as? View }
@@ -152,9 +159,7 @@ class MainActivity : AppCompatActivity() {
                 android.view.KeyEvent.KEYCODE_DPAD_LEFT -> if (!railOpen) {
                     val f = currentFocus
                     val insideRail = railPanel?.let { isDescendant(it, f) } == true
-                    if (f != null && !insideRail && f.focusSearch(android.view.View.FOCUS_LEFT) == null) {
-                        openRail(); return true
-                    }
+                    if (f != null && !insideRail && atLeftEdge(f)) { openRail(); return true }
                 }
                 android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> if (railOpen) {
                     val f = currentFocus

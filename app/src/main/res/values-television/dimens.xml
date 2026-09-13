@@ -12,7 +12,7 @@
 
     <dimen name="topbar_h">72dp</dimen>
     <dimen name="bottomnav_h">0dp</dimen>
-    <dimen name="rail_w">196dp</dimen>
+    <dimen name="rail_w">224dp</dimen>
     <dimen name="hero_h">396dp</dimen>
     <dimen name="card_w">352dp</dimen>
     <dimen name="card_thumb_h">198dp</dimen>
