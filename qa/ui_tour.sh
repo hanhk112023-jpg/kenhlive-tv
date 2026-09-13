@@ -96,5 +96,32 @@ adb logcat -d -s AndroidRuntime:E | tail -40 > $OUT/crash.txt
 adb logcat -d -b events | grep -E 'am_(crash|anr|proc_died)' | grep -i kenhlive > $OUT/events.txt || true
 echo "===== TIMELINE ====="; cat $TL
 S1=$(stat -c%s $OUT/rec1.mp4 2>/dev/null || echo 0); S2=$(stat -c%s $OUT/rec2.mp4 2>/dev/null || echo 0)
+# Ghep 2 doan + burn phu de timeline (co dau) vao rec.mp4
+if [ "$S1" -gt 100000 ] && [ "$S2" -gt 100000 ]; then
+  python3 - <<'PY'
+import os
+OUT='/tmp/tour'
+seg=[]; last=-99
+for L in open(OUT+'/timeline.txt',encoding='utf-8',errors='replace'):
+    p=L.strip().split('|')
+    if len(p)<2: continue
+    try: t=int(p[0].rstrip('s'))
+    except: continue
+    if t<3 or t-last<9: continue
+    last=t; seg.append((t,p[1]))
+def esc(x): return x.replace('{','(').replace('}',')')
+def fmt(s):
+    m,ss=divmod(s,60); return f"0:{m:02d}:{ss:02d}"
+lines=["[Script Info]","PlayResX: 1920","PlayResY: 1080","ScriptType: v4.00+","","[V4+ Styles]","Format: Name, Fontname, Fontsize, PrimaryColour, Outline, Shadow, Alignment, MarginV","Style: Cap,Noto Sans,46,&H00FFFFFF,2,1,1,60","","[Events]","Format: Marked, Start, End, Text"]
+for idx,(t,lab) in enumerate(seg):
+    end=seg[idx+1][0] if idx+1<len(seg) else t+12
+    lines.append(f"Dialogue: 0,{fmt(t)},{fmt(end)},{esc(lab)}")
+open(OUT+'/caps.ass','w',encoding='utf-8').write("\n".join(lines))
+PY
+  printf "file '%s'\nfile '%s'\n" "$OUT/rec1.mp4" "$OUT/rec2.mp4" > $OUT/list.txt
+  ffmpeg -y -f concat -safe 0 -i $OUT/list.txt -vf "ass=$OUT/caps.ass" -c:v libx264 -preset veryfast -crf 27 $OUT/rec.mp4 >/dev/null 2>&1 \
+    || ffmpeg -y -f concat -safe 0 -i $OUT/list.txt -c copy $OUT/rec.mp4 >/dev/null 2>&1
+fi
+
 echo "KET-QUA rec1=$S1 rec2=$S2 split=$SPLIT crash=$(wc -l < $OUT/crash.txt) appcrash=$(wc -l < $OUT/events.txt)"
 { [ "$S1" -gt 100000 ] && [ "$S2" -gt 100000 ]; } || { echo "::error::thieu video"; exit 1; }
