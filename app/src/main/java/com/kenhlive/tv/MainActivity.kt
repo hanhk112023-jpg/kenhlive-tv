@@ -26,6 +26,9 @@ class MainActivity : AppCompatActivity() {
     private val vm: LiveViewModel by viewModels()
     private var current = 0
     private val navViews = mutableListOf<View>()
+    private var railPanel: View? = null
+    private var railScrim: View? = null
+    private var railOpen = false
     private val tabTags = arrayOf("tab_live", "tab_schedule", "tab_search", "tab_settings")
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,6 +48,7 @@ class MainActivity : AppCompatActivity() {
 
         // BACK: tab khác → về Live trước; tab Live → dialog xác nhận thoát (UX TV)
         onBackPressedDispatcher.addCallback(this) {
+            if (railOpen) { closeRail(); return@addCallback }
             if (current != 0) { showTab(0); return@addCallback }
             AlertDialog.Builder(this@MainActivity)
                 .setTitle(R.string.dialog_exit_title)
@@ -65,6 +69,12 @@ class MainActivity : AppCompatActivity() {
         }
         vm.load()
 
+        if (DeviceMode.isTv) {
+            railPanel = findViewById(R.id.railPanel)
+            railScrim = findViewById(R.id.railScrim)
+            railScrim?.setOnClickListener { closeRail() }
+        }
+
         UpdateManager.checkAndUpdate(this)
         UpdateManager.resumePendingInstall(this)
         handleDebugIntent(intent)
@@ -82,15 +92,83 @@ class MainActivity : AppCompatActivity() {
             val v = findViewById<View>(id) ?: return@forEachIndexed
             v.findViewById<ImageView>(R.id.navIcon)?.setImageResource(def.first)
             v.findViewById<TextView>(R.id.navLabel)?.setText(def.second)
-            v.setOnClickListener { showTab(i) }
+            v.setOnClickListener { showTab(i) } // showTab tu dong dong rail
             navViews.add(v)
         }
-        // TV: rail là điểm focus đầu tiên khi mở app
-        if (DeviceMode.isTv) navViews.firstOrNull()?.post { navViews.firstOrNull()?.requestFocus() }
+        // TV: focus dau = noi dung (rail an); PHONE: khong co rail
+    }
+
+    // ===== TV rail overlay kieu FPT: noi dung full-man, LEFT o canh trai mo rail =====
+    private fun openRail() {
+        val panel = railPanel ?: return
+        if (railOpen) return
+        railOpen = true
+        panel.visibility = View.VISIBLE
+        panel.translationX = -panel.width.toFloat().coerceAtLeast(600f)
+        panel.animate().translationX(0f).setDuration(190).start()
+        railScrim?.let { it.visibility = View.VISIBLE; it.animate().alpha(1f).setDuration(190).start() }
+        navViews.getOrElse(current) { navViews.firstOrNull() }?.requestFocus()
+    }
+
+    private fun closeRail(focusContent: Boolean = true) {
+        val panel = railPanel ?: return
+        if (!railOpen) return
+        railOpen = false
+        panel.animate().translationX(-panel.width.toFloat()).setDuration(160)
+            .withEndAction { panel.visibility = View.GONE }.start()
+        railScrim?.animate()?.alpha(0f)?.setDuration(160)
+            ?.withEndAction { railScrim?.visibility = View.GONE }?.start()
+        if (focusContent) focusContentFirst()
+    }
+
+    private fun focusContentFirst() {
+        val c = findViewById<View>(R.id.fragmentContainer) ?: return
+        c.findFocus()?.let { if (c === it.rootView || isDescendant(c, it)) return }
+        c.post {
+            val v = c.findViewWithTag<View>("kl_focus_first") ?: firstFocusableIn(c)
+            v?.requestFocus()
+        }
+    }
+
+    private fun isDescendant(root: View, v: View?): Boolean {
+        var p: View? = v.parent as? View
+        while (p != null) { if (p === root) return true; p = p.parent as? View }
+        return false
+    }
+
+    private fun firstFocusableIn(root: View): View? {
+        if (root is android.view.ViewGroup) {
+            for (i in 0 until root.childCount) {
+                val f = firstFocusableIn(root.getChildAt(i))
+                if (f != null) return f
+            }
+        }
+        return if (root.isFocusable) root else null
+    }
+
+    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+        if (DeviceMode.isTv && event.action == android.view.KeyEvent.ACTION_DOWN) {
+            when (event.keyCode) {
+                android.view.KeyEvent.KEYCODE_DPAD_LEFT -> if (!railOpen) {
+                    val f = currentFocus
+                    val insideRail = railPanel?.let { isDescendant(it, f) } == true
+                    if (f != null && !insideRail && f.focusSearch(android.view.View.FOCUS_LEFT) == null) {
+                        openRail(); return true
+                    }
+                }
+                android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> if (railOpen) {
+                    val f = currentFocus
+                    val insideRail = railPanel?.let { isDescendant(it, f) } == true
+                    if (insideRail) { closeRail(); return true }
+                }
+            }
+        }
+        return super.dispatchKeyEvent(event)
     }
 
     private fun showTab(pos: Int, animate: Boolean = true) {
         current = pos
+        if (railOpen) closeRail()
         navViews.forEachIndexed { i, v -> v.isSelected = i == pos }
         val tx = supportFragmentManager.beginTransaction()
         if (animate) tx.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)

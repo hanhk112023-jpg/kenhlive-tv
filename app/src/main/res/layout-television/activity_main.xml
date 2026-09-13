@@ -1,22 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- ANDROID TV shell: left navigation rail (D-pad first class) + content pane -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- ANDROID TV shell (FPT-style): noi dung FULL-MAN HINH; rail trai la overlay
+     tran vao khi nguoi dung an LEFT o canh trai, an chon tab xong rail tu an. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
-    android:baselineAligned="false"
     android:background="@color/kl_bg_deep">
 
-    <!-- RAIL -->
+    <!-- CONTENT: full-bleed, 100% chieu ngang man hinh -->
+    <FrameLayout
+        android:id="@+id/fragmentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- SCRIM lam toi noi dung khi rail mo -->
+    <View
+        android:id="@+id/railScrim"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#8C000000"
+        android:alpha="0"
+        android:visibility="gone" />
+
+    <!-- RAIL overlay: cao toan man, ngang bang rail_w, nam ngoai canh trai -->
     <LinearLayout
+        android:id="@+id/railPanel"
         android:layout_width="@dimen/rail_w"
         android:layout_height="match_parent"
+        android:layout_gravity="start"
         android:orientation="vertical"
-        android:background="@color/kl_surface_1"
+        android:background="@color/kl_surface_2"
+        android:elevation="24dp"
         android:paddingLeft="14dp"
         android:paddingRight="14dp"
         android:paddingTop="24dp"
-        android:paddingBottom="20dp">
+        android:paddingBottom="20dp"
+        android:visibility="gone">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -66,15 +84,4 @@
             android:ellipsize="end"
             android:visibility="gone" />
     </LinearLayout>
-
-    <View
-        android:layout_width="1dp"
-        android:layout_height="match_parent"
-        android:background="@color/kl_border_soft" />
-
-    <FrameLayout
-        android:id="@+id/fragmentContainer"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1" />
-</LinearLayout>
+</FrameLayout>
