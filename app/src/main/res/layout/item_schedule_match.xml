@@ -12,7 +12,7 @@
     android:focusable="true"
     android:clickable="true">
 
-    <!-- time / live badge -->
+    <!-- cot gio + badge LIVE -->
     <LinearLayout
         android:layout_width="@dimen/sched_time_w"
         android:layout_height="wrap_content"
@@ -39,87 +39,64 @@
             android:visibility="gone" />
     </LinearLayout>
 
-    <!-- crest + teams -->
-    <LinearLayout
+    <!-- crest hai doi sat ten (kieu FPT livescore) -->
+    <ImageView
+        android:id="@+id/hostIcon"
+        android:layout_width="@dimen/sched_avatar"
+        android:layout_height="@dimen/sched_avatar"
+        android:layout_marginLeft="@dimen/sp_item_pad"
+        android:contentDescription="@null" />
+
+    <!-- ten tran: chiem phan lon, khong de dai trang chet -->
+    <TextView
+        android:id="@+id/matchName"
+        style="@style/KL.Text.Title"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
         android:layout_weight="1"
+        android:layout_height="wrap_content"
         android:layout_marginLeft="10dp"
-        android:orientation="vertical">
+        android:layout_marginRight="10dp"
+        android:maxLines="2"
+        android:ellipsize="end" />
 
-        <TextView
-            android:id="@+id/matchName"
-            style="@style/KL.Text.Title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:maxLines="2"
-            android:ellipsize="end" />
+    <!-- crest doi khach -->
+    <ImageView
+        android:id="@+id/guestIcon"
+        android:layout_width="@dimen/sched_avatar"
+        android:layout_height="@dimen/sched_avatar"
+        android:contentDescription="@null" />
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <ImageView
-                android:id="@+id/leagueCrest"
-                android:layout_width="@dimen/crest_s"
-                android:layout_height="@dimen/crest_s"
-                android:contentDescription="@null" />
-
-            <TextView
-                android:id="@+id/matchLeague"
-                style="@style/KL.Text.Meta"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="6dp"
-                android:maxLines="1"
-                android:ellipsize="end" />
-        </LinearLayout>
-    </LinearLayout>
-
-    <!-- anchors + team crests -->
+    <!-- tag giai (giua-phai) -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:gravity="right">
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginLeft="10dp"
+        android:layout_marginRight="10dp">
 
-        <LinearLayout
+        <ImageView
+            android:id="@+id/leagueCrest"
+            android:layout_width="@dimen/crest_s"
+            android:layout_height="@dimen/crest_s"
+            android:contentDescription="@null" />
+
+        <TextView
+            android:id="@+id/matchLeague"
+            style="@style/KL.Text.Meta"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <ImageView
-                android:id="@+id/hostIcon"
-                android:layout_width="@dimen/sched_avatar"
-                android:layout_height="@dimen/sched_avatar"
-                android:contentDescription="@null" />
-
-            <TextView
-                style="@style/KL.Text.Meta"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="6dp"
-                android:layout_marginRight="6dp"
-                android:text="–" />
-
-            <ImageView
-                android:id="@+id/guestIcon"
-                android:layout_width="@dimen/sched_avatar"
-                android:layout_height="@dimen/sched_avatar"
-                android:contentDescription="@null" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/anchorRow"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical" />
+            android:layout_marginLeft="6dp"
+            android:maxWidth="200dp"
+            android:maxLines="1"
+            android:ellipsize="end" />
     </LinearLayout>
+
+    <!-- BLV avatars ben phai cung -->
+    <LinearLayout
+        android:id="@+id/anchorRow"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical" />
 </LinearLayout>

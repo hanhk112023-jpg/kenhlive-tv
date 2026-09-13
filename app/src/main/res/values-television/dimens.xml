@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- ANDROID TV (10-foot): bigger type, looser spacing, side rail navigation. -->
 <resources>
-    <dimen name="sp_screen_margin">48dp</dimen>
+    <dimen name="sp_screen_margin">52dp</dimen>
     <dimen name="sp_row_gap">44dp</dimen>
     <dimen name="sp_card_gap">24dp</dimen>
     <dimen name="sp_item_pad">26dp</dimen>
@@ -12,40 +12,40 @@
 
     <dimen name="topbar_h">84dp</dimen>
     <dimen name="bottomnav_h">0dp</dimen>
-    <dimen name="rail_w">250dp</dimen>
-    <dimen name="hero_h">470dp</dimen>
+    <dimen name="rail_w">268dp</dimen>
+    <dimen name="hero_h">500dp</dimen>
     <dimen name="card_w">430dp</dimen>
     <dimen name="card_thumb_h">242dp</dimen>
 
-    <dimen name="ts_display">60sp</dimen>
-    <dimen name="ts_hero_meta">22sp</dimen>
-    <dimen name="ts_section">32sp</dimen>
-    <dimen name="ts_title">30sp</dimen>
-    <dimen name="ts_body">25sp</dimen>
-    <dimen name="ts_meta">22sp</dimen>
-    <dimen name="ts_nav">23sp</dimen>
-    <dimen name="ts_button">23sp</dimen>
-    <dimen name="ts_chip">22sp</dimen>
+    <dimen name="ts_display">66sp</dimen>
+    <dimen name="ts_hero_meta">24sp</dimen>
+    <dimen name="ts_section">34sp</dimen>
+    <dimen name="ts_title">32sp</dimen>
+    <dimen name="ts_body">27sp</dimen>
+    <dimen name="ts_meta">25sp</dimen>
+    <dimen name="ts_nav">25sp</dimen>
+    <dimen name="ts_button">25sp</dimen>
+    <dimen name="ts_chip">24sp</dimen>
     <dimen name="ts_empty">28sp</dimen>
 
     <dimen name="btn_h">62dp</dimen>
     <dimen name="btn_pad_x">30dp</dimen>
     <dimen name="nav_icon">30dp</dimen>
-    <dimen name="chip_h">60dp</dimen>
+    <dimen name="chip_h">64dp</dimen>
     <dimen name="input_h">74dp</dimen>
     <dimen name="avatar_s">54dp</dimen>
-    <dimen name="crest_s">38dp</dimen>
+    <dimen name="crest_s">40dp</dimen>
     <dimen name="empty_img_w">420dp</dimen>
     <dimen name="empty_img_h">240dp</dimen>
     <dimen name="focus_ring_w">3dp</dimen>
     <dimen name="focus_glow_w">9dp</dimen>
-    <dimen name="sched_avatar">50dp</dimen>
-    <dimen name="ts_fx_league">19sp</dimen>
-    <dimen name="ts_fx_meta">21sp</dimen>
-    <dimen name="ts_fx_team">26sp</dimen>
-    <dimen name="ts_fx_time">40sp</dimen>
-    <dimen name="ts_card_tag">21sp</dimen>
-    <dimen name="ts_card_room">24sp</dimen>
-    <dimen name="sched_time_w">92dp</dimen>
+    <dimen name="sched_avatar">52dp</dimen>
+    <dimen name="ts_fx_league">21sp</dimen>
+    <dimen name="ts_fx_meta">23sp</dimen>
+    <dimen name="ts_fx_team">29sp</dimen>
+    <dimen name="ts_fx_time">44sp</dimen>
+    <dimen name="ts_card_tag">23sp</dimen>
+    <dimen name="ts_card_room">25sp</dimen>
+    <dimen name="sched_time_w">104dp</dimen>
     <dimen name="sched_row_gap">12dp</dimen>
 </resources>
