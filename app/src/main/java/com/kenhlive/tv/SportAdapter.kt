@@ -148,6 +148,15 @@ class SportAdapter(
             is ChipsItem -> {
                 val vh = h as ChipsVH
                 vh.row.removeAllViews()
+                // canh phai chip row = right edge cua card 3 (kieu FPT: thanh loc liep rail)
+                (vh.row.parent as? View)?.let { sv ->
+                    val screen = sv.rootView.width.takeIf { it > 0 }
+                        ?: sv.context.resources.displayMetrics.widthPixels
+                    val frac = if (DeviceMode.isTv) 1f - 0.33f else 1f
+                    val lp = sv.layoutParams
+                    lp.width = (screen * frac).toInt()
+                    sv.layoutParams = lp
+                }
                 val inf = LayoutInflater.from(vh.row.context)
                 item.labels.forEachIndexed { i, lab ->
                     val chip = inf.inflate(R.layout.item_search_chip, vh.row, false) as TextView

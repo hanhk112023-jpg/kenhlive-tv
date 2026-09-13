@@ -61,6 +61,8 @@ class MatchCardsAdapter(
     }
 
     var rowPos: Int = 0
+    /** % chieu rong man ma 1 card + gap chiem (de chip row canh phai theo rail). */
+    var cardFraction: Float = 0.33f
     var keyHandler: ((Int, Int, Int) -> android.view.View.OnKeyListener)? = null
 
     inner class LiveVH(v: View) : RecyclerView.ViewHolder(v) {

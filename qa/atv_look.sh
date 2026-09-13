@@ -9,6 +9,7 @@ sleep 1
 adb shell settings put global http_proxy 10.0.2.2:7891
 adb shell settings put global wifi_proxy 10.0.2.2:7891
 adb shell wm size 1920x1080
+adb shell wm density 320   # TV 10-foot chuan: 1080p@320dpi (emulator mac dinh 213 = anh teo 66%)
 adb install -r app/build/outputs/apk/debug/app-debug.apk >/dev/null 2>&1
 adb logcat -c
 
