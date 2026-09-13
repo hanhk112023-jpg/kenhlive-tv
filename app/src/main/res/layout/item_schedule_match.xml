@@ -8,13 +8,13 @@
     android:background="@drawable/bg_card"
     android:foreground="@drawable/fg_focus"
     android:padding="@dimen/sp_item_pad"
-    android:layout_marginBottom="8dp"
+    android:layout_marginBottom="@dimen/sched_row_gap"
     android:focusable="true"
     android:clickable="true">
 
     <!-- time / live badge -->
     <LinearLayout
-        android:layout_width="56dp"
+        android:layout_width="@dimen/sched_time_w"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center_horizontal">

@@ -52,4 +52,6 @@
     <dimen name="ts_fx_time">22sp</dimen>
     <dimen name="ts_card_tag">13sp</dimen>
     <dimen name="ts_card_room">15sp</dimen>
+    <dimen name="sched_time_w">56dp</dimen>
+    <dimen name="sched_row_gap">8dp</dimen>
 </resources>
