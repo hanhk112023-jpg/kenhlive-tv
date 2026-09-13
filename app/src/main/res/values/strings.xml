@@ -4,8 +4,7 @@
     <string name="app_tagline">Bóng đá trực tiếp</string>
 
     <!-- navigation -->
-    <string name="nav_live">Trực tiếp</string>
-    <string name="nav_schedule">Lịch trình</string>
+        <string name="nav_schedule">Lịch trình</string>
     <string name="nav_search">Tìm kiếm</string>
     <string name="nav_settings">Cài đặt</string>
     <string name="nav_multiview">Đa màn hình</string>
@@ -125,4 +124,8 @@
     <string name="cd_match">Trận đấu</string>
     <string name="cd_blv">Bình luận viên</string>
     <string name="cd_empty">Không có dữ liệu</string>
+    <string name="badge_has_room">Có phòng live</string>
+    <string name="badge_no_room">Chưa có phòng</string>
+    <string name="sport_rail_title">TRỰC TIẾP &amp; SẮP DIỄN RA</string>
+    <string name="nav_live">Bóng đá</string>
 </resources>

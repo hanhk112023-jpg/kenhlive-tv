@@ -20,6 +20,8 @@ class StateBinder(root: View) {
     private val body: TextView = root.findViewById(R.id.stateBody)
     private val retry: TextView = root.findViewById(R.id.stateRetry)
 
+    fun hide() { stateRoot.visibility = View.GONE }
+
     fun <T> render(state: UiState<T>, loadingTextRes: Int = R.string.state_loading, onRetry: () -> Unit = {}) {
         when (state) {
             is UiState.Loading -> {

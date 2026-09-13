@@ -11,52 +11,26 @@
     android:focusable="true"
     android:clickable="true">
 
-    <!-- Row 1: tag giai (trai) + LIVE pill DO (phai) — nguyen mau card bong da FPT Play -->
-    <LinearLayout
+    <TextView
+        android:id="@+id/fxLeague"
+        style="@style/KL.Text.Meta"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:textColor="@color/kl_text_3"
+        android:textSize="11sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
 
-        <TextView
-            android:id="@+id/cardLeague"
-            style="@style/KL.Text.Meta"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:textColor="@color/kl_text_3"
-            android:textSize="11sp"
-            android:maxLines="1"
-            android:ellipsize="end" />
-
-        <TextView
-            android:id="@+id/cardLive"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginLeft="8dp"
-            android:text="● LIVE"
-            android:textColor="#FFFFFF"
-            android:textSize="10sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.06"
-            android:background="@drawable/bg_badge_live_red"
-            android:paddingLeft="7dp"
-            android:paddingRight="7dp"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp" />
-    </LinearLayout>
-
-    <!-- Row 2: ten doi trai | giua: viewers | ten doi phai -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:minHeight="52dp">
+        android:minHeight="56dp">
 
         <TextView
-            android:id="@+id/cardHost"
+            android:id="@+id/fxHost"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
@@ -76,26 +50,27 @@
             android:paddingLeft="6dp"
             android:paddingRight="6dp">
 
-            <ImageView
-                android:id="@+id/cardAvatar"
-                android:layout_width="26dp"
-                android:layout_height="26dp"
-                android:contentDescription="@null" />
-
             <TextView
-                android:id="@+id/cardViewers"
+                android:id="@+id/fxTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:textColor="#FF4D4D"
+                android:textColor="@color/kl_text_1"
                 android:fontFamily="@font/oswald"
-                android:textSize="15sp"
+                android:textSize="22sp"
                 android:textStyle="bold"
+                android:fontFeatureSettings="tnum" />
+
+            <TextView
+                android:id="@+id/fxDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/kl_text_3"
+                android:textSize="11sp"
                 android:fontFeatureSettings="tnum" />
         </LinearLayout>
 
         <TextView
-            android:id="@+id/cardGuest"
+            android:id="@+id/fxGuest"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
@@ -107,7 +82,6 @@
             android:ellipsize="end" />
     </LinearLayout>
 
-    <!-- Row 3: BLV + so phong -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -115,36 +89,28 @@
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
-        <TextView
-            android:id="@+id/cardBlv"
-            style="@style/KL.Text.Meta"
+        <LinearLayout
+            android:id="@+id/fxAnchorRow"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:maxLines="1"
-            android:ellipsize="end" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical" />
 
         <TextView
-            android:id="@+id/cardRooms"
+            android:id="@+id/fxCountdown"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="6dp"
-            android:textColor="#DCE6F0"
+            android:textColor="#FFFFFF"
             android:textSize="11sp"
-            android:fontFamily="sans-serif-medium"
-            android:background="@drawable/pill_glass"
+            android:textStyle="bold"
+            android:fontFeatureSettings="tnum"
+            android:background="@drawable/bg_badge_live_red"
             android:paddingLeft="8dp"
             android:paddingRight="8dp"
             android:paddingTop="2dp"
             android:paddingBottom="2dp"
             android:visibility="gone" />
     </LinearLayout>
-
-    <!-- day bar cam nhan: match live co vat trang mong o day (nhip FPT) -->
-    <View
-        android:id="@+id/cardAccent"
-        android:layout_width="42dp"
-        android:layout_height="3dp"
-        android:layout_marginTop="10dp"
-        android:background="@drawable/bg_accent_live" />
 </LinearLayout>
