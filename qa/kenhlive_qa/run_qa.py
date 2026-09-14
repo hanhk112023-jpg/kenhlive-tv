@@ -372,9 +372,15 @@ else:
     # (bug 'nhảy sai vị trí': mỗi hàng HorizontalScrollView offset riêng → focus-search mặc định
     #  tìm 'gần nhất hình học' rơi vào ô lệch cột/hàng khác)
     print('[5.56b] DOWN/UP xuyên hàng cùng cột', flush=True)
-    # về card đầu hàng (LEFT 15 lần — biên trái nuốt phím)
+    # về card đầu hàng (LEFT 15 lần — rail co the mo → RIGHT dong ve card)
     for _ in range(15): P.key('21'); time.sleep(0.25)
-    ok_c, bc, _ = focused_card_info()
+    ok_c, bc, what_c = focused_card_info()
+    if not ok_c and ('nav_' in (what_c or '') or 'railPanel' in (what_c or '')):
+        P.key('22'); time.sleep(0.8)                      # RIGHT: dong rail → ve chip
+        for _ in range(4):                                 # DOWN: chip → hero → card dau hang
+            if ok_c and bc: break
+            P.key('20'); time.sleep(0.9)
+            ok_c, bc, what_c = focused_card_info()
     b_start = bc
     down_ok = 0; down_tot = 0; col_bad = []
     for step in range(3):
