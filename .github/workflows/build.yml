@@ -18,8 +18,8 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Use pre-installed Android SDK (nho setup-android@v3 — action gay preview-license loi hom 14/09)
+        run: echo "ANDROID_HOME=$ANDROID_HOME"
 
       - name: Build debug APK
         env:
