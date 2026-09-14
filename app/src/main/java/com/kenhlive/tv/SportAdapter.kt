@@ -79,6 +79,29 @@ class SportAdapter(
 
     fun restoreFocus() = FocusKit.restore(this)
 
+    /** Focus nut XEM NGAY cua page hero hien tai (dinh vi, khong de geometry doan). */
+    fun focusHeroPlay(): Boolean {
+        val rv = outerRecyclerView ?: return false
+        val vh = rv.findViewHolderForAdapterPosition(1) as? HeroVH ?: return false
+        val inner = vh.pager.getChildAt(0) as? RecyclerView ?: return false
+        val page = inner.findViewHolderForAdapterPosition(vh.pager.currentItem)?.itemView ?: return false
+        return page.findViewById<View>(R.id.heroPlay)?.requestFocus() == true
+    }
+
+    /** Focus card DAUTHIEN (idx 0) cua rail LIVE & SAP. */
+    fun focusRailFirst(): Boolean {
+        val rv = outerRecyclerView ?: return false
+        if (FocusKit.focusNow(rv, 2, 0)) return true
+        rv.smoothScrollBy(0, 300)
+        var left = 6
+        object : Runnable {
+            override fun run() {
+                if (left > 0 && !FocusKit.focusNow(rv, 2, 0)) { left--; rv.postDelayed(this, 160) }
+            }
+        }.run()
+        return true
+    }
+
     inner class ChipsVH(v: View) : RecyclerView.ViewHolder(v) {
         val row: LinearLayout = v.findViewById(R.id.chipRow)
     }
@@ -163,6 +186,12 @@ class SportAdapter(
                     chip.text = lab
                     chip.isSelected = i == item.sel
                     chip.setOnClickListener { onLeaguePick(i) }
+                    chip.setOnKeyListener { _, code, ev ->
+                        if (ev.action == android.view.KeyEvent.ACTION_DOWN &&
+                            code == android.view.KeyEvent.KEYCODE_DPAD_DOWN) {
+                            if (!focusHeroPlay()) focusRailFirst(); true
+                        } else false
+                    }
                     vh.row.addView(chip)
                 }
             }
@@ -175,6 +204,14 @@ class SportAdapter(
                     vh.pager.adapter = a
                     vh.pager.isUserInputEnabled = !DeviceMode.isTv
                     a.attach(vh.pager, vh.dots)
+                    vh.itemView.setOnKeyListener { _, code, ev ->
+                        if (ev.action == android.view.KeyEvent.ACTION_DOWN &&
+                            code == android.view.KeyEvent.KEYCODE_DPAD_DOWN) {
+                            if (!FocusKit.focusNow(outerRecyclerView ?: return@setOnKeyListener false, 2, 0))
+                                focusRailFirst()
+                            true
+                        } else false
+                    }
                 }
             }
             is RailItem -> {

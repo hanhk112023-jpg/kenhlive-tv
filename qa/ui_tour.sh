@@ -28,6 +28,7 @@ T0=$(date +%s)
 focus() { adb shell dumpsys window 2>/dev/null | grep -m1 -o 'com.kenhlive.tv/[^ ]*' || echo '?'; }
 mark()  { echo "$(($(date +%s)-T0))s|$1|$(focus)" >> $TL; }
 key()   { adb shell input keyevent $1; }
+foc()   { local X=$(adb shell "uiautomator dump /sdcard/f.xml >/dev/null 2>&1; cat /sdcard/f.xml" 2>/dev/null | tr '>' '\n' | grep 'focused="true"' | grep -o 'bounds="[^"]*"' | head -1); echo "$(($(date +%s)-T0))s|FOCU $X" >> $TL; }
 go()    { local n="$1" c="$2" w="$3"; key "$c"; sleep "$w"; mark "$n"; }
 relaunch(){ adb shell am start -n com.kenhlive.tv/.MainActivity --ei tab "$1" >/dev/null 2>&1; sleep 14; mark "RELAUNCH tab$1"; }
 startrec(){ REC_CUR="$1"; adb shell rm -f /sdcard/$REC_CUR; adb shell screenrecord --bit-rate 6000000 --time-limit 200 /sdcard/$REC_CUR & REC_PID=$!; }
@@ -38,8 +39,8 @@ startrec rec1.mp4; sleep 2; mark "MO APP: Bong da (Sport Zone full-man)"
 # 1. HOME: chip -> hero -> rail -> danh sach
 go "RIGHT: chip giai"      22 2
 go "LEFT: ve TAT CA"       21 2
-go "DOWN: hero"            20 3
-go "DOWN: card LIVE 1"     20 3
+go "DOWN: hero"            20 3; foc
+go "DOWN: card LIVE 1"     20 3; foc
 go "RIGHT: card 2"         22 2
 go "RIGHT: card 3"         22 2
 go "LEFT: ve card 1"       21 2
