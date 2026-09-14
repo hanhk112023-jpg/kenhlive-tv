@@ -11,6 +11,7 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.kenhlive.tv.ui.FocusKit
 import com.kenhlive.tv.ui.RoomPickerDialog
 import com.kenhlive.tv.ui.StateBinder
 import com.kenhlive.tv.viewmodel.LiveViewModel
@@ -115,7 +116,12 @@ class LiveFragment : Fragment() {
             items.add(label)
             items.addAll(ms)
         }
+        val hadFocus = list.hasFocus() && FocusKit.lastSlot != null
         adapter.submitList(items)
+        if (hadFocus) {
+            // silent refresh khi user dang o trong danh sach: gap layout xong thi dinh vi lai
+            list.post { list.post { FocusKit.restore(adapter) } }
+        }
         if (items.size > 3) state.hide()
         else if (liveGroups.isEmpty() && daysLabeled.isEmpty()) state.render(UiState.Empty("Sân vắng bóng", "Hiện không có trận nào đang live"), R.string.live_loading)
     }
