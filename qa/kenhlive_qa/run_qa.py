@@ -322,7 +322,9 @@ def focused_card_info():
     if not mf: return False, None, '?'
     tag = mf.group(0)
     mb = _re.search(r'bounds="\[(\d+),(\d+)\]\[(\d+),(\d+)\]"', tag)
-    return ('cardRoot' in tag), (mb.groups() if mb else None), tag[:110]
+    # Sport Zone (v6.1.x): card rail = cardRoot; dong danh sach ngay = schedCard.
+    # Ca hai deu la "vung noi dung hop le" khi do dieu huong DOWN/UP xuyen hang.
+    return ('cardRoot' in tag or 'schedCard' in tag), (mb.groups() if mb else None), tag[:110]
 
 def focused_is_card():
     ok, b, t = focused_card_info()
