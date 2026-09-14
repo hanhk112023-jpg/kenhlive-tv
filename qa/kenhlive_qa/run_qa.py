@@ -342,12 +342,20 @@ else:
     # LEFT 3 lần — focus phải ĐỨNG YÊN ở đúng card này (mép trái chặn, không nhảy hàng)
     for _ in range(3): P.key('21'); time.sleep(0.4)
     ok_l, bl, what_l = focused_card_info()
-    # yêu cầu thật: vẫn là card, cùng HÀNG (trục Y không đổi) — không nhảy lên tab/hero/hàng khác
-    stay_l = ok_l and b0 and bl and abs(int(bl[1]) - int(b0[1])) < 40
-    add_check('LEFT tại mép trái — không nhảy khỏi hàng', stay_l,
-              'cùng hàng' if stay_l else f'{b0} → {bl}')
-    if not stay_l: add_finding('Điều hướng', 'HIGH', 'Bấm LEFT ở đầu hàng làm focus nhảy sang nơi khác',
-                               f'bounds {b0} → {bl}', 'nuốt DPAD_LEFT bằng OnKeyListener trên card đầu (không dùng nextFocusLeftId — id cardRoot trùng giữa các hàng)')
+    # thiet ke FPT v6.1.5+: LEFT o card dau = MO RAIL (focus vao nav_* / railPanel) — hanh vi DUNG.
+    if not ok_l and ('nav_' in (what_l or '') or 'railPanel' in (what_l or '')):
+        P.key('22'); time.sleep(0.7)                      # RIGHT dong rail
+        ok_l, bl, what_l = focused_card_info()
+        stay_l = ok_l and b0 and bl and abs(int(bl[1]) - int(b0[1])) < 40
+        add_check('LEFT tại mép trái — mở rail kiểu FPT rồi đóng về cùng hàng', stay_l,
+                  'rail ok, về cùng hàng' if stay_l else f'{b0} → {bl}')
+    else:
+        # yeu cau that: van la card, cung HÀNG (truc Y khong doi) — khong nhay len tab/hero/hang khac
+        stay_l = ok_l and b0 and bl and abs(int(bl[1]) - int(b0[1])) < 40
+        add_check('LEFT tại mép trái — không nhảy khỏi hàng', stay_l,
+                  'cùng hàng' if stay_l else f'{b0} → {bl}')
+        if not stay_l: add_finding('Điều hướng', 'HIGH', 'Bấm LEFT ở đầu hàng làm focus nhảy sang nơi khác',
+                                   f'bounds {b0} → {bl}', 'nuốt DPAD_LEFT bằng OnKeyListener trên card đầu (không dùng nextFocusLeftId — id cardRoot trùng giữa các hàng)')
     # RIGHT 12 lần (dài hơn mọi hàng) — vẫn phải ở card CUỐI của CÙNG hàng
     for _ in range(12): P.key('22'); time.sleep(0.35)
     ok_r, br, what_r = focused_card_info()
