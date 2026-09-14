@@ -45,7 +45,10 @@ object SocoliveParser {
                         viewers = r.optInt("viewCount", 0),
                         matchTitle = match,
                         league = league,
-                        cover = r.optString("cover", "")
+                        cover = r.optString("cover", ""),
+                        category = when (r.optInt("liveTypeParent", 0)) {
+                            1 -> "Bóng đá"; 2 -> "Bóng rổ"; else -> ""
+                        }
                     )
                 )
             }

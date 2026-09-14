@@ -21,14 +21,16 @@ data class LiveRoom(
     val viewers: Int,
     val matchTitle: String,   // "A vs B"
     val league: String,       // "CHA FACup"
-    val cover: String = ""    // ảnh nền phòng (hero banner)
+    val cover: String = "",   // ảnh nền phòng (hero banner)
+    val category: String = "" // "Bóng đá" | "Bóng rổ" | "" (môn, tu liveTypeParent)
 )
 
 /** Gộp nhiều phòng cùng 1 trận (cùng giải + tên trận). */
 data class LiveMatchGroup(
     val league: String,
     val matchTitle: String,
-    val rooms: List<LiveRoom>   // sorted by viewers desc
+    val rooms: List<LiveRoom>,  // sorted by viewers desc
+    val category: String = rooms.firstOrNull()?.category ?: ""
 ) {
     val totalViewers: Int get() = rooms.sumOf { it.viewers }
     val top: LiveRoom get() = rooms.first()

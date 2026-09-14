@@ -91,30 +91,26 @@ class LiveFragment : Fragment() {
 
     private fun rebuild() {
         if (!::adapter.isInitialized) return
-        // danh sach giai (thu tu viewers ghep) — chip = Tong hop + toi da 12 giai
-        val leagues = (liveGroups.map { it.league } + daysLabeled.values.flatten().map { leagueOf(it) })
-            .filter { it.isNotBlank() }
-            .distinct()
-            .take(12)
-        if (leagueLabels.size != leagues.size + 1) leagueLabels = listOf("Tất cả") + leagues
+        // chip = MON (dinh), khong phai danh sach giai dai dong: Tat ca / Bong da / Bong ro
+        if (leagueLabels.size != 3) leagueLabels = listOf("Tất cả", "Bóng đá", "Bóng rổ")
         if (selLeague >= leagueLabels.size) selLeague = 0
 
         val lg = if (selLeague == 0) liveGroups
-        else liveGroups.filter { it.league == leagueLabels[selLeague] }
+        else liveGroups.filter { it.category == leagueLabels[selLeague] }
 
         val now = System.currentTimeMillis()
         val upcoming = daysLabeled.values.flatten()
             .filter { it.matchTimeMs in (now - 30 * 60_000L)..(now + 24 * 3600_000L) && !it.isLive || (it.isLive && it.hasRoom && liveGroups.none { g -> g.matchTitle == "${it.host} vs ${it.guest}" }) }
             .sortedBy { it.matchTimeMs }
         val upFiltered = if (selLeague == 0) upcoming
-        else upcoming.filter { leagueOf(it) == leagueLabels[selLeague] }
+        else upcoming.filter { it.category == leagueLabels[selLeague] }
 
         val items = mutableListOf<Any>()
         items.add(SportAdapter.ChipsItem(leagueLabels, selLeague))
         items.add(SportAdapter.HeroItem(lg))
         items.add(SportAdapter.RailItem(lg, upFiltered))
         for ((label, ms0) in daysLabeled) {
-            val ms = if (selLeague == 0) ms0 else ms0.filter { leagueOf(it) == leagueLabels[selLeague] }
+            val ms = if (selLeague == 0) ms0 else ms0.filter { it.category == leagueLabels[selLeague] }
             if (ms.isEmpty()) continue
             items.add(label)
             items.addAll(ms)
