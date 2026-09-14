@@ -132,11 +132,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** FPT-style: focus dang sat canh trai man hinh (<= ~150dp tu mép) -> LEFT mo rail. */
+    /** FPT-style: chi mo rail khi focus THAT SU khong con phan tu nao ben trai (khong dung nguong toa do — hang chip bat dau tai x=0 nen hay moi nhaim). */
     private fun atLeftEdge(f: View): Boolean {
-        val loc = IntArray(2); f.getLocationOnScreen(loc)
-        val limit = (resources.displayMetrics.density * 150).toInt()
-        return loc[0] <= limit
+        val nxt = f.focusSearch(View.FOCUS_LEFT) ?: return true
+        if (nxt === f) return true
+        val a = IntArray(2); f.getLocationOnScreen(a)
+        val b = IntArray(2); nxt.getLocationOnScreen(b)
+        return b[0] >= a[0] - 4   // nhan LEFT ma khong di duoc sang trai = da sat mép
     }
 
     private fun isDescendant(root: View, v: View?): Boolean {
