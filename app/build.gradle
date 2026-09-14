@@ -38,8 +38,8 @@ android {
         applicationId "com.kenhlive.tv"
         minSdk 21
         targetSdk 34
-        versionCode 79
-        versionName "6.2.1"
+        versionCode 80
+        versionName "6.2.2"
         // APK universal: box 32-bit (armeabi-v7a) + 64-bit (arm64). Thu vien hien tai
         // khong co native lib nao nen ban nao cung chay duoc; khai bao phong khi
         // them dependency native (sqlite/cronet...) - bo doi na = bao "loi phan tich cu phap" tren TV 32-bit.

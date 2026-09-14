@@ -5,12 +5,14 @@
     android:focusable="false"
     android:descendantFocusability="afterDescendants">
 
+    <!-- fitCenter (khong centerCrop): anh promo vnres co chu bake san o dau/cuoi —
+         centerCrop vao khung ngang 2.8:1 xen mat 'cat 1 nui banner'. Nen den thuan. -->
     <ImageView
         android:id="@+id/heroCover"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scaleType="centerCrop"
-        android:background="@drawable/bg_skeleton"
+        android:scaleType="fitCenter"
+        android:background="#FF000000"
         android:contentDescription="@string/cd_match" />
 
     <View
@@ -69,10 +71,12 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
-            android:layout_marginRight="120dp"
+            android:layout_marginRight="20dp"
             android:includeFontPadding="false"
             android:paddingTop="6dp"
             android:maxLines="2"
+            android:breakStrategy="simple"
+            android:hyphenationFrequency="none"
             android:ellipsize="end"
             android:shadowColor="#E6000000"
             android:shadowDy="2"
@@ -84,7 +88,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:layout_marginRight="120dp"
+            android:layout_marginRight="20dp"
             android:maxLines="1"
             android:ellipsize="end"
             android:textColor="@color/kl_text_2"
