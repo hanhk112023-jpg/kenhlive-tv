@@ -54,20 +54,15 @@ object UpdateManager {
         CoroutineScope(Dispatchers.IO).launch {
             try {
                 val client = OkHttpClient()
+                // Repo co the private → qua proxy worker (kenhlive-dl), no tu tai APK bang token.
                 val json = client.newCall(
-                    Request.Builder().url("https://api.github.com/repos/hanhk112023-jpg/kenhlive-tv/releases/latest").build()
+                    Request.Builder().url("https://kenhlive-dl.htuananh153.workers.dev/version").build()
                 ).execute().use { resp ->
                     if (!resp.isSuccessful) return@launch
                     JSONObject(resp.body!!.string())
                 }
-                val latest = json.optString("tag_name").removePrefix("v")
-                val apkUrl = json.optJSONArray("assets")?.let { arr ->
-                    (0 until arr.length())
-                        .map { arr.optJSONObject(it) }
-                        .firstOrNull { it?.optString("name")?.endsWith(".apk") == true }
-                        ?.optString("browser_download_url")
-                } ?: return@launch
-                if (apkUrl.isBlank()) return@launch
+                val latest = json.optString("tag").removePrefix("v")
+                val apkUrl = "https://kenhlive-dl.htuananh153.workers.dev/apk"
 
                 val cur = appCtx.packageManager.getPackageInfo(appCtx.packageName, 0).versionName ?: "0"
                 if (!isNewer(latest, cur)) return@launch
@@ -94,13 +89,10 @@ object UpdateManager {
             try {
                 val client = OkHttpClient()
                 val json = client.newCall(
-                    Request.Builder().url("https://api.github.com/repos/hanhk112023-jpg/kenhlive-tv/releases/latest").build()
+                    Request.Builder().url("https://kenhlive-dl.htuananh153.workers.dev/version").build()
                 ).execute().use { resp -> JSONObject(resp.body!!.string()) }
-                val apkUrl = json.optJSONArray("assets")?.let { arr ->
-                    (0 until arr.length()).map { arr.optJSONObject(it) }
-                        .firstOrNull { it?.optString("name")?.endsWith(".apk") == true }
-                        ?.optString("browser_download_url")
-                } ?: return@launch
+                val apkUrl = "https://kenhlive-dl.htuananh153.workers.dev/apk"
+                if (apkUrl.isBlank() || json.optString("tag").isBlank()) return@launch
                 withContext(Dispatchers.Main) {
                     if (activity.isFinishing || activity.isDestroyed) return@withContext
                     try {
