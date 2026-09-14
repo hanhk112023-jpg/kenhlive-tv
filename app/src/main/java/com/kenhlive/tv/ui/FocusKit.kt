@@ -96,15 +96,22 @@ object FocusKit {
 
     /** Khôi phục focus về ô đã nhớ (gọi từ onResume) — ưu tiên KHOÁ nội dung vì position drift sau refresh. */
     fun restore(host: RowHost) {
-        val slot = lastKey?.let { host.slotFor(it) } ?: lastSlot ?: return
-        val (rowPos, idx) = slot
         val rv = host.outerRecyclerView ?: return
-        rv.post {
-            if (!focusNow(rv, rowPos, idx)) {
-                // hàng chưa nằm trong màn → cuộn tới rồi thử lại
-                rv.scrollToPosition(rowPos)
-                rv.postDelayed({ focusNow(rv, rowPos, idx) }, 220)
+        if (lastSlot == null && lastKey == null) return
+        var left = 8
+        val tryOnce = object : Runnable {
+            override fun run() {
+                // re-resolve moi lan: vi tri drift theo DiffUtil pending updates
+                val slot = lastKey?.let { host.slotFor(it) } ?: lastSlot
+                val done = slot?.let { (rowPos, idx) ->
+                    if (focusNow(rv, rowPos, idx)) true
+                    else { rv.scrollToPosition(rowPos); false }
+                } ?: false
+                if (done || left <= 0) return
+                left--
+                rv.postDelayed(this, 160)
             }
         }
+        rv.post(tryOnce)
     }
 }

@@ -344,8 +344,11 @@ else:
     ok_l, bl, what_l = focused_card_info()
     # thiet ke FPT v6.1.5+: LEFT o card dau = MO RAIL (focus vao nav_* / railPanel) — hanh vi DUNG.
     if not ok_l and ('nav_' in (what_l or '') or 'railPanel' in (what_l or '')):
-        P.key('22'); time.sleep(0.7)                      # RIGHT dong rail
-        ok_l, bl, what_l = focused_card_info()
+        P.key('22'); time.sleep(0.8)                      # RIGHT: dong rail → ve chip dau
+        for _ in range(4):                                 # DOWN: chip → hero → card dau hang
+            if ok_l and bl: break
+            P.key('20'); time.sleep(0.9)
+            ok_l, bl, _ = focused_card_info()
         stay_l = ok_l and b0 and bl and abs(int(bl[1]) - int(b0[1])) < 40
         add_check('LEFT tại mép trái — mở rail kiểu FPT rồi đóng về cùng hàng', stay_l,
                   'rail ok, về cùng hàng' if stay_l else f'{b0} → {bl}')
