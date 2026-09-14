@@ -58,11 +58,18 @@ class LiveFragment : Fragment() {
             vm.state.collect { st ->
                 if (st is UiState.Success) liveGroups = st.data
                 rebuild()
-                // Error/Loading khi CHUA co du lieu moi/ cu -> lap overlay;
-                // da co du lieu (liveGroups khong rong) -> GIU noi dung kieu FPT, im lang retry nen
-                if ((st is UiState.Loading || st is UiState.Error) && liveGroups.isEmpty())
-                    state.render(st, R.string.live_loading) { vm.load(force = true); svm.load(force = true) }
-                else state.hide() // an spinner ton dong khi data da ve giua chung
+                // Da co noi dung (live HOAC lich) -> an overlay, giu UI kieu FPT va im lang retry nen.
+                // Chua co gi -> dung overlay cua StateBinder: Loading / Error / Empty "San vang bong".
+                // (Truoc day nhanh nay goi state.hide() vo dieu kien nen UiState.Empty cua
+                //  LiveViewModel bi an mat -> man hinh trong khong khi khong co tran nao.)
+                val hasContent = liveGroups.isNotEmpty() || daysLabeled.isNotEmpty()
+                when {
+                    hasContent -> state.hide()
+                    st is UiState.Success -> Unit // rebuild() da dat Empty
+                    else -> state.render(st, R.string.live_loading) {
+                        vm.load(force = true); svm.load(force = true)
+                    }
+                }
             }
         }
         viewLifecycleOwner.lifecycleScope.launch {
@@ -117,7 +124,14 @@ class LiveFragment : Fragment() {
         }
         adapter.submitList(items)
         if (items.size > 3) state.hide()
-        else if (liveGroups.isEmpty() && daysLabeled.isEmpty()) state.render(UiState.Empty("Sân vắng bóng", "Hiện không có trận nào đang live"), R.string.live_loading)
+        else if (liveGroups.isEmpty() && daysLabeled.isEmpty())
+            state.render(
+                UiState.Empty(
+                    getString(R.string.live_empty_title),
+                    getString(R.string.live_empty_body)
+                ),
+                R.string.live_loading
+            )
     }
 
     override fun onResume() {

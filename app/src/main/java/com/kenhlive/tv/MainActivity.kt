@@ -90,10 +90,17 @@ class MainActivity : AppCompatActivity() {
             R.id.nav_settings to Pair(R.drawable.ic_nav_settings, R.string.nav_settings)
         )
         navViews.clear()
+        // Box khong khai bao leanback/uiMode=television van phai chay layout PHONE (bottom nav).
+        // item_nav_phone dat focusable="false" cho man hinh cam ung, nhung may KHONG co man hinh
+        // cam ung (TV box gia re) thi dieu khien tu xa khong bao gio focus duoc bottom nav ->
+        // khong the mo Cai dat / Lich / Tim kiem. Bat focusable theo kha nang that cua thiet bi.
+        val navNeedsFocus = DeviceMode.isTv ||
+            !packageManager.hasSystemFeature(android.content.pm.PackageManager.FEATURE_TOUCHSCREEN)
         defs.forEachIndexed { i, (id, def) ->
             val v = findViewById<View>(id) ?: return@forEachIndexed
             v.findViewById<ImageView>(R.id.navIcon)?.setImageResource(def.first)
             v.findViewById<TextView>(R.id.navLabel)?.setText(def.second)
+            v.isFocusable = navNeedsFocus
             v.setOnClickListener { showTab(i) } // showTab tu dong dong rail
             navViews.add(v)
         }
@@ -125,9 +132,16 @@ class MainActivity : AppCompatActivity() {
 
     private fun focusContentFirst() {
         val c = findViewById<View>(R.id.fragmentContainer) ?: return
-        c.findFocus()?.let { if (c === it.rootView || isDescendant(c, it)) return }
+        // Focus da nam trong noi dung thi giu nguyen. (Dieu kien cu `c === it.rootView` luon
+        // false: c la container con it.rootView la DecorView -> code chet.)
+        c.findFocus()?.let { if (isDescendant(c, it)) return }
         c.post {
-            val v = c.findViewWithTag<View>("kl_focus_first") ?: firstFocusableIn(c)
+            val tagged = c.findViewWithTag<View>("kl_focus_first")
+            val v = when {
+                tagged == null -> firstFocusableIn(c)
+                tagged.isFocusable -> tagged
+                else -> firstFocusableIn(tagged) ?: firstFocusableIn(c)
+            }
             v?.requestFocus()
         }
     }
@@ -177,7 +191,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun showTab(pos: Int, animate: Boolean = true) {
         current = pos
-        if (railOpen) closeRail()
+        val fromRail = railOpen
+        if (railOpen) closeRail(focusContent = false)
         navViews.forEachIndexed { i, v -> v.isSelected = i == pos }
         val tx = supportFragmentManager.beginTransaction()
         if (animate) tx.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
@@ -196,6 +211,16 @@ class MainActivity : AppCompatActivity() {
             } else if (f != null) tx.hide(f)
         }
         tx.commit()
+        // FOCUS SAU KHI TAB MOI THUC SU CO VIEW.
+        // Truoc day closeRail() goi focusContentFirst() ngay dau ham, trong khi commit() la
+        // BAT DONG BO -> Runnable focus chay TRUOC transaction: focus dat len view cua tab cu,
+        // tab cu bi hide (GONE) ngay sau do -> focus roi xuong dat, dieu khien tu xa tuong "chet"
+        // (mo duoc Cai dat/Lich/Tim nhung khong bam duoc gi). ROM khac nhau phuc hoi focus
+        // khac nhau nen ben thi thay binh thuong, box Android 12 thi chet han.
+        if (fromRail) {
+            supportFragmentManager.executePendingTransactions()
+            focusContentFirst()
+        }
     }
 
     fun hideKeyboard() {

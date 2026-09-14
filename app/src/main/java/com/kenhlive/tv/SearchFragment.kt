@@ -41,6 +41,8 @@ class SearchFragment : Fragment() {
     private lateinit var searchAdapter: SearchResultAdapter
     private var dialog: AlertDialog? = null
     private var syncing = false
+    /** Nguồn đã tải xong chưa — chặn empty state đè lên spinner ở lần collect đầu tiên. */
+    private var sourceOk = false
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, s: Bundle?): View {
         val v = inflater.inflate(R.layout.fragment_search, container, false)
@@ -77,6 +79,7 @@ class SearchFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             vm.source.collect { st ->
+                sourceOk = st is UiState.Success
                 state.render(st, R.string.state_loading) { vm.load(force = true) }
             }
         }
@@ -88,6 +91,21 @@ class SearchFragment : Fragment() {
                     getString(R.string.search_count_all, r.groups.size)
                 else getString(R.string.search_count_result, r.groups.size, q)
                 if (r.chips.isNotEmpty() && chipContainer.childCount == 0) buildChips(r.chips)
+                // Khong tim thay gi -> hien empty state (anh empty_search) thay vi danh sach trong
+                // tro. Chi lam khi nguon da tai xong de khong de empty state che spinner.
+                when {
+                    r.groups.isNotEmpty() -> state.hide()
+                    sourceOk -> state.render(
+                        if (q.isBlank())
+                            UiState.Empty(
+                                getString(R.string.live_empty_title),
+                                getString(R.string.live_empty_body)
+                            )
+                        else UiState.Empty(getString(R.string.search_empty, q)),
+                        R.string.state_loading,
+                        emptyImageRes = R.drawable.empty_search
+                    )
+                }
             }
         }
         vm.load()

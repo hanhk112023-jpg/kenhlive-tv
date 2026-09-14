@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Landscape phone: shorter hero, wider cards -->
+<!-- Landscape PHONE: shorter hero, wider cards.
+     CHU Y: `land` uu tien CAO HON `television` (Table 2 cua Android) nen file nay cung de len
+     Android TV — gia tri cho TV nam o values-land-television/dimens.xml (them key o day thi
+     phai them ban TV tuong ung o do). -->
 <resources>
     <dimen name="hero_h">210dp</dimen>
     <dimen name="card_w">248dp</dimen>

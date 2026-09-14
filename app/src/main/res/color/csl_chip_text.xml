@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Màu chữ chip theo trạng thái — cùng pattern với csl_nav_text.
+     Thiếu file này, chip "môn" đang lọc chỉ đổi nền nên gần như không phân biệt được
+     trên TV (chữ vẫn xám kl_text_2 ở cả 3 trạng thái). -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true" android:color="@color/kl_text_1" />
+    <item android:state_selected="true" android:color="@color/kl_brand" />
+    <item android:color="@color/kl_text_2" />
+</selector>

@@ -22,7 +22,12 @@ class StateBinder(root: View) {
 
     fun hide() { stateRoot.visibility = View.GONE }
 
-    fun <T> render(state: UiState<T>, loadingTextRes: Int = R.string.state_loading, onRetry: () -> Unit = {}) {
+    fun <T> render(
+        state: UiState<T>,
+        loadingTextRes: Int = R.string.state_loading,
+        emptyImageRes: Int = R.drawable.empty_schedule,
+        onRetry: () -> Unit = {}
+    ) {
         when (state) {
             is UiState.Loading -> {
                 stateRoot.visibility = View.VISIBLE
@@ -39,7 +44,7 @@ class StateBinder(root: View) {
                 stateRoot.visibility = View.VISIBLE
                 loading.visibility = View.GONE
                 empty.visibility = View.VISIBLE
-                image.setImageResource(R.drawable.empty_schedule)
+                image.setImageResource(emptyImageRes)
                 title.text = state.title
                 body.text = state.body
                 retry.visibility = View.GONE

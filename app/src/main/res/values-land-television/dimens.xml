@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ANDROID TV ở chế độ ngang (TV LUÔN là land).
+
+  Theo Table 2 của Android, qualifier *Screen orientation* (`land`) có ĐỘ ƯU TIÊN CAO HƠN
+  *UI mode* (`television`) — nên `values-land/` thắng `values-television/` trên chính màn TV
+  và kéo hero/card/topbar về số đo điện thoại (hero 338dp → 210dp, card 316dp → 248dp).
+  Thư mục `land-television` cụ thể hơn cả hai nên được chọn cho TV, trả lại đúng số đo 10-foot.
+
+  Giữ 5 khoá này ĐỒNG BỘ với values-television/dimens.xml.
+-->
+<resources>
+    <dimen name="hero_h">338dp</dimen>
+    <dimen name="card_w">316dp</dimen>
+    <dimen name="card_thumb_h">178dp</dimen>
+    <dimen name="topbar_h">44dp</dimen>
+    <dimen name="bottomnav_h">0dp</dimen>
+</resources>

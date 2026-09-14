@@ -65,14 +65,10 @@ class SportAdapter(
     override fun onAttachedToRecyclerView(rv: RecyclerView) { outerRecyclerView = rv }
     override fun onDetachedFromRecyclerView(rv: RecyclerView) { outerRecyclerView = null }
 
-    /** UP tu rail/danh sach -> nut XEM NGAY cua hero; hero chua layout -> chip. */
+    /** UP tu rail/danh sach -> nut XEM NGAY cua hero; hero an/chua layout -> chip. */
     override fun focusHero(): Boolean {
         val rv = outerRecyclerView ?: return false
-        (rv.findViewHolderForAdapterPosition(1) as? HeroVH)?.let { vh ->
-            val inner = vh.pager.getChildAt(0) as? RecyclerView
-            val page = inner?.findViewHolderForAdapterPosition(vh.pager.currentItem)?.itemView
-            if (page?.findViewById<View>(R.id.heroPlay)?.requestFocus() == true) return true
-        }
+        if (focusHeroPlay()) return true
         val ch = rv.findViewHolderForAdapterPosition(0) as? ChipsVH ?: return false
         return ch.row.getChildAt(0)?.requestFocus() ?: false
     }
@@ -83,6 +79,7 @@ class SportAdapter(
     fun focusHeroPlay(): Boolean {
         val rv = outerRecyclerView ?: return false
         val vh = rv.findViewHolderForAdapterPosition(1) as? HeroVH ?: return false
+        if (vh.itemView.visibility != View.VISIBLE) return false // hero dang an (khong co tran live)
         val inner = vh.pager.getChildAt(0) as? RecyclerView ?: return false
         val page = inner.findViewHolderForAdapterPosition(vh.pager.currentItem)?.itemView ?: return false
         return page.findViewById<View>(R.id.heroPlay)?.requestFocus() == true
@@ -198,7 +195,14 @@ class SportAdapter(
             is HeroItem -> {
                 val vh = h as HeroVH
                 (vh.pager.adapter as? HeroPagerAdapter)?.detach()
-                if (item.groups.isNotEmpty()) {
+                if (item.groups.isEmpty()) {
+                    // Khong co tran live: DOP hero. Truoc day adapter cu van giu lai nen hero
+                    // "ma" cua lan load truoc van hien (hoac 1 khoi trong cao hero_h day rail
+                    // xuong) khi loc mon khong co ket qua.
+                    vh.pager.adapter = null
+                    vh.dots.removeAllViews()
+                    vh.itemView.visibility = View.GONE
+                } else {
                     vh.itemView.visibility = View.VISIBLE
                     val a = HeroPagerAdapter(item.groups) { g -> onGroupClick(g) }
                     vh.pager.adapter = a

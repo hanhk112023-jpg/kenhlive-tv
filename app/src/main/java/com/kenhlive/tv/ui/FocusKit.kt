@@ -60,29 +60,53 @@ object FocusKit {
     private fun moveRow(host: RowHost, fromPos: Int, targetPos: Int, idx: Int): Boolean {
         val rv = host.outerRecyclerView ?: return false
         if (targetPos < 0 || targetPos >= (rv.adapter?.itemCount ?: 0)) return true // biên dọc: nuốt
-        if (focusNow(rv, targetPos, idx)) return true
-        rv.smoothScrollBy(0, if (targetPos > fromPos) 420 else -420)
-        retry(host, targetPos, idx, 7)
+        val step = if (targetPos > fromPos) 1 else -1
+        if (focusRow(rv, targetPos, idx, step)) return true
+        rv.smoothScrollBy(0, step * 420)
+        retry(host, targetPos, idx, 7, step)
         return true
     }
 
-    private fun retry(host: RowHost, pos: Int, idx: Int, left: Int) {
+    private fun retry(host: RowHost, pos: Int, idx: Int, left: Int, step: Int) {
         if (left <= 0) return
         val rv = host.outerRecyclerView ?: return
         rv.postDelayed({
-            if (!focusNow(rv, pos, idx)) retry(host, pos, idx, left - 1)
+            if (!focusRow(rv, pos, idx, step)) retry(host, pos, idx, left - 1, step)
         }, 180)
+    }
+
+    /**
+     * Focus hàng `pos`; nếu hàng đó không có gì focus được (header ngày) thì bước tiếp theo
+     * hướng `step` sang hàng kề. Thiếu bước này thì D-pad DOWN/UP từ rail "Trực tiếp & Sắp
+     * diễn ra" chỉ cuộn nội dung còn focus mắc lại ở card rail (card bị recycle → mất focus).
+     */
+    private fun focusRow(rv: RecyclerView, pos: Int, idx: Int, step: Int): Boolean {
+        val count = rv.adapter?.itemCount ?: 0
+        var p = pos
+        while (p in 0 until count) {
+            val vh = rv.findViewHolderForAdapterPosition(p) ?: return false // chưa layout → chờ/cuộn
+            if (focusNow(rv, p, idx)) return true
+            val isRail = vh.itemView.findViewById<RecyclerView>(R.id.rowList) != null
+            if (isRail || vh.itemView.isFocusable) return false // có ô thật, chỉ là chưa sẵn sàng
+            p += step // header ngày: bỏ qua, đi tiếp cùng hướng bấm phím
+        }
+        return false
     }
 
     /** Focus ô idx của hàng adapter `pos` (hàng = RecyclerView ngang bên trong RowVH). */
     fun focusNow(rv: RecyclerView, pos: Int, idx: Int): Boolean {
         val vh = rv.findViewHolderForAdapterPosition(pos) ?: return false
-        val inner = vh.itemView.findViewById<RecyclerView>(R.id.rowList) ?: return false
-        val lm = inner.layoutManager as? LinearLayoutManager ?: return false
-        val target = lm.findViewByPosition(idx)
-            ?: lm.findViewByPosition(idx.coerceAtMost((inner.adapter?.itemCount ?: 1) - 1))
-            ?: return false
-        return target.requestFocus()
+        val inner = vh.itemView.findViewById<RecyclerView>(R.id.rowList)
+        if (inner != null) {
+            val lm = inner.layoutManager as? LinearLayoutManager ?: return false
+            val target = lm.findViewByPosition(idx)
+                ?: lm.findViewByPosition(idx.coerceAtMost((inner.adapter?.itemCount ?: 1) - 1))
+                ?: return false
+            return target.requestFocus()
+        }
+        // Hàng không phải rail (card trận trong danh sách theo ngày): focus chính card.
+        val item = vh.itemView
+        return item.isFocusable && item.requestFocus()
     }
 
     /** Khôi phục focus về ô đã nhớ (gọi từ onResume). */
@@ -90,10 +114,10 @@ object FocusKit {
         val (rowPos, idx) = lastSlot ?: return
         val rv = host.outerRecyclerView ?: return
         rv.post {
-            if (!focusNow(rv, rowPos, idx)) {
+            if (!focusRow(rv, rowPos, idx, 1) && !focusRow(rv, rowPos, idx, -1)) {
                 // hàng chưa nằm trong màn → cuộn tới rồi thử lại
                 rv.scrollToPosition(rowPos)
-                rv.postDelayed({ focusNow(rv, rowPos, idx) }, 220)
+                rv.postDelayed({ focusRow(rv, rowPos, idx, 1) }, 220)
             }
         }
     }
