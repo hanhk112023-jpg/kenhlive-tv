@@ -68,22 +68,21 @@ class SportAdapter(
     /** Dinh vi slot theo khoa noi dung (chong drift vi tri sau auto-refresh). */
     override fun slotFor(key: String): Pair<Int, Int>? {
         val rv = outerRecyclerView ?: return null
-        val ad = rv.adapter as? ListAdapter<*, *> ?: return null
         val parts = key.split('|', limit = 3)
         if (parts.size < 3) return null
         val (kind, lg, mt) = parts
-        for (pos in 0 until ad.itemCount) {
-            when (val it = ad.getItem(pos)) {
+        for (pos in 0 until itemCount) {
+            when (val cur = getItem(pos)) {
                 is RailItem -> {
-                    val all = (it.groups as? List<LiveMatchGroup>) ?: emptyList()
+                    val all = (cur.groups as? List<LiveMatchGroup>) ?: emptyList()
                     var i = all.indexOfFirst { g -> g.league == lg && g.matchTitle == mt }
                     if (i < 0) {
-                        val j = it.upcoming.indexOfFirst { m -> m.league == lg && "${m.host} vs ${m.guest}" == mt }
+                        val j = cur.upcoming.indexOfFirst { m -> m.league == lg && "${m.host} vs ${m.guest}" == mt }
                         if (j >= 0) i = all.size + j
                     }
                     if (i >= 0) return 2 to i
                 }
-                is ScheduleMatch -> if (kind == "M" && it.league == lg && "${it.host} vs ${it.guest}" == mt) return pos to 0
+                is ScheduleMatch -> if (kind == "M" && cur.league == lg && "${cur.host} vs ${cur.guest}" == mt) return pos to 0
                 else -> {}
             }
         }
