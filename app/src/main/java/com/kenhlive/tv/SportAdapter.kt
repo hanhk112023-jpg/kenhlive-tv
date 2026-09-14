@@ -65,6 +65,31 @@ class SportAdapter(
     override fun onAttachedToRecyclerView(rv: RecyclerView) { outerRecyclerView = rv }
     override fun onDetachedFromRecyclerView(rv: RecyclerView) { outerRecyclerView = null }
 
+    /** Dinh vi slot theo khoa noi dung (chong drift vi tri sau auto-refresh). */
+    override fun slotFor(key: String): Pair<Int, Int>? {
+        val rv = outerRecyclerView ?: return null
+        val ad = rv.adapter as? ListAdapter<*, *> ?: return null
+        val parts = key.split('|', limit = 3)
+        if (parts.size < 3) return null
+        val (kind, lg, mt) = parts
+        for (pos in 0 until ad.itemCount) {
+            when (val it = ad.getItem(pos)) {
+                is RailItem -> {
+                    val all = (it.groups as? List<LiveMatchGroup>) ?: emptyList()
+                    var i = all.indexOfFirst { g -> g.league == lg && g.matchTitle == mt }
+                    if (i < 0) {
+                        val j = it.upcoming.indexOfFirst { m -> m.league == lg && "${m.host} vs ${m.guest}" == mt }
+                        if (j >= 0) i = all.size + j
+                    }
+                    if (i >= 0) return 2 to i
+                }
+                is ScheduleMatch -> if (kind == "M" && it.league == lg && "${it.host} vs ${it.guest}" == mt) return pos to 0
+                else -> {}
+            }
+        }
+        return null
+    }
+
     /** UP tu rail/danh sach -> nut XEM NGAY cua hero; hero chua layout -> chip. */
     override fun focusHero(): Boolean {
         val rv = outerRecyclerView ?: return false
@@ -232,7 +257,7 @@ class SportAdapter(
                 val vh = h as MatchVH
                 val ctx = h.itemView.context
                 vh.itemView.setOnFocusChangeListener { v, has ->
-                    if (has) FocusKit.remember(pos, 0)
+                    if (has) FocusKit.remember(pos, 0, "M|${item.league}|${item.host} vs ${item.guest}")
                     v.animate().scaleX(if (has) 1.015f else 1f).scaleY(if (has) 1.015f else 1f)
                         .setDuration(130).start()
                     v.elevation = if (has) 10f else 0f

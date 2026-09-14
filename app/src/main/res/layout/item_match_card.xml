@@ -64,7 +64,9 @@
             android:textColor="@color/kl_text_1"
             android:textSize="@dimen/ts_fx_team"
             android:fontFamily="sans-serif-medium"
-            android:maxLines="3"
+            android:maxLines="2"
+            android:breakStrategy="simple"
+            android:hyphenationFrequency="none"
             android:ellipsize="end" />
 
         <LinearLayout
@@ -103,7 +105,9 @@
             android:textColor="@color/kl_text_1"
             android:textSize="@dimen/ts_fx_team"
             android:fontFamily="sans-serif-medium"
-            android:maxLines="3"
+            android:maxLines="2"
+            android:breakStrategy="simple"
+            android:hyphenationFrequency="none"
             android:ellipsize="end" />
     </LinearLayout>
 

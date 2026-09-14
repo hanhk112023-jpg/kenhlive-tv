@@ -60,6 +60,8 @@
         android:layout_marginLeft="10dp"
         android:layout_marginRight="10dp"
         android:maxLines="2"
+        android:breakStrategy="simple"
+        android:hyphenationFrequency="none"
         android:ellipsize="end" />
 
     <!-- crest doi khach -->

@@ -20,7 +20,13 @@ object FocusKit {
     /** Vị trí ô focus gần nhất (rowPos, idx) — khôi phục khi quay lại màn hình. */
     var lastSlot: Pair<Int, Int>? = null
 
+    /** Khoá nội dung của ô focus (vd "C|league|A vs B") — position drift sau auto-refresh. */
+    var lastKey: String? = null
+
     interface RowHost {
+        /** Định vị lại slot hiện tại theo khoá nội dung (null = không tìm thấy). */
+        fun slotFor(key: String): Pair<Int, Int>? = null
+
         val outerRecyclerView: RecyclerView?
         /** Focus nút hero (UP từ hàng đầu). Trả về true nếu đã focus được. */
         fun focusHero(): Boolean
@@ -55,7 +61,10 @@ object FocusKit {
     }
 
     /** Nhớ ô đang focus để restore. */
-    fun remember(rowPos: Int, idx: Int) { lastSlot = rowPos to idx }
+    fun remember(rowPos: Int, idx: Int, key: String? = null) {
+        lastSlot = rowPos to idx
+        if (key != null) lastKey = key
+    }
 
     private fun moveRow(host: RowHost, fromPos: Int, targetPos: Int, idx: Int): Boolean {
         val rv = host.outerRecyclerView ?: return false
@@ -85,9 +94,10 @@ object FocusKit {
         return target.requestFocus()
     }
 
-    /** Khôi phục focus về ô đã nhớ (gọi từ onResume). */
+    /** Khôi phục focus về ô đã nhớ (gọi từ onResume) — ưu tiên KHOÁ nội dung vì position drift sau refresh. */
     fun restore(host: RowHost) {
-        val (rowPos, idx) = lastSlot ?: return
+        val slot = lastKey?.let { host.slotFor(it) } ?: lastSlot ?: return
+        val (rowPos, idx) = slot
         val rv = host.outerRecyclerView ?: return
         rv.post {
             if (!focusNow(rv, rowPos, idx)) {

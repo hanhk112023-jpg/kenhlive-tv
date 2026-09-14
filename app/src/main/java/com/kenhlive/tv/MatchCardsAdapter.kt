@@ -105,7 +105,14 @@ class MatchCardsAdapter(
         val card = h.itemView
         keyHandler?.let { card.setOnKeyListener(it(rowPos, pos, itemCount)) }
         card.setOnFocusChangeListener { v, has ->
-            if (has) FocusKit.remember(rowPos, pos)
+            if (has) {
+                val key = when (val it0 = getItem(pos)) {
+                    is LiveMatchGroup -> "L|${it0.league}|${it0.matchTitle}"
+                    is ScheduleMatch -> "M|${it0.league}|${it0.host} vs ${it0.guest}"
+                    else -> null
+                }
+                FocusKit.remember(rowPos, pos, key)
+            }
             v.animate().scaleX(if (has) 1.06f else 1f).scaleY(if (has) 1.06f else 1f)
                 .setDuration(150).start()
             v.elevation = if (has) 16f else 0f
