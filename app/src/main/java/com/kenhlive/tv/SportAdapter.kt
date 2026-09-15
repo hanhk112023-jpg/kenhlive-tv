@@ -133,6 +133,10 @@ class SportAdapter(
     inner class HeroVH(v: View) : RecyclerView.ViewHolder(v) {
         val pager: androidx.viewpager2.widget.ViewPager2 = v.findViewById(R.id.heroPager)
         val dots: LinearLayout = v.findViewById(R.id.heroDots)
+        init {
+            // XML clipToOutline chi hieu luc API31+; set bang code de bo goc banner tren moi ROM (API21+)
+            pager.clipToOutline = true
+        }
     }
 
     inner class RailVH(v: View) : RecyclerView.ViewHolder(v) {
