@@ -19,7 +19,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|right"
-        android:layout_marginRight="@dimen/sp_screen_margin"
+        android:layout_marginRight="@dimen/hero_dots_margin"
         android:layout_marginBottom="14dp"
         android:orientation="horizontal" />
 </FrameLayout>

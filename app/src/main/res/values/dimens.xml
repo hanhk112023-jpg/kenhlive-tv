@@ -55,4 +55,5 @@
     <dimen name="ts_card_room">15sp</dimen>
     <dimen name="sched_time_w">56dp</dimen>
     <dimen name="sched_row_gap">8dp</dimen>
+    <dimen name="hero_dots_margin">48dp</dimen>
 </resources>
