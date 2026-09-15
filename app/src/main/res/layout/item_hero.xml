@@ -5,9 +5,10 @@
     android:focusable="false"
     android:descendantFocusability="afterDescendants">
 
-    <!-- 6.2.3 ti le chuan: cover fitCenter — anh promo vnres (chu/logo bake san
-         o dau-cuoi) hien TRON VEN, khong centerCrop cat nui nua; hai ben co dai
-         den ne (mau nen app la #000 nen hoa nhap). -->
+    <!-- 6.2.4 chuan: khung banner = cot noi dung (margin 16dp) + bo goc 18dp + 16:9
+         (hero_h 184dp). fitCenter: 8/10 anh nguon 16:9 LAP KIN khung khong cat;
+         promo gan vuong (1.09 Rong Dat) chi le 2 dai den doi xung trong khung tron —
+         centerCrop se tai lap 'cat 1 nui' voi loai anh nay, cam dung lai. -->
 <ImageView
         android:id="@+id/heroCover"
         android:layout_width="match_parent"

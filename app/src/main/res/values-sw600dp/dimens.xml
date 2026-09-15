@@ -2,7 +2,7 @@
 <!-- Tablets / foldables: intermediate scale, 3-up cards -->
 <resources>
     <dimen name="sp_screen_margin">28dp</dimen>
-    <dimen name="hero_h">306dp</dimen>
+    <dimen name="hero_h">284dp</dimen>
     <dimen name="card_w">268dp</dimen>
     <dimen name="card_thumb_h">151dp</dimen>
     <dimen name="ts_display">34sp</dimen>
