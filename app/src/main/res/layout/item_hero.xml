@@ -5,14 +5,26 @@
     android:focusable="false"
     android:descendantFocusability="afterDescendants">
 
-    <!-- fitCenter (khong centerCrop): anh promo vnres co chu bake san o dau/cuoi —
-         centerCrop vao khung ngang 2.8:1 xen mat 'cat 1 nui banner'. Nen den thuan. -->
+    <!-- 6.2.3 ti le chuan: khung hero do theo ti le ANH THAT (listener Coil) —
+         cover centerCrop day khung, that bao nhieu lo den day; heroBlur lam day
+         khong con den thu. Quyen loi so voi fitCenter (cung het cat nui, thoi den). -->
+    <ImageView
+        android:id="@+id/heroBlur"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:importantForAccessibility="no"
+        android:contentDescription="@null" />
+
+    <!-- fitCenter: KHÔNG BAO GIỜ cắt ảnh (promo vnres chữ bake mép); phone tu do
+         khung = ti le anh that (listener Coil) nen anh lap day, TV giu khung co
+         + heroBlur day hai ben → khong con dai den thuan -->
     <ImageView
         android:id="@+id/heroCover"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="fitCenter"
-        android:background="#FF000000"
+        android:background="@android:color/transparent"
         android:contentDescription="@string/cd_match" />
 
     <View

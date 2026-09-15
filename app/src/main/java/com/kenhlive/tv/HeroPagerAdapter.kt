@@ -84,6 +84,7 @@ class HeroPagerAdapter(
 
     inner class HV(v: View) : RecyclerView.ViewHolder(v) {
         val cover: ImageView = v.findViewById(R.id.heroCover)
+        val blur: ImageView = v.findViewById(R.id.heroBlur)
         val title: TextView = v.findViewById(R.id.heroTitle)
         val league: TextView = v.findViewById(R.id.heroLeague)
         val blv: TextView = v.findViewById(R.id.heroBlv)
@@ -103,7 +104,13 @@ class HeroPagerAdapter(
         h.league.text = g.league
         h.blv.text = top.blvName
         h.viewers.text = SocoliveRepository.fmtViewers(g.totalViewers)
-        h.cover.load(top.cover.ifBlank { top.avatar }) {
+        val imgSrc = top.cover.ifBlank { top.avatar }
+        // day nền blur: khung rong hon anh (TV) khong con dai den thuan
+        h.blur.load(imgSrc) {
+            transformations(coil.transform.BlurTransformation(h.itemView.context, 22, 6))
+            crossfade(0)
+        }
+        h.cover.load(imgSrc) {
             crossfade(if (DeviceMode.lowRam) 0 else 200)
             placeholder(R.drawable.hero_fallback)
             error(R.drawable.hero_fallback)

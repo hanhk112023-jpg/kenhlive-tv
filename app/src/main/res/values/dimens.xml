@@ -17,7 +17,7 @@
     <dimen name="topbar_h">56dp</dimen>
     <dimen name="bottomnav_h">64dp</dimen>
     <dimen name="rail_w">0dp</dimen>          <!-- unused on phone -->
-    <dimen name="hero_h">236dp</dimen>
+    <dimen name="hero_h">208dp</dimen>
     <dimen name="card_w">216dp</dimen>
     <dimen name="card_thumb_h">122dp</dimen>
 
