@@ -78,12 +78,17 @@ class ScheduleAdapter(
                 vh.time.text = SocoliveRepository.formatTime(item.matchTimeMs)
                 vh.badge.visibility = View.VISIBLE
                 if (item.isLive) {
-                    vh.badge.text = ctx.getString(R.string.sched_live).uppercase()
+                    vh.badge.setText(R.string.sched_live)
                     vh.badge.setTextColor(0xFFFFFFFF.toInt())
                     vh.badge.setBackgroundResource(R.drawable.bg_badge_live)
                     vh.time.setTextColor(ctx.getColorCompat(R.color.kl_live))
+                } else if (item.hasRoom) {
+                    vh.badge.setText(R.string.badge_has_room)
+                    vh.badge.setTextColor(ctx.getColorCompat(R.color.kl_text_2))
+                    vh.badge.setBackgroundResource(R.drawable.bg_badge_glass)
+                    vh.time.setTextColor(ctx.getColorCompat(R.color.kl_text_1))
                 } else {
-                    vh.badge.text = SocoliveRepository.formatTime(item.matchTimeMs)
+                    vh.badge.setText(R.string.badge_no_room)
                     vh.badge.setTextColor(ctx.getColorCompat(R.color.kl_text_3))
                     vh.badge.setBackgroundResource(R.drawable.bg_badge_glass)
                     vh.time.setTextColor(ctx.getColorCompat(R.color.kl_text_1))

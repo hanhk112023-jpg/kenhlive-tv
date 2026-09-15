@@ -8,6 +8,8 @@
     android:background="@drawable/bg_card"
     android:foreground="@drawable/fg_focus"
     android:padding="@dimen/sp_item_pad"
+    android:layout_marginLeft="@dimen/sp_screen_margin"
+    android:layout_marginRight="@dimen/sp_screen_margin"
     android:layout_marginBottom="@dimen/sched_row_gap"
     android:focusable="true"
     android:clickable="true">
@@ -39,6 +41,7 @@
             android:paddingRight="7dp"
             android:paddingTop="2dp"
             android:paddingBottom="2dp"
+            android:ellipsize="end"
             android:visibility="gone" />
     </LinearLayout>
 
