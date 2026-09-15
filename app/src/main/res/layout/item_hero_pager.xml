@@ -9,7 +9,9 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/hero_h"
         android:layout_marginLeft="@dimen/hero_side_margin"
-        android:layout_marginRight="@dimen/hero_side_margin" />
+        android:layout_marginRight="@dimen/hero_side_margin"
+        android:background="@drawable/bg_hero_card"
+        android:clipToOutline="true" />
 
     <!-- dots indicator -->
     <LinearLayout

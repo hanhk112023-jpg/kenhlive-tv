@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- khung banner: cung radius 18dp nhu card rail (bg_card) — banner nam trong cot
+     noi dung thi goc phai bo cung kieu, lech goc = 'lech' mat -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="#FF000000" />
+    <corners android:radius="18dp" />
+</shape>
