@@ -104,6 +104,7 @@ dependencies {
 
     // Coil — nhẹ hơn Glide, Kotlin-first
     implementation 'io.coil-kt:coil:2.5.0'
+    implementation 'io.coil-kt:coil-transform:2.5.0'
 
     // BUG-09: network khai báo tường minh (repository + UpdateManager)
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
