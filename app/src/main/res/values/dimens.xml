@@ -19,11 +19,12 @@
     <dimen name="rail_w">0dp</dimen>          <!-- unused on phone -->
     <dimen name="hero_h">184dp</dimen>
     <dimen name="hero_side_margin">16dp</dimen>
+    <dimen name="hero_pad_b">12dp</dimen>
     <dimen name="card_w">216dp</dimen>
     <dimen name="card_thumb_h">122dp</dimen>
 
     <!-- type scale -->
-    <dimen name="ts_display">28sp</dimen>
+    <dimen name="ts_display">24sp</dimen>
     <dimen name="ts_hero_meta">13sp</dimen>
     <dimen name="ts_section">15sp</dimen>
     <dimen name="ts_title">16sp</dimen>
@@ -53,7 +54,7 @@
     <dimen name="ts_fx_time">22sp</dimen>
     <dimen name="ts_card_tag">13sp</dimen>
     <dimen name="ts_card_room">15sp</dimen>
-    <dimen name="sched_time_w">56dp</dimen>
+    <dimen name="sched_time_w">72dp</dimen>
     <dimen name="sched_row_gap">8dp</dimen>
     <dimen name="hero_dots_margin">48dp</dimen>
 </resources>

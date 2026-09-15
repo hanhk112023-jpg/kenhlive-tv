@@ -124,8 +124,8 @@
     <string name="cd_match">Trận đấu</string>
     <string name="cd_blv">Bình luận viên</string>
     <string name="cd_empty">Không có dữ liệu</string>
-    <string name="badge_has_room">Có phòng live</string>
-    <string name="badge_no_room">Chưa có phòng</string>
+    <string name="badge_has_room">Có phòng</string>
+    <string name="badge_no_room">Chưa có</string>
     <string name="sport_rail_title">TRỰC TIẾP &amp; SẮP DIỄN RA</string>
     <string name="nav_live">Bóng đá</string>
 </resources>

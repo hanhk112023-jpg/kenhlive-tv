@@ -240,10 +240,15 @@ class SportAdapter(
                             true
                         } else false
                     }
+                } else {
+                    // khong co tran live -> an banner trong, de man hinh empty khong loe banner den
+                    vh.itemView.visibility = View.GONE
                 }
             }
             is RailItem -> {
                 val vh = h as RailVH
+                val empty = item.groups.isEmpty() && item.upcoming.isEmpty()
+                vh.itemView.visibility = if (empty) View.GONE else View.VISIBLE
                 vh.title.setText(R.string.sport_rail_title)
                 vh.count.visibility = View.GONE
                 vh.cards.rowPos = pos
@@ -274,14 +279,17 @@ class SportAdapter(
                     vh.badge.setText(R.string.sched_live)
                     vh.badge.setBackgroundResource(R.drawable.bg_badge_live_red)
                     vh.badge.setTextColor(0xFFFFFFFF.toInt())
+                    vh.time.setTextColor(ctx.getColorCompat(R.color.kl_live))
                 } else if (item.hasRoom) {
                     vh.badge.setText(R.string.badge_has_room)
                     vh.badge.setBackgroundResource(R.drawable.bg_badge_glass)
                     vh.badge.setTextColor(ctx.getColor(R.color.kl_text_2))
+                    vh.time.setTextColor(ctx.getColorCompat(R.color.kl_text_1))
                 } else {
                     vh.badge.setText(R.string.badge_no_room)
                     vh.badge.setBackgroundResource(R.drawable.bg_badge_glass)
                     vh.badge.setTextColor(ctx.getColor(R.color.kl_text_3))
+                    vh.time.setTextColor(ctx.getColorCompat(R.color.kl_text_1))
                 }
                 vh.hostIcon.load(item.hostIcon) { crossfade(0); placeholder(R.drawable.logo_placeholder); error(null) }
                 vh.guestIcon.load(item.guestIcon) { crossfade(0); placeholder(R.drawable.logo_placeholder); error(null) }

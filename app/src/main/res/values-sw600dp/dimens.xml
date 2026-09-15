@@ -10,5 +10,6 @@
     <dimen name="ts_title">18sp</dimen>
     <dimen name="bottomnav_h">68dp</dimen>
     <dimen name="hero_side_margin">28dp</dimen>
+    <dimen name="hero_pad_b">20dp</dimen>
     <dimen name="hero_dots_margin">64dp</dimen>
 </resources>

@@ -15,6 +15,7 @@
     <dimen name="rail_w">170dp</dimen>
     <dimen name="hero_h">338dp</dimen>
     <dimen name="hero_side_margin">0dp</dimen>
+    <dimen name="hero_pad_b">26dp</dimen>
     <dimen name="card_w">316dp</dimen>
     <dimen name="card_thumb_h">178dp</dimen>
 

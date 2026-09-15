@@ -6,7 +6,8 @@
     android:clipToPadding="false"
     android:paddingLeft="@dimen/sp_screen_margin"
     android:paddingRight="@dimen/sp_screen_margin"
-    android:paddingTop="10dp">
+    android:paddingTop="10dp"
+    android:paddingBottom="12dp">
 
     <LinearLayout
         android:id="@+id/chipRow"
