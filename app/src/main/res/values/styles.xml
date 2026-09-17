@@ -138,7 +138,7 @@
 
     <style name="KL.Chip" parent="">
         <item name="android:background">@drawable/bg_chip</item>
-        <item name="android:textColor">@color/kl_text_2</item>
+        <item name="android:textColor">@color/csl_chip_text</item>
         <item name="android:textSize">@dimen/ts_chip</item>
         <item name="android:fontFamily">sans-serif-medium</item>
         <item name="android:minHeight">@dimen/chip_h</item>

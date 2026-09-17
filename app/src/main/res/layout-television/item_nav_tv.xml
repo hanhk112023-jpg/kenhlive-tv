@@ -8,7 +8,7 @@
     android:background="@drawable/bg_nav_item"
     android:foreground="@drawable/fg_focus"
     android:paddingLeft="14dp"
-    android:paddingRight="12dp"
+    android:paddingRight="14dp"
     android:clickable="true"
     android:focusable="true">
 
@@ -25,6 +25,6 @@
         android:textColor="@color/csl_nav_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="12dp"
+        android:layout_marginLeft="14dp"
         android:textSize="@dimen/ts_nav" />
 </LinearLayout>

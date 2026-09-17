@@ -6,8 +6,8 @@
     android:gravity="center_vertical"
     android:background="@drawable/bg_card"
     android:foreground="@drawable/fg_focus"
-    android:padding="@dimen/sp_item_pad"
-    android:layout_marginBottom="8dp"
+    android:padding="14dp"
+    android:layout_marginBottom="10dp"
     android:focusable="true"
     android:clickable="true">
 
@@ -23,7 +23,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:layout_marginLeft="12dp"
+        android:layout_marginLeft="14dp"
         android:orientation="vertical">
 
         <TextView
@@ -31,6 +31,7 @@
             style="@style/KL.Text.Title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:textColor="@color/kl_text_1"
             android:maxLines="1"
             android:ellipsize="end" />
 
@@ -39,7 +40,8 @@
             style="@style/KL.Text.Meta"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
+            android:textColor="@color/kl_text_3"
+            android:layout_marginTop="3dp"
             android:maxLines="1"
             android:ellipsize="end" />
     </LinearLayout>
@@ -49,7 +51,7 @@
         style="@style/KL.Text.Badge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_badge_live"
+        android:background="@drawable/bg_badge_live_red"
         android:paddingLeft="9dp"
         android:paddingRight="9dp"
         android:paddingTop="3dp"
@@ -64,5 +66,5 @@
         android:layout_marginLeft="10dp"
         android:src="@drawable/ic_chevron_right"
         android:contentDescription="@null"
-        android:alpha="0.6" />
+        android:alpha="0.5" />
 </LinearLayout>

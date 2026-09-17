@@ -5,18 +5,16 @@
     android:focusable="false"
     android:descendantFocusability="afterDescendants">
 
-    <!-- 6.2.4 chuan: khung banner = cot noi dung (margin 16dp) + bo goc 18dp + 16:9
-         (hero_h 184dp). fitCenter: 8/10 anh nguon 16:9 LAP KIN khung khong cat;
-         promo gan vuong (1.09 Rong Dat) chi le 2 dai den doi xung trong khung tron —
-         centerCrop se tai lap 'cat 1 nui' voi loai anh nay, cam dung lai. -->
-<ImageView
+    <!-- 16:9 banner cover: fitCenter tren nen toi sang trong -->
+    <ImageView
         android:id="@+id/heroCover"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:scaleType="fitCenter"
-        android:background="#FF000000"
+        android:background="@color/kl_bg_deep"
         android:contentDescription="@string/cd_match" />
 
+    <!-- Cinematic scrim overlay -->
     <View
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -29,8 +27,13 @@
         android:gravity="bottom"
         android:paddingLeft="@dimen/sp_screen_margin"
         android:paddingRight="@dimen/sp_screen_margin"
+<<<<<<< Updated upstream
         android:paddingBottom="@dimen/hero_pad_b">
+=======
+        android:paddingBottom="24dp">
+>>>>>>> Stashed changes
 
+        <!-- Header: League badge + Viewers badge -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -43,8 +46,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/bg_badge_brand"
-                android:paddingLeft="10dp"
-                android:paddingRight="10dp"
+                android:paddingLeft="11dp"
+                android:paddingRight="11dp"
                 android:paddingTop="4dp"
                 android:paddingBottom="4dp"
                 android:textColor="@color/kl_brand"
@@ -60,13 +63,14 @@
                 android:background="@drawable/bg_badge_glass"
                 android:drawableLeft="@drawable/ic_eye"
                 android:drawablePadding="6dp"
-                android:paddingLeft="10dp"
-                android:paddingRight="10dp"
+                android:paddingLeft="11dp"
+                android:paddingRight="11dp"
                 android:paddingTop="4dp"
                 android:paddingBottom="4dp"
                 android:textColor="@color/kl_text_1" />
         </LinearLayout>
 
+        <!-- Match Title -->
         <TextView
             android:id="@+id/heroTitle"
             style="@style/KL.Text.Display"
@@ -75,15 +79,16 @@
             android:layout_marginTop="8dp"
             android:layout_marginRight="20dp"
             android:includeFontPadding="false"
-            android:paddingTop="6dp"
+            android:paddingTop="4dp"
             android:maxLines="2"
             android:breakStrategy="simple"
             android:hyphenationFrequency="none"
             android:ellipsize="end"
-            android:shadowColor="#E6000000"
-            android:shadowDy="2"
-            android:shadowRadius="10" />
+            android:shadowColor="#FF000000"
+            android:shadowDy="3"
+            android:shadowRadius="12" />
 
+        <!-- Commentator Subtitle -->
         <TextView
             android:id="@+id/heroBlv"
             style="@style/KL.Text.Body"
@@ -94,9 +99,11 @@
             android:maxLines="1"
             android:ellipsize="end"
             android:textColor="@color/kl_text_2"
-            android:shadowColor="#CC000000"
-            android:shadowRadius="6" />
+            android:shadowColor="#E6000000"
+            android:shadowDy="2"
+            android:shadowRadius="8" />
 
+        <!-- CTA Buttons -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

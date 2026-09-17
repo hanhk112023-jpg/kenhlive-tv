@@ -1,23 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- ANDROID TV (10-foot): bigger type, looser spacing, side rail navigation. -->
 <resources>
-    <dimen name="sp_screen_margin">34dp</dimen>
-    <dimen name="sp_row_gap">22dp</dimen>
-    <dimen name="sp_card_gap">12dp</dimen>
-    <dimen name="sp_item_pad">14dp</dimen>
+    <dimen name="sp_screen_margin">36dp</dimen>
+    <dimen name="sp_row_gap">24dp</dimen>
+    <dimen name="sp_card_gap">14dp</dimen>
+    <dimen name="sp_item_pad">16dp</dimen>
 
-    <dimen name="rd_card">12dp</dimen>
-    <dimen name="rd_input">10dp</dimen>
-    <dimen name="rd_dialog">14dp</dimen>
+    <dimen name="rd_card">16dp</dimen>
+    <dimen name="rd_input">12dp</dimen>
+    <dimen name="rd_dialog">20dp</dimen>
 
-    <dimen name="topbar_h">44dp</dimen>
+    <dimen name="topbar_h">48dp</dimen>
     <dimen name="bottomnav_h">0dp</dimen>
-    <dimen name="rail_w">170dp</dimen>
-    <dimen name="hero_h">338dp</dimen>
+    <dimen name="rail_w">220dp</dimen>
+    <dimen name="rail_collapsed_w">68dp</dimen>
+    <dimen name="hero_h">340dp</dimen>
     <dimen name="hero_side_margin">0dp</dimen>
+<<<<<<< Updated upstream
     <dimen name="hero_pad_b">26dp</dimen>
     <dimen name="card_w">316dp</dimen>
     <dimen name="card_thumb_h">178dp</dimen>
+=======
+    <dimen name="card_w">324dp</dimen>
+    <dimen name="card_thumb_h">182dp</dimen>
+>>>>>>> Stashed changes
 
     <dimen name="ts_display">30sp</dimen>
     <dimen name="ts_hero_meta">13sp</dimen>

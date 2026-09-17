@@ -75,10 +75,19 @@ class HeroPagerAdapter(
 
     private fun paintDots(pos: Int) {
         val box = dots ?: return
+        val ctx = box.context
+        val d = (6 * ctx.resources.displayMetrics.density).toInt()
+        val wOn = (16 * ctx.resources.displayMetrics.density).toInt()
         for (i in 0 until box.childCount) {
+            val v = box.getChildAt(i)
             val on = i == pos
-            box.getChildAt(i).setBackgroundResource(if (on) R.drawable.bg_badge_live else R.drawable.bg_circle)
-            box.getChildAt(i).alpha = if (on) 1f else 0.45f
+            v.setBackgroundResource(if (on) R.drawable.bg_badge_live else R.drawable.bg_circle)
+            v.alpha = if (on) 1f else 0.35f
+            val lp = v.layoutParams
+            if (lp.width != (if (on) wOn else d)) {
+                lp.width = if (on) wOn else d
+                v.layoutParams = lp
+            }
         }
     }
 

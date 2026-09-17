@@ -7,7 +7,7 @@
     android:layout_marginRight="@dimen/sp_card_gap"
     android:background="@drawable/bg_card"
     android:foreground="@drawable/fg_focus"
-    android:padding="12dp"
+    android:padding="14dp"
     android:focusable="true"
     android:clickable="true">
 
@@ -17,17 +17,19 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textColor="@color/kl_text_3"
-        android:textSize="@dimen/ts_fx_meta"
+        android:textSize="11sp"
+        android:textAllCaps="true"
+        android:letterSpacing="0.04"
         android:maxLines="1"
         android:ellipsize="end" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="12dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:minHeight="56dp">
+        android:minHeight="58dp">
 
         <TextView
             android:id="@+id/fxHost"
@@ -38,7 +40,9 @@
             android:textColor="@color/kl_text_1"
             android:textSize="@dimen/ts_fx_team"
             android:fontFamily="sans-serif-medium"
-            android:maxLines="3"
+            android:maxLines="2"
+            android:breakStrategy="simple"
+            android:hyphenationFrequency="none"
             android:ellipsize="end" />
 
         <LinearLayout
@@ -46,7 +50,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center"
-            android:minWidth="62dp"
+            android:minWidth="66dp"
             android:paddingLeft="6dp"
             android:paddingRight="6dp">
 
@@ -64,8 +68,9 @@
                 android:id="@+id/fxDate"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
                 android:textColor="@color/kl_text_3"
-                android:textSize="@dimen/ts_fx_meta"
+                android:textSize="11sp"
                 android:fontFeatureSettings="tnum" />
         </LinearLayout>
 
@@ -78,14 +83,16 @@
             android:textColor="@color/kl_text_1"
             android:textSize="@dimen/ts_fx_team"
             android:fontFamily="sans-serif-medium"
-            android:maxLines="3"
+            android:maxLines="2"
+            android:breakStrategy="simple"
+            android:hyphenationFrequency="none"
             android:ellipsize="end" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="12dp"
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
@@ -103,14 +110,14 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="6dp"
             android:textColor="#FFFFFF"
-            android:textSize="@dimen/ts_fx_meta"
+            android:textSize="11sp"
             android:textStyle="bold"
             android:fontFeatureSettings="tnum"
             android:background="@drawable/bg_badge_live_red"
             android:paddingLeft="8dp"
             android:paddingRight="8dp"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
             android:visibility="gone" />
     </LinearLayout>
 </LinearLayout>

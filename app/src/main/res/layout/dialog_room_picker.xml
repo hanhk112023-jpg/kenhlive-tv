@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Dialog chọn phòng BLV / đổi trận — D-pad friendly (RecyclerView focusable) -->
+<!-- Dialog chon phong BLV / doi tran — D-pad friendly (RecyclerView focusable) -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingLeft="22dp"
-    android:paddingRight="22dp"
-    android:paddingTop="20dp"
-    android:paddingBottom="14dp">
+    android:paddingLeft="24dp"
+    android:paddingRight="24dp"
+    android:paddingTop="22dp"
+    android:paddingBottom="16dp">
 
     <TextView
         android:id="@+id/dialogTitle"
         style="@style/KL.Text.Section"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textSize="18sp"
         android:maxLines="2"
         android:ellipsize="end" />
 
@@ -22,20 +23,21 @@
         style="@style/KL.Text.Meta"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textColor="@color/kl_brand"
         android:layout_marginTop="4dp" />
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_marginTop="14dp"
-        android:layout_marginBottom="10dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="12dp"
         android:background="@color/kl_border_soft" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/roomList"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:maxHeight="420dp"
+        android:maxHeight="440dp"
         android:clipToPadding="false"
         android:paddingBottom="28dp"
         android:scrollbars="vertical" />

@@ -3,25 +3,31 @@
 <resources>
     <!-- grid & spacing -->
     <dimen name="sp_screen_margin">16dp</dimen>
-    <dimen name="sp_row_gap">18dp</dimen>
-    <dimen name="sp_card_gap">10dp</dimen>
-    <dimen name="sp_item_pad">12dp</dimen>
+    <dimen name="sp_row_gap">20dp</dimen>
+    <dimen name="sp_card_gap">12dp</dimen>
+    <dimen name="sp_item_pad">14dp</dimen>
 
     <!-- radii -->
-    <dimen name="rd_card">14dp</dimen>
+    <dimen name="rd_card">16dp</dimen>
     <dimen name="rd_pill">999dp</dimen>
-    <dimen name="rd_input">12dp</dimen>
-    <dimen name="rd_dialog">20dp</dimen>
+    <dimen name="rd_input">14dp</dimen>
+    <dimen name="rd_dialog">22dp</dimen>
 
     <!-- chrome -->
-    <dimen name="topbar_h">56dp</dimen>
-    <dimen name="bottomnav_h">64dp</dimen>
+    <dimen name="topbar_h">58dp</dimen>
+    <dimen name="bottomnav_h">66dp</dimen>
     <dimen name="rail_w">0dp</dimen>          <!-- unused on phone -->
-    <dimen name="hero_h">184dp</dimen>
+    <dimen name="rail_collapsed_w">0dp</dimen>
+    <dimen name="hero_h">188dp</dimen>
     <dimen name="hero_side_margin">16dp</dimen>
+<<<<<<< Updated upstream
     <dimen name="hero_pad_b">12dp</dimen>
     <dimen name="card_w">216dp</dimen>
     <dimen name="card_thumb_h">122dp</dimen>
+=======
+    <dimen name="card_w">224dp</dimen>
+    <dimen name="card_thumb_h">126dp</dimen>
+>>>>>>> Stashed changes
 
     <!-- type scale -->
     <dimen name="ts_display">24sp</dimen>

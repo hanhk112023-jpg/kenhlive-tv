@@ -12,7 +12,7 @@
         app:use_controller="false"
         xmlns:app="http://schemas.android.com/apk/res-auto" />
 
-    <!-- BUFFERING -->
+    <!-- BUFFERING SPINNER -->
     <LinearLayout
         android:id="@+id/bufferBox"
         android:layout_width="wrap_content"
@@ -21,26 +21,27 @@
         android:orientation="vertical"
         android:gravity="center_horizontal"
         android:background="@drawable/bg_badge_glass"
-        android:paddingLeft="22dp"
-        android:paddingRight="22dp"
-        android:paddingTop="14dp"
-        android:paddingBottom="14dp"
+        android:paddingLeft="24dp"
+        android:paddingRight="24dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp"
         android:visibility="gone">
 
         <ProgressBar
-            android:layout_width="38dp"
-            android:layout_height="38dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
             android:indeterminateTint="@color/kl_brand" />
 
         <TextView
             style="@style/KL.Text.Body"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="10dp"
+            android:textColor="@color/kl_text_1"
             android:text="@string/player_buffering" />
     </LinearLayout>
 
-    <!-- TOP OVERLAY -->
+    <!-- TOP OVERLAY HUD -->
     <LinearLayout
         android:id="@+id/topOverlay"
         android:layout_width="match_parent"
@@ -54,10 +55,10 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingLeft="12dp"
-            android:paddingRight="12dp"
-            android:paddingTop="12dp"
-            android:paddingBottom="14dp">
+            android:paddingLeft="14dp"
+            android:paddingRight="14dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="18dp">
 
             <ImageButton
                 android:id="@+id/backBtn"
@@ -71,7 +72,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginLeft="12dp"
+                android:layout_marginLeft="14dp"
                 android:orientation="vertical">
 
                 <TextView
@@ -79,17 +80,27 @@
                     style="@style/KL.Text.Title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:textSize="17sp"
                     android:maxLines="1"
                     android:ellipsize="end" />
 
-                <TextView
-                    android:id="@+id/playerSub"
-                    style="@style/KL.Text.Meta"
-                    android:layout_width="match_parent"
+                <LinearLayout
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/sched_live"
-                    android:textColor="@color/kl_live"
-                    android:visibility="gone" />
+                    android:layout_marginTop="3dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/playerSub"
+                        style="@style/KL.Text.Meta"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/sched_live"
+                        android:textColor="@color/kl_live"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+                </LinearLayout>
             </LinearLayout>
 
             <ImageButton
@@ -138,11 +149,12 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="18dp"
+        android:layout_marginBottom="22dp"
         android:background="@drawable/bg_badge_glass"
-        android:paddingLeft="14dp"
-        android:paddingRight="14dp"
-        android:paddingTop="6dp"
-        android:paddingBottom="6dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:textColor="@color/kl_text_2"
         android:visibility="gone" />
 </FrameLayout>

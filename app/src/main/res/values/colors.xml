@@ -7,58 +7,62 @@
 <resources>
     <!-- brand -->
     <color name="kl_brand">#FF00E676</color>
-    <color name="kl_brand_pressed">#FF00B25C</color>
-    <color name="kl_brand_dim">#3300E676</color>
+    <color name="kl_brand_pressed">#FF00B359</color>
+    <color name="kl_brand_glow">#5500E676</color>
+    <color name="kl_brand_dim">#2600E676</color>
     <color name="kl_brand_soft">#1400E676</color>
-    <color name="kl_on_brand">#FF04140B</color>
-    <color name="kl_cyan">#FF00F0FF</color>
-    <color name="kl_amber">#FFFFB020</color>
+    <color name="kl_on_brand">#FF031309</color>
+    <color name="kl_cyan">#FF00E5FF</color>
+    <color name="kl_amber">#FFFFB300</color>
 
-    <!-- surfaces (dark, layered) -->
-    <color name="kl_bg">#FF000000</color>
-    <color name="kl_bg_deep">#FF000000</color>
-    <color name="kl_surface_1">#FF0E0E11</color>
-    <color name="kl_surface_2">#FF17171B</color>
-    <color name="kl_surface_3">#FF1F1F24</color>
-    <color name="kl_surface_translucent">#E60A0A0C</color>
-    <color name="kl_border">#1FFFFFFF</color>
-    <color name="kl_border_soft">#12FFFFFF</color>
+    <!-- surfaces (dark, layered obsidian & slate) -->
+    <color name="kl_bg">#FF0A0A0E</color>
+    <color name="kl_bg_deep">#FF08080B</color>
+    <color name="kl_surface_1">#FF13141B</color>
+    <color name="kl_surface_2">#FF1A1B24</color>
+    <color name="kl_surface_3">#FF242634</color>
+    <color name="kl_surface_translucent">#EE0E0F15</color>
+    <color name="kl_surface_glass">#1AFFFFFF</color>
+    <color name="kl_border">#22FFFFFF</color>
+    <color name="kl_border_soft">#14FFFFFF</color>
 
     <!-- text -->
-    <color name="kl_text_1">#FFF8FAFC</color>
-    <color name="kl_text_2">#FFC9C9CF</color>
-    <color name="kl_text_3">#FF9B9BA4</color>
-    <color name="kl_text_disabled">#FF5C5C66</color>
+    <color name="kl_text_1">#FFFFFFFF</color>
+    <color name="kl_text_2">#FFCBD5E1</color>
+    <color name="kl_text_3">#FF8E95A5</color>
+    <color name="kl_text_disabled">#FF4E5363</color>
 
     <!-- states -->
-    <color name="kl_live">#FFFF3B30</color>
-    <color name="kl_error">#FFFF5A52</color>
+    <color name="kl_live">#FFFF334B</color>
+    <color name="kl_live_glow">#55FF334B</color>
+    <color name="kl_live_dim">#26FF334B</color>
+    <color name="kl_error">#FFFF4D4D</color>
     <color name="kl_focus_ring">#FFFFFFFF</color>
-    <color name="kl_focus_glow">#59FFFFFF</color>
+    <color name="kl_focus_glow">#6600E676</color>
     <color name="kl_pressed_overlay">#26FFFFFF</color>
 
     <!-- scrims -->
-    <color name="kl_scrim_start">#E6000000</color>
-    <color name="kl_scrim_mid">#66000000</color>
+    <color name="kl_scrim_start">#F20A0A0E</color>
+    <color name="kl_scrim_mid">#770A0A0E</color>
     <color name="kl_scrim_end">#00000000</color>
 
     <!-- legacy aliases kept for compatibility with existing refs -->
     <color name="brand_green">@color/kl_brand</color>
     <color name="brand_green_dark">@color/kl_brand_pressed</color>
-    <color name="brand_green_glow">#4000E676</color>
+    <color name="brand_green_glow">@color/kl_brand_glow</color>
     <color name="brand_green_soft">@color/kl_brand_soft</color>
     <color name="brand_blue">@color/kl_cyan</color>
     <color name="bg_base">@color/kl_bg_deep</color>
     <color name="bg_card">@color/kl_surface_1</color>
     <color name="bg_card_alt">@color/kl_surface_2</color>
-    <color name="bg_elevated">#F21A1A1F</color>
-    <color name="bg_topbar">#F0000000</color>
+    <color name="bg_elevated">@color/kl_surface_2</color>
+    <color name="bg_topbar">#F20E0F15</color>
     <color name="accent_amber">@color/kl_amber</color>
     <color name="accent_cyan">@color/kl_cyan</color>
     <color name="accent_green">@color/kl_brand</color>
     <color name="accent_indigo">#6366F1</color>
     <color name="accent_purple">#9D4EDD</color>
-    <color name="accent_red">#FF2A5F</color>
+    <color name="accent_red">@color/kl_live</color>
     <color name="text_primary">@color/kl_text_1</color>
     <color name="text_secondary">@color/kl_text_2</color>
     <color name="text_muted">@color/kl_text_3</color>

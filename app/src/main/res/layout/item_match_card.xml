@@ -7,11 +7,11 @@
     android:layout_marginRight="@dimen/sp_card_gap"
     android:background="@drawable/bg_card"
     android:foreground="@drawable/fg_focus"
-    android:padding="12dp"
+    android:padding="14dp"
     android:focusable="true"
     android:clickable="true">
 
-    <!-- Row 1: tag giai (trai) + LIVE pill DO (phai) — nguyen mau card bong da FPT Play -->
+    <!-- Row 1: Tag giai (trai) + LIVE pill DO (phai) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -25,7 +25,9 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:textColor="@color/kl_text_3"
-            android:textSize="@dimen/ts_fx_meta"
+            android:textSize="11sp"
+            android:textAllCaps="true"
+            android:letterSpacing="0.04"
             android:maxLines="1"
             android:ellipsize="end" />
 
@@ -36,24 +38,24 @@
             android:layout_marginLeft="8dp"
             android:text="● LIVE"
             android:textColor="#FFFFFF"
-            android:textSize="@dimen/ts_fx_team"
+            android:textSize="11sp"
             android:textStyle="bold"
             android:letterSpacing="0.06"
             android:background="@drawable/bg_badge_live_red"
-            android:paddingLeft="7dp"
-            android:paddingRight="7dp"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp" />
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp" />
     </LinearLayout>
 
-    <!-- Row 2: ten doi trai | giua: viewers | ten doi phai -->
+    <!-- Row 2: Doi nha (phai) | Giua: Avatar BLV + Viewers | Doi khach (trai) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="12dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:minHeight="52dp">
+        android:minHeight="58dp">
 
         <TextView
             android:id="@+id/cardHost"
@@ -74,14 +76,15 @@
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center"
-            android:minWidth="62dp"
+            android:minWidth="66dp"
             android:paddingLeft="6dp"
             android:paddingRight="6dp">
 
             <ImageView
                 android:id="@+id/cardAvatar"
-                android:layout_width="26dp"
-                android:layout_height="26dp"
+                android:layout_width="28dp"
+                android:layout_height="28dp"
+                android:background="@drawable/bg_circle"
                 android:contentDescription="@null" />
 
             <TextView
@@ -89,7 +92,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="3dp"
-                android:textColor="#FF4D4D"
+                android:textColor="@color/kl_live"
                 android:fontFamily="@font/oswald"
                 android:textSize="@dimen/ts_card_room"
                 android:textStyle="bold"
@@ -115,7 +118,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="12dp"
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
@@ -125,6 +128,7 @@
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
+            android:textColor="@color/kl_text_2"
             android:maxLines="1"
             android:ellipsize="end" />
 
@@ -133,22 +137,22 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="6dp"
-            android:textColor="#DCE6F0"
+            android:textColor="@color/kl_text_2"
             android:textSize="@dimen/ts_fx_meta"
             android:fontFamily="sans-serif-medium"
-            android:background="@drawable/pill_glass"
+            android:background="@drawable/bg_badge_glass"
             android:paddingLeft="8dp"
             android:paddingRight="8dp"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
             android:visibility="gone" />
     </LinearLayout>
 
-    <!-- day bar cam nhan: match live co vat trang mong o day (nhip FPT) -->
+    <!-- Accent bar duoi cung -->
     <View
         android:id="@+id/cardAccent"
-        android:layout_width="42dp"
+        android:layout_width="48dp"
         android:layout_height="3dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="12dp"
         android:background="@drawable/bg_accent_live" />
 </LinearLayout>

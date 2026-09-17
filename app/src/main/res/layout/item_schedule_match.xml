@@ -14,7 +14,7 @@
     android:focusable="true"
     android:clickable="true">
 
-    <!-- cot gio + badge LIVE -->
+    <!-- Cot gio + badge LIVE -->
     <LinearLayout
         android:layout_width="@dimen/sched_time_w"
         android:layout_height="wrap_content"
@@ -26,6 +26,8 @@
             style="@style/KL.Text.Title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:fontFamily="@font/oswald"
+            android:textSize="17sp"
             android:maxLines="1"
             android:singleLine="true"
             android:includeFontPadding="false"
@@ -37,15 +39,19 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
-            android:paddingLeft="7dp"
-            android:paddingRight="7dp"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
             android:paddingTop="2dp"
             android:paddingBottom="2dp"
+<<<<<<< Updated upstream
             android:ellipsize="end"
+=======
+            android:textSize="10sp"
+>>>>>>> Stashed changes
             android:visibility="gone" />
     </LinearLayout>
 
-    <!-- crest hai doi sat ten (kieu FPT livescore) -->
+    <!-- Crest doi nha -->
     <ImageView
         android:id="@+id/hostIcon"
         android:layout_width="@dimen/sched_avatar"
@@ -53,7 +59,7 @@
         android:layout_marginLeft="@dimen/sp_item_pad"
         android:contentDescription="@null" />
 
-    <!-- ten tran: chiem phan lon, khong de dai trang chet -->
+    <!-- Ten tran -->
     <TextView
         android:id="@+id/matchName"
         style="@style/KL.Text.Title"
@@ -67,14 +73,14 @@
         android:hyphenationFrequency="none"
         android:ellipsize="end" />
 
-    <!-- crest doi khach -->
+    <!-- Crest doi khach -->
     <ImageView
         android:id="@+id/guestIcon"
         android:layout_width="@dimen/sched_avatar"
         android:layout_height="@dimen/sched_avatar"
         android:contentDescription="@null" />
 
-    <!-- tag giai (giua-phai) -->
+    <!-- Tag giai -->
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -100,7 +106,7 @@
             android:ellipsize="end" />
     </LinearLayout>
 
-    <!-- BLV avatars ben phai cung -->
+    <!-- BLV avatars -->
     <LinearLayout
         android:id="@+id/anchorRow"
         android:layout_width="wrap_content"
