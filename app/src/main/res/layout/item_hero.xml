@@ -27,11 +27,7 @@
         android:gravity="bottom"
         android:paddingLeft="@dimen/sp_screen_margin"
         android:paddingRight="@dimen/sp_screen_margin"
-<<<<<<< Updated upstream
         android:paddingBottom="@dimen/hero_pad_b">
-=======
-        android:paddingBottom="24dp">
->>>>>>> Stashed changes
 
         <!-- Header: League badge + Viewers badge -->
         <LinearLayout

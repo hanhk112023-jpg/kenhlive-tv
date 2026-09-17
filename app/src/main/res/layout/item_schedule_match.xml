@@ -43,11 +43,8 @@
             android:paddingRight="8dp"
             android:paddingTop="2dp"
             android:paddingBottom="2dp"
-<<<<<<< Updated upstream
             android:ellipsize="end"
-=======
             android:textSize="10sp"
->>>>>>> Stashed changes
             android:visibility="gone" />
     </LinearLayout>
 

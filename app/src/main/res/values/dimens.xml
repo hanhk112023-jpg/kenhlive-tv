@@ -20,14 +20,9 @@
     <dimen name="rail_collapsed_w">0dp</dimen>
     <dimen name="hero_h">188dp</dimen>
     <dimen name="hero_side_margin">16dp</dimen>
-<<<<<<< Updated upstream
     <dimen name="hero_pad_b">12dp</dimen>
-    <dimen name="card_w">216dp</dimen>
-    <dimen name="card_thumb_h">122dp</dimen>
-=======
     <dimen name="card_w">224dp</dimen>
     <dimen name="card_thumb_h">126dp</dimen>
->>>>>>> Stashed changes
 
     <!-- type scale -->
     <dimen name="ts_display">24sp</dimen>
