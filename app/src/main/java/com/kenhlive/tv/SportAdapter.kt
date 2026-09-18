@@ -69,6 +69,7 @@ class SportAdapter(
     override val headerPositions: Int get() = 4
 
     private val pool = RecyclerView.RecycledViewPool()
+    private val blvPool = RecyclerView.RecycledViewPool()
 
     override fun onAttachedToRecyclerView(rv: RecyclerView) { outerRecyclerView = rv }
     override fun onDetachedFromRecyclerView(rv: RecyclerView) { outerRecyclerView = null }
@@ -180,7 +181,7 @@ class SportAdapter(
         )
         init {
             list.layoutManager = LinearLayoutManager(list.context, LinearLayoutManager.HORIZONTAL, false)
-            list.setRecycledViewPool(pool)
+            list.setRecycledViewPool(blvPool)
             list.adapter = cards
             list.clipChildren = false
             list.clipToPadding = false

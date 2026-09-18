@@ -21,6 +21,8 @@ class BlvCardsAdapter(
 ) : ListAdapter<LiveRoom, BlvCardsAdapter.BlvVH>(DIFF) {
 
     companion object {
+        private const val TYPE_BLV = 10
+
         private val DIFF = object : DiffUtil.ItemCallback<LiveRoom>() {
             override fun areItemsTheSame(a: LiveRoom, b: LiveRoom) = a.roomNum == b.roomNum
             override fun areContentsTheSame(a: LiveRoom, b: LiveRoom) =
@@ -48,6 +50,8 @@ class BlvCardsAdapter(
         val matchTitle: TextView = v.findViewById(R.id.blvMatchTitle)
         val viewers: TextView = v.findViewById(R.id.blvViewers)
     }
+
+    override fun getItemViewType(position: Int): Int = TYPE_BLV
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): BlvVH {
         val v = LayoutInflater.from(parent.context).inflate(R.layout.item_blv_card, parent, false)
