@@ -5,6 +5,8 @@ set -u
 OUT=/tmp/tour; mkdir -p $OUT
 adb root >/dev/null 2>&1 || true; sleep 1
 adb shell settings put global http_proxy 10.0.2.2:7891
+adb shell settings put system accelerometer_rotation 0
+adb shell settings put system user_rotation 0
 adb shell wm size 1920x1080
 adb shell wm density 320
 adb install -r app/build/outputs/apk/debug/app-debug.apk >/dev/null 2>&1

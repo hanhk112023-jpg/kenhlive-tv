@@ -63,6 +63,7 @@ jobs:
           api-level: 30
           arch: x86
           target: android-tv
+          profile: tv_1080p
           disableAnimations: true
           script: bash qa/ui_tour.sh
 
