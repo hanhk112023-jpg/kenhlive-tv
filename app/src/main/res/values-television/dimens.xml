@@ -16,7 +16,7 @@
     <dimen name="rail_collapsed_w">68dp</dimen>
     <dimen name="rail_slim_w">60dp</dimen>
     <dimen name="hero_h">340dp</dimen>
-    <dimen name="hero_side_margin">0dp</dimen>
+    <dimen name="hero_side_margin">@dimen/sp_screen_margin</dimen>
     <dimen name="hero_pad_b">26dp</dimen>
     <dimen name="card_w">324dp</dimen>
     <dimen name="card_thumb_h">182dp</dimen>

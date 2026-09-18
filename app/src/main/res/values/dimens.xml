@@ -19,9 +19,9 @@
     <dimen name="rail_w">0dp</dimen>          <!-- unused on phone -->
     <dimen name="rail_collapsed_w">0dp</dimen>
     <dimen name="rail_slim_w">0dp</dimen>
-    <dimen name="hero_h">188dp</dimen>
+    <dimen name="hero_h">185dp</dimen>
     <dimen name="hero_side_margin">16dp</dimen>
-    <dimen name="hero_pad_b">12dp</dimen>
+    <dimen name="hero_pad_b">14dp</dimen>
     <dimen name="card_w">224dp</dimen>
     <dimen name="card_thumb_h">126dp</dimen>
     <dimen name="channel_card_w">180dp</dimen>

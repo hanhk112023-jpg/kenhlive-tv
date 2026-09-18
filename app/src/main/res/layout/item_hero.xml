@@ -5,13 +5,13 @@
     android:focusable="false"
     android:descendantFocusability="afterDescendants">
 
-    <!-- 16:9 banner cover: fitCenter / centerCrop tren nen toi sang trong -->
+    <!-- 16:9 banner cover: fitCenter tren nen den thuan khong bi xen chu/logo -->
     <ImageView
         android:id="@+id/heroCover"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scaleType="centerCrop"
-        android:background="@color/kl_bg_deep"
+        android:scaleType="fitCenter"
+        android:background="#FF000000"
         android:contentDescription="@string/cd_match" />
 
     <!-- Cinematic scrim overlay (lam toi trai & duoi de text de doc) -->
