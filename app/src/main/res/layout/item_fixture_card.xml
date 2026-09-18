@@ -5,119 +5,193 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:layout_marginRight="@dimen/sp_card_gap"
-    android:background="@drawable/bg_card"
-    android:foreground="@drawable/fg_focus"
+    android:background="@drawable/bg_card_match"
+    android:foreground="@drawable/fg_card_focus_cyan"
     android:padding="14dp"
     android:focusable="true"
     android:clickable="true">
 
-    <TextView
-        android:id="@+id/fxLeague"
-        style="@style/KL.Text.Meta"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textColor="@color/kl_text_3"
-        android:textSize="11sp"
-        android:textAllCaps="true"
-        android:letterSpacing="0.04"
-        android:maxLines="1"
-        android:ellipsize="end" />
-
+    <!-- Row 1: League tag (left) + Countdown pill AMBER (right) (kieu IMG_2815) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:minHeight="58dp">
-
-        <TextView
-            android:id="@+id/fxHost"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:gravity="right"
-            android:textColor="@color/kl_text_1"
-            android:textSize="@dimen/ts_fx_team"
-            android:fontFamily="sans-serif-medium"
-            android:maxLines="2"
-            android:breakStrategy="simple"
-            android:hyphenationFrequency="none"
-            android:ellipsize="end" />
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:minWidth="66dp"
-            android:paddingLeft="6dp"
-            android:paddingRight="6dp">
-
-            <TextView
-                android:id="@+id/fxTime"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/kl_text_1"
-                android:fontFamily="@font/oswald"
-                android:textSize="@dimen/ts_fx_time"
-                android:textStyle="bold"
-                android:fontFeatureSettings="tnum" />
-
-            <TextView
-                android:id="@+id/fxDate"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:textColor="@color/kl_text_3"
-                android:textSize="11sp"
-                android:fontFeatureSettings="tnum" />
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/fxGuest"
-            android:layout_width="0dp"
-            android:layout_weight="1"
-            android:layout_height="wrap_content"
-            android:gravity="left"
-            android:textColor="@color/kl_text_1"
-            android:textSize="@dimen/ts_fx_team"
-            android:fontFamily="sans-serif-medium"
-            android:maxLines="2"
-            android:breakStrategy="simple"
-            android:hyphenationFrequency="none"
-            android:ellipsize="end" />
-    </LinearLayout>
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
-        <LinearLayout
-            android:id="@+id/fxAnchorRow"
-            android:layout_width="0dp"
-            android:layout_weight="1"
+        <TextView
+            android:id="@+id/fxLeague"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical" />
+            android:background="@drawable/bg_badge_league_cyan"
+            android:textColor="@color/kl_cyan"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
+            android:maxLines="1"
+            android:maxWidth="160dp"
+            android:ellipsize="end" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
 
         <TextView
             android:id="@+id/fxCountdown"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="6dp"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/kl_amber"
             android:textSize="11sp"
             android:textStyle="bold"
-            android:fontFeatureSettings="tnum"
-            android:background="@drawable/bg_badge_live_red"
+            android:background="@drawable/bg_badge_countdown"
             android:paddingLeft="8dp"
             android:paddingRight="8dp"
             android:paddingTop="3dp"
             android:paddingBottom="3dp"
             android:visibility="gone" />
+    </LinearLayout>
+
+    <!-- Row 2: Doi nha (trai) | Giua: VS Badge | Doi khach (phai) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:minHeight="54dp">
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical|end">
+
+            <TextView
+                android:id="@+id/fxHost"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:textColor="@color/kl_text_1"
+                android:textSize="@dimen/ts_fx_team"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="2"
+                android:breakStrategy="simple"
+                android:ellipsize="end" />
+
+            <ImageView
+                android:id="@+id/fxHostIcon"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginLeft="6dp"
+                android:src="@drawable/ic_sports"
+                android:visibility="gone"
+                android:contentDescription="@null" />
+        </LinearLayout>
+
+        <!-- Center badge: VS badge (kieu IMG_2815) -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp">
+
+            <TextView
+                android:id="@+id/fxVs"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:gravity="center"
+                android:background="@drawable/bg_vs_circle"
+                android:textColor="#FFFFFF"
+                android:text="VS"
+                android:fontFamily="@font/oswald"
+                android:textSize="11sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/fxTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="@color/kl_text_3"
+                android:fontFamily="@font/oswald"
+                android:textSize="11sp"
+                android:fontFeatureSettings="tnum" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical|start">
+
+            <ImageView
+                android:id="@+id/fxGuestIcon"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginRight="6dp"
+                android:src="@drawable/ic_sports"
+                android:visibility="gone"
+                android:contentDescription="@null" />
+
+            <TextView
+                android:id="@+id/fxGuest"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:gravity="start"
+                android:textColor="@color/kl_text_1"
+                android:textSize="@dimen/ts_fx_team"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="2"
+                android:breakStrategy="simple"
+                android:ellipsize="end" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Row 3: Ten tran dau day du (kieu IMG_2815) -->
+    <TextView
+        android:id="@+id/fxMatchTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textColor="@color/kl_text_1"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <!-- Row 4: Bat dau: 15:00 • 16.09 + BLV avatar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/fxDate"
+            style="@style/KL.Text.Meta"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:textColor="@color/kl_text_2"
+            android:textSize="11sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <LinearLayout
+            android:id="@+id/fxAnchorRow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical" />
     </LinearLayout>
 </LinearLayout>

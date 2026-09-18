@@ -28,8 +28,6 @@ class MainActivity : AppCompatActivity() {
     private var current = 0
     private val navViews = mutableListOf<View>()
     private var railPanel: View? = null
-    private var railScrim: View? = null
-    private var railOpen = false
     private val tabTags = arrayOf("tab_live", "tab_schedule", "tab_search", "tab_settings")
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,7 +48,6 @@ class MainActivity : AppCompatActivity() {
 
         // BACK: tab khác → về Live trước; tab Live → dialog xác nhận thoát (UX TV)
         onBackPressedDispatcher.addCallback(this) {
-            if (railOpen) { closeRail(); return@addCallback }
             if (current != 0) { showTab(0); return@addCallback }
             AlertDialog.Builder(this@MainActivity)
                 .setTitle(R.string.dialog_exit_title)
@@ -73,8 +70,6 @@ class MainActivity : AppCompatActivity() {
 
         if (DeviceMode.isTv) {
             railPanel = findViewById(R.id.railPanel)
-            railScrim = findViewById(R.id.railScrim)
-            railScrim?.setOnClickListener { closeRail() }
         }
 
         UpdateManager.checkAndUpdate(this)
@@ -85,7 +80,7 @@ class MainActivity : AppCompatActivity() {
     private fun setupNav() {
         val defs = listOf(
             R.id.nav_live to Pair(R.drawable.ic_nav_live, R.string.nav_live),
-            R.id.nav_schedule to Pair(R.drawable.ic_nav_schedule, R.string.nav_schedule),
+            R.id.nav_schedule to Pair(if (DeviceMode.isTv) R.drawable.ic_sports else R.drawable.ic_nav_schedule, R.string.nav_schedule),
             R.id.nav_search to Pair(R.drawable.ic_nav_search, R.string.nav_search),
             R.id.nav_settings to Pair(R.drawable.ic_nav_settings, R.string.nav_settings)
         )
@@ -94,33 +89,35 @@ class MainActivity : AppCompatActivity() {
             val v = findViewById<View>(id) ?: return@forEachIndexed
             v.findViewById<ImageView>(R.id.navIcon)?.setImageResource(def.first)
             v.findViewById<TextView>(R.id.navLabel)?.setText(def.second)
-            v.setOnClickListener { showTab(i) } // showTab tu dong dong rail
+            v.setOnClickListener { showTab(i) }
             navViews.add(v)
         }
-        // TV: focus dau = noi dung (rail an); PHONE: khong co rail
-    }
 
-    // ===== TV rail overlay kieu FPT: noi dung full-man, LEFT o canh trai mo rail =====
-    private fun openRail() {
-        val panel = railPanel ?: return
-        if (railOpen) return
-        railOpen = true
-        panel.visibility = View.VISIBLE
-        panel.translationX = -panel.width.toFloat().coerceAtLeast(600f)
-        panel.animate().translationX(0f).setDuration(190).start()
-        railScrim?.let { it.visibility = View.VISIBLE; it.animate().alpha(1f).setDuration(190).start() }
-        navViews.getOrElse(current) { navViews.firstOrNull() }?.requestFocus()
-    }
-
-    private fun closeRail(focusContent: Boolean = true) {
-        val panel = railPanel ?: return
-        if (!railOpen) return
-        railOpen = false
-        panel.animate().translationX(-panel.width.toFloat()).setDuration(160)
-            .withEndAction { panel.visibility = View.GONE }.start()
-        railScrim?.animate()?.alpha(0f)?.setDuration(160)
-            ?.withEndAction { railScrim?.visibility = View.GONE }?.start()
-        if (focusContent) focusContentFirst()
+        if (DeviceMode.isTv) {
+            findViewById<View>(R.id.nav_profile)?.setOnClickListener {
+                AlertDialog.Builder(this)
+                    .setTitle(R.string.app_name)
+                    .setMessage(R.string.settings_about_body)
+                    .setPositiveButton(R.string.dialog_close, null)
+                    .show()
+            }
+            findViewById<View>(R.id.nav_multiview)?.apply {
+                findViewById<ImageView>(R.id.navIcon)?.setImageResource(R.drawable.ic_multiview)
+                setOnClickListener { openMultiView() }
+            }
+            findViewById<View>(R.id.nav_replay)?.apply {
+                findViewById<ImageView>(R.id.navIcon)?.setImageResource(R.drawable.ic_highlights)
+                setOnClickListener { showTab(0) }
+            }
+            findViewById<View>(R.id.nav_fav)?.apply {
+                findViewById<ImageView>(R.id.navIcon)?.setImageResource(R.drawable.ic_fav)
+                setOnClickListener { showTab(0) }
+            }
+            findViewById<View>(R.id.nav_cats)?.apply {
+                findViewById<ImageView>(R.id.navIcon)?.setImageResource(R.drawable.ic_cats)
+                setOnClickListener { showTab(0) }
+            }
+        }
     }
 
     private fun focusContentFirst() {
@@ -132,13 +129,13 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** FPT-style: chi mo rail khi focus THAT SU khong con phan tu nao ben trai (khong dung nguong toa do — hang chip bat dau tai x=0 nen hay moi nhaim). */
+    /** Kiểm tra xem focus hiện tại đã sát mép trái màn hình chưa để chuyển sang rail. */
     private fun atLeftEdge(f: View): Boolean {
         val nxt = f.focusSearch(View.FOCUS_LEFT) ?: return true
         if (nxt === f) return true
         val a = IntArray(2); f.getLocationOnScreen(a)
         val b = IntArray(2); nxt.getLocationOnScreen(b)
-        return b[0] >= a[0] - 4   // nhan LEFT ma khong di duoc sang trai = da sat mép
+        return b[0] >= a[0] - 4
     }
 
     private fun isDescendant(root: View, v: View?): Boolean {
@@ -159,25 +156,25 @@ class MainActivity : AppCompatActivity() {
 
     override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
         if (DeviceMode.isTv && event.action == android.view.KeyEvent.ACTION_DOWN) {
+            val f = currentFocus
+            val insideRail = railPanel?.let { isDescendant(it, f) } == true
             when (event.keyCode) {
-                android.view.KeyEvent.KEYCODE_DPAD_LEFT -> if (!railOpen) {
-                    val f = currentFocus
-                    val insideRail = railPanel?.let { isDescendant(it, f) } == true
-                    if (f != null && !insideRail && atLeftEdge(f)) { openRail(); return true }
+                android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
+                    if (f != null && !insideRail && atLeftEdge(f)) {
+                        navViews.getOrNull(current)?.requestFocus() ?: navViews.firstOrNull()?.requestFocus()
+                        return true
+                    }
                 }
-                android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> if (railOpen) {
-                    val f = currentFocus
-                    val insideRail = railPanel?.let { isDescendant(it, f) } == true
-                    if (insideRail) { closeRail(); return true }
+                android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                    if (insideRail) {
+                        focusContentFirst()
+                        return true
+                    }
                 }
             }
         }
         return super.dispatchKeyEvent(event)
     }
-
-    private fun showTab(pos: Int, animate: Boolean = true) {
-        current = pos
-        if (railOpen) closeRail()
         navViews.forEachIndexed { i, v -> v.isSelected = i == pos }
         val tx = supportFragmentManager.beginTransaction()
         if (animate) tx.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)

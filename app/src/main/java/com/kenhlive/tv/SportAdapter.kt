@@ -3,9 +3,9 @@ package com.kenhlive.tv
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.HorizontalScrollView
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
@@ -14,34 +14,40 @@ import coil.load
 import com.kenhlive.tv.ui.FocusKit
 
 /**
- * Sport Zone (kieu tab The thao FPT Play moi):
- *  pos 0: chip giai dau (Tong hop + cac giai, loc toan bo rail + danh sach)
- *  pos 1: rail "Truc tiep & Sap dien ra" (card doc ngang kieu FPT: LIVE do / gio lon)
- *  pos 2+: danh sach theo ngay (header ngay + tran) nhu cu
+ * Sport Zone (kieu IMG_2815, toi uu dac thu Socolive):
+ *  pos 0: Hero banner (Tran tam diem + Dong ho & Lich am duong + Xem ngay & Chi tiet)
+ *  pos 1: Rail "Trực Tiếp & Tâm Điểm Thể Thao" (Card ti so 0:0, co/logo 2 doi, LIVE do / dem nguoc ho phach)
+ *  pos 2: Rail "Bình Luận Viên Tâm Điểm" (Top phong live BLV Socolive dang phat voi the gradient da sac)
+ *  pos 3+: "Khám Phá Nhanh" / Danh sach tran theo ngay
  */
 class SportAdapter(
     private val onGroupClick: (LiveMatchGroup) -> Unit,
     private val onGroupLong: (LiveMatchGroup) -> Unit,
     private val onFixtureClick: (ScheduleMatch) -> Unit,
-    private val onLeaguePick: (Int) -> Unit
+    private val onLeaguePick: (Int) -> Unit,
+    private val onGroupDetails: ((LiveMatchGroup) -> Unit)? = null,
+    private val onRoomClick: ((LiveRoom) -> Unit)? = null
 ) : ListAdapter<Any, RecyclerView.ViewHolder>(DIFF), FocusKit.RowHost {
 
     data class ChipsItem(val labels: List<String>, val sel: Int)
     data class HeroItem(val groups: List<LiveMatchGroup>)
     data class RailItem(val groups: List<LiveMatchGroup>, val upcoming: List<ScheduleMatch>)
+    data class BlvRowItem(val rooms: List<LiveRoom>)
 
     companion object {
         private const val TYPE_CHIPS = 0
         private const val TYPE_HERO = 1
         private const val TYPE_RAIL = 2
-        private const val TYPE_DAY = 3
-        private const val TYPE_MATCH = 4
+        private const val TYPE_BLV = 3
+        private const val TYPE_DAY = 4
+        private const val TYPE_MATCH = 5
 
         private val DIFF = object : DiffUtil.ItemCallback<Any>() {
             override fun areItemsTheSame(a: Any, b: Any) = when {
                 a is ChipsItem && b is ChipsItem -> true
                 a is HeroItem && b is HeroItem -> true
                 a is RailItem && b is RailItem -> true
+                a is BlvRowItem && b is BlvRowItem -> true
                 a is String && b is String -> a == b
                 a is ScheduleMatch && b is ScheduleMatch -> a.scheduleId == b.scheduleId
                 else -> false
@@ -52,20 +58,21 @@ class SportAdapter(
                 a is RailItem && b is RailItem ->
                     a.groups.map { it.matchTitle to it.totalViewers } == b.groups.map { it.matchTitle to it.totalViewers } &&
                         a.upcoming.map { it.scheduleId } == b.upcoming.map { it.scheduleId }
+                a is BlvRowItem && b is BlvRowItem ->
+                    a.rooms.map { it.roomNum to it.viewers } == b.rooms.map { it.roomNum to it.viewers }
                 else -> a == b
             }
         }
     }
 
     override var outerRecyclerView: RecyclerView? = null
-    override val headerPositions: Int get() = 3
+    override val headerPositions: Int get() = 4
 
     private val pool = RecyclerView.RecycledViewPool()
 
     override fun onAttachedToRecyclerView(rv: RecyclerView) { outerRecyclerView = rv }
     override fun onDetachedFromRecyclerView(rv: RecyclerView) { outerRecyclerView = null }
 
-    /** Dinh vi slot theo khoa noi dung (chong drift vi tri sau auto-refresh). */
     override fun slotFor(key: String): Pair<Int, Int>? {
         val rv = outerRecyclerView ?: return null
         val parts = key.split('|', limit = 3)
@@ -80,7 +87,7 @@ class SportAdapter(
                         val j = cur.upcoming.indexOfFirst { m -> m.league == lg && "${m.host} vs ${m.guest}" == mt }
                         if (j >= 0) i = all.size + j
                     }
-                    if (i >= 0) return 2 to i
+                    if (i >= 0) return pos to i
                 }
                 is ScheduleMatch -> if (kind == "M" && cur.league == lg && "${cur.host} vs ${cur.guest}" == mt) return pos to 0
                 else -> {}
@@ -89,41 +96,51 @@ class SportAdapter(
         return null
     }
 
-    /** UP tu rail/danh sach -> nut XEM NGAY cua hero; hero chua layout -> chip. */
     override fun focusHero(): Boolean {
         val rv = outerRecyclerView ?: return false
-        (rv.findViewHolderForAdapterPosition(1) as? HeroVH)?.let { vh ->
-            val inner = vh.pager.getChildAt(0) as? RecyclerView
-            val page = inner?.findViewHolderForAdapterPosition(vh.pager.currentItem)?.itemView
-            if (page?.findViewById<View>(R.id.heroPlay)?.requestFocus() == true) return true
+        for (i in 0 until itemCount) {
+            if (getItem(i) is HeroItem) {
+                (rv.findViewHolderForAdapterPosition(i) as? HeroVH)?.let { vh ->
+                    val inner = vh.pager.getChildAt(0) as? RecyclerView
+                    val page = inner?.findViewHolderForAdapterPosition(vh.pager.currentItem)?.itemView
+                    if (page?.findViewById<View>(R.id.heroPlay)?.requestFocus() == true) return true
+                }
+            }
         }
-        val ch = rv.findViewHolderForAdapterPosition(0) as? ChipsVH ?: return false
-        return ch.row.getChildAt(0)?.requestFocus() ?: false
+        return false
     }
 
     fun restoreFocus() = FocusKit.restore(this)
 
-    /** Focus nut XEM NGAY cua page hero hien tai (dinh vi, khong de geometry doan). */
     fun focusHeroPlay(): Boolean {
         val rv = outerRecyclerView ?: return false
-        val vh = rv.findViewHolderForAdapterPosition(1) as? HeroVH ?: return false
-        val inner = vh.pager.getChildAt(0) as? RecyclerView ?: return false
-        val page = inner.findViewHolderForAdapterPosition(vh.pager.currentItem)?.itemView ?: return false
-        return page.findViewById<View>(R.id.heroPlay)?.requestFocus() == true
+        for (i in 0 until itemCount) {
+            if (getItem(i) is HeroItem) {
+                val vh = rv.findViewHolderForAdapterPosition(i) as? HeroVH ?: continue
+                val inner = vh.pager.getChildAt(0) as? RecyclerView ?: continue
+                val page = inner.findViewHolderForAdapterPosition(vh.pager.currentItem)?.itemView ?: continue
+                return page.findViewById<View>(R.id.heroPlay)?.requestFocus() == true
+            }
+        }
+        return false
     }
 
-    /** Focus card DAUTHIEN (idx 0) cua rail LIVE & SAP. */
     fun focusRailFirst(): Boolean {
         val rv = outerRecyclerView ?: return false
-        if (FocusKit.focusNow(rv, 2, 0)) return true
-        rv.smoothScrollBy(0, 300)
-        var left = 6
-        object : Runnable {
-            override fun run() {
-                if (left > 0 && !FocusKit.focusNow(rv, 2, 0)) { left--; rv.postDelayed(this, 160) }
+        for (i in 0 until itemCount) {
+            if (getItem(i) is RailItem) {
+                if (FocusKit.focusNow(rv, i, 0)) return true
+                rv.smoothScrollBy(0, 300)
+                var left = 6
+                object : Runnable {
+                    override fun run() {
+                        if (left > 0 && !FocusKit.focusNow(rv, i, 0)) { left--; rv.postDelayed(this, 160) }
+                    }
+                }.run()
+                return true
             }
-        }.run()
-        return true
+        }
+        return false
     }
 
     inner class ChipsVH(v: View) : RecyclerView.ViewHolder(v) {
@@ -134,7 +151,6 @@ class SportAdapter(
         val pager: androidx.viewpager2.widget.ViewPager2 = v.findViewById(R.id.heroPager)
         val dots: LinearLayout = v.findViewById(R.id.heroDots)
         init {
-            // XML clipToOutline chi hieu luc API31+; set bang code de bo goc banner tren moi ROM (API21+)
             pager.clipToOutline = true
         }
     }
@@ -152,6 +168,23 @@ class SportAdapter(
             list.clipToPadding = false
             (list.parent as? ViewGroup)?.let { it.clipChildren = false }
             cards.keyHandler = { rowPos, idx, size -> FocusKit.rowCardKey(this@SportAdapter, rowPos, idx, size) }
+        }
+    }
+
+    inner class BlvRowVH(v: View) : RecyclerView.ViewHolder(v) {
+        val title: TextView = v.findViewById(R.id.rowTitle)
+        val count: TextView = v.findViewById(R.id.rowCount)
+        val list: RecyclerView = v.findViewById(R.id.rowList)
+        val cards = BlvCardsAdapter(
+            onRoomClick = { r -> onRoomClick?.invoke(r) }
+        )
+        init {
+            list.layoutManager = LinearLayoutManager(list.context, LinearLayoutManager.HORIZONTAL, false)
+            list.setRecycledViewPool(pool)
+            list.adapter = cards
+            list.clipChildren = false
+            list.clipToPadding = false
+            (list.parent as? ViewGroup)?.let { it.clipChildren = false }
         }
     }
 
@@ -175,6 +208,7 @@ class SportAdapter(
         is ChipsItem -> TYPE_CHIPS
         is HeroItem -> TYPE_HERO
         is RailItem -> TYPE_RAIL
+        is BlvRowItem -> TYPE_BLV
         is String -> TYPE_DAY
         else -> TYPE_MATCH
     }
@@ -185,6 +219,7 @@ class SportAdapter(
             TYPE_CHIPS -> ChipsVH(inf.inflate(R.layout.item_league_chips, parent, false))
             TYPE_HERO -> HeroVH(inf.inflate(R.layout.item_hero_pager, parent, false))
             TYPE_RAIL -> RailVH(inf.inflate(R.layout.item_row, parent, false))
+            TYPE_BLV -> BlvRowVH(inf.inflate(R.layout.item_row, parent, false))
             TYPE_DAY -> DayVH(inf.inflate(R.layout.item_day_header, parent, false))
             else -> MatchVH(inf.inflate(R.layout.item_schedule_match, parent, false))
         }
@@ -199,15 +234,6 @@ class SportAdapter(
             is ChipsItem -> {
                 val vh = h as ChipsVH
                 vh.row.removeAllViews()
-                // canh phai chip row = right edge cua card 3 (kieu FPT: thanh loc liep rail)
-                (vh.row.parent as? View)?.let { sv ->
-                    val screen = sv.rootView.width.takeIf { it > 0 }
-                        ?: sv.context.resources.displayMetrics.widthPixels
-                    val frac = if (DeviceMode.isTv) 1f - 0.33f else 1f
-                    val lp = sv.layoutParams
-                    lp.width = (screen * frac).toInt()
-                    sv.layoutParams = lp
-                }
                 val inf = LayoutInflater.from(vh.row.context)
                 item.labels.forEachIndexed { i, lab ->
                     val chip = inf.inflate(R.layout.item_search_chip, vh.row, false) as TextView
@@ -225,23 +251,22 @@ class SportAdapter(
             }
             is HeroItem -> {
                 val vh = h as HeroVH
-                (vh.pager.adapter as? HeroPagerAdapter)?.detach()
                 if (item.groups.isNotEmpty()) {
                     vh.itemView.visibility = View.VISIBLE
-                    val a = HeroPagerAdapter(item.groups) { g -> onGroupClick(g) }
-                    vh.pager.adapter = a
-                    vh.pager.isUserInputEnabled = !DeviceMode.isTv
-                    a.attach(vh.pager, vh.dots)
-                    vh.itemView.setOnKeyListener { _, code, ev ->
+                    val cur = (vh.pager.adapter as? HeroPagerAdapter)
+                    if (cur == null || cur.itemCount != item.groups.size.coerceAtMost(8)) {
+                        val ad = HeroPagerAdapter(item.groups, onGroupClick, onGroupDetails)
+                        vh.pager.adapter = ad
+                        ad.attach(vh.pager, vh.dots)
+                    }
+                    vh.pager.setOnKeyListener { _, code, ev ->
                         if (ev.action == android.view.KeyEvent.ACTION_DOWN &&
                             code == android.view.KeyEvent.KEYCODE_DPAD_DOWN) {
-                            if (!FocusKit.focusNow(outerRecyclerView ?: return@setOnKeyListener false, 2, 0))
-                                focusRailFirst()
+                            focusRailFirst()
                             true
                         } else false
                     }
                 } else {
-                    // khong co tran live -> an banner trong, de man hinh empty khong loe banner den
                     vh.itemView.visibility = View.GONE
                 }
             }
@@ -253,6 +278,14 @@ class SportAdapter(
                 vh.count.visibility = View.GONE
                 vh.cards.rowPos = pos
                 vh.cards.submitList((item.groups as List<Any>) + item.upcoming)
+            }
+            is BlvRowItem -> {
+                val vh = h as BlvRowVH
+                val empty = item.rooms.isEmpty()
+                vh.itemView.visibility = if (empty) View.GONE else View.VISIBLE
+                vh.title.setText(R.string.sport_blv_title)
+                vh.count.visibility = View.GONE
+                vh.cards.submitList(item.rooms)
             }
             is String -> {
                 val vh = h as DayVH
@@ -279,17 +312,17 @@ class SportAdapter(
                     vh.badge.setText(R.string.sched_live)
                     vh.badge.setBackgroundResource(R.drawable.bg_badge_live_red)
                     vh.badge.setTextColor(0xFFFFFFFF.toInt())
-                    vh.time.setTextColor(ctx.getColorCompat(R.color.kl_live))
+                    vh.time.setTextColor(ContextCompat.getColor(ctx, R.color.kl_live))
                 } else if (item.hasRoom) {
                     vh.badge.setText(R.string.badge_has_room)
                     vh.badge.setBackgroundResource(R.drawable.bg_badge_glass)
-                    vh.badge.setTextColor(ctx.getColor(R.color.kl_text_2))
-                    vh.time.setTextColor(ctx.getColorCompat(R.color.kl_text_1))
+                    vh.badge.setTextColor(ContextCompat.getColor(ctx, R.color.kl_text_2))
+                    vh.time.setTextColor(ContextCompat.getColor(ctx, R.color.kl_text_1))
                 } else {
                     vh.badge.setText(R.string.badge_no_room)
                     vh.badge.setBackgroundResource(R.drawable.bg_badge_glass)
-                    vh.badge.setTextColor(ctx.getColor(R.color.kl_text_3))
-                    vh.time.setTextColor(ctx.getColorCompat(R.color.kl_text_1))
+                    vh.badge.setTextColor(ContextCompat.getColor(ctx, R.color.kl_text_3))
+                    vh.time.setTextColor(ContextCompat.getColor(ctx, R.color.kl_text_1))
                 }
                 vh.hostIcon.load(item.hostIcon) { crossfade(0); placeholder(R.drawable.logo_placeholder); error(null) }
                 vh.guestIcon.load(item.guestIcon) { crossfade(0); placeholder(R.drawable.logo_placeholder); error(null) }

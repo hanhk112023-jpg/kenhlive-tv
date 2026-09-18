@@ -37,6 +37,11 @@ object SocoliveParser {
                 seen.add(num)
                 val a = r.optJSONObject("anchor") ?: JSONObject()
                 val (league, match) = splitTitle(r.optString("title", "Live"))
+                val grow = a.optJSONObject("growDto")
+                val level = grow?.optString("name", "") ?: ""
+                val score = a.optInt("score", 0)
+                val focus = r.optInt("focusCount", 0)
+                val notice = r.optString("notice", "").ifBlank { r.optString("detail", "") }
                 out.add(
                     LiveRoom(
                         roomNum = num,
@@ -48,7 +53,11 @@ object SocoliveParser {
                         cover = r.optString("cover", ""),
                         category = when (r.optInt("liveTypeParent", 0)) {
                             1 -> "Bóng đá"; 2 -> "Bóng rổ"; else -> ""
-                        }
+                        },
+                        blvLevel = level,
+                        score = score,
+                        focusCount = focus,
+                        notice = notice
                     )
                 )
             }
@@ -60,8 +69,55 @@ object SocoliveParser {
     fun groupRooms(rooms: List<LiveRoom>): List<LiveMatchGroup> =
         rooms.groupBy { it.league to it.matchTitle }
             .values
-            .map { g -> LiveMatchGroup(g.first().league, g.first().matchTitle, g.sortedByDescending { it.viewers }) }
+            .map { g ->
+                val top = g.first()
+                LiveMatchGroup(
+                    top.league,
+                    top.matchTitle,
+                    g.sortedByDescending { it.viewers },
+                    top.category,
+                    top.hostIcon,
+                    top.guestIcon
+                )
+            }
             .sortedByDescending { it.totalViewers }
+
+    /** Parse danh sách trận đề xuất / tâm điểm từ match_recommend.json */
+    fun parseRecommendMatches(body: String): List<ScheduleMatch> {
+        val matches = JSONObject(stripJsonp(body)).optJSONObject("data")?.optJSONArray("matches") ?: return emptyList()
+        val out = mutableListOf<ScheduleMatch>()
+        for (i in 0 until matches.length()) {
+            val m = matches.optJSONObject(i) ?: continue
+            val host = m.optString("hostName", "").trim()
+            val guest = m.optString("guestName", "").trim()
+            if (host.isBlank() && guest.isBlank()) continue
+            val sid = m.optString("scheduleId", "")
+            val anchors = mutableListOf<AnchorInfo>()
+            val arr = m.optJSONArray("anchors")
+            if (arr != null) for (j in 0 until arr.length()) {
+                val a = arr.optJSONObject(j) ?: continue
+                val room = a.optJSONObject("anchor")?.optString("roomNum", "") ?: a.optString("roomNum", "")
+                val icon = a.optString("icon", "").ifBlank { a.optString("cutOutIcon", "") }
+                anchors.add(AnchorInfo(a.optString("nickName", "BLV"), icon, room))
+            }
+            val timeMs = m.optLong("matchTime", 0L)
+            out.add(
+                ScheduleMatch(
+                    scheduleId = sid.ifBlank { "$host-$guest-$timeMs" },
+                    host = host,
+                    guest = guest,
+                    league = m.optString("subCateName", ""),
+                    category = m.optString("categoryName", "Bóng đá"),
+                    matchTimeMs = timeMs,
+                    hostIcon = m.optString("hostIcon", ""),
+                    guestIcon = m.optString("guestIcon", ""),
+                    anchors = anchors,
+                    leagueCrest = m.optString("categoryIcon", "").ifBlank { m.optString("hostIcon", "") }
+                )
+            )
+        }
+        return out
+    }
 
     fun parseScheduleDay(body: String, addMatch: (JSONObject) -> Unit) {
         val arr = JSONObject(stripJsonp(body)).optJSONArray("data") ?: return

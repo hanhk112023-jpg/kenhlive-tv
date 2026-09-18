@@ -11,14 +11,17 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
 import coil.load
+import com.kenhlive.tv.ui.LunarCalendar
 
 /**
  * Hero carousel (top trận hot). Tự lật 5s (9s máy yếu) nhưng DỪNG khi user đang focus/touch
  * để không giật focus giữa chừng trên TV. Dots indicator đồng bộ trang.
+ * Hỗ trợ giao diện kiểu IMG_2815: đồng hồ + lịch âm dương, LIVE meta, nút Xem ngay + Chi tiết.
  */
 class HeroPagerAdapter(
     private val groups: List<LiveMatchGroup>,
-    private val onClick: (LiveMatchGroup) -> Unit
+    private val onClick: (LiveMatchGroup) -> Unit,
+    private val onDetailsClick: ((LiveMatchGroup) -> Unit)? = null
 ) : RecyclerView.Adapter<HeroPagerAdapter.HV>() {
 
     private val handler = Handler(Looper.getMainLooper())
@@ -31,7 +34,7 @@ class HeroPagerAdapter(
             if (p != null && groups.size > 1 && !p.hasFocus()) {
                 p.currentItem = (p.currentItem + 1) % groups.size
             }
-            handler.postDelayed(this, if (DeviceMode.lowRam) 9000 else 5000)
+            handler.postDelayed(this, if (DeviceMode.lowRam) 9000 else 6000)
         }
     }
 
@@ -46,7 +49,7 @@ class HeroPagerAdapter(
         p.unregisterOnPageChangeCallback(pageCb)
         p.registerOnPageChangeCallback(pageCb)
         handler.removeCallbacks(auto)
-        handler.postDelayed(auto, if (DeviceMode.lowRam) 9000 else 5000)
+        handler.postDelayed(auto, if (DeviceMode.lowRam) 9000 else 6000)
     }
 
     fun detach() {
@@ -98,6 +101,10 @@ class HeroPagerAdapter(
         val blv: TextView = v.findViewById(R.id.heroBlv)
         val viewers: TextView = v.findViewById(R.id.heroViewers)
         val play: View = v.findViewById(R.id.heroPlay)
+        val details: View? = v.findViewById(R.id.heroDetails)
+        val clockText: TextView? = v.findViewById(R.id.heroClockText)
+        val solarDate: TextView? = v.findViewById(R.id.heroSolarDate)
+        val lunarDate: TextView? = v.findViewById(R.id.heroLunarDate)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HV =
@@ -109,16 +116,34 @@ class HeroPagerAdapter(
         val g = groups[pos]
         val top = g.top
         h.title.text = g.matchTitle
-        h.league.text = g.league
-        h.blv.text = top.blvName
+        h.league.text = "• ${g.league}"
+        val desc = buildString {
+            append("Trực tiếp ")
+            if (g.league.isNotBlank()) append("${g.league} • ")
+            append("BLV ${top.blvName}")
+            if (top.blvLevel.isNotBlank()) append(" (${top.blvLevel})")
+            if (g.count > 1) append(" • ${g.count} phòng live")
+            if (top.notice.isNotBlank()) append(" • ${top.notice}")
+        }
+        h.blv.text = desc
         h.viewers.text = SocoliveRepository.fmtViewers(g.totalViewers)
+
+        // Đồng hồ & Lịch Âm - Dương
+        h.clockText?.text = LunarCalendar.formatTime()
+        h.solarDate?.text = LunarCalendar.formatSolarDate()
+        h.lunarDate?.text = LunarCalendar.formatLunarDate()
+
         val imgSrc = top.cover.ifBlank { top.avatar }
         h.cover.load(imgSrc) {
             crossfade(if (DeviceMode.lowRam) 0 else 200)
             placeholder(R.drawable.hero_fallback)
             error(R.drawable.hero_fallback)
         }
+
         h.itemView.setOnClickListener { onClick(g) }
         h.play.setOnClickListener { onClick(g) }
+        h.details?.setOnClickListener {
+            if (onDetailsClick != null) onDetailsClick.invoke(g) else onClick(g)
+        }
     }
 }

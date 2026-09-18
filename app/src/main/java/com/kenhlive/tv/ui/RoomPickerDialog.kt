@@ -86,10 +86,9 @@ object RoomPickerDialog {
             FocusKit.decorateCard(h.itemView, scale = 1.02f, elevation = 8f)
             when (model) {
                 is LiveRoom -> {
-                    h.name.text = model.blvName
-                    h.meta.text = ctx.getString(
-                        R.string.picker_viewers_live, SocoliveRepository.fmtViewers(model.viewers)
-                    )
+                    h.name.text = model.blvName + if (model.blvLevel.isNotBlank()) " (${model.blvLevel})" else ""
+                    val vText = ctx.getString(R.string.picker_viewers_live, SocoliveRepository.fmtViewers(model.viewers))
+                    h.meta.text = if (model.score > 0) "$vText • ⭐ ${SocoliveRepository.fmtViewers(model.score)} điểm" else vText
                     h.live.visibility = View.VISIBLE
                     h.avatar.load(model.avatar) {
                         crossfade(if (KenhLiveApp.lowRam) 0 else 80)

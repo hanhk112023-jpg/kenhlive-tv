@@ -5,13 +5,13 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:layout_marginRight="@dimen/sp_card_gap"
-    android:background="@drawable/bg_card"
-    android:foreground="@drawable/fg_focus"
+    android:background="@drawable/bg_card_match"
+    android:foreground="@drawable/fg_card_focus_cyan"
     android:padding="14dp"
     android:focusable="true"
     android:clickable="true">
 
-    <!-- Row 1: Tag giai (trai) + LIVE pill DO (phai) -->
+    <!-- Row 1: League tag (left) + LIVE pill RED (right) (kieu IMG_2815) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -20,22 +20,29 @@
 
         <TextView
             android:id="@+id/cardLeague"
-            style="@style/KL.Text.Meta"
-            android:layout_width="0dp"
-            android:layout_weight="1"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/kl_text_3"
+            android:background="@drawable/bg_badge_league_cyan"
+            android:textColor="@color/kl_cyan"
             android:textSize="11sp"
-            android:textAllCaps="true"
-            android:letterSpacing="0.04"
+            android:textStyle="bold"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
             android:maxLines="1"
+            android:maxWidth="160dp"
             android:ellipsize="end" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
 
         <TextView
             android:id="@+id/cardLive"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="8dp"
             android:text="● LIVE"
             android:textColor="#FFFFFF"
             android:textSize="11sp"
@@ -48,77 +55,122 @@
             android:paddingBottom="3dp" />
     </LinearLayout>
 
-    <!-- Row 2: Doi nha (phai) | Giua: Avatar BLV + Viewers | Doi khach (trai) -->
+    <!-- Row 2: Doi nha (trai) | Giua: Ti so 0:0 hoac Avatar BLV | Doi khach (phai) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="10dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:minHeight="58dp">
+        android:minHeight="54dp">
 
-        <TextView
-            android:id="@+id/cardHost"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:gravity="right"
-            android:textColor="@color/kl_text_1"
-            android:textSize="@dimen/ts_fx_team"
-            android:fontFamily="sans-serif-medium"
-            android:maxLines="2"
-            android:breakStrategy="simple"
-            android:hyphenationFrequency="none"
-            android:ellipsize="end" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical|end">
 
+            <TextView
+                android:id="@+id/cardHost"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:gravity="end"
+                android:textColor="@color/kl_text_1"
+                android:textSize="@dimen/ts_fx_team"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="2"
+                android:breakStrategy="simple"
+                android:ellipsize="end" />
+
+            <ImageView
+                android:id="@+id/cardHostIcon"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginLeft="6dp"
+                android:src="@drawable/ic_sports"
+                android:visibility="gone"
+                android:contentDescription="@null" />
+        </LinearLayout>
+
+        <!-- Center badge: Ti so 0 : 0 trong capsule (kieu IMG_2815) -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center"
-            android:minWidth="66dp"
             android:paddingLeft="6dp"
             android:paddingRight="6dp">
 
-            <ImageView
-                android:id="@+id/cardAvatar"
-                android:layout_width="28dp"
-                android:layout_height="28dp"
-                android:background="@drawable/bg_circle"
-                android:contentDescription="@null" />
-
             <TextView
-                android:id="@+id/cardViewers"
+                android:id="@+id/cardScore"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:textColor="@color/kl_live"
+                android:background="@drawable/bg_score_capsule"
+                android:textColor="#FFFFFF"
+                android:text="0 : 0"
                 android:fontFamily="@font/oswald"
-                android:textSize="@dimen/ts_card_room"
-                android:textStyle="bold"
-                android:fontFeatureSettings="tnum" />
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <ImageView
+                android:id="@+id/cardAvatar"
+                android:layout_width="22dp"
+                android:layout_height="22dp"
+                android:layout_marginTop="3dp"
+                android:background="@drawable/bg_circle"
+                android:contentDescription="@null" />
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/cardGuest"
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:gravity="left"
-            android:textColor="@color/kl_text_1"
-            android:textSize="@dimen/ts_fx_team"
-            android:fontFamily="sans-serif-medium"
-            android:maxLines="2"
-            android:breakStrategy="simple"
-            android:hyphenationFrequency="none"
-            android:ellipsize="end" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical|start">
+
+            <ImageView
+                android:id="@+id/cardGuestIcon"
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:layout_marginRight="6dp"
+                android:src="@drawable/ic_sports"
+                android:visibility="gone"
+                android:contentDescription="@null" />
+
+            <TextView
+                android:id="@+id/cardGuest"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:gravity="start"
+                android:textColor="@color/kl_text_1"
+                android:textSize="@dimen/ts_fx_team"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="2"
+                android:breakStrategy="simple"
+                android:ellipsize="end" />
+        </LinearLayout>
     </LinearLayout>
 
-    <!-- Row 3: BLV + so phong -->
+    <!-- Row 3: Tên trận đấu đầy đủ (kieu IMG_2815) -->
+    <TextView
+        android:id="@+id/cardMatchTitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:textColor="@color/kl_text_1"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <!-- Row 4: BLV + Viewers / Thời gian bắt đầu -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="4dp"
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
@@ -129,8 +181,19 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:textColor="@color/kl_text_2"
+            android:textSize="11sp"
             android:maxLines="1"
             android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/cardViewers"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="6dp"
+            android:textColor="@color/kl_amber"
+            android:fontFamily="@font/oswald"
+            android:textSize="12sp"
+            android:textStyle="bold" />
 
         <TextView
             android:id="@+id/cardRooms"
@@ -138,21 +201,13 @@
             android:layout_height="wrap_content"
             android:layout_marginLeft="6dp"
             android:textColor="@color/kl_text_2"
-            android:textSize="@dimen/ts_fx_meta"
+            android:textSize="11sp"
             android:fontFamily="sans-serif-medium"
             android:background="@drawable/bg_badge_glass"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp"
+            android:paddingLeft="7dp"
+            android:paddingRight="7dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
             android:visibility="gone" />
     </LinearLayout>
-
-    <!-- Accent bar duoi cung -->
-    <View
-        android:id="@+id/cardAccent"
-        android:layout_width="48dp"
-        android:layout_height="3dp"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/bg_accent_live" />
 </LinearLayout>

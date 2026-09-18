@@ -5,20 +5,70 @@
     android:focusable="false"
     android:descendantFocusability="afterDescendants">
 
-    <!-- 16:9 banner cover: fitCenter tren nen toi sang trong -->
+    <!-- 16:9 banner cover: fitCenter / centerCrop tren nen toi sang trong -->
     <ImageView
         android:id="@+id/heroCover"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:scaleType="fitCenter"
+        android:scaleType="centerCrop"
         android:background="@color/kl_bg_deep"
         android:contentDescription="@string/cd_match" />
 
-    <!-- Cinematic scrim overlay -->
+    <!-- Cinematic scrim overlay (lam toi trai & duoi de text de doc) -->
     <View
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@drawable/bg_hero_scrim" />
+
+    <!-- TOP RIGHT: CLOCK & SOLAR/LUNAR DATE WIDGET (kieu IMG_2815) -->
+    <LinearLayout
+        android:id="@+id/heroClockContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="16dp"
+        android:layout_marginRight="@dimen/sp_screen_margin"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/heroClockText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_clock_pill"
+            android:paddingLeft="14dp"
+            android:paddingRight="14dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:fontFamily="@font/oswald" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:orientation="vertical"
+            android:gravity="right">
+
+            <TextView
+                android:id="@+id/heroSolarDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/kl_text_1"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/heroLunarDate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="@color/kl_amber"
+                android:textSize="11sp" />
+        </LinearLayout>
+    </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -29,7 +79,7 @@
         android:paddingRight="@dimen/sp_screen_margin"
         android:paddingBottom="@dimen/hero_pad_b">
 
-        <!-- Header: League badge + Viewers badge -->
+        <!-- Header: LIVE badge + Tournament/League + Time metadata -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -37,17 +87,26 @@
             android:gravity="center_vertical">
 
             <TextView
+                android:id="@+id/heroLiveBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="LIVE"
+                android:textColor="@color/kl_amber"
+                android:textStyle="bold"
+                android:textSize="12sp"
+                android:letterSpacing="0.08" />
+
+            <TextView
                 android:id="@+id/heroLeague"
                 style="@style/KL.Text.Badge"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_badge_brand"
-                android:paddingLeft="11dp"
-                android:paddingRight="11dp"
-                android:paddingTop="4dp"
-                android:paddingBottom="4dp"
-                android:textColor="@color/kl_brand"
-                android:maxWidth="260dp"
+                android:layout_marginLeft="6dp"
+                android:paddingLeft="6dp"
+                android:paddingRight="6dp"
+                android:textColor="@color/kl_text_1"
+                android:textSize="12sp"
+                android:maxWidth="320dp"
                 android:ellipsize="end" />
 
             <TextView
@@ -55,15 +114,16 @@
                 style="@style/KL.Text.Meta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="10dp"
+                android:layout_marginLeft="8dp"
                 android:background="@drawable/bg_badge_glass"
                 android:drawableLeft="@drawable/ic_eye"
                 android:drawablePadding="6dp"
-                android:paddingLeft="11dp"
-                android:paddingRight="11dp"
-                android:paddingTop="4dp"
-                android:paddingBottom="4dp"
-                android:textColor="@color/kl_text_1" />
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"
+                android:textColor="@color/kl_text_2"
+                android:textSize="11sp" />
         </LinearLayout>
 
         <!-- Match Title -->
@@ -72,58 +132,61 @@
             style="@style/KL.Text.Display"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginRight="20dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginRight="40dp"
             android:includeFontPadding="false"
-            android:paddingTop="4dp"
             android:maxLines="2"
             android:breakStrategy="simple"
             android:hyphenationFrequency="none"
             android:ellipsize="end"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
             android:shadowColor="#FF000000"
             android:shadowDy="3"
             android:shadowRadius="12" />
 
-        <!-- Commentator Subtitle -->
+        <!-- Commentator / Description Subtitle -->
         <TextView
             android:id="@+id/heroBlv"
             style="@style/KL.Text.Body"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:layout_marginRight="20dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginRight="40dp"
             android:maxLines="1"
             android:ellipsize="end"
             android:textColor="@color/kl_text_2"
+            android:textSize="14sp"
             android:shadowColor="#E6000000"
             android:shadowDy="2"
             android:shadowRadius="8" />
 
-        <!-- CTA Buttons -->
+        <!-- CTA Buttons: Xem ngay + Chi tiet (kieu IMG_2815) -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_marginTop="12dp"
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
+            <!-- Primary CTA: Xem ngay (Orange Pill) -->
             <LinearLayout
                 android:id="@+id/heroPlay"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:background="@drawable/bg_button_primary"
-                android:paddingLeft="@dimen/btn_pad_x"
-                android:paddingRight="@dimen/btn_pad_x"
+                android:background="@drawable/bg_button_orange"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
                 android:paddingTop="10dp"
                 android:paddingBottom="10dp"
                 android:clickable="true"
                 android:focusable="true">
 
                 <ImageView
-                    android:layout_width="15dp"
-                    android:layout_height="15dp"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
                     android:src="@drawable/ic_play"
                     android:contentDescription="@string/cd_play" />
 
@@ -131,9 +194,41 @@
                     style="@style/KL.Text.Button"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="9dp"
-                    android:text="@string/live_hero_cta"
-                    android:textColor="@color/kl_on_brand" />
+                    android:layout_marginLeft="8dp"
+                    android:text="Xem ngay"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFF" />
+            </LinearLayout>
+
+            <!-- Secondary CTA: Chi tiet (Frosted Glass Pill) -->
+            <LinearLayout
+                android:id="@+id/heroDetails"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="12dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_button_glass"
+                android:paddingLeft="18dp"
+                android:paddingRight="18dp"
+                android:paddingTop="10dp"
+                android:paddingBottom="10dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:src="@drawable/ic_info"
+                    android:contentDescription="Chi tiết" />
+
+                <TextView
+                    style="@style/KL.Text.Button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="7dp"
+                    android:text="Chi tiết"
+                    android:textColor="#FFFFFF" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

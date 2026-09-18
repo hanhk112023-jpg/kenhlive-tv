@@ -22,7 +22,13 @@ data class LiveRoom(
     val matchTitle: String,   // "A vs B"
     val league: String,       // "CHA FACup"
     val cover: String = "",   // ảnh nền phòng (hero banner)
-    val category: String = "" // "Bóng đá" | "Bóng rổ" | "" (môn, tu liveTypeParent)
+    val category: String = "", // "Bóng đá" | "Bóng rổ" | "" (môn, tu liveTypeParent)
+    val blvLevel: String = "", // "Lv.1".."Lv.5" from anchor.growDto.name
+    val score: Int = 0,       // anchor.score
+    val focusCount: Int = 0,  // follower count
+    val notice: String = "",  // commentator announcement/notice
+    val hostIcon: String = "",// cờ/logo đội nhà
+    val guestIcon: String = ""// cờ/logo đội khách
 )
 
 /** Gộp nhiều phòng cùng 1 trận (cùng giải + tên trận). */
@@ -30,7 +36,9 @@ data class LiveMatchGroup(
     val league: String,
     val matchTitle: String,
     val rooms: List<LiveRoom>,  // sorted by viewers desc
-    val category: String = rooms.firstOrNull()?.category ?: ""
+    val category: String = rooms.firstOrNull()?.category ?: "",
+    val hostIcon: String = rooms.firstOrNull()?.hostIcon ?: "",
+    val guestIcon: String = rooms.firstOrNull()?.guestIcon ?: ""
 ) {
     val totalViewers: Int get() = rooms.sumOf { it.viewers }
     val top: LiveRoom get() = rooms.first()
@@ -78,7 +86,10 @@ object SocoliveRepository {
 
     private fun stamp(): String = (System.currentTimeMillis() / 1000).toString()
 
-    fun invalidateLive() { liveCache = null }
+    @Volatile private var recommendCache: List<ScheduleMatch>? = null
+    @Volatile private var recommendCacheAt = 0L
+
+    fun invalidateLive() { liveCache = null; recommendCache = null }
 
     // ---------- TAB TRỰC TIẾP ----------
     /** force=true bỏ qua cache (pull-to-refresh / retry). */
@@ -88,7 +99,6 @@ object SocoliveRepository {
             if (c != null && System.currentTimeMillis() - liveCacheAt < LIVE_TTL_MS) return c
         }
         return liveMutex.withLock {
-            // kiểm tra lại trong lock: request song song chỉ đi 1 lần
             val c = liveCache
             if (!force && c != null && System.currentTimeMillis() - liveCacheAt < LIVE_TTL_MS) return@withLock c
             withContext(Dispatchers.IO) {
@@ -98,6 +108,26 @@ object SocoliveRepository {
             }.also {
                 liveCache = it
                 liveCacheAt = System.currentTimeMillis()
+            }
+        }
+    }
+
+    /** Trận đề xuất / tâm điểm từ match_recommend.json (chứa cờ/logo 2 đội & danh sách BLV). */
+    suspend fun fetchRecommendations(force: Boolean = false): List<ScheduleMatch> {
+        if (!force) {
+            val c = recommendCache
+            if (c != null && System.currentTimeMillis() - recommendCacheAt < LIVE_TTL_MS) return c
+        }
+        return withContext(Dispatchers.IO) {
+            try {
+                val now = stamp()
+                val body = Http.getWithRetry("$API/match_recommend.json?callback=recommend&v=$now&_=$now")
+                SocoliveParser.parseRecommendMatches(body)
+            } catch (_: Exception) { emptyList() }
+        }.also {
+            if (it.isNotEmpty()) {
+                recommendCache = it
+                recommendCacheAt = System.currentTimeMillis()
             }
         }
     }

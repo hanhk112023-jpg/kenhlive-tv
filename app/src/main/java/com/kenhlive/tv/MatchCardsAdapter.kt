@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -19,9 +18,9 @@ import java.util.Date
 import java.util.Locale
 
 /**
- * Card kieu Sport Zone FPT Play, 2 loai trong cung 1 rail "Truc tiep & Sap dien ra":
- *  - LIVE:  tag giai + pill LIVE DO, 2 ten doi 2 ben, giua avatar + viewers do, vat do duoi
- *  - SOON:  gio HH:MM lon + ngay, chip dem nguoc "BAT DAU SAU X'" do, avatar BLV co phong
+ * Card kiểu Sport Zone FPT Play / IMG_2815, 2 loại trong cùng 1 rail "Trực Tiếp & Tâm Điểm Thể Thao":
+ *  - LIVE:  tag giải cyan + pill LIVE ĐỎ, tỉ số 0:0, 2 tên đội 2 bên, avatar BLV + viewers, viền focus cyan neon
+ *  - SOON:  giờ HH:MM, tag đếm ngược "còn Xp", VS badge tròn, tên trận + thời gian bắt đầu
  */
 class MatchCardsAdapter(
     private val onLiveClick: (LiveMatchGroup) -> Unit,
@@ -47,7 +46,6 @@ class MatchCardsAdapter(
             }
         }
 
-        /** "A vs B" -> (A, B); khong co "vs" -> (title, ""). */
         fun splitTeams(t: String): Pair<String, String> {
             val i = t.indexOf(" vs ", ignoreCase = true)
             return if (i > 0) t.substring(0, i).trim() to t.substring(i + 4).trim() else t to ""
@@ -55,13 +53,12 @@ class MatchCardsAdapter(
 
         fun countdownLabel(at: Long): String {
             val mins = ((at - System.currentTimeMillis()) / 60_000L).coerceAtLeast(0)
-            return if (mins < 60) "BẮT ĐẦU SAU ${mins}′"
-            else "CÒN ${mins / 3600}H${"%02d".format((mins % 3600) / 60)}'"
+            return if (mins < 60) "⏳ còn ${mins}p"
+            else "⏳ còn ${mins / 60}h ${mins % 60}p"
         }
     }
 
     var rowPos: Int = 0
-    /** % chieu rong man ma 1 card + gap chiem (de chip row canh phai theo rail). */
     var cardFraction: Float = 0.33f
     var keyHandler: ((Int, Int, Int) -> android.view.View.OnKeyListener)? = null
 
@@ -73,6 +70,10 @@ class MatchCardsAdapter(
         val viewers: TextView = v.findViewById(R.id.cardViewers)
         val blv: TextView = v.findViewById(R.id.cardBlv)
         val rooms: TextView = v.findViewById(R.id.cardRooms)
+        val score: TextView? = v.findViewById(R.id.cardScore)
+        val matchTitle: TextView? = v.findViewById(R.id.cardMatchTitle)
+        val hostIcon: ImageView? = v.findViewById(R.id.cardHostIcon)
+        val guestIcon: ImageView? = v.findViewById(R.id.cardGuestIcon)
     }
 
     inner class FixtureVH(v: View) : RecyclerView.ViewHolder(v) {
@@ -83,6 +84,9 @@ class MatchCardsAdapter(
         val date: TextView = v.findViewById(R.id.fxDate)
         val anchors: LinearLayout = v.findViewById(R.id.fxAnchorRow)
         val countdown: TextView = v.findViewById(R.id.fxCountdown)
+        val matchTitle: TextView? = v.findViewById(R.id.fxMatchTitle)
+        val hostIcon: ImageView? = v.findViewById(R.id.fxHostIcon)
+        val guestIcon: ImageView? = v.findViewById(R.id.fxGuestIcon)
     }
 
     override fun getItemViewType(pos: Int) =
@@ -92,7 +96,6 @@ class MatchCardsAdapter(
         val inf = LayoutInflater.from(parent.context)
         val v = if (viewType == TYPE_LIVE) inf.inflate(R.layout.item_match_card, parent, false)
                 else inf.inflate(R.layout.item_fixture_card, parent, false)
-        // do 10-foot: width = 30% chieu rong man (mat du dung o moi density/ROM)
         val px = parent.context.resources.displayMetrics.widthPixels
         val target = (px * if (DeviceMode.isTv) 0.33f else 0.62f).toInt()
         val lp = v.layoutParams
@@ -113,7 +116,7 @@ class MatchCardsAdapter(
                 }
                 FocusKit.remember(rowPos, pos, key)
             }
-            v.animate().scaleX(if (has) 1.06f else 1f).scaleY(if (has) 1.06f else 1f)
+            v.animate().scaleX(if (has) 1.05f else 1f).scaleY(if (has) 1.05f else 1f)
                 .setDuration(150).start()
             v.elevation = if (has) 16f else 0f
         }
@@ -129,16 +132,43 @@ class MatchCardsAdapter(
         val (host, guest) = splitTeams(g.matchTitle)
         h.host.text = host
         h.guest.text = guest
+        h.matchTitle?.text = g.matchTitle
+        h.score?.text = "0 : 0"
+
+        if (g.hostIcon.isNotBlank()) {
+            h.hostIcon?.visibility = View.VISIBLE
+            h.hostIcon?.load(g.hostIcon) {
+                crossfade(0)
+                placeholder(R.drawable.ic_sports)
+                error(R.drawable.ic_sports)
+            }
+        } else {
+            h.hostIcon?.visibility = View.GONE
+        }
+
+        if (g.guestIcon.isNotBlank()) {
+            h.guestIcon?.visibility = View.VISIBLE
+            h.guestIcon?.load(g.guestIcon) {
+                crossfade(0)
+                placeholder(R.drawable.ic_sports)
+                error(R.drawable.ic_sports)
+            }
+        } else {
+            h.guestIcon?.visibility = View.GONE
+        }
+
         h.viewers.text = "👁 " + SocoliveRepository.fmtViewers(g.totalViewers)
-        h.blv.text = g.top.blvName + if (g.count > 1) " +${g.count - 1} BLV" else ""
+        h.blv.text = "Đang trực tiếp • BLV ${g.top.blvName}" + if (g.count > 1) " +${g.count - 1}" else ""
         if (g.count > 1) {
             h.rooms.text = ctx.getString(R.string.live_rooms_badge, g.count)
             h.rooms.visibility = View.VISIBLE
         } else h.rooms.visibility = View.GONE
+
         h.avatar.load(g.top.avatar) {
             crossfade(if (DeviceMode.lowRam) 0 else 80)
             transformations(CircleCropTransformation())
-            placeholder(R.drawable.logo_placeholder); error(R.drawable.logo_placeholder)
+            placeholder(R.drawable.logo_placeholder)
+            error(R.drawable.logo_placeholder)
         }
         h.itemView.setOnClickListener { onLiveClick(g) }
         h.itemView.setOnLongClickListener { onLiveLong(g); true }
@@ -150,24 +180,57 @@ class MatchCardsAdapter(
         h.league.text = m.league.ifBlank { m.category }
         h.host.text = m.host
         h.guest.text = m.guest
+        h.matchTitle?.text = "${m.host} vs ${m.guest}"
+
+        if (m.hostIcon.isNotBlank()) {
+            h.hostIcon?.visibility = View.VISIBLE
+            h.hostIcon?.load(m.hostIcon) {
+                crossfade(0)
+                placeholder(R.drawable.ic_sports)
+                error(R.drawable.ic_sports)
+            }
+        } else {
+            h.hostIcon?.visibility = View.GONE
+        }
+
+        if (m.guestIcon.isNotBlank()) {
+            h.guestIcon?.visibility = View.VISIBLE
+            h.guestIcon?.load(m.guestIcon) {
+                crossfade(0)
+                placeholder(R.drawable.ic_sports)
+                error(R.drawable.ic_sports)
+            }
+        } else {
+            h.guestIcon?.visibility = View.GONE
+        }
+
         if (m.matchTimeMs > 0) {
             val c = Calendar.getInstance(Locale.US).apply { time = Date(m.matchTimeMs) }
-            h.time.text = DateFormat.format("HH:mm", c).toString()
-            h.date.text = DateFormat.format("dd/MM", c).toString()
+            val timeStr = DateFormat.format("HH:mm", c).toString()
+            val dateStr = DateFormat.format("dd.MM", c).toString()
+            h.time.text = timeStr
+            h.date.text = "Bắt đầu: $timeStr • $dateStr"
             val soon = m.matchTimeMs - System.currentTimeMillis()
             if (soon in 1 until 24 * 3600_000L) {
                 h.countdown.text = countdownLabel(m.matchTimeMs)
                 h.countdown.visibility = View.VISIBLE
             } else h.countdown.visibility = View.GONE
-        } else { h.time.text = "--:--"; h.date.text = ""; h.countdown.visibility = View.GONE }
+        } else {
+            h.time.text = "--:--"
+            h.date.text = "Chưa có giờ"
+            h.countdown.visibility = View.GONE
+        }
+
         h.anchors.removeAllViews()
         val inf = LayoutInflater.from(ctx)
         val withRoom = m.anchors.filter { it.roomNum.isNotBlank() }
         (if (withRoom.isNotEmpty()) withRoom else m.anchors).take(4).forEach { a ->
             val iv = inf.inflate(R.layout.item_anchor_avatar, h.anchors, false) as ImageView
             iv.load(a.icon) {
-                crossfade(0); transformations(CircleCropTransformation())
-                placeholder(R.drawable.logo_placeholder); error(R.drawable.logo_placeholder)
+                crossfade(0)
+                transformations(CircleCropTransformation())
+                placeholder(R.drawable.logo_placeholder)
+                error(R.drawable.logo_placeholder)
             }
             h.anchors.addView(iv)
         }

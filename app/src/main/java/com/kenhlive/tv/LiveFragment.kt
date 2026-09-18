@@ -19,9 +19,11 @@ import com.kenhlive.tv.viewmodel.ScheduleViewModel
 import kotlinx.coroutines.launch
 
 /**
- * MAN BONG DA — cau truc Sport Zone (lay cam FPT Play moi):
- *  chip giai dau -> rail "Truc tiep & Sap dien ra" -> danh sach theo ngay.
- * Data: LiveViewModel (all_live_rooms) + ScheduleViewModel (matches_YYYYMMDD), cache san.
+ * MÀN HÌNH CHÍNH — Cấu trúc giao diện kiểu IMG_2815, tùy chỉnh riêng cho SocoliveTV:
+ *  1. Hero Banner: Trận đấu tâm điểm, đồng hồ số & lịch âm dương, nút "Xem ngay" + "Chi tiết"
+ *  2. "Trực Tiếp & Tâm Điểm Thể Thao": Thẻ trận ngang có tỉ số 0:0, cờ 2 đội, badge LIVE / đếm ngược
+ *  3. "Bình Luận Viên Tâm Điểm": Hàng thẻ phòng live BLV Socolive nổi bật với màu sắc gradient sang trọng
+ *  4. "Khám Phá Nhanh" / Lịch thi đấu theo ngày
  */
 class LiveFragment : Fragment() {
 
@@ -47,7 +49,9 @@ class LiveFragment : Fragment() {
             onGroupClick = { g -> openGroupPicker(g) },
             onGroupLong = { g -> openMultiView(g) },
             onFixtureClick = { m -> onFixtureTap(m) },
-            onLeaguePick = { i -> selLeague = i; rebuild() }
+            onLeaguePick = { i -> selLeague = i; rebuild() },
+            onGroupDetails = { g -> openGroupPicker(g) },
+            onRoomClick = { r -> openRoom(r) }
         )
         list.layoutManager = LinearLayoutManager(requireContext())
         list.adapter = adapter
@@ -59,17 +63,14 @@ class LiveFragment : Fragment() {
             vm.state.collect { st ->
                 if (st is UiState.Success) liveGroups = st.data
                 rebuild()
-                // Error/Loading khi CHUA co du lieu moi/ cu -> lap overlay;
-                // da co du lieu (liveGroups khong rong) -> GIU noi dung kieu FPT, im lang retry nen
                 if ((st is UiState.Loading || st is UiState.Error) && liveGroups.isEmpty())
                     state.render(st, R.string.live_loading) { vm.load(force = true); svm.load(force = true) }
-                else state.hide() // an spinner ton dong khi data da ve giua chung
+                else state.hide()
             }
         }
         viewLifecycleOwner.lifecycleScope.launch {
             svm.state.collect { st ->
                 if (st is UiState.Success) {
-                    // ScheduleViewModel tra danh sach FLATTEN (String header ngay | ScheduleMatch)
                     val flat = st.data
                     val grouped = LinkedHashMap<String, MutableList<ScheduleMatch>>()
                     var cur = ""
@@ -87,43 +88,108 @@ class LiveFragment : Fragment() {
         return v
     }
 
-    private fun leagueOf(g: LiveMatchGroup): String = g.league
-    private fun leagueOf(m: ScheduleMatch): String = m.league.ifBlank { m.category }
-
     private fun rebuild() {
         if (!::adapter.isInitialized) return
-        // chip = MON (dinh), khong phai danh sach giai dai dong: Tat ca / Bong da / Bong ro
-        if (leagueLabels.size != 3) leagueLabels = listOf("Tất cả", "Bóng đá", "Bóng rổ")
+
+        // Ánh xạ cờ/logo 2 đội từ dữ liệu lịch thi đấu / đề xuất
+        val allScheduleMatches = daysLabeled.values.flatten()
+        val iconMap = mutableMapOf<String, Pair<String, String>>()
+        for (m in allScheduleMatches) {
+            if (m.hostIcon.isNotBlank() || m.guestIcon.isNotBlank()) {
+                val key = "${m.host} vs ${m.guest}".lowercase().trim()
+                iconMap[key] = m.hostIcon to m.guestIcon
+            }
+        }
+
+        val enrichedLiveGroups = liveGroups.map { g ->
+            if (g.hostIcon.isNotBlank() && g.guestIcon.isNotBlank()) g
+            else {
+                val key = g.matchTitle.lowercase().trim()
+                val found = iconMap[key] ?: iconMap.entries.firstOrNull { (k, _) ->
+                    k in key || key in k
+                }?.value
+                if (found != null) {
+                    g.copy(hostIcon = found.first, guestIcon = found.second)
+                } else g
+            }
+        }
+
+        val baseCategories = listOf("Tất cả", "Bóng đá", "Bóng rổ")
+        val activeLeagues = enrichedLiveGroups.map { it.league }
+            .filter { it.isNotBlank() && it !in baseCategories }
+            .distinct()
+            .take(4)
+        leagueLabels = baseCategories + activeLeagues
         if (selLeague >= leagueLabels.size) selLeague = 0
 
-        val lg = if (selLeague == 0) liveGroups
-        else liveGroups.filter { it.category == leagueLabels[selLeague] }
+        val lg = when (selLeague) {
+            0 -> enrichedLiveGroups
+            1 -> enrichedLiveGroups.filter { it.category == "Bóng đá" || it.league.contains("bóng đá", ignoreCase = true) }
+            2 -> enrichedLiveGroups.filter { it.category == "Bóng rổ" || it.league.contains("bóng rổ", ignoreCase = true) || it.league.contains("nba", ignoreCase = true) }
+            else -> {
+                val target = leagueLabels[selLeague]
+                enrichedLiveGroups.filter { it.league.equals(target, ignoreCase = true) || it.category.equals(target, ignoreCase = true) }
+            }
+        }
 
         val now = System.currentTimeMillis()
-        val upcoming = daysLabeled.values.flatten()
-            .filter { it.matchTimeMs in (now - 30 * 60_000L)..(now + 24 * 3600_000L) && !it.isLive || (it.isLive && it.hasRoom && liveGroups.none { g -> g.matchTitle == "${it.host} vs ${it.guest}" }) }
+        val upcoming = allScheduleMatches
+            .filter { it.matchTimeMs in (now - 30 * 60_000L)..(now + 24 * 3600_000L) && !it.isLive || (it.isLive && it.hasRoom && enrichedLiveGroups.none { g -> g.matchTitle == "${it.host} vs ${it.guest}" }) }
             .sortedBy { it.matchTimeMs }
-        val upFiltered = if (selLeague == 0) upcoming
-        else upcoming.filter { it.category == leagueLabels[selLeague] }
+        val upFiltered = when (selLeague) {
+            0 -> upcoming
+            1 -> upcoming.filter { it.category == "Bóng đá" }
+            2 -> upcoming.filter { it.category == "Bóng rổ" }
+            else -> {
+                val target = leagueLabels[selLeague]
+                upcoming.filter { it.league.equals(target, ignoreCase = true) || it.category.equals(target, ignoreCase = true) }
+            }
+        }
 
         val items = mutableListOf<Any>()
-        items.add(SportAdapter.ChipsItem(leagueLabels, selLeague))
+
+        // 1. Hero banner ở đầu tiên (kieu IMG_2815)
         items.add(SportAdapter.HeroItem(lg))
+
+        // Phone layout: thêm chips lọc môn trên cùng
+        if (!DeviceMode.isTv) {
+            items.add(0, SportAdapter.ChipsItem(leagueLabels, selLeague))
+        }
+
+        // 2. Section 1: "Trực Tiếp & Tâm Điểm Thể Thao" (Row trận đấu trực tiếp)
         items.add(SportAdapter.RailItem(lg, upFiltered))
+
+        // 3. Section 2: "Bình Luận Viên Tâm Điểm" (Row các BLV hot nhất của Socolive với thẻ gradient đa sắc)
+        val allRooms = lg.flatMap { it.rooms }.sortedByDescending { it.viewers }
+        if (allRooms.isNotEmpty()) {
+            items.add(SportAdapter.BlvRowItem(allRooms))
+        }
+
+        // 4. Section 3: "Khám Phá Nhanh" / Danh sách trận đấu theo ngày
         for ((label, ms0) in daysLabeled) {
-            val ms = if (selLeague == 0) ms0 else ms0.filter { it.category == leagueLabels[selLeague] }
+            val ms = when (selLeague) {
+                0 -> ms0
+                1 -> ms0.filter { it.category == "Bóng đá" }
+                2 -> ms0.filter { it.category == "Bóng rổ" }
+                else -> {
+                    val target = leagueLabels[selLeague]
+                    ms0.filter { it.league.equals(target, ignoreCase = true) || it.category.equals(target, ignoreCase = true) }
+                }
+            }
             if (ms.isEmpty()) continue
             items.add(label)
             items.addAll(ms)
         }
+
         val hadFocus = list.hasFocus() && FocusKit.lastSlot != null
         adapter.submitList(items)
         if (hadFocus) {
-            // silent refresh khi user dang o trong danh sach: gap layout xong thi dinh vi lai
             list.post { list.post { FocusKit.restore(adapter) } }
         }
-        if (items.size > 3) state.hide()
-        else if (liveGroups.isEmpty() && daysLabeled.isEmpty()) state.render(UiState.Empty("Sân vắng bóng", "Hiện không có trận nào đang live"), R.string.live_loading)
+        if (items.size > 2) state.hide()
+        else if (liveGroups.isEmpty() && daysLabeled.isEmpty()) {
+            state.render(UiState.Empty("Sân vắng bóng", "Hiện không có trận nào đang live"), R.string.live_loading)
+        }
     }
 
     override fun onResume() {
@@ -139,7 +205,6 @@ class LiveFragment : Fragment() {
         svm.stopAutoRefresh()
     }
 
-    /** QA hook (`--es open refresh`). */
     fun debugForceRefresh() { if (isAdded) { vm.silentRefresh(); svm.load(force = true) } }
 
     fun openMultiView(initial: LiveMatchGroup? = null) {
@@ -154,7 +219,6 @@ class LiveFragment : Fragment() {
         dialog = RoomPickerDialog.show(requireContext(), g, onPickRoom = { r -> openRoom(r) })
     }
 
-    /** Tap tran sap toi: mo phong BLV dau tien co phong (neu khong -> toast). */
     private fun onFixtureTap(m: ScheduleMatch) {
         val live = m.anchors.filter { it.roomNum.isNotBlank() }
         if (live.isEmpty()) {
