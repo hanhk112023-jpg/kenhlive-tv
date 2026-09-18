@@ -12,3 +12,4 @@ __pycache__/
 
 # keystore ky APK — CHI co trong secret CI (BUG-01)
 keystore/
+imagetest/

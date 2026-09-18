@@ -54,6 +54,9 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
 
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y ffmpeg fonts-noto-core
+
       - name: Quay tour UI
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -68,7 +71,7 @@ jobs:
         run: |
           mkdir -p tour_out && cp -r /tmp/tour/* tour_out/ 2>/dev/null || true
           ls -la tour_out/
-          SZ=$(stat -c%s tour_out/rec.mp4 2>/dev/null || echo 0)
+          SZ=$(stat -c%s tour_out/rec.mp4 2>/dev/null || stat -c%s tour_out/rec1.mp4 2>/dev/null || echo 0)
           [ "$SZ" -gt 100000 ] || { echo "artifact khong co video (=$SZ)"; exit 1; }
 
       - uses: actions/upload-artifact@v4

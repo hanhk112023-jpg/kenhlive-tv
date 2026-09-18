@@ -77,7 +77,7 @@ jobs:
           target: android-tv
           disableAnimations: true
           script: |
-            bash qa/dpad_test.sh 34
+            bash qa/dpad_test.sh ${{ matrix.api }}
 
       - name: Thu ảnh (kể cả fail)
         if: always()
@@ -89,5 +89,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: dpad-video-a34
+          name: dpad-video-a${{ matrix.api }}
           path: look_out/
