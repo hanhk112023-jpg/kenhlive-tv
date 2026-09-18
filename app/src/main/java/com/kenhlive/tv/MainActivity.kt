@@ -103,7 +103,7 @@ class MainActivity : AppCompatActivity() {
             }
             findViewById<View>(R.id.nav_multiview)?.apply {
                 findViewById<ImageView>(R.id.navIcon)?.setImageResource(R.drawable.ic_multiview)
-                setOnClickListener { startActivity(Intent(this, MultiViewActivity::class.java)) }
+                setOnClickListener { startActivity(Intent(this@MainActivity, MultiViewActivity::class.java)) }
             }
             findViewById<View>(R.id.nav_replay)?.apply {
                 findViewById<ImageView>(R.id.navIcon)?.setImageResource(R.drawable.ic_highlights)
