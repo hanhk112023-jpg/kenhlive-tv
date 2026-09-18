@@ -175,6 +175,9 @@ class MainActivity : AppCompatActivity() {
         }
         return super.dispatchKeyEvent(event)
     }
+
+    fun showTab(pos: Int, animate: Boolean = true) {
+        current = pos
         navViews.forEachIndexed { i, v -> v.isSelected = i == pos }
         val tx = supportFragmentManager.beginTransaction()
         if (animate) tx.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
