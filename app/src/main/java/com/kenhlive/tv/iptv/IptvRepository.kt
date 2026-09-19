@@ -22,8 +22,9 @@ object IptvRepository {
     private const val KEY_CACHE = "m3u_cached_content"
     private const val KEY_LAST_UPDATE = "m3u_last_update"
 
-    // Playlist m3u dự phòng mặc định (các kênh VTV, tin tức, thể thao cơ bản)
-    const val DEFAULT_M3U_URL = "https://raw.githubusercontent.com/iptv-org/iptv/master/streams/vn.m3u"
+    // Playlist m3u tự động cập nhật mỗi 6h từ vbskycn/iptv (492 kênh CCTV, vệ tinh, phim, tài liệu, thể thao)
+    const val DEFAULT_M3U_URL = "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u"
+    const val BACKUP_M3U_URL = "https://live.zbds.top/tv/iptv4.m3u"
 
     fun getM3uUrl(context: Context): String {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -48,7 +49,10 @@ object IptvRepository {
         }
 
         // Tải m3u/m3u8 từ mạng
-        val content = fetchUrl(m3uUrl)
+        var content = fetchUrl(m3uUrl)
+        if (content.isNullOrBlank() && m3uUrl == DEFAULT_M3U_URL) {
+            content = fetchUrl(BACKUP_M3U_URL)
+        }
         if (!content.isNullOrBlank()) {
             sp.edit()
                 .putString(KEY_CACHE, content)
