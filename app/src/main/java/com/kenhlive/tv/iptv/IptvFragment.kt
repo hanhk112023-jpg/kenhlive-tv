@@ -58,7 +58,7 @@ class IptvFragment : Fragment() {
         btnRefresh = view.findViewById(R.id.btnRefreshIptv)
         btnManage = view.findViewById(R.id.btnManageM3u)
 
-        // TV 4-5 cột rộng rãi chuẩn 16:9, Mobile 2-3 cột
+        // TV 4 cột rộng rãi chuẩn 16:9, Mobile 2 cột
         val spanCount = if (DeviceMode.isTv) 4 else 2
         gridList.layoutManager = GridLayoutManager(requireContext(), spanCount)
         groupList.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
@@ -98,9 +98,9 @@ class IptvFragment : Fragment() {
             } else {
                 val vnCount = allChannels.count { it.isVn }
                 val sportsCount = allChannels.size - vnCount
-                countText.text = "Tổng: ${allChannels.size} kênh (${vnCount} kênh VN, ${sportsCount} kênh Thể thao)"
+                countText.text = "Tổng: ${allChannels.size} kênh chất lượng cao (${vnCount} VN, ${sportsCount} Thể thao Châu Âu/Quốc tế)"
 
-                val distinctGroups = mutableListOf("Việt Nam", "Thể thao", "Tất cả")
+                val distinctGroups = mutableListOf("Việt Nam", "Thể thao Châu Âu", "Tất cả")
                 val otherGroups = allChannels.map { it.group }.distinct().filterNot { it in distinctGroups }
                 distinctGroups.addAll(otherGroups)
 
@@ -114,14 +114,18 @@ class IptvFragment : Fragment() {
         var list = allChannels
         if (selectedGroup == "Việt Nam") {
             list = list.filter { it.isVn || it.group.contains("Việt Nam", ignoreCase = true) }
-        } else if (selectedGroup == "Thể thao") {
-            list = list.filter { !it.isVn && (it.group.contains("Thể thao", ignoreCase = true) || it.group.contains("Sport", ignoreCase = true)) }
+        } else if (selectedGroup == "Thể thao Châu Âu") {
+            list = list.filter { !it.isVn }
         } else if (selectedGroup != "Tất cả") {
             list = list.filter { it.group.equals(selectedGroup, ignoreCase = true) }
         }
 
         if (currentKeyword.isNotEmpty()) {
-            list = list.filter { it.name.contains(currentKeyword, ignoreCase = true) || it.group.contains(currentKeyword, ignoreCase = true) }
+            list = list.filter {
+                it.name.contains(currentKeyword, ignoreCase = true) ||
+                it.group.contains(currentKeyword, ignoreCase = true) ||
+                it.country.contains(currentKeyword, ignoreCase = true)
+            }
         }
 
         displayedChannels = list
@@ -170,8 +174,8 @@ class IptvFragment : Fragment() {
             override fun onBindViewHolder(holder: ChannelViewHolder, position: Int) {
                 val ch = channels[position]
                 holder.tvName.text = ch.name
-                holder.tvSub.text = if (ch.isVn) "Truyền hình Việt Nam" else ch.group
-                holder.badge.text = if (ch.isVn) "VIỆT NAM" else "THỂ THAO"
+                holder.tvSub.text = if (ch.isVn) "Truyền hình Việt Nam" else "Thể thao · ${if (ch.country.isNotEmpty()) ch.country else "Quốc tế"}"
+                holder.badge.text = if (ch.isVn) "VIỆT NAM" else if (ch.country.isNotEmpty()) "EU (${ch.country})" else "SPORTS"
 
                 if (ch.logo.isNotEmpty()) {
                     holder.ivLogo.load(ch.logo) {
@@ -216,7 +220,7 @@ class IptvFragment : Fragment() {
 
         AlertDialog.Builder(ctx)
             .setTitle("Thêm Playlist M3U / M3U8 Riêng")
-            .setMessage("Mặc định ứng dụng đã tự động tải 82 kênh Việt Nam và 430 kênh Thể thao quốc tế. Bạn có thể nhập thêm link cá nhân tại đây:")
+            .setMessage("Ứng dụng tự động chọn lọc kênh Việt Nam & Thể thao Châu Âu chất lượng cao. Bạn có thể dán thêm link playlist cá nhân tại đây:")
             .setView(input)
             .setPositiveButton("LƯU & NẠP KÊNH") { _, _ ->
                 val newUrl = input.text.toString().trim()

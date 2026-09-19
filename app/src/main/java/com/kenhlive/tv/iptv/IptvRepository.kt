@@ -7,6 +7,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import java.net.HttpURLConnection
 import java.net.URL
+import java.util.Locale
 
 data class IptvChannel(
     val id: String,
@@ -14,7 +15,8 @@ data class IptvChannel(
     val group: String,
     val logo: String,
     val url: String,
-    val isVn: Boolean = false
+    val isVn: Boolean = false,
+    val country: String = ""
 )
 
 object IptvRepository {
@@ -25,9 +27,20 @@ object IptvRepository {
     private const val KEY_CACHE_CUSTOM = "m3u_cache_custom"
     private const val KEY_LAST_UPDATE = "m3u_last_update"
 
-    // Nguồn chính: Việt Nam & Thể thao quốc tế từ iptv-org
+    // Nguồn chính: Việt Nam & Thể thao từ iptv-org
     const val URL_VN = "https://iptv-org.github.io/iptv/countries/vn.m3u"
     const val URL_SPORTS = "https://iptv-org.github.io/iptv/categories/sports.m3u"
+
+    // Danh sách mã quốc gia Châu Âu trọng điểm & các thương hiệu thể thao lớn
+    private val EU_COUNTRIES = setOf(
+        "UK", "GB", "ES", "FR", "DE", "IT", "PT", "NL", "BE", "CH", "AT", "SE", "NO", "DK", "FI", "PL", "RO", "CZ"
+    )
+
+    private val PREMIUM_SPORTS_KEYWORDS = listOf(
+        "bein", "dazn", "canal+", "eurosport", "sky", "barca", "real madrid", "fifa", "uefa",
+        "red bull", "formula", "f1", "motogp", "wrc", "fight", "combat", "tennis", "golf",
+        "digi sport", "movistar", "sport", "football", "soccer", "racing"
+    )
 
     fun getCustomUrl(context: Context): String {
         return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -81,22 +94,21 @@ object IptvRepository {
 
         val result = mutableListOf<IptvChannel>()
 
-        // 1. Kênh Việt Nam
+        // 1. Kênh Việt Nam tuyển chọn
         if (!cachedVn.isNullOrBlank()) {
-            result.addAll(parseM3u(cachedVn!!, defaultGroup = "Việt Nam", isVn = true))
+            result.addAll(parseM3u(cachedVn!!, defaultGroup = "Việt Nam", isVn = true, filterEuSports = false))
         }
 
-        // 2. Kênh Thể thao
+        // 2. Kênh Thể thao Châu Âu & Premium quốc tế tuyển chọn kỹ càng (chất lượng > số lượng)
         if (!cachedSports.isNullOrBlank()) {
-            result.addAll(parseM3u(cachedSports!!, defaultGroup = "Thể thao", isVn = false))
+            result.addAll(parseM3u(cachedSports!!, defaultGroup = "Thể thao Châu Âu", isVn = false, filterEuSports = true))
         }
 
-        // 3. Kênh từ link tùy chỉnh của người dùng (nếu có)
+        // 3. Kênh từ playlist tùy chọn của người dùng (nếu có)
         if (!cachedCustom.isNullOrBlank()) {
-            result.addAll(parseM3u(cachedCustom!!, defaultGroup = "Kênh riêng", isVn = false))
+            result.addAll(parseM3u(cachedCustom!!, defaultGroup = "Kênh riêng", isVn = false, filterEuSports = false))
         }
 
-        // Loại trừ kênh trùng lặp theo stream url
         result.distinctBy { it.url }
     }
 
@@ -115,18 +127,21 @@ object IptvRepository {
         }
     }
 
-    fun parseM3u(content: String, defaultGroup: String, isVn: Boolean): List<IptvChannel> {
+    fun parseM3u(content: String, defaultGroup: String, isVn: Boolean, filterEuSports: Boolean): List<IptvChannel> {
         val list = mutableListOf<IptvChannel>()
         val lines = content.lines()
         var curName = ""
         var curGroup = defaultGroup
         var curLogo = ""
         var curId = ""
+        var curCountry = ""
 
         val tvgNameRegex = Regex("""tvg-name="([^"]*)"""", RegexOption.IGNORE_CASE)
         val tvgLogoRegex = Regex("""tvg-logo="([^"]*)"""", RegexOption.IGNORE_CASE)
         val groupRegex = Regex("""group-title="([^"]*)"""", RegexOption.IGNORE_CASE)
         val tvgIdRegex = Regex("""tvg-id="([^"]*)"""", RegexOption.IGNORE_CASE)
+        val countryRegex = Regex("""tvg-country="([^"]*)"""", RegexOption.IGNORE_CASE)
+        val idCountryRegex = Regex("""tvg-id="[^"]*\.([a-zA-Z]{2})@""", RegexOption.IGNORE_CASE)
 
         for (line in lines) {
             val trimmed = line.trim()
@@ -138,26 +153,41 @@ object IptvRepository {
                 curId = tvgIdRegex.find(trimmed)?.groupValues?.get(1) ?: ""
                 val tvgName = tvgNameRegex.find(trimmed)?.groupValues?.get(1) ?: ""
 
-                // Làm sạch tên nhóm
-                curGroup = when {
-                    isVn -> "Việt Nam"
-                    foundGroup.contains("Sport", ignoreCase = true) -> "Thể thao"
-                    foundGroup.isNotBlank() && !foundGroup.equals("Undefined", true) -> foundGroup
-                    else -> defaultGroup
+                // Trích xuất quốc gia
+                var country = countryRegex.find(trimmed)?.groupValues?.get(1)?.uppercase(Locale.ROOT) ?: ""
+                if (country.isEmpty()) {
+                    country = idCountryRegex.find(trimmed)?.groupValues?.get(1)?.uppercase(Locale.ROOT) ?: ""
                 }
+                curCountry = country
 
                 val commaIdx = trimmed.lastIndexOf(',')
                 val dispName = if (commaIdx != -1 && commaIdx < trimmed.length - 1) {
                     trimmed.substring(commaIdx + 1).trim()
                 } else tvgName
 
-                // Lọc bỏ hậu tố phân giải không cần thiết để tên kênh gọn đẹp
                 var cleanName = (if (dispName.isNotEmpty()) dispName else tvgName).ifEmpty { "Kênh TV" }
+                val isGeoBlocked = cleanName.contains("[Geo-blocked]", ignoreCase = true)
                 cleanName = cleanName.replace(Regex("""\[Geo-blocked\]""", RegexOption.IGNORE_CASE), "")
                     .replace(Regex("""\[Not 24/7\]""", RegexOption.IGNORE_CASE), "")
                     .trim()
 
                 curName = cleanName
+
+                curGroup = when {
+                    isVn -> "Việt Nam"
+                    curCountry in EU_COUNTRIES -> "Châu Âu (${curCountry})"
+                    else -> defaultGroup
+                }
+
+                // Nếu lọc thể thao: Bỏ các kênh bị geo-block hoặc không thuộc Châu Âu / không thuộc thương hiệu lớn
+                if (filterEuSports) {
+                    val nameLower = cleanName.lowercase(Locale.ROOT)
+                    val isPremiumBrand = PREMIUM_SPORTS_KEYWORDS.any { nameLower.contains(it) }
+                    val isEu = curCountry in EU_COUNTRIES
+                    if (isGeoBlocked || (!isEu && !isPremiumBrand)) {
+                        curName = "" // Đánh dấu bỏ qua
+                    }
+                }
             } else if (!trimmed.startsWith("#")) {
                 if (curName.isNotEmpty() && (trimmed.startsWith("http://", true) || trimmed.startsWith("https://", true))) {
                     list.add(
@@ -167,12 +197,14 @@ object IptvRepository {
                             group = curGroup,
                             logo = curLogo,
                             url = trimmed,
-                            isVn = isVn
+                            isVn = isVn,
+                            country = curCountry
                         )
                     )
                 }
                 curName = ""
                 curLogo = ""
+                curCountry = ""
                 curGroup = defaultGroup
                 curId = ""
             }
