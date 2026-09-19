@@ -60,21 +60,30 @@ go "UP"                    19 2
 adb exec-out screencap -p > $OUT/tab1_schedule.png
 mark "CHUP ANH: Tab 1 Schedule"
 
-# 3. TAB 2: TÌM KIẾM
+# 3. TAB 2: TRUYỀN HÌNH OTT (M3U / M3U8)
 relaunch 2
+sleep 8
+adb exec-out screencap -p > $OUT/tab2_iptv.png
+mark "CHUP ANH: Tab 2 IPTV"
+go "DOWN: chon kenh OTT 1" 20 2
+go "RIGHT: kenh OTT 2"     22 2
+go "LEFT: ve kenh OTT 1"   21 2
+
+# 4. TAB 3: TÌM KIẾM
+relaunch 3
 adb shell input text "u23" >/dev/null 2>&1; sleep 6; mark "TYPE 'u23' -> ket qua tim kiem"
 go "BACK dong ban phim"    4 2
 go "DOWN qua ket qua"      20 2
-adb exec-out screencap -p > $OUT/tab2_search.png
-mark "CHUP ANH: Tab 2 Search"
+adb exec-out screencap -p > $OUT/tab3_search.png
+mark "CHUP ANH: Tab 3 Search"
 
-# 4. TAB 3: CÀI ĐẶT
-relaunch 3
+# 5. TAB 4: CÀI ĐẶT
+relaunch 4
 go "DOWN muc"              20 2
 go "DOWN"                  20 2
 go "UP"                    19 2
-adb exec-out screencap -p > $OUT/tab3_settings.png
-mark "CHUP ANH: Tab 3 Settings"
+adb exec-out screencap -p > $OUT/tab4_settings.png
+mark "CHUP ANH: Tab 4 Settings"
 
 # 5. VÀO PHÒNG LIVE -> PLAYER EXOPLAYER
 relaunch 0
