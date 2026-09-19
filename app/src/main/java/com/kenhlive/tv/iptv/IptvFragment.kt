@@ -164,17 +164,14 @@ class IptvFragment : Fragment() {
                 holder.tvSub.text = if (ch.isVn) "Truyền hình Việt Nam" else "${ch.group} · Thể thao quốc tế"
                 holder.badge.text = if (ch.isVn) "VIỆT NAM" else ch.group.uppercase()
 
-                val localLogo = IptvLogoResolver.resolveLocalLogo(ch.name, ch.group)
-                if (localLogo != null) {
-                    holder.ivLogo.setImageResource(localLogo)
-                } else if (ch.logo.isNotEmpty()) {
+                if (ch.logo.isNotEmpty()) {
                     holder.ivLogo.load(ch.logo) {
                         crossfade(true)
-                        error(R.drawable.logo_vntv)
-                        placeholder(R.drawable.logo_vntv)
+                        error(R.drawable.ic_nav_tv)
+                        placeholder(R.drawable.ic_nav_tv)
                     }
                 } else {
-                    holder.ivLogo.setImageResource(R.drawable.logo_vntv)
+                    holder.ivLogo.setImageResource(R.drawable.ic_nav_tv)
                 }
 
                 holder.itemView.setOnClickListener {
