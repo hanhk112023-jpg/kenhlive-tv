@@ -85,6 +85,7 @@
 
         <include layout="@layout/item_nav_phone" android:id="@+id/nav_live" />
         <include layout="@layout/item_nav_phone" android:id="@+id/nav_schedule" />
+        <include layout="@layout/item_nav_phone" android:id="@+id/nav_iptv" />
         <include layout="@layout/item_nav_phone" android:id="@+id/nav_search" />
         <include layout="@layout/item_nav_phone" android:id="@+id/nav_settings" />
     </LinearLayout>

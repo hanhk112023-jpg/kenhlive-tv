@@ -11,6 +11,7 @@ import androidx.activity.addCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import com.kenhlive.tv.iptv.IptvFragment
 import com.kenhlive.tv.ui.applyTvDensity
 import androidx.lifecycle.lifecycleScope
 import com.kenhlive.tv.viewmodel.LiveViewModel
@@ -28,7 +29,7 @@ class MainActivity : AppCompatActivity() {
     private var current = 0
     private val navViews = mutableListOf<View>()
     private var railPanel: View? = null
-    private val tabTags = arrayOf("tab_live", "tab_schedule", "tab_search", "tab_settings")
+    private val tabTags = arrayOf("tab_live", "tab_schedule", "tab_iptv", "tab_search", "tab_settings")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,9 +43,9 @@ class MainActivity : AppCompatActivity() {
 
         setupNav()
 
-        // deep-link: --ei tab N mở thẳng tab N (0 Live / 1 Lịch / 2 Tìm / 3 Cài đặt — CI + QA)
+        // deep-link: --ei tab N mở thẳng tab N (0 Live / 1 Lịch / 2 IPTV / 3 Tìm / 4 Cài đặt — CI + QA)
         val tabX = intent?.getIntExtra("tab", -1) ?: -1
-        showTab(if (tabX in 0..3) tabX else 0, animate = false)
+        showTab(if (tabX in 0..4) tabX else 0, animate = false)
 
         // BACK: tab khác → về Live trước; tab Live → dialog xác nhận thoát (UX TV)
         onBackPressedDispatcher.addCallback(this) {
@@ -81,6 +82,7 @@ class MainActivity : AppCompatActivity() {
         val defs = listOf(
             R.id.nav_live to Pair(R.drawable.ic_nav_live, R.string.nav_live),
             R.id.nav_schedule to Pair(if (DeviceMode.isTv) R.drawable.ic_sports else R.drawable.ic_nav_schedule, R.string.nav_schedule),
+            R.id.nav_iptv to Pair(R.drawable.ic_nav_tv, R.string.nav_iptv),
             R.id.nav_search to Pair(R.drawable.ic_nav_search, R.string.nav_search),
             R.id.nav_settings to Pair(R.drawable.ic_nav_settings, R.string.nav_settings)
         )
@@ -104,18 +106,6 @@ class MainActivity : AppCompatActivity() {
             findViewById<View>(R.id.nav_multiview)?.apply {
                 findViewById<ImageView>(R.id.navIcon)?.setImageResource(R.drawable.ic_multiview)
                 setOnClickListener { startActivity(Intent(this@MainActivity, MultiViewActivity::class.java)) }
-            }
-            findViewById<View>(R.id.nav_replay)?.apply {
-                findViewById<ImageView>(R.id.navIcon)?.setImageResource(R.drawable.ic_highlights)
-                setOnClickListener { showTab(0) }
-            }
-            findViewById<View>(R.id.nav_fav)?.apply {
-                findViewById<ImageView>(R.id.navIcon)?.setImageResource(R.drawable.ic_fav)
-                setOnClickListener { showTab(0) }
-            }
-            findViewById<View>(R.id.nav_cats)?.apply {
-                findViewById<ImageView>(R.id.navIcon)?.setImageResource(R.drawable.ic_cats)
-                setOnClickListener { showTab(0) }
             }
         }
     }
@@ -188,7 +178,8 @@ class MainActivity : AppCompatActivity() {
                     f = when (i) {
                         0 -> LiveFragment()
                         1 -> ScheduleFragment()
-                        2 -> SearchFragment()
+                        2 -> IptvFragment()
+                        3 -> SearchFragment()
                         else -> SettingsFragment()
                     }
                     tx.add(R.id.fragmentContainer, f, tag)
@@ -221,8 +212,9 @@ class MainActivity : AppCompatActivity() {
                             .firstOrNull { it.isAdded }?.debugForceRefresh()
                     }
                 }
-                "search" -> showTab(2, animate = false)
-                "settings" -> showTab(3, animate = false)
+                "iptv" -> showTab(2, animate = false)
+                "search" -> showTab(3, animate = false)
+                "settings" -> showTab(4, animate = false)
                 "player" -> lifecycleScope.launch { openPlayer(pip = false) }
                 else -> {}
             }
@@ -251,7 +243,7 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         val tabX = intent.getIntExtra("tab", -1)
-        if (tabX in 0..3) showTab(tabX, animate = false)
+        if (tabX in 0..4) showTab(tabX, animate = false)
         handleDebugIntent(intent)
     }
 }

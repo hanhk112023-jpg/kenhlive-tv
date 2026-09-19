@@ -50,14 +50,8 @@
         <!-- 4. Sports / Soccer Ball Icon -->
         <include layout="@layout/item_nav_slim" android:id="@+id/nav_schedule" />
 
-        <!-- 5. Highlights / Movies Icon -->
-        <include layout="@layout/item_nav_slim" android:id="@+id/nav_replay" />
-
-        <!-- 6. Favorites Icon -->
-        <include layout="@layout/item_nav_slim" android:id="@+id/nav_fav" />
-
-        <!-- 7. Categories / Apps Icon -->
-        <include layout="@layout/item_nav_slim" android:id="@+id/nav_cats" />
+        <!-- 5. IPTV / Truyền hình Icon (thay thế Replay, Fav, Cats) -->
+        <include layout="@layout/item_nav_slim" android:id="@+id/nav_iptv" />
 
         <!-- Spacer pushes Settings to the bottom -->
         <View

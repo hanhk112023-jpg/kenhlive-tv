@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/kl_bg_deep">
+
+    <!-- Thanh tiêu đề và Quản lý Playlist -->
+    <LinearLayout
+        android:id="@+id/iptvTopBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp">
+
+        <TextView
+            android:id="@+id/iptvTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Truyền hình OTT"
+            android:textColor="@color/kl_text_1"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/channelCountText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:textColor="@color/kl_cyan"
+            android:textSize="13sp"
+            android:text="" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <!-- Nút Cập nhật / Reload -->
+        <Button
+            android:id="@+id/btnRefreshIptv"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="Làm mới"
+            android:textColor="@color/kl_text_1"
+            android:textSize="12sp"
+            android:background="@drawable/bg_button_ghost"
+            android:focusable="true"
+            android:clickable="true"
+            android:paddingLeft="14dp"
+            android:paddingRight="14dp"
+            android:layout_marginRight="8dp" />
+
+        <!-- Nút Thêm / Đổi link M3U -->
+        <Button
+            android:id="@+id/btnManageM3u"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="+ Thêm M3U"
+            android:textColor="@color/kl_on_brand"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:background="@drawable/bg_button_primary"
+            android:focusable="true"
+            android:clickable="true"
+            android:paddingLeft="14dp"
+            android:paddingRight="14dp" />
+    </LinearLayout>
+
+    <!-- Danh sách thể loại kênh (Groups) -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/iptvGroupList"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:clipToPadding="false"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:paddingBottom="8dp" />
+
+    <!-- Lưới danh sách kênh (Cards OTT) -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/iptvGrid"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:paddingBottom="20dp"
+            android:scrollbars="vertical" />
+
+        <!-- Trạng thái Loading / Empty -->
+        <ProgressBar
+            android:id="@+id/iptvLoading"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/iptvEmptyText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="Chưa có kênh nào. Bấm '+ Thêm M3U' để nhập link playlist."
+            android:textColor="@color/kl_text_3"
+            android:textSize="14sp"
+            android:visibility="gone" />
+    </FrameLayout>
+</LinearLayout>
