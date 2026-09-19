@@ -133,7 +133,7 @@ class MatchCardsAdapter(
         h.host.text = host
         h.guest.text = guest
         h.matchTitle?.text = g.matchTitle
-        h.score?.text = "0 : 0"
+        h.score?.text = "VS"
 
         if (g.hostIcon.isNotBlank()) {
             h.hostIcon?.visibility = View.VISIBLE
