@@ -1,0 +1,20 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="40dp"
+    android:viewportWidth="120"
+    android:viewportHeight="40">
+    <path
+        android:fillColor="#FF0F131D"
+        android:pathData="M4,0h112a4,4 0 0,1 4,4v32a4,4 0 0,1 -4,4h-112a4,4 0 0,1 -4,-4v-32a4,4 0 0,1 4,-4z"/>
+    <!-- Logo Thể thao Việt Nam - Sao vàng trên nền tròn đỏ -->
+    <path
+        android:fillColor="#FFE50914"
+        android:pathData="M35,20a12,12 0 1,0 24,0a12,12 0 1,0 -24,0"/>
+    <path
+        android:fillColor="#FFFFD700"
+        android:pathData="M47,12l2,5h5l-4,3l1.5,5l-4.5,-3l-4.5,3l1.5,-5l-4,-3h5z"/>
+    <!-- Chữ TV viền cyan -->
+    <path
+        android:fillColor="#FF00E5FF"
+        android:pathData="M66,14h12v4h-4v12h-4v-12h-4zM80,14h5l3,11l3,-11h5l-6,16h-4z"/>
+</vector>
