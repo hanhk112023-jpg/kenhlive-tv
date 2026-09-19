@@ -5,7 +5,7 @@
     android:orientation="vertical"
     android:background="@color/kl_bg_deep">
 
-    <!-- Top Bar: Tiêu đề + Thống kê + Tìm kiếm nhanh + Thêm M3U -->
+    <!-- Top Bar: Tiêu đề cố định "Truyền Hình" + Bộ lọc tìm kiếm nhanh -->
     <LinearLayout
         android:id="@+id/iptvTopBar"
         android:layout_width="match_parent"
@@ -26,9 +26,9 @@
                 android:id="@+id/iptvTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Truyền hình OTT &amp; Thể thao"
+                android:text="Truyền Hình"
                 android:textColor="@color/kl_text_1"
-                android:textSize="20sp"
+                android:textSize="22sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -38,7 +38,7 @@
                 android:layout_marginTop="2dp"
                 android:textColor="@color/kl_cyan"
                 android:textSize="12sp"
-                android:text="Đang cập nhật danh mục..." />
+                android:text="Đang tải danh sách kênh..." />
         </LinearLayout>
 
         <View
@@ -46,54 +46,23 @@
             android:layout_height="1dp"
             android:layout_weight="1" />
 
-        <!-- Ô Tìm kiếm nhanh kênh -->
+        <!-- Ô Tìm kiếm nhanh kênh OTT -->
         <EditText
             android:id="@+id/searchChannelInput"
-            android:layout_width="220dp"
+            android:layout_width="240dp"
             android:layout_height="38dp"
-            android:hint="Tìm kênh (VTV, ESPN...)"
+            android:hint="Tìm kênh (VTV, ANTV, Bóng đá...)"
             android:textColorHint="@color/kl_text_3"
             android:textColor="@color/kl_text_1"
             android:textSize="13sp"
             android:background="@drawable/bg_chip"
             android:paddingLeft="14dp"
             android:paddingRight="14dp"
-            android:layout_marginRight="10dp"
             android:singleLine="true"
             android:imeOptions="actionSearch" />
-
-        <!-- Nút Làm mới danh sách -->
-        <Button
-            android:id="@+id/btnRefreshIptv"
-            android:layout_width="wrap_content"
-            android:layout_height="38dp"
-            android:text="Làm mới"
-            android:textColor="@color/kl_text_1"
-            android:textSize="12sp"
-            android:background="@drawable/bg_button_ghost"
-            android:focusable="true"
-            android:clickable="true"
-            android:paddingLeft="14dp"
-            android:paddingRight="14dp"
-            android:layout_marginRight="8dp" />
-
-        <!-- Nút Thêm M3U tùy chỉnh -->
-        <Button
-            android:id="@+id/btnManageM3u"
-            android:layout_width="wrap_content"
-            android:layout_height="38dp"
-            android:text="+ Thêm M3U"
-            android:textColor="@color/kl_on_brand"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:background="@drawable/bg_button_primary"
-            android:focusable="true"
-            android:clickable="true"
-            android:paddingLeft="14dp"
-            android:paddingRight="14dp" />
     </LinearLayout>
 
-    <!-- Thanh phân loại danh mục (Việt Nam, Thể thao, Kênh riêng...) -->
+    <!-- Phân loại danh mục cố định: Việt Nam | Thể thao Châu Âu | Tất cả -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/iptvGroupList"
         android:layout_width="match_parent"
@@ -104,7 +73,7 @@
         android:paddingRight="24dp"
         android:paddingBottom="10dp" />
 
-    <!-- Lưới danh sách thẻ kênh -->
+    <!-- Lưới danh sách kênh OTT -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"

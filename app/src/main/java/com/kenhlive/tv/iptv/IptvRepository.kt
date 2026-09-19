@@ -21,17 +21,15 @@ data class IptvChannel(
 
 object IptvRepository {
     private const val PREFS = "iptv_prefs"
-    private const val KEY_CUSTOM_URL = "m3u_custom_url"
     private const val KEY_CACHE_VN = "m3u_cache_vn"
     private const val KEY_CACHE_SPORTS = "m3u_cache_sports"
-    private const val KEY_CACHE_CUSTOM = "m3u_cache_custom"
     private const val KEY_LAST_UPDATE = "m3u_last_update"
 
-    // Nguồn chính: Việt Nam & Thể thao từ iptv-org
+    // Nguồn cố định: Việt Nam & Thể thao từ iptv-org
     const val URL_VN = "https://iptv-org.github.io/iptv/countries/vn.m3u"
     const val URL_SPORTS = "https://iptv-org.github.io/iptv/categories/sports.m3u"
 
-    // Danh sách mã quốc gia Châu Âu trọng điểm & các thương hiệu thể thao lớn
+    // Danh sách mã quốc gia Châu Âu & thương hiệu thể thao lớn
     private val EU_COUNTRIES = setOf(
         "UK", "GB", "ES", "FR", "DE", "IT", "PT", "NL", "BE", "CH", "AT", "SE", "NO", "DK", "FI", "PL", "RO", "CZ"
     )
@@ -42,38 +40,21 @@ object IptvRepository {
         "digi sport", "movistar", "sport", "football", "soccer", "racing"
     )
 
-    fun getCustomUrl(context: Context): String {
-        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getString(KEY_CUSTOM_URL, "") ?: ""
-    }
-
-    fun saveCustomUrl(context: Context, url: String) {
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .edit()
-            .putString(KEY_CUSTOM_URL, url.trim())
-            .remove(KEY_CACHE_CUSTOM)
-            .apply()
-    }
-
     suspend fun loadChannels(context: Context, forceRefresh: Boolean = false): List<IptvChannel> = withContext(Dispatchers.IO) {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val customUrl = getCustomUrl(context)
         val lastUpdate = sp.getLong(KEY_LAST_UPDATE, 0L)
-        val isExpired = System.currentTimeMillis() - lastUpdate > 3600_000L * 3 // Cache 3 tiếng
+        val isExpired = System.currentTimeMillis() - lastUpdate > 3600_000L * 3 // Tự động làm mới mỗi 3 tiếng
 
         var cachedVn = sp.getString(KEY_CACHE_VN, null)
         var cachedSports = sp.getString(KEY_CACHE_SPORTS, null)
-        var cachedCustom = sp.getString(KEY_CACHE_CUSTOM, null)
 
         if (forceRefresh || isExpired || cachedVn == null || cachedSports == null) {
             coroutineScope {
                 val jobVn = async { fetchUrl(URL_VN) }
                 val jobSports = async { fetchUrl(URL_SPORTS) }
-                val jobCustom = if (customUrl.isNotEmpty()) async { fetchUrl(customUrl) } else null
 
                 val resVn = jobVn.await()
                 val resSports = jobSports.await()
-                val resCustom = jobCustom?.await()
 
                 val editor = sp.edit()
                 if (!resVn.isNullOrBlank()) {
@@ -83,10 +64,6 @@ object IptvRepository {
                 if (!resSports.isNullOrBlank()) {
                     cachedSports = resSports
                     editor.putString(KEY_CACHE_SPORTS, resSports)
-                }
-                if (!resCustom.isNullOrBlank()) {
-                    cachedCustom = resCustom
-                    editor.putString(KEY_CACHE_CUSTOM, resCustom)
                 }
                 editor.putLong(KEY_LAST_UPDATE, System.currentTimeMillis()).apply()
             }
@@ -99,14 +76,9 @@ object IptvRepository {
             result.addAll(parseM3u(cachedVn!!, defaultGroup = "Việt Nam", isVn = true, filterEuSports = false))
         }
 
-        // 2. Kênh Thể thao Châu Âu & Premium quốc tế tuyển chọn kỹ càng (chất lượng > số lượng)
+        // 2. Kênh Thể thao Châu Âu & Premium quốc tế (chất lượng > số lượng)
         if (!cachedSports.isNullOrBlank()) {
             result.addAll(parseM3u(cachedSports!!, defaultGroup = "Thể thao Châu Âu", isVn = false, filterEuSports = true))
-        }
-
-        // 3. Kênh từ playlist tùy chọn của người dùng (nếu có)
-        if (!cachedCustom.isNullOrBlank()) {
-            result.addAll(parseM3u(cachedCustom!!, defaultGroup = "Kênh riêng", isVn = false, filterEuSports = false))
         }
 
         result.distinctBy { it.url }
@@ -179,13 +151,13 @@ object IptvRepository {
                     else -> defaultGroup
                 }
 
-                // Nếu lọc thể thao: Bỏ các kênh bị geo-block hoặc không thuộc Châu Âu / không thuộc thương hiệu lớn
+                // Nếu lọc thể thao: Bỏ geo-block và chỉ giữ Châu Âu / thương hiệu thể thao lớn
                 if (filterEuSports) {
                     val nameLower = cleanName.lowercase(Locale.ROOT)
                     val isPremiumBrand = PREMIUM_SPORTS_KEYWORDS.any { nameLower.contains(it) }
                     val isEu = curCountry in EU_COUNTRIES
                     if (isGeoBlocked || (!isEu && !isPremiumBrand)) {
-                        curName = "" // Đánh dấu bỏ qua
+                        curName = ""
                     }
                 }
             } else if (!trimmed.startsWith("#")) {
