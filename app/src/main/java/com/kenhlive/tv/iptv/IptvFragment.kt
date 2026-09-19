@@ -83,9 +83,9 @@ class IptvFragment : Fragment() {
             } else {
                 val vnCount = allChannels.count { it.isVn }
                 val sportsCount = allChannels.size - vnCount
-                countText.text = "Tổng: ${allChannels.size} kênh (${vnCount} VN, ${sportsCount} Thể thao Châu Âu)"
+                countText.text = "Tổng: ${allChannels.size} kênh (${vnCount} VN, ${sportsCount} DAZN & Sky Sports)"
 
-                val distinctGroups = mutableListOf("Việt Nam", "Thể thao Châu Âu", "Tất cả")
+                val distinctGroups = mutableListOf("Việt Nam", "DAZN", "Sky Sports", "Tất cả")
                 val otherGroups = allChannels.map { it.group }.distinct().filterNot { it in distinctGroups }
                 distinctGroups.addAll(otherGroups)
 
@@ -99,8 +99,10 @@ class IptvFragment : Fragment() {
         var list = allChannels
         if (selectedGroup == "Việt Nam") {
             list = list.filter { it.isVn || it.group.contains("Việt Nam", ignoreCase = true) }
-        } else if (selectedGroup == "Thể thao Châu Âu") {
-            list = list.filter { !it.isVn }
+        } else if (selectedGroup == "DAZN") {
+            list = list.filter { it.group.equals("DAZN", ignoreCase = true) }
+        } else if (selectedGroup == "Sky Sports") {
+            list = list.filter { it.group.equals("Sky Sports", ignoreCase = true) }
         } else if (selectedGroup != "Tất cả") {
             list = list.filter { it.group.equals(selectedGroup, ignoreCase = true) }
         }
@@ -159,8 +161,8 @@ class IptvFragment : Fragment() {
             override fun onBindViewHolder(holder: ChannelViewHolder, position: Int) {
                 val ch = channels[position]
                 holder.tvName.text = ch.name
-                holder.tvSub.text = if (ch.isVn) "Truyền hình Việt Nam" else "Thể thao Châu Âu · ${if (ch.country.isNotEmpty()) ch.country else "Quốc tế"}"
-                holder.badge.text = if (ch.isVn) "VIỆT NAM" else if (ch.country.isNotEmpty()) "EU (${ch.country})" else "SPORTS"
+                holder.tvSub.text = if (ch.isVn) "Truyền hình Việt Nam" else "${ch.group} · Thể thao quốc tế"
+                holder.badge.text = if (ch.isVn) "VIỆT NAM" else ch.group.uppercase()
 
                 if (ch.logo.isNotEmpty()) {
                     holder.ivLogo.load(ch.logo) {

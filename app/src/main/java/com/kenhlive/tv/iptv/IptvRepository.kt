@@ -151,13 +151,14 @@ object IptvRepository {
                     else -> defaultGroup
                 }
 
-                // Nếu lọc thể thao: Bỏ geo-block và chỉ giữ Châu Âu / thương hiệu thể thao lớn
+                // Nếu lọc thể thao: Chỉ giữ đúng các kênh của đài DAZN và Sky Sports
                 if (filterEuSports) {
                     val nameLower = cleanName.lowercase(Locale.ROOT)
-                    val isPremiumBrand = PREMIUM_SPORTS_KEYWORDS.any { nameLower.contains(it) }
-                    val isEu = curCountry in EU_COUNTRIES
-                    if (isGeoBlocked || (!isEu && !isPremiumBrand)) {
+                    val isDaznOrSky = nameLower.contains("dazn") || nameLower.contains("sky sport") || nameLower.contains("skysport")
+                    if (isGeoBlocked || !isDaznOrSky) {
                         curName = ""
+                    } else {
+                        curGroup = if (nameLower.contains("dazn")) "DAZN" else "Sky Sports"
                     }
                 }
             } else if (!trimmed.startsWith("#")) {
