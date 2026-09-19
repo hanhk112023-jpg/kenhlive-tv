@@ -162,12 +162,14 @@ class SportAdapter(
         val list: RecyclerView = v.findViewById(R.id.rowList)
         val cards = MatchCardsAdapter(onGroupClick, onGroupLong, onFixtureClick)
         init {
+            (v as? ViewGroup)?.clipChildren = false
+            (v as? ViewGroup)?.clipToPadding = false
             list.layoutManager = LinearLayoutManager(list.context, LinearLayoutManager.HORIZONTAL, false)
             list.setRecycledViewPool(pool)
             list.adapter = cards
             list.clipChildren = false
             list.clipToPadding = false
-            (list.parent as? ViewGroup)?.let { it.clipChildren = false }
+            (list.parent as? ViewGroup)?.let { it.clipChildren = false; it.clipToPadding = false }
             cards.keyHandler = { rowPos, idx, size -> FocusKit.rowCardKey(this@SportAdapter, rowPos, idx, size) }
         }
     }
@@ -180,12 +182,14 @@ class SportAdapter(
             onRoomClick = { r -> onRoomClick?.invoke(r) }
         )
         init {
+            (v as? ViewGroup)?.clipChildren = false
+            (v as? ViewGroup)?.clipToPadding = false
             list.layoutManager = LinearLayoutManager(list.context, LinearLayoutManager.HORIZONTAL, false)
             list.setRecycledViewPool(blvPool)
             list.adapter = cards
             list.clipChildren = false
             list.clipToPadding = false
-            (list.parent as? ViewGroup)?.let { it.clipChildren = false }
+            (list.parent as? ViewGroup)?.let { it.clipChildren = false; it.clipToPadding = false }
         }
     }
 
