@@ -2,9 +2,9 @@ package com.kenhlive.tv.iptv
 
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import java.io.BufferedReader
-import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 
@@ -13,61 +13,91 @@ data class IptvChannel(
     val name: String,
     val group: String,
     val logo: String,
-    val url: String
+    val url: String,
+    val isVn: Boolean = false
 )
 
 object IptvRepository {
     private const val PREFS = "iptv_prefs"
-    private const val KEY_URL = "m3u_url"
-    private const val KEY_CACHE = "m3u_cached_content"
+    private const val KEY_CUSTOM_URL = "m3u_custom_url"
+    private const val KEY_CACHE_VN = "m3u_cache_vn"
+    private const val KEY_CACHE_SPORTS = "m3u_cache_sports"
+    private const val KEY_CACHE_CUSTOM = "m3u_cache_custom"
     private const val KEY_LAST_UPDATE = "m3u_last_update"
 
-    // Playlist m3u tự động cập nhật mỗi 6h từ vbskycn/iptv (492 kênh CCTV, vệ tinh, phim, tài liệu, thể thao)
-    const val DEFAULT_M3U_URL = "https://raw.githubusercontent.com/vbskycn/iptv/master/tv/iptv4.m3u"
-    const val BACKUP_M3U_URL = "https://live.zbds.top/tv/iptv4.m3u"
+    // Nguồn chính: Việt Nam & Thể thao quốc tế từ iptv-org
+    const val URL_VN = "https://iptv-org.github.io/iptv/countries/vn.m3u"
+    const val URL_SPORTS = "https://iptv-org.github.io/iptv/categories/sports.m3u"
 
-    fun getM3uUrl(context: Context): String {
-        val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        return sp.getString(KEY_URL, DEFAULT_M3U_URL) ?: DEFAULT_M3U_URL
+    fun getCustomUrl(context: Context): String {
+        return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getString(KEY_CUSTOM_URL, "") ?: ""
     }
 
-    fun saveM3uUrl(context: Context, url: String) {
-        val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        sp.edit().putString(KEY_URL, url.trim()).apply()
+    fun saveCustomUrl(context: Context, url: String) {
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit()
+            .putString(KEY_CUSTOM_URL, url.trim())
+            .remove(KEY_CACHE_CUSTOM)
+            .apply()
     }
 
     suspend fun loadChannels(context: Context, forceRefresh: Boolean = false): List<IptvChannel> = withContext(Dispatchers.IO) {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        val m3uUrl = getM3uUrl(context)
-        val cached = sp.getString(KEY_CACHE, null)
+        val customUrl = getCustomUrl(context)
         val lastUpdate = sp.getLong(KEY_LAST_UPDATE, 0L)
-        val isExpired = System.currentTimeMillis() - lastUpdate > 3600_000L // 1 tiếng tự động cập nhật
+        val isExpired = System.currentTimeMillis() - lastUpdate > 3600_000L * 3 // Cache 3 tiếng
 
-        if (!forceRefresh && !cached.isNullOrEmpty() && !isExpired) {
-            val list = parseM3u(cached)
-            if (list.isNotEmpty()) return@withContext list
+        var cachedVn = sp.getString(KEY_CACHE_VN, null)
+        var cachedSports = sp.getString(KEY_CACHE_SPORTS, null)
+        var cachedCustom = sp.getString(KEY_CACHE_CUSTOM, null)
+
+        if (forceRefresh || isExpired || cachedVn == null || cachedSports == null) {
+            coroutineScope {
+                val jobVn = async { fetchUrl(URL_VN) }
+                val jobSports = async { fetchUrl(URL_SPORTS) }
+                val jobCustom = if (customUrl.isNotEmpty()) async { fetchUrl(customUrl) } else null
+
+                val resVn = jobVn.await()
+                val resSports = jobSports.await()
+                val resCustom = jobCustom?.await()
+
+                val editor = sp.edit()
+                if (!resVn.isNullOrBlank()) {
+                    cachedVn = resVn
+                    editor.putString(KEY_CACHE_VN, resVn)
+                }
+                if (!resSports.isNullOrBlank()) {
+                    cachedSports = resSports
+                    editor.putString(KEY_CACHE_SPORTS, resSports)
+                }
+                if (!resCustom.isNullOrBlank()) {
+                    cachedCustom = resCustom
+                    editor.putString(KEY_CACHE_CUSTOM, resCustom)
+                }
+                editor.putLong(KEY_LAST_UPDATE, System.currentTimeMillis()).apply()
+            }
         }
 
-        // Tải m3u/m3u8 từ mạng
-        var content = fetchUrl(m3uUrl)
-        if (content.isNullOrBlank() && m3uUrl == DEFAULT_M3U_URL) {
-            content = fetchUrl(BACKUP_M3U_URL)
-        }
-        if (!content.isNullOrBlank()) {
-            sp.edit()
-                .putString(KEY_CACHE, content)
-                .putLong(KEY_LAST_UPDATE, System.currentTimeMillis())
-                .apply()
-            val list = parseM3u(content)
-            if (list.isNotEmpty()) return@withContext list
+        val result = mutableListOf<IptvChannel>()
+
+        // 1. Kênh Việt Nam
+        if (!cachedVn.isNullOrBlank()) {
+            result.addAll(parseM3u(cachedVn!!, defaultGroup = "Việt Nam", isVn = true))
         }
 
-        // Nếu lỗi mạng hoặc link người dùng lỗi mà có cache cũ thì dùng cache
-        if (!cached.isNullOrEmpty()) {
-            return@withContext parseM3u(cached)
+        // 2. Kênh Thể thao
+        if (!cachedSports.isNullOrBlank()) {
+            result.addAll(parseM3u(cachedSports!!, defaultGroup = "Thể thao", isVn = false))
         }
 
-        emptyList()
+        // 3. Kênh từ link tùy chỉnh của người dùng (nếu có)
+        if (!cachedCustom.isNullOrBlank()) {
+            result.addAll(parseM3u(cachedCustom!!, defaultGroup = "Kênh riêng", isVn = false))
+        }
+
+        // Loại trừ kênh trùng lặp theo stream url
+        result.distinctBy { it.url }
     }
 
     private fun fetchUrl(urlStr: String): String? {
@@ -85,11 +115,11 @@ object IptvRepository {
         }
     }
 
-    fun parseM3u(content: String): List<IptvChannel> {
+    fun parseM3u(content: String, defaultGroup: String, isVn: Boolean): List<IptvChannel> {
         val list = mutableListOf<IptvChannel>()
         val lines = content.lines()
         var curName = ""
-        var curGroup = "Truyền hình"
+        var curGroup = defaultGroup
         var curLogo = ""
         var curId = ""
 
@@ -104,33 +134,46 @@ object IptvRepository {
 
             if (trimmed.startsWith("#EXTINF:", ignoreCase = true)) {
                 curLogo = tvgLogoRegex.find(trimmed)?.groupValues?.get(1) ?: ""
-                curGroup = groupRegex.find(trimmed)?.groupValues?.get(1) ?: "Truyền hình"
+                val foundGroup = groupRegex.find(trimmed)?.groupValues?.get(1) ?: ""
                 curId = tvgIdRegex.find(trimmed)?.groupValues?.get(1) ?: ""
                 val tvgName = tvgNameRegex.find(trimmed)?.groupValues?.get(1) ?: ""
-                
-                // Lấy tên sau dấu phẩy cuối cùng nếu có
+
+                // Làm sạch tên nhóm
+                curGroup = when {
+                    isVn -> "Việt Nam"
+                    foundGroup.contains("Sport", ignoreCase = true) -> "Thể thao"
+                    foundGroup.isNotBlank() && !foundGroup.equals("Undefined", true) -> foundGroup
+                    else -> defaultGroup
+                }
+
                 val commaIdx = trimmed.lastIndexOf(',')
                 val dispName = if (commaIdx != -1 && commaIdx < trimmed.length - 1) {
                     trimmed.substring(commaIdx + 1).trim()
                 } else tvgName
 
-                curName = dispName.ifEmpty { tvgName.ifEmpty { "Kênh TV" } }
+                // Lọc bỏ hậu tố phân giải không cần thiết để tên kênh gọn đẹp
+                var cleanName = (if (dispName.isNotEmpty()) dispName else tvgName).ifEmpty { "Kênh TV" }
+                cleanName = cleanName.replace(Regex("""\[Geo-blocked\]""", RegexOption.IGNORE_CASE), "")
+                    .replace(Regex("""\[Not 24/7\]""", RegexOption.IGNORE_CASE), "")
+                    .trim()
+
+                curName = cleanName
             } else if (!trimmed.startsWith("#")) {
-                // Đây là dòng link URL (m3u8, flv, rtmp, mp4, etc.)
                 if (curName.isNotEmpty() && (trimmed.startsWith("http://", true) || trimmed.startsWith("https://", true))) {
                     list.add(
                         IptvChannel(
                             id = curId.ifEmpty { curName },
                             name = curName,
-                            group = curGroup.ifEmpty { "Truyền hình" },
+                            group = curGroup,
                             logo = curLogo,
-                            url = trimmed
+                            url = trimmed,
+                            isVn = isVn
                         )
                     )
                 }
                 curName = ""
                 curLogo = ""
-                curGroup = "Truyền hình"
+                curGroup = defaultGroup
                 curId = ""
             }
         }

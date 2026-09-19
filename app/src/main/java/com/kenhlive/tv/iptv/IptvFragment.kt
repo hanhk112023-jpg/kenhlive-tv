@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -32,12 +34,14 @@ class IptvFragment : Fragment() {
     private lateinit var loadingView: ProgressBar
     private lateinit var emptyText: TextView
     private lateinit var countText: TextView
+    private lateinit var searchInput: EditText
     private lateinit var btnRefresh: Button
     private lateinit var btnManage: Button
 
     private var allChannels: List<IptvChannel> = emptyList()
     private var displayedChannels: List<IptvChannel> = emptyList()
-    private var selectedGroup: String = "Tất cả"
+    private var selectedGroup: String = "Việt Nam"
+    private var currentKeyword: String = ""
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return inflater.inflate(R.layout.fragment_iptv, container, false)
@@ -50,11 +54,12 @@ class IptvFragment : Fragment() {
         loadingView = view.findViewById(R.id.iptvLoading)
         emptyText = view.findViewById(R.id.iptvEmptyText)
         countText = view.findViewById(R.id.channelCountText)
+        searchInput = view.findViewById(R.id.searchChannelInput)
         btnRefresh = view.findViewById(R.id.btnRefreshIptv)
         btnManage = view.findViewById(R.id.btnManageM3u)
 
-        // Cột hiển thị: TV 5-6 cột, Điện thoại 3 cột
-        val spanCount = if (DeviceMode.isTv) 5 else 3
+        // TV 4-5 cột rộng rãi chuẩn 16:9, Mobile 2-3 cột
+        val spanCount = if (DeviceMode.isTv) 4 else 2
         gridList.layoutManager = GridLayoutManager(requireContext(), spanCount)
         groupList.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
 
@@ -65,6 +70,15 @@ class IptvFragment : Fragment() {
         btnManage.setOnClickListener {
             showManageM3uDialog()
         }
+
+        searchInput.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
+                currentKeyword = s?.toString()?.trim() ?: ""
+                applyFilter()
+            }
+            override fun afterTextChanged(s: Editable?) {}
+        })
 
         loadData(forceRefresh = false)
     }
@@ -78,25 +92,40 @@ class IptvFragment : Fragment() {
 
             if (allChannels.isEmpty()) {
                 emptyText.visibility = View.VISIBLE
-                countText.text = ""
+                countText.text = "0 kênh"
                 setupGroups(emptyList())
                 setupGrid(emptyList())
             } else {
-                countText.text = "(${allChannels.size} kênh)"
-                val groups = listOf("Tất cả") + allChannels.map { it.group }.distinct()
-                setupGroups(groups)
-                filterByGroup(selectedGroup)
+                val vnCount = allChannels.count { it.isVn }
+                val sportsCount = allChannels.size - vnCount
+                countText.text = "Tổng: ${allChannels.size} kênh (${vnCount} kênh VN, ${sportsCount} kênh Thể thao)"
+
+                val distinctGroups = mutableListOf("Việt Nam", "Thể thao", "Tất cả")
+                val otherGroups = allChannels.map { it.group }.distinct().filterNot { it in distinctGroups }
+                distinctGroups.addAll(otherGroups)
+
+                setupGroups(distinctGroups)
+                applyFilter()
             }
         }
     }
 
-    private fun filterByGroup(group: String) {
-        selectedGroup = group
-        displayedChannels = if (group == "Tất cả") {
-            allChannels
-        } else {
-            allChannels.filter { it.group.equals(group, ignoreCase = true) }
+    private fun applyFilter() {
+        var list = allChannels
+        if (selectedGroup == "Việt Nam") {
+            list = list.filter { it.isVn || it.group.contains("Việt Nam", ignoreCase = true) }
+        } else if (selectedGroup == "Thể thao") {
+            list = list.filter { !it.isVn && (it.group.contains("Thể thao", ignoreCase = true) || it.group.contains("Sport", ignoreCase = true)) }
+        } else if (selectedGroup != "Tất cả") {
+            list = list.filter { it.group.equals(selectedGroup, ignoreCase = true) }
         }
+
+        if (currentKeyword.isNotEmpty()) {
+            list = list.filter { it.name.contains(currentKeyword, ignoreCase = true) || it.group.contains(currentKeyword, ignoreCase = true) }
+        }
+
+        displayedChannels = list
+        emptyText.visibility = if (displayedChannels.isEmpty()) View.VISIBLE else View.GONE
         setupGrid(displayedChannels)
     }
 
@@ -121,7 +150,8 @@ class IptvFragment : Fragment() {
                 }
 
                 holder.itemView.setOnClickListener {
-                    filterByGroup(g)
+                    selectedGroup = g
+                    applyFilter()
                     notifyDataSetChanged()
                 }
             }
@@ -140,7 +170,8 @@ class IptvFragment : Fragment() {
             override fun onBindViewHolder(holder: ChannelViewHolder, position: Int) {
                 val ch = channels[position]
                 holder.tvName.text = ch.name
-                holder.tvGroup.text = ch.group
+                holder.tvSub.text = if (ch.isVn) "Truyền hình Việt Nam" else ch.group
+                holder.badge.text = if (ch.isVn) "VIỆT NAM" else "THỂ THAO"
 
                 if (ch.logo.isNotEmpty()) {
                     holder.ivLogo.load(ch.logo) {
@@ -172,11 +203,11 @@ class IptvFragment : Fragment() {
 
     private fun showManageM3uDialog() {
         val ctx = requireContext()
-        val curUrl = IptvRepository.getM3uUrl(ctx)
+        val curUrl = IptvRepository.getCustomUrl(ctx)
 
         val input = EditText(ctx).apply {
             setText(curUrl)
-            setHint("Nhập link playlist m3u / m3u8...")
+            setHint("Dán link M3U / M3U8 cá nhân...")
             setTextColor(Color.WHITE)
             setHintTextColor(Color.GRAY)
             setPadding(40, 30, 40, 30)
@@ -184,19 +215,17 @@ class IptvFragment : Fragment() {
         }
 
         AlertDialog.Builder(ctx)
-            .setTitle("Cấu hình Playlist M3U / M3U8")
-            .setMessage("Hỗ trợ định dạng .m3u, .m3u8 trực tuyến. Hệ thống sẽ tự động cập nhật danh sách kênh theo chu kỳ.")
+            .setTitle("Thêm Playlist M3U / M3U8 Riêng")
+            .setMessage("Mặc định ứng dụng đã tự động tải 82 kênh Việt Nam và 430 kênh Thể thao quốc tế. Bạn có thể nhập thêm link cá nhân tại đây:")
             .setView(input)
-            .setPositiveButton("LƯU & TẢI KÊNH") { _, _ ->
+            .setPositiveButton("LƯU & NẠP KÊNH") { _, _ ->
                 val newUrl = input.text.toString().trim()
-                if (newUrl.isNotEmpty()) {
-                    IptvRepository.saveM3uUrl(ctx, newUrl)
-                    Toast.makeText(ctx, "Đã lưu! Đang tải danh mục kênh mới...", Toast.LENGTH_SHORT).show()
-                    loadData(forceRefresh = true)
-                }
+                IptvRepository.saveCustomUrl(ctx, newUrl)
+                Toast.makeText(ctx, "Đang tải dữ liệu kênh...", Toast.LENGTH_SHORT).show()
+                loadData(forceRefresh = true)
             }
-            .setNeutralButton("MẶC ĐỊNH") { _, _ ->
-                IptvRepository.saveM3uUrl(ctx, IptvRepository.DEFAULT_M3U_URL)
+            .setNeutralButton("XÓA LINK RIÊNG") { _, _ ->
+                IptvRepository.saveCustomUrl(ctx, "")
                 loadData(forceRefresh = true)
             }
             .setNegativeButton("HỦY", null)
@@ -209,7 +238,8 @@ class IptvFragment : Fragment() {
 
     private class ChannelViewHolder(v: View) : RecyclerView.ViewHolder(v) {
         val ivLogo: ImageView = v.findViewById(R.id.channelLogo)
+        val badge: TextView = v.findViewById(R.id.channelBadge)
         val tvName: TextView = v.findViewById(R.id.channelName)
-        val tvGroup: TextView = v.findViewById(R.id.channelGroup)
+        val tvSub: TextView = v.findViewById(R.id.channelSub)
     }
 }

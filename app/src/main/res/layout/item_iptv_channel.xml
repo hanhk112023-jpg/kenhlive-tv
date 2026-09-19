@@ -4,71 +4,92 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:layout_margin="6dp"
+    android:layout_margin="7dp"
     android:background="@drawable/bg_card_match"
     android:foreground="@drawable/fg_card_focus_cyan"
-    android:padding="12dp"
     android:focusable="true"
-    android:clickable="true"
-    android:gravity="center_horizontal">
+    android:clickable="true">
 
-    <!-- Logo kênh -->
+    <!-- Thumbnail / Logo Container chuẩn 16:9 với nền đen sâu -->
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="64dp"
-        android:background="#15161E">
+        android:layout_height="100dp"
+        android:background="#050608">
 
         <ImageView
             android:id="@+id/channelLogo"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center"
-            android:padding="6dp"
+            android:padding="12dp"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_nav_tv" />
 
-        <!-- Badge LIVE nhỏ trên góc -->
+        <!-- Badge Group Tag nổi bật trên góc trái (VD: VIỆT NAM hoặc THỂ THAO) -->
+        <TextView
+            android:id="@+id/channelBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|left"
+            android:layout_margin="8dp"
+            android:text="VIỆT NAM"
+            android:textColor="@color/kl_cyan"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:background="@drawable/bg_badge_league_cyan"
+            android:paddingLeft="8dp"
+            android:paddingRight="8dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp" />
+
+        <!-- Chấm tròn LIVE nhỏ trên góc phải -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="top|right"
-            android:layout_margin="4dp"
-            android:text="OTT"
-            android:textColor="@color/kl_cyan"
+            android:layout_margin="8dp"
+            android:text="● LIVE"
+            android:textColor="#FFFFFF"
             android:textSize="9sp"
             android:textStyle="bold"
-            android:background="@drawable/bg_badge_league_cyan"
-            android:paddingLeft="5dp"
-            android:paddingRight="5dp"
+            android:background="@drawable/bg_badge_live_red"
+            android:paddingLeft="6dp"
+            android:paddingRight="6dp"
             android:paddingTop="2dp"
             android:paddingBottom="2dp" />
     </FrameLayout>
 
-    <!-- Tên kênh -->
-    <TextView
-        android:id="@+id/channelName"
+    <!-- Thông tin tên kênh phía dưới -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:gravity="center"
-        android:textColor="@color/kl_text_1"
-        android:textSize="13sp"
-        android:textStyle="bold"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:text="Kênh TV" />
+        android:orientation="vertical"
+        android:padding="10dp"
+        android:background="#13141B">
 
-    <!-- Thể loại / Nhóm kênh -->
-    <TextView
-        android:id="@+id/channelGroup"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:gravity="center"
-        android:textColor="@color/kl_text_3"
-        android:textSize="11sp"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:text="Truyền hình" />
+        <TextView
+            android:id="@+id/channelName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="left|center_vertical"
+            android:textColor="@color/kl_text_1"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="VTV3 HD" />
+
+        <TextView
+            android:id="@+id/channelSub"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:gravity="left|center_vertical"
+            android:textColor="@color/kl_text_3"
+            android:textSize="11sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="Kênh truyền hình trực tuyến" />
+    </LinearLayout>
 
 </LinearLayout>
