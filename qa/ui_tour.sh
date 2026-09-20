@@ -65,9 +65,25 @@ relaunch 2
 sleep 8
 adb exec-out screencap -p > $OUT/tab2_iptv.png
 mark "CHUP ANH: Tab 2 IPTV"
-go "DOWN: chon kenh OTT 1" 20 2
-go "RIGHT: kenh OTT 2"     22 2
-go "LEFT: ve kenh OTT 1"   21 2
+go "DOWN: chon kenh VTV dau tien" 20 2
+adb exec-out screencap -p > $OUT/tab2_vtv_focused.png
+mark "CHUP ANH: Focus kenh VTV dau tien"
+go "RIGHT: sang kenh VTV tiep theo" 22 2
+go "RIGHT: sang kenh VTV thu 3" 22 2
+go "OK: mo xem kenh VTV trong Player" 23 6
+adb exec-out screencap -p > $OUT/tab2_vtv_player.png
+mark "CHUP ANH: Player phat kenh VTV"
+go "OK: hien controls player va sidebar" 23 2
+adb exec-out screencap -p > $OUT/tab2_sidebar_channels.png
+mark "CHUP ANH: Sidebar danh sach kenh IPTV"
+go "BACK: dong sidebar ve player" 4 2
+go "BACK: thoat player ve tab truyen hinh" 4 3
+go "UP: len danh muc nhom kenh" 19 2
+go "RIGHT: chon nhom The Thao" 22 2
+go "OK: active filter The Thao" 23 3
+adb exec-out screencap -p > $OUT/tab2_sports_filter.png
+mark "CHUP ANH: Nhom The Thao (DAZN/Sky/beIN)"
+go "DOWN: focus kenh the thao dau tien" 20 2
 
 # 4. TAB 3: TÌM KIẾM
 relaunch 3

@@ -68,14 +68,28 @@ object IptvRepository {
 
         val result = mutableListOf<IptvChannel>()
 
-        // 1. Kênh Việt Nam tuyển chọn
+        // 1. Kênh Việt Nam tuyển chọn: VTV lên đầu, sau đó đến các kênh TW/HTV, cuối cùng là kênh địa phương
         if (!cachedVn.isNullOrBlank()) {
-            result.addAll(parseM3u(cachedVn!!, defaultGroup = "Việt Nam", isVn = true, filterEuSports = false))
+            val vnRaw = parseM3u(cachedVn!!, defaultGroup = "Việt Nam", isVn = true, filterSports = false)
+            val sortedVn = vnRaw.sortedWith(
+                compareBy(
+                    { ch ->
+                        val n = ch.name.lowercase(Locale.ROOT)
+                        when {
+                            n.contains("vtv") -> 0         // VTV ưu tiên số 1 trên đầu
+                            n.contains("htv") || n.contains("vov") || n.contains("thvl") || n.contains("vtc") || n.contains("qpv") || n.contains("truyền hình quốc hội") -> 1 // Đài lớn
+                            else -> 2                      // Kênh tỉnh/địa phương xếp xuống dưới
+                        }
+                    },
+                    { it.name }
+                )
+            )
+            result.addAll(sortedVn)
         }
 
-        // 2. Kênh Thể thao Châu Âu & Premium quốc tế (DAZN, Sky Sports)
+        // 2. Kênh Thể thao Quốc tế (DAZN, Sky Sports, beIN, ESPN, FIFA+, Fight, Tennis, Golf, F1...)
         if (!cachedSports.isNullOrBlank()) {
-            result.addAll(parseM3u(cachedSports!!, defaultGroup = "Thể thao Châu Âu", isVn = false, filterEuSports = true))
+            result.addAll(parseM3u(cachedSports!!, defaultGroup = "Thể Thao", isVn = false, filterSports = true))
         }
 
         val distinctList = result.distinctBy { it.url }
@@ -98,7 +112,7 @@ object IptvRepository {
         }
     }
 
-    fun parseM3u(content: String, defaultGroup: String, isVn: Boolean, filterEuSports: Boolean): List<IptvChannel> {
+    fun parseM3u(content: String, defaultGroup: String, isVn: Boolean, filterSports: Boolean): List<IptvChannel> {
         val list = mutableListOf<IptvChannel>()
         val lines = content.lines()
         var curName = ""
@@ -150,14 +164,33 @@ object IptvRepository {
                     else -> defaultGroup
                 }
 
-                // Nếu lọc thể thao: Chỉ giữ đúng các kênh của đài DAZN và Sky Sports
-                if (filterEuSports) {
+                // Nếu lọc thể thao: Lấy DAZN, Sky Sports, beIN, ESPN, FIFA+, Fight, Tennis, Golf, F1...
+                if (filterSports) {
                     val nameLower = cleanName.lowercase(Locale.ROOT)
-                    val isDaznOrSky = nameLower.contains("dazn") || nameLower.contains("sky sport") || nameLower.contains("skysport")
-                    if (isGeoBlocked || !isDaznOrSky) {
+                    val isPopularSports = nameLower.contains("dazn") ||
+                        nameLower.contains("sky sport") ||
+                        nameLower.contains("skysport") ||
+                        nameLower.contains("bein") ||
+                        nameLower.contains("espn") ||
+                        nameLower.contains("fifa") ||
+                        nameLower.contains("fight") ||
+                        nameLower.contains("combat") ||
+                        nameLower.contains("tennis") ||
+                        nameLower.contains("golf") ||
+                        nameLower.contains("f1") ||
+                        nameLower.contains("racing")
+
+                    if (isGeoBlocked || !isPopularSports) {
                         curName = ""
                     } else {
-                        curGroup = if (nameLower.contains("dazn")) "DAZN" else "Sky Sports"
+                        curGroup = when {
+                            nameLower.contains("dazn") -> "DAZN"
+                            nameLower.contains("sky") -> "Sky Sports"
+                            nameLower.contains("bein") -> "beIN Sports"
+                            nameLower.contains("espn") -> "ESPN"
+                            nameLower.contains("fifa") -> "FIFA+"
+                            else -> "Thể Thao"
+                        }
                     }
                 }
             } else if (!trimmed.startsWith("#")) {
