@@ -1,14 +1,17 @@
 package com.kenhlive.tv.iptv
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.fragment.app.Fragment
@@ -16,6 +19,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import coil.load
 import com.kenhlive.tv.DeviceMode
 import com.kenhlive.tv.PlayerActivity
 import com.kenhlive.tv.R
@@ -67,14 +71,13 @@ class IptvFragment : Fragment() {
             override fun afterTextChanged(s: Editable?) {}
         })
 
-        loadChannels()
+        loadData()
     }
 
-    private fun loadChannels() {
+    private fun loadData() {
         loadingView.visibility = View.VISIBLE
         emptyText.visibility = View.GONE
-
-        viewLifecycleOwner.lifecycleScope.launch {
+        lifecycleScope.launch {
             allChannels = IptvRepository.loadChannels(requireContext())
             loadingView.visibility = View.GONE
 
@@ -86,20 +89,19 @@ class IptvFragment : Fragment() {
             } else {
                 val vnCount = allChannels.count { it.isVn }
                 val sportsCount = allChannels.size - vnCount
-                countText.text = "Tổng: ${allChannels.size} kênh (${vnCount} VN, ${sportsCount} Thể thao & Quốc tế)"
+                countText.text = "Tổng: ${allChannels.size} kênh (${vnCount} VN, ${sportsCount} Thể thao)"
 
-                // Danh mục nhóm kênh ưu tiên: Việt Nam -> Thể Thao -> DAZN -> Sky Sports -> beIN Sports -> ESPN -> FIFA+ -> Tất cả
-                val baseGroups = listOf("Việt Nam", "Thể Thao", "DAZN", "Sky Sports", "beIN Sports", "ESPN", "FIFA+", "Tất cả")
-                val otherGroups = allChannels.map { it.group }.distinct().filterNot { it in baseGroups }
-                val distinctGroups = (baseGroups + otherGroups).filter { g ->
+                val distinctGroups = mutableListOf("Việt Nam", "Thể Thao", "DAZN", "Sky Sports", "beIN Sports", "ESPN", "FIFA+", "Tất cả")
+                val otherGroups = allChannels.map { it.group }.distinct().filterNot { it in distinctGroups }
+                distinctGroups.addAll(otherGroups)
+
+                setupGroups(distinctGroups.filter { g ->
                     g == "Tất cả" || allChannels.any {
                         if (g == "Việt Nam") it.isVn || it.group.contains("Việt Nam", ignoreCase = true)
                         else if (g == "Thể Thao") !it.isVn
                         else it.group.equals(g, ignoreCase = true)
                     }
-                }
-
-                setupGroups(distinctGroups)
+                })
                 applyFilter(focusFirst = true)
             }
         }
@@ -158,18 +160,28 @@ class IptvFragment : Fragment() {
                 holder.tv.isSelected = isSel
                 if (isSel) {
                     holder.tv.setTextColor(Color.parseColor("#FF00E5FF"))
-                    holder.tv.setBackgroundResource(R.drawable.bg_pill_active)
+                    holder.tv.setBackgroundResource(R.drawable.bg_badge_league_cyan)
                 } else {
-                    holder.tv.setTextColor(Color.parseColor("#80FFFFFF"))
-                    holder.tv.setBackgroundResource(R.drawable.bg_pill_default)
+                    holder.tv.setTextColor(Color.parseColor("#FFCBD5E1"))
+                    holder.tv.setBackgroundResource(R.drawable.bg_chip)
                 }
 
                 holder.itemView.setOnClickListener {
-                    if (selectedGroup != g) {
-                        selectedGroup = g
-                        notifyDataSetChanged()
-                        applyFilter(focusFirst = true)
+                    selectedGroup = g
+                    applyFilter(focusFirst = true)
+                    notifyDataSetChanged()
+                }
+
+                // Khi bấm DOWN từ thanh nhóm -> chuyển focus xuống thẳng kênh đầu tiên của lưới
+                holder.itemView.setOnKeyListener { _, keyCode, event ->
+                    if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                        if (displayedChannels.isNotEmpty()) {
+                            gridList.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
+                                ?: gridList.scrollToPosition(0)
+                            return@setOnKeyListener true
+                        }
                     }
+                    false
                 }
             }
 
@@ -178,17 +190,37 @@ class IptvFragment : Fragment() {
     }
 
     private fun setupGrid(channels: List<IptvChannel>) {
-        gridList.adapter = object : RecyclerView.Adapter<IptvGridAdapter.IptvChannelViewHolder>() {
-            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): IptvGridAdapter.IptvChannelViewHolder {
+        gridList.adapter = object : RecyclerView.Adapter<ChannelViewHolder>() {
+            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelViewHolder {
                 val v = LayoutInflater.from(parent.context).inflate(R.layout.item_iptv_channel, parent, false)
-                return IptvGridAdapter.IptvChannelViewHolder(v)
+                return ChannelViewHolder(v)
             }
 
-            override fun onBindViewHolder(holder: IptvGridAdapter.IptvChannelViewHolder, position: Int) {
-                val item = channels[position]
-                holder.bind(item)
+            override fun onBindViewHolder(holder: ChannelViewHolder, position: Int) {
+                val ch = channels[position]
+                holder.tvName.text = ch.name
+                holder.tvSub.text = if (ch.isVn) "Truyền hình Việt Nam" else "${ch.group} · Thể thao quốc tế"
+                holder.badge.text = if (ch.isVn) "VIỆT NAM" else ch.group.uppercase()
+
+                if (ch.logo.isNotEmpty()) {
+                    holder.ivLogo.load(ch.logo) {
+                        crossfade(true)
+                        error(R.drawable.ic_nav_tv)
+                        placeholder(R.drawable.ic_nav_tv)
+                    }
+                } else {
+                    holder.ivLogo.setImageResource(R.drawable.ic_nav_tv)
+                }
+
                 holder.itemView.setOnClickListener {
-                    playChannel(item)
+                    openChannel(ch)
+                }
+
+                holder.itemView.setOnFocusChangeListener { v, hasFocus ->
+                    v.animate().scaleX(if (hasFocus) 1.05f else 1f)
+                        .scaleY(if (hasFocus) 1.05f else 1f)
+                        .setDuration(150).start()
+                    v.elevation = if (hasFocus) 16f else 0f
                 }
             }
 
@@ -196,18 +228,24 @@ class IptvFragment : Fragment() {
         }
     }
 
-    private fun playChannel(ch: IptvChannel) {
+    private fun openChannel(ch: IptvChannel) {
         val intent = Intent(requireContext(), PlayerActivity::class.java).apply {
-            putExtra("EXTRA_ROOM_ID", ch.id)
-            putExtra("EXTRA_TITLE", ch.name)
-            putExtra("EXTRA_STREAM_URL", ch.url)
-            putExtra("EXTRA_IS_LIVE", true)
-            putExtra("EXTRA_CHANNEL_NAME", ch.group)
+            putExtra("url", ch.url)
+            putExtra("name", ch.name)
+            putExtra("pip", false)
+            putExtra("is_iptv", true)
         }
         startActivity(intent)
     }
 
-    class GroupViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val tv: TextView = view.findViewById(R.id.groupNameText)
+    private class GroupViewHolder(v: View) : RecyclerView.ViewHolder(v) {
+        val tv: TextView = v.findViewById(R.id.groupTitle)
+    }
+
+    private class ChannelViewHolder(v: View) : RecyclerView.ViewHolder(v) {
+        val ivLogo: ImageView = v.findViewById(R.id.channelLogo)
+        val badge: TextView = v.findViewById(R.id.channelBadge)
+        val tvName: TextView = v.findViewById(R.id.channelName)
+        val tvSub: TextView = v.findViewById(R.id.channelSub)
     }
 }
