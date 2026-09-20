@@ -39,7 +39,11 @@ class ScheduleFragment : Fragment() {
         viewLifecycleOwner.lifecycleScope.launch {
             vm.state.collect { st ->
                 state.render(st, R.string.sched_loading) { vm.load(force = true) }
-                if (st is UiState.Success) adapter.submitList(st.data)
+                if (st is UiState.Success) {
+                    adapter.submitList(st.data) {
+                        if (DeviceMode.isTv) focusFirstMatch()
+                    }
+                }
             }
         }
         vm.load()
@@ -49,6 +53,34 @@ class ScheduleFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         vm.startAutoRefresh()
+    }
+
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (!hidden && DeviceMode.isTv) {
+            focusFirstMatch()
+        }
+    }
+
+    private fun focusFirstMatch() {
+        val rv = view?.findViewById<RecyclerView>(R.id.schedList) ?: return
+        rv.post {
+            for (i in 0 until adapter.itemCount) {
+                if (adapter.getItemViewType(i) == 1) { // TYPE_MATCH
+                    val vh = rv.findViewHolderForAdapterPosition(i)
+                    if (vh != null) {
+                        vh.itemView.requestFocus()
+                        break
+                    } else {
+                        rv.scrollToPosition(i)
+                        rv.postDelayed({
+                            rv.findViewHolderForAdapterPosition(i)?.itemView?.requestFocus()
+                        }, 80)
+                        break
+                    }
+                }
+            }
+        }
     }
 
     override fun onPause() {

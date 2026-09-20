@@ -68,6 +68,9 @@ class ScheduleAdapter(
                 val vh = h as MatchVH
                 val ctx = h.itemView.context
                 vh.itemView.setOnFocusChangeListener { v, has ->
+                    if (has) {
+                        v.parent?.requestChildFocus(v, v)
+                    }
                     v.animate().scaleX(if (has) 1.015f else 1f).scaleY(if (has) 1.015f else 1f)
                         .setDuration(130).start()
                     v.elevation = if (has) 10f else 0f

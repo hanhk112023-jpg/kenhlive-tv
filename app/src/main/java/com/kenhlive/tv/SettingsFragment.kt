@@ -33,7 +33,14 @@ class SettingsFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        rebuild()
+        rebuild(focusRow = if (DeviceMode.isTv) 1 else -1)
+    }
+
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (!hidden) {
+            rebuild(focusRow = if (DeviceMode.isTv) 1 else -1)
+        }
     }
 
     private fun vqName(i: Int) = when (i) {
@@ -50,7 +57,7 @@ class SettingsFragment : Fragment() {
         else -> getString(R.string.aq_standard)
     }
 
-    private fun rebuild() {
+    private fun rebuild(focusRow: Int = -1) {
         if (!isAdded) return
         val ctx = requireContext()
         val mvLayout = ctx.getSharedPreferences("mv", android.content.Context.MODE_PRIVATE).getInt("layout", 2)
@@ -87,14 +94,30 @@ class SettingsFragment : Fragment() {
                 }
             )
         )
+
+        if (focusRow >= 0 && DeviceMode.isTv) {
+            val list = view?.findViewById<RecyclerView>(R.id.settingsList)
+            list?.post {
+                val vh = list.findViewHolderForAdapterPosition(focusRow)
+                if (vh != null) {
+                    vh.itemView.requestFocus()
+                } else {
+                    list.scrollToPosition(focusRow)
+                    list.postDelayed({
+                        list.findViewHolderForAdapterPosition(focusRow)?.itemView?.requestFocus()
+                    }, 80)
+                }
+            }
+        }
     }
 
     private fun pickVideoQuality() {
         val names = arrayOf(getString(R.string.vq_auto), getString(R.string.vq_high), getString(R.string.vq_stable))
-        singleChoice(names, EnhanceSettings.videoQuality(requireContext())) { i ->
+        val cur = EnhanceSettings.videoQuality(requireContext())
+        singleChoice(names, cur) { i ->
             EnhanceSettings.setVideoQuality(requireContext(), i)
             Toast.makeText(requireContext(), getString(R.string.player_video_changed, names[i]), Toast.LENGTH_SHORT).show()
-            rebuild()
+            rebuild(focusRow = 1)
         }
     }
 
@@ -103,10 +126,11 @@ class SettingsFragment : Fragment() {
             getString(R.string.aq_standard), getString(R.string.aq_bass), getString(R.string.aq_dialog),
             getString(R.string.aq_night), getString(R.string.aq_auto)
         )
-        singleChoice(names, EnhanceSettings.audioMode(requireContext())) { i ->
+        val cur = EnhanceSettings.audioMode(requireContext())
+        singleChoice(names, cur) { i ->
             EnhanceSettings.setAudioMode(requireContext(), i)
             Toast.makeText(requireContext(), getString(R.string.player_audio_changed, names[i]), Toast.LENGTH_SHORT).show()
-            rebuild()
+            rebuild(focusRow = 2)
         }
     }
 
@@ -119,16 +143,25 @@ class SettingsFragment : Fragment() {
                 requireContext().getSharedPreferences("mv", android.content.Context.MODE_PRIVATE)
                     .edit().putInt("layout", if (i == 1) 4 else 2).apply()
             }
-            rebuild()
+            rebuild(focusRow = 4)
         }
     }
 
     private fun singleChoice(names: Array<String>, checked: Int, onPick: (Int) -> Unit) {
         dialog?.dismiss()
-        dialog = AlertDialog.Builder(requireContext())
-            .setSingleChoiceItems(names, checked) { d, i -> d.dismiss(); onPick(i) }
+        val dlg = AlertDialog.Builder(requireContext(), R.style.Theme_KenhLive_Dialog)
+            .setSingleChoiceItems(names, checked) { d, i ->
+                d.dismiss()
+                onPick(i)
+            }
             .setOnDismissListener { dialog = null }
-            .show()
+            .create()
+        dialog = dlg
+        dlg.show()
+        dlg.listView?.post {
+            dlg.listView?.setSelection(checked)
+            dlg.listView?.requestFocus()
+        }
     }
 
     private fun versionName(): String = try {

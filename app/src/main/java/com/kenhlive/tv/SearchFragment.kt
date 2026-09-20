@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -77,6 +78,18 @@ class SearchFragment : Fragment() {
                 vm.setQuery(input.text.toString()); true
             } else false
         }
+        input.setOnKeyListener { _, keyCode, event ->
+            if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                if (chipRow.visibility == View.VISIBLE && chipContainer.childCount > 0) {
+                    chipContainer.getChildAt(0)?.requestFocus()
+                    return@setOnKeyListener true
+                } else if (searchAdapter.itemCount > 0) {
+                    resultList.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
+                    return@setOnKeyListener true
+                }
+            }
+            false
+        }
         v.findViewById<ImageButton>(R.id.clearBtn).setOnClickListener {
             input.setText("")
             vm.setQuery("")
@@ -104,6 +117,17 @@ class SearchFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
+        if (DeviceMode.isTv) focusAppropriate()
+    }
+
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (!hidden && DeviceMode.isTv) {
+            focusAppropriate()
+        }
+    }
+
+    private fun focusAppropriate() {
         if (lastFocusedPosition >= 0 && searchAdapter.itemCount > 0) {
             resultList.post {
                 val vh = resultList.findViewHolderForAdapterPosition(lastFocusedPosition)
@@ -116,7 +140,7 @@ class SearchFragment : Fragment() {
                     }, 120)
                 }
             }
-        } else if (DeviceMode.isTv) {
+        } else {
             input.post { input.requestFocus() }
         }
     }

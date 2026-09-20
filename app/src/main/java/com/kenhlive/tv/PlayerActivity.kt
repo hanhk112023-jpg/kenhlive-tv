@@ -74,7 +74,7 @@ class PlayerActivity : AppCompatActivity() {
         findViewById<TextView>(R.id.playerSub).visibility = View.VISIBLE
 
         val channelListBtn = findViewById<ImageButton>(R.id.channelListBtn)
-        if (isIptvMode || IptvRepository.currentChannels.isNotEmpty()) {
+        if (isIptvMode) {
             channelListBtn.visibility = View.VISIBLE
             channelListBtn.setOnClickListener { toggleSidebar() }
             setupSidebar()
@@ -250,14 +250,14 @@ class PlayerActivity : AppCompatActivity() {
             getString(R.string.aq_standard), getString(R.string.aq_bass), getString(R.string.aq_dialog),
             getString(R.string.aq_night), getString(R.string.aq_auto)
         )
-        buildChips(videoBox, vqNames, EnhanceSettings.videoQuality(this)) { i ->
+        buildChips(videoBox, vqNames, EnhanceSettings.videoQuality(this), audioBox, isUpRow = true) { i ->
             EnhanceSettings.setVideoQuality(this, i)
             (player?.trackSelector as? androidx.media3.exoplayer.trackselection.DefaultTrackSelector)
                 ?.let { Enhancer.applyVideo(it, i) }
             Toast.makeText(this, getString(R.string.player_video_changed, vqNames[i]), Toast.LENGTH_SHORT).show()
             markSelection(videoBox, i)
         }
-        buildChips(audioBox, aqNames, EnhanceSettings.audioMode(this)) { i ->
+        buildChips(audioBox, aqNames, EnhanceSettings.audioMode(this), videoBox, isUpRow = false) { i ->
             EnhanceSettings.setAudioMode(this, i)
             val sid = player?.audioSessionId ?: 0
             if (sid != 0) audioFx.attach(sid, i)
@@ -266,7 +266,7 @@ class PlayerActivity : AppCompatActivity() {
             markSelection(audioBox, i)
         }
 
-        dialog = AlertDialog.Builder(this)
+        dialog = AlertDialog.Builder(this, R.style.Theme_KenhLive_Dialog)
             .setView(v)
             .setNegativeButton(R.string.dialog_close, null)
             .setOnDismissListener { dialog = null }
@@ -279,7 +279,10 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
-    private fun buildChips(box: LinearLayout, names: Array<String>, selected: Int, onPick: (Int) -> Unit) {
+    private fun buildChips(
+        box: LinearLayout, names: Array<String>, selected: Int,
+        otherBox: LinearLayout, isUpRow: Boolean, onPick: (Int) -> Unit
+    ) {
         box.removeAllViews()
         val inf = LayoutInflater.from(this)
         names.forEachIndexed { i, n ->
@@ -287,6 +290,20 @@ class PlayerActivity : AppCompatActivity() {
             chip.text = n
             chip.isSelected = i == selected
             chip.setOnClickListener { onPick(i) }
+            chip.setOnKeyListener { _, keyCode, event ->
+                if (event.action == KeyEvent.ACTION_DOWN) {
+                    if (isUpRow && keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                        val targetIdx = i.coerceAtMost(otherBox.childCount - 1)
+                        otherBox.getChildAt(targetIdx)?.requestFocus()
+                        return@setOnKeyListener true
+                    } else if (!isUpRow && keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                        val targetIdx = i.coerceAtMost(otherBox.childCount - 1)
+                        otherBox.getChildAt(targetIdx)?.requestFocus()
+                        return@setOnKeyListener true
+                    }
+                }
+                false
+            }
             box.addView(chip)
         }
     }
@@ -377,8 +394,8 @@ class PlayerActivity : AppCompatActivity() {
         if (isDown && topOverlay?.visibility != View.VISIBLE && dialog == null) {
             showOverlay()
             if (isOkKey) {
-                // Focus vào nút danh sách kênh (nếu có) hoặc nút chất lượng/back
-                val targetBtn = if (findViewById<View>(R.id.channelListBtn)?.visibility == View.VISIBLE) {
+                // Focus vào nút chất lượng (hoặc nút danh sách kênh nếu IPTV)
+                val targetBtn = if (isIptvMode && findViewById<View>(R.id.channelListBtn)?.visibility == View.VISIBLE) {
                     findViewById<View>(R.id.channelListBtn)
                 } else {
                     findViewById<View>(R.id.qualityBtn) ?: findViewById<View>(R.id.backBtn)

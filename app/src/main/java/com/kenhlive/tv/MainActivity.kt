@@ -5,8 +5,10 @@ import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
+import androidx.recyclerview.widget.RecyclerView
 import androidx.activity.addCallback
 import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
@@ -92,6 +94,13 @@ class MainActivity : AppCompatActivity() {
             v.findViewById<ImageView>(R.id.navIcon)?.setImageResource(def.first)
             v.findViewById<TextView>(R.id.navLabel)?.setText(def.second)
             v.setOnClickListener { showTab(i) }
+            if (DeviceMode.isTv) {
+                v.setOnFocusChangeListener { _, hasFocus ->
+                    if (hasFocus && current != i) {
+                        showTab(i, animate = false)
+                    }
+                }
+            }
             navViews.add(v)
         }
 
@@ -111,12 +120,46 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun focusContentFirst() {
-        val c = findViewById<View>(R.id.fragmentContainer) ?: return
+        val c = findViewById<ViewGroup>(R.id.fragmentContainer) ?: return
         c.findFocus()?.let { if (c === it.rootView || isDescendant(c, it)) return }
-        c.post {
-            val v = c.findViewWithTag<View>("kl_focus_first") ?: firstFocusableIn(c)
-            v?.requestFocus()
+
+        // Tìm view con của fragmentContainer đang hiển thị (VISIBLE & isShown)
+        for (i in 0 until c.childCount) {
+            val child = c.getChildAt(i)
+            if (child.visibility == View.VISIBLE) {
+                val tagged = child.findViewWithTag<View>("kl_focus_first")
+                if (tagged != null && tagged.visibility == View.VISIBLE && tagged.requestFocus()) return
+
+                val target = firstFocusableIn(child)
+                if (target != null && target.requestFocus()) return
+
+                // Nếu fragment chứa RecyclerView nhưng chưa kịp layout xong viewHolder
+                val rv = findFirstRecyclerView(child)
+                if (rv != null) {
+                    rv.post {
+                        val vh = rv.findViewHolderForAdapterPosition(0)
+                            ?: (if ((rv.adapter?.itemCount ?: 0) > 1) rv.findViewHolderForAdapterPosition(1) else null)
+                        if (vh?.itemView?.requestFocus() == true) return@post
+                        rv.requestFocus()
+                    }
+                    return
+                }
+
+                child.post { firstFocusableIn(child)?.requestFocus() }
+                return
+            }
         }
+    }
+
+    private fun findFirstRecyclerView(root: View): RecyclerView? {
+        if (root is RecyclerView) return root
+        if (root is ViewGroup) {
+            for (i in 0 until root.childCount) {
+                val r = findFirstRecyclerView(root.getChildAt(i))
+                if (r != null) return r
+            }
+        }
+        return null
     }
 
     /** Kiểm tra xem focus hiện tại đã sát mép trái màn hình chưa để chuyển sang rail. */
@@ -135,6 +178,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun firstFocusableIn(root: View): View? {
+        if (root.visibility != View.VISIBLE) return null
         if (root is android.view.ViewGroup) {
             for (i in 0 until root.childCount) {
                 val f = firstFocusableIn(root.getChildAt(i))
@@ -157,6 +201,11 @@ class MainActivity : AppCompatActivity() {
                 }
                 android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> {
                     if (insideRail) {
+                        // Kích hoạt tab nếu người dùng đang đứng ở item nav tương ứng
+                        val focusedNavIdx = navViews.indexOfFirst { it === f || isDescendant(it, f) }
+                        if (focusedNavIdx >= 0 && focusedNavIdx != current) {
+                            showTab(focusedNavIdx, animate = false)
+                        }
                         focusContentFirst()
                         return true
                     }
