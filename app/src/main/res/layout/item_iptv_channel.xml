@@ -13,7 +13,7 @@
     <!-- Thumbnail / Logo Container chuẩn 16:9 với nền đen sâu -->
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="100dp"
+        android:layout_height="116dp"
         android:background="#050608">
 
         <ImageView
@@ -73,7 +73,7 @@
             android:layout_height="wrap_content"
             android:gravity="left|center_vertical"
             android:textColor="@color/kl_text_1"
-            android:textSize="13sp"
+            android:textSize="14sp"
             android:textStyle="bold"
             android:maxLines="1"
             android:ellipsize="end"

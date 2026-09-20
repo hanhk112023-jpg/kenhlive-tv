@@ -219,6 +219,7 @@ class IptvFragment : Fragment() {
             putExtra("url", ch.url)
             putExtra("name", ch.name)
             putExtra("pip", false)
+            putExtra("is_iptv", true)
         }
         startActivity(intent)
     }

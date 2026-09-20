@@ -104,6 +104,16 @@
             </LinearLayout>
 
             <ImageButton
+                android:id="@+id/channelListBtn"
+                style="@style/KL.IconButton"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_marginLeft="8dp"
+                android:src="@drawable/ic_nav_tv"
+                android:contentDescription="Danh sách kênh"
+                android:visibility="gone" />
+
+            <ImageButton
                 android:id="@+id/qualityBtn"
                 style="@style/KL.IconButton"
                 android:layout_width="44dp"
@@ -140,6 +150,53 @@
                 android:contentDescription="@string/player_pip_unsupported"
                 android:visibility="gone" />
         </LinearLayout>
+    </LinearLayout>
+
+    <!-- SIDE PANEL: DANH SÁCH KÊNH ĐỔ RA BÊN PHẢI ĐỂ CHUYỂN KÊNH NHANH -->
+    <LinearLayout
+        android:id="@+id/channelSidebar"
+        android:layout_width="320dp"
+        android:layout_height="match_parent"
+        android:layout_gravity="right"
+        android:background="#E60C1117"
+        android:orientation="vertical"
+        android:paddingTop="16dp"
+        android:paddingBottom="16dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:paddingBottom="12dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Danh Sách Kênh"
+                android:textColor="@color/kl_text_1"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/sidebarCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/kl_cyan"
+                android:textSize="12sp"
+                android:text="" />
+        </LinearLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/sidebarChannelList"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:scrollbars="vertical" />
     </LinearLayout>
 
     <!-- BOTTOM HINT (TV) -->

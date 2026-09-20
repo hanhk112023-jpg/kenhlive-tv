@@ -25,6 +25,9 @@ object IptvRepository {
     private const val KEY_CACHE_SPORTS = "m3u_cache_sports"
     private const val KEY_LAST_UPDATE = "m3u_last_update"
 
+    // Bộ nhớ RAM tĩnh để PlayerActivity mở sidebar chuyển kênh tức thì
+    var currentChannels: List<IptvChannel> = emptyList()
+
     // Nguồn cố định: Việt Nam & Thể thao từ iptv-org
     const val URL_VN = "https://iptv-org.github.io/iptv/countries/vn.m3u"
     const val URL_SPORTS = "https://iptv-org.github.io/iptv/categories/sports.m3u"
@@ -32,12 +35,6 @@ object IptvRepository {
     // Danh sách mã quốc gia Châu Âu & thương hiệu thể thao lớn
     private val EU_COUNTRIES = setOf(
         "UK", "GB", "ES", "FR", "DE", "IT", "PT", "NL", "BE", "CH", "AT", "SE", "NO", "DK", "FI", "PL", "RO", "CZ"
-    )
-
-    private val PREMIUM_SPORTS_KEYWORDS = listOf(
-        "bein", "dazn", "canal+", "eurosport", "sky", "barca", "real madrid", "fifa", "uefa",
-        "red bull", "formula", "f1", "motogp", "wrc", "fight", "combat", "tennis", "golf",
-        "digi sport", "movistar", "sport", "football", "soccer", "racing"
     )
 
     suspend fun loadChannels(context: Context, forceRefresh: Boolean = false): List<IptvChannel> = withContext(Dispatchers.IO) {
@@ -76,12 +73,14 @@ object IptvRepository {
             result.addAll(parseM3u(cachedVn!!, defaultGroup = "Việt Nam", isVn = true, filterEuSports = false))
         }
 
-        // 2. Kênh Thể thao Châu Âu & Premium quốc tế (chất lượng > số lượng)
+        // 2. Kênh Thể thao Châu Âu & Premium quốc tế (DAZN, Sky Sports)
         if (!cachedSports.isNullOrBlank()) {
             result.addAll(parseM3u(cachedSports!!, defaultGroup = "Thể thao Châu Âu", isVn = false, filterEuSports = true))
         }
 
-        result.distinctBy { it.url }
+        val distinctList = result.distinctBy { it.url }
+        currentChannels = distinctList
+        distinctList
     }
 
     private fun fetchUrl(urlStr: String): String? {

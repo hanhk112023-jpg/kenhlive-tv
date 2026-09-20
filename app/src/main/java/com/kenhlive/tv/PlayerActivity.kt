@@ -13,12 +13,19 @@ import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import coil.load
+import com.kenhlive.tv.iptv.IptvChannel
+import com.kenhlive.tv.iptv.IptvRepository
 import com.kenhlive.tv.ui.applyTvDensity
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -28,7 +35,7 @@ import androidx.media3.ui.PlayerView
 
 /**
  * Màn phát stream. Overlay điều khiển focusable (TV dùng D-pad để tới từng nút),
- * tự ẩn 3.5s; dialog hình/âm dạng chip chọn trực tiếp (thay dialog chữ bản cũ).
+ * tự ẩn 3.5s; dialog hình/âm dạng chip chọn trực tiếp; danh sách kênh sidebar chuyển nhanh.
  */
 class PlayerActivity : AppCompatActivity() {
 
@@ -45,6 +52,11 @@ class PlayerActivity : AppCompatActivity() {
     private var streamRetries = 0
     private var dialog: AlertDialog? = null
 
+    // Danh sách kênh nhanh (Sidebar)
+    private var channelSidebar: View? = null
+    private var sidebarList: RecyclerView? = null
+    private var isIptvMode: Boolean = false
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         applyTvDensity()
@@ -52,11 +64,21 @@ class PlayerActivity : AppCompatActivity() {
 
         url = intent.getStringExtra("url") ?: ""
         val name = intent.getStringExtra("name") ?: getString(R.string.player_default_name)
+        isIptvMode = intent.getBooleanExtra("is_iptv", false)
 
         topOverlay = findViewById(R.id.topOverlay)
         hint = findViewById(R.id.playerHint)
+        channelSidebar = findViewById(R.id.channelSidebar)
+        sidebarList = findViewById(R.id.sidebarChannelList)
         findViewById<TextView>(R.id.playerTitle).text = name
         findViewById<TextView>(R.id.playerSub).visibility = View.VISIBLE
+
+        val channelListBtn = findViewById<ImageButton>(R.id.channelListBtn)
+        if (isIptvMode || IptvRepository.currentChannels.isNotEmpty()) {
+            channelListBtn.visibility = View.VISIBLE
+            channelListBtn.setOnClickListener { toggleSidebar() }
+            setupSidebar()
+        }
 
         initPlayer()
         val pv = findViewById<PlayerView>(R.id.playerView)
@@ -81,6 +103,80 @@ class PlayerActivity : AppCompatActivity() {
 
         hint?.text = getString(if (DeviceMode.isTv) R.string.player_hint_tv else R.string.player_hint_phone)
         showOverlay()
+    }
+
+    private fun setupSidebar() {
+        val list = IptvRepository.currentChannels
+        val rv = sidebarList ?: return
+        rv.layoutManager = LinearLayoutManager(this)
+        findViewById<TextView>(R.id.sidebarCount)?.text = "${list.size} kênh"
+
+        rv.adapter = object : RecyclerView.Adapter<SidebarVH>() {
+            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SidebarVH {
+                val v = LayoutInflater.from(parent.context).inflate(R.layout.item_channel_overlay, parent, false)
+                return SidebarVH(v)
+            }
+
+            override fun onBindViewHolder(holder: SidebarVH, position: Int) {
+                val ch = list[position]
+                holder.tvName.text = ch.name
+                holder.tvSub.text = if (ch.isVn) "Việt Nam" else ch.group
+                holder.badge.text = if (ch.isVn) "VIỆT NAM" else ch.group.uppercase()
+
+                if (ch.logo.isNotEmpty()) {
+                    holder.ivLogo.load(ch.logo) {
+                        crossfade(true)
+                        error(R.drawable.ic_nav_tv)
+                        placeholder(R.drawable.ic_nav_tv)
+                    }
+                } else {
+                    holder.ivLogo.setImageResource(R.drawable.ic_nav_tv)
+                }
+
+                holder.itemView.setOnClickListener {
+                    switchChannel(ch)
+                }
+
+                holder.itemView.setOnFocusChangeListener { v, hasFocus ->
+                    v.animate().scaleX(if (hasFocus) 1.03f else 1f)
+                        .scaleY(if (hasFocus) 1.03f else 1f)
+                        .setDuration(130).start()
+                }
+            }
+
+            override fun getItemCount(): Int = list.size
+        }
+    }
+
+    private fun switchChannel(ch: IptvChannel) {
+        url = ch.url
+        findViewById<TextView>(R.id.playerTitle).text = ch.name
+        channelSidebar?.visibility = View.GONE
+        showOverlay()
+
+        player?.stop()
+        player?.setMediaItem(Enhancer.buildMediaItem(url))
+        player?.prepare()
+        player?.playWhenReady = true
+        Toast.makeText(this, "Đang chuyển sang: ${ch.name}", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun toggleSidebar() {
+        val sb = channelSidebar ?: return
+        if (sb.visibility == View.VISIBLE) {
+            sb.visibility = View.GONE
+            topOverlay?.visibility = View.VISIBLE
+            findViewById<View>(R.id.channelListBtn)?.requestFocus()
+        } else {
+            sb.visibility = View.VISIBLE
+            topOverlay?.visibility = View.GONE
+            hint?.visibility = View.GONE
+            handler.removeCallbacks(hideOverlay)
+            sb.post {
+                sidebarList?.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
+                    ?: sidebarList?.requestFocus()
+            }
+        }
     }
 
     private fun initPlayer() {
@@ -247,6 +343,7 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun showOverlay() {
+        if (channelSidebar?.visibility == View.VISIBLE) return
         topOverlay?.visibility = View.VISIBLE
         hint?.visibility = View.VISIBLE
         hideOnce()
@@ -263,24 +360,40 @@ class PlayerActivity : AppCompatActivity() {
             e.keyCode == KeyEvent.KEYCODE_ENTER ||
             e.keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER
 
-        // 1. Khi overlay đang ẩn mà bấm phím D-pad bất kỳ hoặc phím OK:
-        // Đánh thức overlay lên và focus vào nút đầu tiên (nút chất lượng hoặc nút back)
+        // 1. Nếu sidebar kênh đang mở:
+        if (channelSidebar?.visibility == View.VISIBLE) {
+            if (e.keyCode == KeyEvent.KEYCODE_BACK && isDown) {
+                toggleSidebar()
+                return true
+            }
+            if (e.keyCode == KeyEvent.KEYCODE_DPAD_LEFT && isDown) {
+                toggleSidebar()
+                return true
+            }
+            return super.dispatchKeyEvent(e)
+        }
+
+        // 2. Khi overlay đang ẩn mà bấm phím D-pad bất kỳ hoặc phím OK:
         if (isDown && topOverlay?.visibility != View.VISIBLE && dialog == null) {
             showOverlay()
             if (isOkKey) {
-                // Focus vào nút đầu tiên để sẵn sàng chọn
-                findViewById<View>(R.id.qualityBtn)?.requestFocus()
-                    ?: findViewById<View>(R.id.backBtn)?.requestFocus()
-                return true // Nuốt sự kiện OK để không trigger click nhầm hay thoát
+                // Focus vào nút danh sách kênh (nếu có) hoặc nút chất lượng/back
+                val targetBtn = if (findViewById<View>(R.id.channelListBtn)?.visibility == View.VISIBLE) {
+                    findViewById<View>(R.id.channelListBtn)
+                } else {
+                    findViewById<View>(R.id.qualityBtn) ?: findViewById<View>(R.id.backBtn)
+                }
+                targetBtn?.requestFocus()
+                return true
             }
         }
 
-        // 2. Nếu overlay đang hiện, gia hạn thời gian tự ẩn
+        // 3. Nếu overlay đang hiện, gia hạn thời gian tự ẩn
         if (isDown && topOverlay?.visibility == View.VISIBLE) {
             hideOnce()
         }
 
-        // 3. Phím BACK: Luôn xử lý thoát / đóng dialog
+        // 4. Phím BACK: Luôn xử lý đóng dialog / ẩn overlay / thoát player
         if (e.keyCode == KeyEvent.KEYCODE_BACK && isDown) {
             if (dialog?.isShowing == true) {
                 dialog?.dismiss()
@@ -288,7 +401,6 @@ class PlayerActivity : AppCompatActivity() {
                 return true
             }
             if (topOverlay?.visibility == View.VISIBLE) {
-                // Nếu đang hiện overlay và user bấm BACK -> ẩn overlay trước thay vì thoát ngay
                 topOverlay?.visibility = View.GONE
                 hint?.visibility = View.GONE
                 handler.removeCallbacks(hideOverlay)
@@ -323,5 +435,12 @@ class PlayerActivity : AppCompatActivity() {
         if (Build.VERSION.SDK_INT >= 26 && isInPictureInPictureMode) return
         player?.release()
         player = null
+    }
+
+    private class SidebarVH(v: View) : RecyclerView.ViewHolder(v) {
+        val ivLogo: ImageView = v.findViewById(R.id.overlayChannelLogo)
+        val tvName: TextView = v.findViewById(R.id.overlayChannelName)
+        val tvSub: TextView = v.findViewById(R.id.overlayChannelSub)
+        val badge: TextView = v.findViewById(R.id.overlayChannelBadge)
     }
 }
