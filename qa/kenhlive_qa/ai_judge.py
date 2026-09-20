@@ -13,13 +13,13 @@ KILO_KEY  = os.environ.get('KILO_API_KEY', '')
 KILO_MODELS_URL = KILO_BASE.rsplit('/v1/',1)[0] + '/v1/models'
 # model vision ưu tiên. Kilo hay đổi danh sách free trong ngày
 # → resolve động từ /v1/models mỗi phiên, cache tại chỗ; env KILO_MODEL vẫn override được.
-PREF = ['stepfun/step-3.7-flash:free',
+PREF = ['inclusionai/ling-3.0-flash-vl:free',
+        'stepfun/step-3.7-flash:free',
         'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning:free',
         'nvidia/nemotron-3-ultra-550b-a55b:free',
         'nvidia/nemotron-3-super-120b-a12b:free',
         'thinkingmachines/inkling:free',
-        'nex-agi/nex-n2.5-pro:free',
-        'stepfun/step-3.7-flash:free']
+        'nex-agi/nex-n2.5-pro:free']
 _model_cache = None
 
 def kilo_vision_models():

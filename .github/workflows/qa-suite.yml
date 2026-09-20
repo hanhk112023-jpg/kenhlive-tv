@@ -72,6 +72,7 @@ jobs:
       - name: Chạy QA Suite trên Android TV emulator
         env:
           KILO_API_KEY: ${{ secrets.KILO_API_KEY }}
+          KILO_MODEL: inclusionai/ling-3.0-flash-vl:free
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
