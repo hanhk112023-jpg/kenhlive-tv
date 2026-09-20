@@ -70,4 +70,9 @@
     <color name="divider">@color/kl_border_soft</color>
     <color name="skeleton">#14FFFFFF</color>
     <color name="skeleton_hi">#26FFFFFF</color>
+    <!-- Pure Black -->
+    <color name="pure_black">#000000</color>
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="cyan">#00E5FF</color>
 </resources>
