@@ -15,6 +15,8 @@ class SearchResultAdapter(
     private val onClick: (LiveMatchGroup) -> Unit
 ) : ListAdapter<LiveMatchGroup, SearchResultAdapter.VH>(DIFF) {
 
+    var onItemFocused: ((Int) -> Unit)? = null
+
     companion object {
         private val DIFF = object : DiffUtil.ItemCallback<LiveMatchGroup>() {
             override fun areItemsTheSame(a: LiveMatchGroup, b: LiveMatchGroup) =
@@ -47,6 +49,9 @@ class SearchResultAdapter(
         }
         h.itemView.setOnClickListener { onClick(g) }
         h.itemView.setOnFocusChangeListener { v, has ->
+            if (has) {
+                onItemFocused?.invoke(pos)
+            }
             v.animate().scaleX(if (has) 1.02f else 1f).scaleY(if (has) 1.02f else 1f)
                 .setDuration(130).start()
             v.elevation = if (has) 10f else 0f

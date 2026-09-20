@@ -41,6 +41,7 @@ class SearchFragment : Fragment() {
     private lateinit var searchAdapter: SearchResultAdapter
     private var dialog: AlertDialog? = null
     private var syncing = false
+    private var lastFocusedPosition: Int = -1
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, s: Bundle?): View {
         val v = inflater.inflate(R.layout.fragment_search, container, false)
@@ -51,7 +52,13 @@ class SearchFragment : Fragment() {
         chipRow = v.findViewById(R.id.chipRow)
         state = StateBinder(v)
 
-        searchAdapter = SearchResultAdapter { g -> openGroup(g) }
+        searchAdapter = SearchResultAdapter { g ->
+            openGroup(g)
+        }
+        searchAdapter.onItemFocused = { pos ->
+            lastFocusedPosition = pos
+        }
+
         resultList.layoutManager = LinearLayoutManager(requireContext())
         resultList.itemAnimator = null
         resultList.clipChildren = false
@@ -73,6 +80,7 @@ class SearchFragment : Fragment() {
         v.findViewById<ImageButton>(R.id.clearBtn).setOnClickListener {
             input.setText("")
             vm.setQuery("")
+            input.requestFocus()
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
@@ -92,6 +100,25 @@ class SearchFragment : Fragment() {
         }
         vm.load()
         return v
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (lastFocusedPosition >= 0 && searchAdapter.itemCount > 0) {
+            resultList.post {
+                val vh = resultList.findViewHolderForAdapterPosition(lastFocusedPosition)
+                if (vh != null) {
+                    vh.itemView.requestFocus()
+                } else {
+                    resultList.scrollToPosition(lastFocusedPosition)
+                    resultList.postDelayed({
+                        resultList.findViewHolderForAdapterPosition(lastFocusedPosition)?.itemView?.requestFocus()
+                    }, 120)
+                }
+            }
+        } else if (DeviceMode.isTv) {
+            input.post { input.requestFocus() }
+        }
     }
 
     private fun buildChips(leagues: List<String>) {

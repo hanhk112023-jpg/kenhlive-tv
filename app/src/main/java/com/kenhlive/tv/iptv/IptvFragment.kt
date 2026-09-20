@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
+import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -54,13 +55,18 @@ class IptvFragment : Fragment() {
         // TV 4 cột rộng rãi 16:9, Mobile 2 cột
         val spanCount = if (DeviceMode.isTv) 4 else 2
         gridList.layoutManager = GridLayoutManager(requireContext(), spanCount)
+        gridList.clipChildren = false
+        gridList.clipToPadding = false
+
         groupList.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
+        groupList.clipChildren = false
+        groupList.clipToPadding = false
 
         searchInput.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                 currentKeyword = s?.toString()?.trim() ?: ""
-                applyFilter()
+                applyFilter(focusFirst = false)
             }
             override fun afterTextChanged(s: Editable?) {}
         })
@@ -90,12 +96,12 @@ class IptvFragment : Fragment() {
                 distinctGroups.addAll(otherGroups)
 
                 setupGroups(distinctGroups)
-                applyFilter()
+                applyFilter(focusFirst = true)
             }
         }
     }
 
-    private fun applyFilter() {
+    private fun applyFilter(focusFirst: Boolean = false) {
         var list = allChannels
         if (selectedGroup == "Việt Nam") {
             list = list.filter { it.isVn || it.group.contains("Việt Nam", ignoreCase = true) }
@@ -118,6 +124,12 @@ class IptvFragment : Fragment() {
         displayedChannels = list
         emptyText.visibility = if (displayedChannels.isEmpty()) View.VISIBLE else View.GONE
         setupGrid(displayedChannels)
+
+        if (focusFirst && displayedChannels.isNotEmpty() && DeviceMode.isTv) {
+            gridList.post {
+                gridList.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
+            }
+        }
     }
 
     private fun setupGroups(groups: List<String>) {
@@ -142,8 +154,20 @@ class IptvFragment : Fragment() {
 
                 holder.itemView.setOnClickListener {
                     selectedGroup = g
-                    applyFilter()
+                    applyFilter(focusFirst = true)
                     notifyDataSetChanged()
+                }
+
+                // Khi bấm DOWN từ thanh nhóm -> chuyển focus xuống thẳng kênh đầu tiên của lưới
+                holder.itemView.setOnKeyListener { _, keyCode, event ->
+                    if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                        if (displayedChannels.isNotEmpty()) {
+                            gridList.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
+                                ?: gridList.scrollToPosition(0)
+                            return@setOnKeyListener true
+                        }
+                    }
+                    false
                 }
             }
 
@@ -176,6 +200,13 @@ class IptvFragment : Fragment() {
 
                 holder.itemView.setOnClickListener {
                     openChannel(ch)
+                }
+
+                holder.itemView.setOnFocusChangeListener { v, hasFocus ->
+                    v.animate().scaleX(if (hasFocus) 1.05f else 1f)
+                        .scaleY(if (hasFocus) 1.05f else 1f)
+                        .setDuration(150).start()
+                    v.elevation = if (hasFocus) 16f else 0f
                 }
             }
 

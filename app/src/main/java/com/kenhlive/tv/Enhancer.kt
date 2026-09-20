@@ -101,6 +101,10 @@ class AudioEnhancer(private val ctx: Context) {
                         enabled = true
                         setStrength(900.toShort()) // thang 0..1000
                     }
+                    loud = LoudnessEnhancer(sessionId).apply {
+                        enabled = true
+                        setTargetGain(350) // +3.5dB bù volume cho bass mạnh không bị nhỏ
+                    }
                 }
                 EnhanceSettings.AQ_DIALOG -> {
                     // cắt trầm, đẩy mid-high → lời BLV nổi rõ giữa tiếng ồn

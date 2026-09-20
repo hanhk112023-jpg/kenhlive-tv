@@ -10,8 +10,7 @@ import com.kenhlive.tv.R
 /**
  * Bộ công cụ focus cho Android TV (10-foot):
  * - Hiệu ứng focus thống nhất: phóng nhẹ + nâng bóng + viền trắng (fg_focus trong XML)
- * - D-pad trong grid/carousel: LEFT/RIGHT nuốt ở biên, UP/DOWN sang hàng kề ĐÚNG CỘT
- *   (không để focus-search mặc định của Android đoán → bug "nhảy lung tung")
+ * - D-pad trong grid/carousel: LEFT/RIGHT nuốt ở biên hoặc nhả ra để về menu, UP/DOWN sang hàng kề ĐÚNG CỘT
  * - Hàng chưa layout: cuộn outer RecyclerView rồi retry (tối đa ~1.4s)
  * Điện thoại: các view focusable=false nên toàn bộ logic này vô hại.
  */
@@ -44,14 +43,22 @@ object FocusKit {
         }
     }
 
-    /** OnKeyListener cho card trong row ngang. */
+    /** OnKeyListener cho card trong row ngang.
+     * Khi idx == 0 và bấm LEFT: trả về false để container cha (MainActivity) nhận diện atLeftEdge và mở rail/menu left.
+     */
     fun rowCardKey(
         host: RowHost, rowPos: Int, idx: Int, size: Int
     ): View.OnKeyListener = View.OnKeyListener { _, keyCode, ev ->
         if (ev.action != KeyEvent.ACTION_DOWN) return@OnKeyListener false
         when (keyCode) {
-            KeyEvent.KEYCODE_DPAD_LEFT -> idx == 0
-            KeyEvent.KEYCODE_DPAD_RIGHT -> idx == size - 1
+            KeyEvent.KEYCODE_DPAD_LEFT -> {
+                if (idx == 0) false // nhả để mở rail menu bên trái
+                else false // để RecyclerView tự cuộn sang trái bình thường
+            }
+            KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                if (idx == size - 1) true // chạm mép phải: nuốt
+                else false // để RecyclerView tự cuộn sang phải bình thường
+            }
             KeyEvent.KEYCODE_DPAD_DOWN -> moveRow(host, rowPos, rowPos + 1, idx)
             KeyEvent.KEYCODE_DPAD_UP ->
                 if (rowPos < host.headerPositions) host.focusHero()

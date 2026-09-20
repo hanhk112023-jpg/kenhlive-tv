@@ -258,8 +258,46 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     override fun dispatchKeyEvent(e: KeyEvent): Boolean {
-        // BACK khi overlay đang hiện → chỉ ẩn overlay? Không: BACK luôn thoát player (chuẩn TV).
-        showOverlay()
+        val isDown = e.action == KeyEvent.ACTION_DOWN
+        val isOkKey = e.keyCode == KeyEvent.KEYCODE_DPAD_CENTER ||
+            e.keyCode == KeyEvent.KEYCODE_ENTER ||
+            e.keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER
+
+        // 1. Khi overlay đang ẩn mà bấm phím D-pad bất kỳ hoặc phím OK:
+        // Đánh thức overlay lên và focus vào nút đầu tiên (nút chất lượng hoặc nút back)
+        if (isDown && topOverlay?.visibility != View.VISIBLE && dialog == null) {
+            showOverlay()
+            if (isOkKey) {
+                // Focus vào nút đầu tiên để sẵn sàng chọn
+                findViewById<View>(R.id.qualityBtn)?.requestFocus()
+                    ?: findViewById<View>(R.id.backBtn)?.requestFocus()
+                return true // Nuốt sự kiện OK để không trigger click nhầm hay thoát
+            }
+        }
+
+        // 2. Nếu overlay đang hiện, gia hạn thời gian tự ẩn
+        if (isDown && topOverlay?.visibility == View.VISIBLE) {
+            hideOnce()
+        }
+
+        // 3. Phím BACK: Luôn xử lý thoát / đóng dialog
+        if (e.keyCode == KeyEvent.KEYCODE_BACK && isDown) {
+            if (dialog?.isShowing == true) {
+                dialog?.dismiss()
+                dialog = null
+                return true
+            }
+            if (topOverlay?.visibility == View.VISIBLE) {
+                // Nếu đang hiện overlay và user bấm BACK -> ẩn overlay trước thay vì thoát ngay
+                topOverlay?.visibility = View.GONE
+                hint?.visibility = View.GONE
+                handler.removeCallbacks(hideOverlay)
+                return true
+            }
+            finish()
+            return true
+        }
+
         return super.dispatchKeyEvent(e)
     }
 
