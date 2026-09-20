@@ -27,6 +27,7 @@
         android:name=".KenhLiveApp"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
         android:banner="@drawable/banner"
         android:usesCleartextTraffic="true"
@@ -46,6 +47,9 @@
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTask"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher_round"
+            android:banner="@drawable/banner"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
