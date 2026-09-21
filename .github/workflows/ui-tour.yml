@@ -64,7 +64,7 @@ jobs:
           arch: x86
           target: android-tv
           profile: tv_1080p
-          disableAnimations: true
+          disable-animations: true
           script: bash qa/ui_tour.sh
 
       - name: Thu kq
