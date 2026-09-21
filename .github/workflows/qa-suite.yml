@@ -73,6 +73,8 @@ jobs:
         env:
           KILO_API_KEY: ${{ secrets.KILO_API_KEY }}
           KILO_MODEL: inclusionai/ling-3.0-flash-vl:free
+          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
+          TYPESAFE_MODEL: jev-latest
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
@@ -89,8 +91,8 @@ jobs:
             ARGS=""
             if [ "${{ inputs.quick }}" = "true" ]; then ARGS="--quick"; fi
             python3 qa/kenhlive_qa/run_qa.py --out /tmp/qa_report $ARGS
-            python3 qa/ai_smart_driver.py || true
-            mkdir -p qa_out && cp -r /tmp/qa_report/* qa_out/ && cp -r /tmp/ai_tour qa_out/ 2>/dev/null || true
+            python3 qa/super_qa_engine.py /tmp/super_qa_report || true
+            mkdir -p qa_out && cp -r /tmp/qa_report/* qa_out/ && cp -r /tmp/super_qa_report/* qa_out/ 2>/dev/null || true
 
       - uses: actions/upload-artifact@v4
         if: always()

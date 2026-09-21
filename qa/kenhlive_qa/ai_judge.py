@@ -9,6 +9,10 @@ KILO_BASE = os.environ.get('KILO_API_BASE', 'https://api.kilo.ai/api/gateway/v1/
 KILO_KEY  = os.environ.get('KILO_API_KEY', '')
 KILO_MODEL = os.environ.get('KILO_MODEL', 'inclusionai/ling-3.0-flash-vl:free')
 
+TYPESAFE_BASE = os.environ.get('TYPESAFE_API_BASE', 'https://api.typesafe.ai/v1/systemone')
+TYPESAFE_KEY  = os.environ.get('TYPESAFE_API_KEY', '')
+TYPESAFE_MODEL = os.environ.get('TYPESAFE_MODEL', 'jev-latest')
+
 def _msgs(prompt, imgs):
     content = [{"type": "text", "text": prompt}]
     for b in (imgs or []):
@@ -114,14 +118,72 @@ def _parse_json(text):
         }
 
 def judge_logcat(logcat_text):
-    """Triage logcat để tìm crash FATAL hoặc ANR của package com.kenhlive.tv."""
-    lines = [l for l in logcat_text.splitlines() if 'com.kenhlive.tv' in l or 'FATAL EXCEPTION' in l]
+    """Triage logcat để tìm crash FATAL hoặc ANR của package com.kenhlive.tv.
+    Ưu tiên dùng TypeSafe (Jev) System One để phản hồi siêu tốc (<1s), fallback Kilo/heuristic."""
+    lines = [l for l in logcat_text.splitlines() if 'com.kenhlive.tv' in l or 'FATAL EXCEPTION' in l or 'ANR in' in l]
     if not lines:
         return {"has_crash": False, "findings": []}
     sample = "\n".join(lines[:200])
-    prompt = f"Phân tích logcat app Android com.kenhlive.tv sau và cho biết có crash FATAL hay ANR không:\n{sample}\nTrả về JSON: {{\"has_crash\": bool, \"findings\": [{{...}}]}}"
-    raw = _chat(prompt)
-    return _parse_json(raw)
+
+    if TYPESAFE_KEY:
+        try:
+            req = urllib.request.Request(
+                TYPESAFE_BASE,
+                data=json.dumps({
+                    "state": sample,
+                    "model": TYPESAFE_MODEL,
+                    "questions": {
+                        "has_crash": {
+                            "type": "noul",
+                            "instructions": "Logcat có chứa lỗi FATAL EXCEPTION, NullPointerException hoặc ANR crash nghiêm trọng không?"
+                        },
+                        "severity": {
+                            "type": "choice",
+                            "instructions": "Mức độ nghiêm trọng của lỗi trong logcat",
+                            "criteria": {
+                                "none": "Không có crash, chỉ log thông thường hoặc warning nhẹ",
+                                "anr": "Lỗi ANR (Application Not Responding) treo ứng dụng",
+                                "fatal": "Crash FATAL văng ứng dụng"
+                            }
+                        }
+                    }
+                }).encode(),
+                headers={"Content-Type": "application/json", "Authorization": "Bearer " + TYPESAFE_KEY, "User-Agent": UA}
+            )
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                res = json.loads(resp.read().decode())
+                ans = res.get("answers", {})
+                has_crash_noul = ans.get("has_crash", {}).get("noul", 0.0)
+                sev_choice = ans.get("severity", {}).get("choice", "none")
+                is_crash = has_crash_noul > 0.7 or sev_choice in ["fatal", "anr"]
+                findings = []
+                if is_crash:
+                    findings.append({
+                        "severity": "CRITICAL" if sev_choice == "fatal" else "HIGH",
+                        "area": "logcat",
+                        "defect": f"Phát hiện crash trong logcat ({sev_choice})",
+                        "suggestion": "Kiểm tra stacktrace chi tiết trong logcat"
+                    })
+                return {"has_crash": is_crash, "findings": findings, "source": "typesafe_jev"}
+        except Exception as e:
+            pass
+
+    if KILO_KEY:
+        try:
+            prompt = f"Phân tích logcat app Android com.kenhlive.tv sau và cho biết có crash FATAL hay ANR không:\n{sample}\nTrả về JSON: {{\"has_crash\": bool, \"findings\": [{{...}}]}}"
+            raw = _chat(prompt, timeout=30)
+            parsed = _parse_json(raw)
+            parsed["source"] = "kilo_ling"
+            return parsed
+        except Exception:
+            pass
+
+    has_fatal = any('FATAL EXCEPTION' in l or 'ANR in com.kenhlive.tv' in l for l in lines)
+    return {
+        "has_crash": has_fatal,
+        "findings": [{"severity": "CRITICAL", "defect": "FATAL in logcat"}] if has_fatal else [],
+        "source": "heuristic"
+    }
 
 def judge_perf(metrics):
     return {"ok": True, "score": 90, "summary": "Metrics acceptable"}
