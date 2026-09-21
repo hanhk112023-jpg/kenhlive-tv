@@ -158,6 +158,48 @@ Trả về DUY NHẤT JSON:
 
         return False
 
+    def run_super_suite(self):
+        """Chạy toàn bộ siêu hệ thống kiểm thử tự động Android TV bằng AI Vision."""
+        print("🚀 Bắt đầu Siêu Hệ Thống Kiểm Thử AI Smart Driver (KênhLive TV)...", flush=True)
+        results = {}
+
+        # 1. TAB 0: Trang chủ & Live
+        print("\n--- [TEST 1] TAB 0: TRANG CHỦ & TRỰC TIẾP ---", flush=True)
+        self.fast_navigate_tab(0)
+        results['home_chips'] = self.run_goal("Kiểm tra thanh chip giải đấu đầu tiên và focus thẻ trận đấu Live", max_steps=4)
+
+        # 2. TAB 1: Lịch thi đấu (Hôm nay)
+        print("\n--- [TEST 2] TAB 1: LỊCH THI ĐẤU (HÔM NAY) ---", flush=True)
+        self.fast_navigate_tab(1)
+        results['schedule_focus'] = self.run_goal("Kiểm tra danh sách lịch thi đấu tự động focus vào trận đấu đầu tiên, không bị kẹt ở tiêu đề ngày", max_steps=4)
+
+        # 3. TAB 2: Truyền hình (IPTV)
+        print("\n--- [TEST 3] TAB 2: TRUYỀN HÌNH OTT ---", flush=True)
+        self.fast_navigate_tab(2)
+        results['iptv_vtv'] = self.run_goal("Focus vào kênh VTV đầu tiên trong danh sách (kênh VTV phải ở đầu danh sách Việt Nam)", max_steps=4)
+        results['iptv_sports'] = self.run_goal("Di chuyển lên thanh nhóm kênh, chọn nhóm 'Thể Thao' để lọc các kênh quốc tế", max_steps=5)
+
+        # 4. TAB 3: Tìm kiếm
+        print("\n--- [TEST 4] TAB 3: TÌM KIẾM ---", flush=True)
+        self.fast_navigate_tab(3)
+        results['search_input'] = self.run_goal("Kiểm tra ô nhập tìm kiếm tự động nhận focus khi mở tab", max_steps=3)
+
+        # 5. TAB 4: Cài đặt (Settings)
+        print("\n--- [TEST 5] TAB 4: CÀI ĐẶT ---", flush=True)
+        self.fast_navigate_tab(4)
+        results['settings_video'] = self.run_goal("Bấm DOWN vào mục Chất lượng hình ảnh, bấm ENTER mở dialog, chọn chất lượng và đóng dialog", max_steps=6)
+        results['settings_audio'] = self.run_goal("Bấm DOWN vào mục Chế độ âm thanh, bấm ENTER mở dialog, chọn chế độ âm thanh và đóng dialog", max_steps=6)
+
+        # Tổng kết
+        passed = sum(1 for v in results.values() if v)
+        total = len(results)
+        print(f"\n==========================================", flush=True)
+        print(f"📊 KẾT QUẢ SIÊU HỆ THỐNG TEST AI: {passed}/{total} tiêu chí đạt", flush=True)
+        for k, v in results.items():
+            print(f"  • {k}: {'✅ PASS' if v else '❌ FAIL'}", flush=True)
+        print(f"==========================================", flush=True)
+        return passed == total
+
     def fast_navigate_tab(self, tab_idx):
         """Điều hướng nhanh đến Tab chỉ định qua Android Intent (không cần sleep mù)."""
         sh(f"{self.adb_cmd} shell am start -n {PKG}/.MainActivity --ei tab {tab_idx}")
@@ -165,19 +207,5 @@ Trả về DUY NHẤT JSON:
 
 if __name__ == '__main__':
     driver = AiSmartDriver()
-    print("🚀 Bắt đầu AI Smart Driver Test...")
-    
-    # 1. Mở tab Truyền hình (Tab 2)
-    driver.fast_navigate_tab(2)
-    
-    # 2. AI kiểm tra và focus kênh VTV đầu tiên
-    driver.run_goal("Focus vào kênh VTV đầu tiên trong danh sách (kênh VTV phải ở đầu danh sách Việt Nam)")
-    
-    # 3. AI mở kênh và kiểm tra Player
-    driver.run_goal("Bấm ENTER để mở xem kênh VTV, sau đó bấm ENTER để hiện thanh điều khiển và danh sách kênh")
-    
-    # 4. AI chuyển sang nhóm Thể Thao
-    driver.fast_navigate_tab(2)
-    driver.run_goal("Di chuyển lên thanh nhóm kênh, chọn nhóm 'Thể Thao' để lọc các kênh quốc tế")
-    
-    print("🏁 Hoàn tất phiên kiểm thử với AI Driver!")
+    success = driver.run_super_suite()
+    sys.exit(0 if success else 1)

@@ -55,9 +55,9 @@ mark "CHUP ANH: Tab 0 Home"
 
 # 2. TAB 1: LỊCH THI ĐẤU
 relaunch 1
-go "DOWN: danh sach lich"  20 1
-go "DOWN: tran ke tiep"    20 1
-go "UP"                    19 1
+go "DOWN: danh sach lich (tu dong focus tran dau dau tien)" 20 1
+go "DOWN: cuon xuong tran ke tiep"                         20 1
+go "UP: cuon tro lai tran dau tien"                         19 1
 adb exec-out screencap -p > $OUT/tab1_schedule.png
 mark "CHUP ANH: Tab 1 Schedule"
 
@@ -88,25 +88,43 @@ go "DOWN: focus kenh the thao dau tien" 20 1
 
 # 4. TAB 3: TÌM KIẾM
 relaunch 3
-adb shell input text "u23" >/dev/null 2>&1; sleep 3; mark "TYPE 'u23' -> ket qua tim kiem"
-go "BACK dong ban phim"    4 1
-go "DOWN qua ket qua"      20 1
+go "KIEM TRA: focus tu dong vao search input" 0 1
+adb shell input text "u23" >/dev/null 2>&1; sleep 2; mark "TYPE 'u23' -> ket qua tim kiem"
+go "BACK dong ban phim"                       4 1
+go "DOWN: chuyen focus xuong chip giai hoac ket qua" 20 1
 adb exec-out screencap -p > $OUT/tab3_search.png
 mark "CHUP ANH: Tab 3 Search"
 
 # 5. TAB 4: CÀI ĐẶT
 relaunch 4
-go "DOWN muc"              20 1
-go "DOWN"                  20 1
-go "UP"                    19 1
+go "DOWN: dong cai dat dau tien (Chat luong hinh anh)" 20 1
+go "OK: mo dialog chon chat luong hinh anh"            23 2
+adb exec-out screencap -p > $OUT/tab4_dialog_video.png
+mark "CHUP ANH: Dialog chon chat luong hinh anh"
+go "DOWN: chuyen lua chon chat luong"                   20 1
+go "OK: chon chat luong moi va dong dialog"             23 2
+go "DOWN: dong cai dat thu 2 (Che do am thanh)"         20 1
+go "OK: mo dialog chon che do am thanh"                23 2
+adb exec-out screencap -p > $OUT/tab4_dialog_audio.png
+mark "CHUP ANH: Dialog chon che do am thanh"
+go "DOWN: chuyen lua chon am thanh (Bass)"             20 1
+go "OK: chon che do am thanh va dong dialog"           23 2
+go "UP: quay lai dong dau"                             19 1
 adb exec-out screencap -p > $OUT/tab4_settings.png
-mark "CHUP ANH: Tab 4 Settings"
+mark "CHUP ANH: Tab 4 Settings sau khi chinh chat luong"
 
 # 6. VÀO PHÒNG LIVE -> PLAYER EXOPLAYER
 relaunch 0
 go "DOWN toi card LIVE"    20 2
 go "OK: danh sach phong"   23 2
 go "OK: vao phong"         23 6; mark "PLAYER dang phat ExoPlayer"
+go "OK: hien control overlay player" 23 1
+go "OK: mo dialog cai dat chat luong hinh/am" 23 2
+adb exec-out screencap -p > $OUT/player_settings_dialog.png
+mark "CHUP ANH: Player settings dialog"
+go "RIGHT: chon muc chat luong khac" 22 1
+go "DOWN: chuyen xuong nhom am thanh" 20 1
+go "BACK: dong dialog cai dat player" 4 1
 adb exec-out screencap -p > $OUT/player.png
 mark "CHUP ANH: Player"
 SPLIT=$(($(date +%s)-T0)); echo "$SPLIT" > $OUT/split_at.txt

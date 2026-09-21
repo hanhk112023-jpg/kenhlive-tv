@@ -89,7 +89,8 @@ jobs:
             ARGS=""
             if [ "${{ inputs.quick }}" = "true" ]; then ARGS="--quick"; fi
             python3 qa/kenhlive_qa/run_qa.py --out /tmp/qa_report $ARGS
-            mkdir -p qa_out && cp -r /tmp/qa_report/* qa_out/
+            python3 qa/ai_smart_driver.py || true
+            mkdir -p qa_out && cp -r /tmp/qa_report/* qa_out/ && cp -r /tmp/ai_tour qa_out/ 2>/dev/null || true
 
       - uses: actions/upload-artifact@v4
         if: always()
