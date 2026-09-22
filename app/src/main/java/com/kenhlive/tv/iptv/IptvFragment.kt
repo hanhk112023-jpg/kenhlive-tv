@@ -103,6 +103,12 @@ class IptvFragment : Fragment() {
                     }
                 })
                 applyFilter(focusFirst = true)
+
+                // Tải ngầm lịch phát sóng EPG thời gian thực
+                EpgRepository.initEpg(requireContext())
+                if (isAdded) {
+                    gridList.adapter?.notifyDataSetChanged()
+                }
             }
         }
     }
@@ -199,8 +205,28 @@ class IptvFragment : Fragment() {
             override fun onBindViewHolder(holder: ChannelViewHolder, position: Int) {
                 val ch = channels[position]
                 holder.tvName.text = ch.name
-                holder.tvSub.text = if (ch.isVn) "Truyền hình Việt Nam" else "${ch.group} · Thể thao quốc tế"
                 holder.badge.text = if (ch.isVn) "VIỆT NAM" else ch.group.uppercase()
+
+                // Cập nhật EPG nếu có
+                val epgInfo = EpgRepository.getCurrentAndNext(ch.id, ch.name)
+                if (epgInfo != null && epgInfo.first != null) {
+                    val curProg = epgInfo.first!!
+                    holder.epgBox.visibility = View.VISIBLE
+                    holder.tvSub.visibility = View.GONE
+                    holder.tvEpgNow.text = "▶ [${curProg.timeRange()}] ${curProg.title}"
+                    holder.epgProgress.progress = curProg.progressPercent()
+                    if (epgInfo.second != null) {
+                        val nextProg = epgInfo.second!!
+                        holder.tvEpgNext.visibility = View.VISIBLE
+                        holder.tvEpgNext.text = "⏭ [${nextProg.startFormatted()}] ${nextProg.title}"
+                    } else {
+                        holder.tvEpgNext.visibility = View.GONE
+                    }
+                } else {
+                    holder.epgBox.visibility = View.GONE
+                    holder.tvSub.visibility = View.VISIBLE
+                    holder.tvSub.text = if (ch.isVn) "Truyền hình Việt Nam" else "${ch.group} · Thể thao quốc tế"
+                }
 
                 if (ch.logo.isNotEmpty()) {
                     holder.ivLogo.load(ch.logo) {
@@ -213,7 +239,7 @@ class IptvFragment : Fragment() {
                 }
 
                 holder.itemView.setOnClickListener {
-                    openChannel(ch)
+                    openChannel(ch, position)
                 }
 
                 holder.itemView.setOnFocusChangeListener { v, hasFocus ->
@@ -228,12 +254,14 @@ class IptvFragment : Fragment() {
         }
     }
 
-    private fun openChannel(ch: IptvChannel) {
+    private fun openChannel(ch: IptvChannel, index: Int) {
         val intent = Intent(requireContext(), PlayerActivity::class.java).apply {
             putExtra("url", ch.url)
             putExtra("name", ch.name)
             putExtra("pip", false)
             putExtra("is_iptv", true)
+            putExtra("channel_id", ch.id)
+            putExtra("current_index", index)
         }
         startActivity(intent)
     }
@@ -247,5 +275,9 @@ class IptvFragment : Fragment() {
         val badge: TextView = v.findViewById(R.id.channelBadge)
         val tvName: TextView = v.findViewById(R.id.channelName)
         val tvSub: TextView = v.findViewById(R.id.channelSub)
+        val epgBox: View = v.findViewById(R.id.epgBox)
+        val tvEpgNow: TextView = v.findViewById(R.id.tvEpgNow)
+        val epgProgress: ProgressBar = v.findViewById(R.id.epgProgress)
+        val tvEpgNext: TextView = v.findViewById(R.id.tvEpgNext)
     }
 }

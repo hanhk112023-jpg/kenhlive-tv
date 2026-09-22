@@ -132,6 +132,24 @@
                 android:contentDescription="@string/settings_audio_mode" />
 
             <ImageButton
+                android:id="@+id/aspectBtn"
+                style="@style/KL.IconButton"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_marginLeft="8dp"
+                android:src="@drawable/ic_aspect_ratio"
+                android:contentDescription="Tỉ lệ khung hình" />
+
+            <ImageButton
+                android:id="@+id/statsBtn"
+                style="@style/KL.IconButton"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_marginLeft="8dp"
+                android:src="@drawable/ic_info"
+                android:contentDescription="Thông số kỹ thuật" />
+
+            <ImageButton
                 android:id="@+id/multiBtn"
                 style="@style/KL.IconButton"
                 android:layout_width="44dp"
@@ -197,6 +215,195 @@
             android:layout_height="match_parent"
             android:clipToPadding="false"
             android:scrollbars="vertical" />
+    </LinearLayout>
+
+    <!-- QUICK CHANNEL BANNER / OSD (D-PAD UP/DOWN/KEYPAD NHẢY KÊNH) -->
+    <LinearLayout
+        android:id="@+id/quickChannelOsd"
+        android:layout_width="wrap_content"
+        android:minWidth="480dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom|center_horizontal"
+        android:layout_marginBottom="36dp"
+        android:orientation="horizontal"
+        android:background="@drawable/bg_card_match"
+        android:padding="16dp"
+        android:gravity="center_vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/osdChannelNumber"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_badge_league_cyan"
+            android:gravity="center"
+            android:textColor="@color/kl_cyan"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:text="01" />
+
+        <ImageView
+            android:id="@+id/osdChannelLogo"
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:layout_marginLeft="14dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_nav_tv" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginLeft="14dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/osdChannelTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/kl_text_1"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="VTV1 HD" />
+
+            <TextView
+                android:id="@+id/osdEpgNow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:textColor="@color/kl_cyan"
+                android:textSize="12sp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="▶ Thời sự 19h" />
+
+            <TextView
+                android:id="@+id/osdEpgNext"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textColor="@color/kl_text_3"
+                android:textSize="11sp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="⏭ 19:45: Phim truyện" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/osdTechTag"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="12dp"
+            android:background="@drawable/bg_badge_glass"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:paddingTop="5dp"
+            android:paddingBottom="5dp"
+            android:textColor="@color/kl_live"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:text="HD 50FPS" />
+    </LinearLayout>
+
+    <!-- STATS FOR NERDS HUD -->
+    <LinearLayout
+        android:id="@+id/statsHudBox"
+        android:layout_width="290dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|right"
+        android:layout_marginTop="24dp"
+        android:layout_marginRight="24dp"
+        android:orientation="vertical"
+        android:background="@drawable/bg_card_match"
+        android:padding="14dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="📊 STATS FOR NERDS"
+                android:textColor="@color/kl_cyan"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/tvHudClose"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="✕"
+                android:textColor="@color/kl_text_3"
+                android:textSize="14sp"
+                android:padding="4dp" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="6dp"
+            android:layout_marginBottom="8dp"
+            android:background="#22FFFFFF" />
+
+        <TextView
+            android:id="@+id/tvStatResolution"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/kl_text_1"
+            android:textSize="11sp"
+            android:text="Độ phân giải: Đang đo..." />
+
+        <TextView
+            android:id="@+id/tvStatFps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:textColor="@color/kl_text_1"
+            android:textSize="11sp"
+            android:text="Khung hình: Đang đo..." />
+
+        <TextView
+            android:id="@+id/tvStatBitrate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:textColor="@color/kl_text_1"
+            android:textSize="11sp"
+            android:text="Bitrate: Đang đo..." />
+
+        <TextView
+            android:id="@+id/tvStatCodec"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:textColor="@color/kl_text_1"
+            android:textSize="11sp"
+            android:text="Codec: H.264 / AAC" />
+
+        <TextView
+            android:id="@+id/tvStatBuffer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:textColor="@color/kl_text_1"
+            android:textSize="11sp"
+            android:text="Bộ đệm dự trữ: 0.0s" />
+
+        <TextView
+            android:id="@+id/tvStatDropped"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:textColor="@color/kl_text_1"
+            android:textSize="11sp"
+            android:text="Khung hình rớt: 0" />
     </LinearLayout>
 
     <!-- BOTTOM HINT (TV) -->

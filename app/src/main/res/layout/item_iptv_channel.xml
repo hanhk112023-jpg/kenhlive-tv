@@ -90,6 +90,48 @@
             android:maxLines="1"
             android:ellipsize="end"
             android:text="Kênh truyền hình trực tuyến" />
+
+        <!-- EPG LIVE CONTAINER -->
+        <LinearLayout
+            android:id="@+id/epgBox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="3dp"
+            android:visibility="gone">
+
+            <TextView
+                android:id="@+id/tvEpgNow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#E0E6ED"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="Đang tải lịch phát sóng..." />
+
+            <ProgressBar
+                android:id="@+id/epgProgress"
+                style="@style/Widget.AppCompat.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="2.5dp"
+                android:layout_marginTop="3dp"
+                android:layout_marginBottom="3dp"
+                android:max="100"
+                android:progress="40"
+                android:progressTint="@color/kl_cyan" />
+
+            <TextView
+                android:id="@+id/tvEpgNext"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/kl_text_3"
+                android:textSize="10sp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="" />
+        </LinearLayout>
     </LinearLayout>
 
 </LinearLayout>
