@@ -240,12 +240,24 @@ class AutonomousAiBugHunter:
 
     def dump_hierarchy_and_focus(self):
         """Đọc toàn bộ UI Hierarchy cây XML và trích xuất element đang giữ focus."""
-        cmd = f"{self.adb_cmd} exec-out uiautomator dump /dev/tty"
+        cmd = f"{self.adb_cmd} shell uiautomator dump /sdcard/window_dump.xml && {self.adb_cmd} shell cat /sdcard/window_dump.xml"
         try:
-            r = subprocess.run(cmd.split(), capture_output=True, text=True, timeout=5)
+            r = subprocess.run(cmd, shell=True, capture_output=True, text=True, timeout=8)
             xml_text = r.stdout
             if not xml_text or "<hierarchy" not in xml_text:
+                # Fallback trực tiếp nếu cat thất bại
+                cmd2 = f"{self.adb_cmd} exec-out uiautomator dump /dev/tty"
+                r2 = subprocess.run(cmd2.split(), capture_output=True, text=True, timeout=5)
+                xml_text = r2.stdout
+
+            if not xml_text or "<hierarchy" not in xml_text:
                 return None, None, []
+
+            # Cắt lấy phần xml từ thẻ mở <hierarchy đến thẻ đóng </hierarchy>
+            start_idx = xml_text.find("<hierarchy")
+            end_idx = xml_text.rfind("</hierarchy>")
+            if start_idx != -1 and end_idx != -1:
+                xml_text = xml_text[start_idx:end_idx + len("</hierarchy>")]
 
             root = ET.fromstring(xml_text.strip())
             focused_node = None

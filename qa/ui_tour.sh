@@ -61,20 +61,30 @@ go "UP: cuon tro lai tran dau tien"                         19 1
 adb exec-out screencap -p > $OUT/tab1_schedule.png
 mark "CHUP ANH: Tab 1 Schedule"
 
-# 3. TAB 2: TRUYỀN HÌNH OTT (M3U / M3U8)
+# 3. TAB 2: TRUYỀN HÌNH OTT (M3U / M3U8) & EPG THỜI GIAN THỰC
 relaunch 2
 sleep 4
 adb exec-out screencap -p > $OUT/tab2_iptv.png
-mark "CHUP ANH: Tab 2 IPTV"
-go "DOWN: chon kenh VTV dau tien" 20 1
+mark "CHUP ANH: Tab 2 IPTV va EPG Live"
+go "DOWN: chon kenh VTV dau tien (hien EPG Now & Next)" 20 1
 adb exec-out screencap -p > $OUT/tab2_vtv_focused.png
-mark "CHUP ANH: Focus kenh VTV dau tien"
+mark "CHUP ANH: Focus kenh VTV va EPG tien trinh"
 go "RIGHT: sang kenh VTV tiep theo" 22 1
 go "RIGHT: sang kenh VTV thu 3" 22 1
-go "OK: mo xem kenh VTV trong Player" 23 4
+go "OK: mo xem kenh VTV trong Player Pro" 23 4
 adb exec-out screencap -p > $OUT/tab2_vtv_player.png
-mark "CHUP ANH: Player phat kenh VTV"
+mark "CHUP ANH: Player Pro phat kenh VTV"
+go "UP: Quick Channel OSD Banner chuyen kenh" 19 2
+adb exec-out screencap -p > $OUT/tab2_quick_osd.png
+mark "CHUP ANH: Quick Channel OSD Banner"
 go "OK: hien controls player va sidebar" 23 1
+go "RIGHT: toi nut Aspect Ratio" 22 1
+go "RIGHT: toi nut Stats for Nerds HUD" 22 1
+go "OK: mo Stats for Nerds HUD" 23 2
+adb exec-out screencap -p > $OUT/tab2_stats_hud.png
+mark "CHUP ANH: Stats for Nerds HUD"
+go "BACK: dong Stats HUD" 4 1
+go "OK: mo danh sach kenh Sidebar" 23 1
 adb exec-out screencap -p > $OUT/tab2_sidebar_channels.png
 mark "CHUP ANH: Sidebar danh sach kenh IPTV"
 go "BACK: dong sidebar ve player" 4 1
