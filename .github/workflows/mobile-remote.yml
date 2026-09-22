@@ -77,8 +77,10 @@ jobs:
             echo "$TUNNEL_URL"
             echo "=========================================================="
 
-            # Bắn link lên GitHub Issue #5 qua GitHub CLI / REST API để bên ngoài đọc được ngay lập tức
-            gh issue comment 5 --repo hanhk112023-jpg/kenhlive-tv --body "📱 [MOBILE REMOTE READY]: $TUNNEL_URL" || true
+            # Lưu vào repo variable hoặc update description
+            curl -s -X PATCH -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/hanhk112023-jpg/kenhlive-tv/issues/5 \
+              -d "{\"body\": \"📱 [ACTIVE TUNNEL]: $TUNNEL_URL (Updated at $(date -u))\"}" || true
 
             MINUTES="${{ inputs.duration_minutes }}"
             [ -n "$MINUTES" ] || MINUTES=60
