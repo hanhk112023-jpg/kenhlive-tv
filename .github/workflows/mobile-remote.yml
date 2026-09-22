@@ -77,10 +77,12 @@ jobs:
             echo "$TUNNEL_URL"
             echo "=========================================================="
 
-            # Lưu vào repo variable hoặc update description
-            curl -s -X PATCH -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github.v3+json" \
-              https://api.github.com/repos/hanhk112023-jpg/kenhlive-tv/issues/5 \
-              -d "{\"body\": \"📱 [ACTIVE TUNNEL]: $TUNNEL_URL (Updated at $(date -u))\"}" || true
+            # Bắn link lên branch gh-pages hoặc push thẳng file vào repo qua GitHub Contents API
+            curl -s -X PUT \
+              -H "Authorization: Bearer $GH_TOKEN" \
+              -H "Accept: application/vnd.github.v3+json" \
+              https://api.github.com/repos/hanhk112023-jpg/kenhlive-tv/contents/RUNNING_MOBILE_URL.txt \
+              -d "{\"message\":\"ci: publish mobile tunnel url\",\"content\":\"$(echo -n $TUNNEL_URL | base64)\"}" || true
 
             MINUTES="${{ inputs.duration_minutes }}"
             [ -n "$MINUTES" ] || MINUTES=60
