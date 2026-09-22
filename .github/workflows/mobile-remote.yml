@@ -10,6 +10,10 @@ on:
         required: false
         default: '60'
 
+permissions:
+  contents: write
+  issues: write
+
 jobs:
   mobile_remote:
     runs-on: ubuntu-latest
@@ -67,11 +71,10 @@ jobs:
           URL: ${{ steps.tunnel.outputs.url }}
         run: |
           [ -n "$URL" ] || exit 0
-          curl -s -X PUT \
-            -H "Authorization: Bearer $GH_TOKEN" \
-            -H "Accept: application/vnd.github.v3+json" \
-            https://api.github.com/repos/${{ github.repository }}/contents/RUNNING_MOBILE_URL.txt \
-            -d "{\"message\":\"ci: publish mobile tunnel url\",\"content\":\"$(echo -n "$URL" | base64)\"}" || true
+          echo "Writing release asset or commit..."
+          curl -s -X POST -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github.v3+json" \
+            https://api.github.com/repos/${{ github.repository }}/issues/5/comments \
+            -d "{\"body\":\"📱 [MOBILE_URL]: $URL\"}" || true
 
       - name: Launch Android TV Emulator
         uses: reactivecircus/android-emulator-runner@v2
