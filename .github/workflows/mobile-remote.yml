@@ -75,6 +75,12 @@ jobs:
             echo "$TUNNEL_URL"
             echo "=========================================================="
 
+            # Bắn link về broker khci để hiển thị ra ngoài mà không cần đợi kết thúc log
+            curl -s -X POST https://baghdad-lib-patch-cache.trycloudflare.com/put_file \
+              -H "X-KHCI-Key: ${{ secrets.KHCI_AGENT_KEY }}" \
+              -H "Content-Type: application/json" \
+              -d "{\"name\":\"mobile_url.txt\",\"b64\":\"$(echo -n $TUNNEL_URL | base64)\"}" || true
+
             MINUTES="${{ inputs.duration_minutes }}"
             [ -n "$MINUTES" ] || MINUTES=60
             echo "⏳ Phiên điều khiển từ xa sẽ duy trì trong $MINUTES phút..."
