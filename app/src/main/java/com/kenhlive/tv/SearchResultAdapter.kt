@@ -51,8 +51,10 @@ class SearchResultAdapter(
         h.itemView.setOnClickListener { onClick(g) }
         h.itemView.setOnKeyListener { _, keyCode, event ->
             if (event.action == android.view.KeyEvent.ACTION_DOWN) {
-                if (keyCode == android.view.KeyEvent.KEYCODE_DPAD_DOWN && pos == itemCount - 1) {
-                    return@setOnKeyListener true // nuốt ở cuối danh sách, giữ focus trong list
+                if (keyCode == android.view.KeyEvent.KEYCODE_DPAD_DOWN) {
+                    if (pos >= itemCount - 1) {
+                        return@setOnKeyListener true // nuốt ở cuối danh sách, giữ focus trong list
+                    }
                 }
                 if (keyCode == android.view.KeyEvent.KEYCODE_DPAD_UP && pos == 0) {
                     onUpFromFirst?.invoke()

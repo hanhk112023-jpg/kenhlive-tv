@@ -159,9 +159,10 @@ class LiveFragment : Fragment() {
         // 2. Section 1: "Trực Tiếp & Tâm Điểm Thể Thao" (Row trận đấu trực tiếp)
         items.add(SportAdapter.RailItem(lg, upFiltered))
 
-        // 3. Section 2: "Bình Luận Viên Tâm Điểm" (Row các BLV hot nhất của Socolive với thẻ gradient đa sắc)
+        // 3. Section 2: "Bình Luận Viên Tâm Điểm" (Chỉ hiện khi ở tab Tất cả / không lọc riêng)
+        // Không render ở hàng thứ 2 nếu đang test hoặc để tránh làm trượt focus khi refresh
         val allRooms = lg.flatMap { it.rooms }.sortedByDescending { it.viewers }
-        if (allRooms.isNotEmpty()) {
+        if (allRooms.isNotEmpty() && !DeviceMode.isTv) {
             items.add(SportAdapter.BlvRowItem(allRooms))
         }
 

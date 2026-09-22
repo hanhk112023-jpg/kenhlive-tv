@@ -44,7 +44,7 @@ object FocusKit {
     }
 
     /** OnKeyListener cho card trong row ngang.
-     * Khi idx == 0 và bấm LEFT: trả về false để container cha (MainActivity) nhận diện atLeftEdge và mở rail/menu left.
+     * Khi idx == 0 và bấm LEFT: nuốt để giữ focus luôn ở mép trái của hàng, tránh văng focus.
      */
     fun rowCardKey(
         host: RowHost, rowPos: Int, idx: Int, size: Int
@@ -52,11 +52,11 @@ object FocusKit {
         if (ev.action != KeyEvent.ACTION_DOWN) return@OnKeyListener false
         when (keyCode) {
             KeyEvent.KEYCODE_DPAD_LEFT -> {
-                if (idx == 0) false // nhả để mở rail menu bên trái
+                if (idx == 0) true // chạm mép trái: nuốt, giữ nguyên trên card đầu tiên
                 else false // để RecyclerView tự cuộn sang trái bình thường
             }
             KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                if (idx == size - 1) true // chạm mép phải: nuốt
+                if (idx >= size - 1) true // chạm mép phải: nuốt, giữ nguyên trên card cuối cùng
                 else false // để RecyclerView tự cuộn sang phải bình thường
             }
             KeyEvent.KEYCODE_DPAD_DOWN -> moveRow(host, rowPos, rowPos + 1, idx)

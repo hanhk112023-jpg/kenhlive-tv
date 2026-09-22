@@ -87,12 +87,14 @@ class SearchFragment : Fragment() {
                     chipContainer.getChildAt(0)?.requestFocus()
                     return@setOnKeyListener true
                 } else if (searchAdapter.itemCount > 0) {
-                    val vh = resultList.findViewHolderForAdapterPosition(0)
-                    if (vh?.itemView?.requestFocus() == true) return@setOnKeyListener true
-                    resultList.scrollToPosition(0)
-                    resultList.postDelayed({
-                        resultList.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
-                    }, 80)
+                    resultList.post {
+                        val vh = resultList.findViewHolderForAdapterPosition(0)
+                        if (vh?.itemView?.requestFocus() == true) return@post
+                        resultList.scrollToPosition(0)
+                        resultList.postDelayed({
+                            resultList.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
+                        }, 50)
+                    }
                     return@setOnKeyListener true
                 }
             }
@@ -171,12 +173,14 @@ class SearchFragment : Fragment() {
                 if (ev.action == KeyEvent.ACTION_DOWN) {
                     if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
                         if (searchAdapter.itemCount > 0) {
-                            val vh = resultList.findViewHolderForAdapterPosition(0)
-                            if (vh?.itemView?.requestFocus() == true) return@setOnKeyListener true
-                            resultList.scrollToPosition(0)
-                            resultList.postDelayed({
-                                resultList.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
-                            }, 80)
+                            resultList.post {
+                                val vh = resultList.findViewHolderForAdapterPosition(0)
+                                if (vh?.itemView?.requestFocus() == true) return@post
+                                resultList.scrollToPosition(0)
+                                resultList.postDelayed({
+                                    resultList.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
+                                }, 50)
+                            }
                             return@setOnKeyListener true
                         }
                     } else if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
