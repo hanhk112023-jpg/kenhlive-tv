@@ -283,9 +283,7 @@ class MainActivity : AppCompatActivity() {
                 "pip" -> lifecycleScope.launch { openPlayer(pip = true) }
                 "update" -> UpdateManager.debugForceDialog(this)
                 "refresh" -> {
-                    showTab(0, animate = false)
                     lifecycleScope.launch {
-                        kotlinx.coroutines.delay(400)
                         supportFragmentManager.fragments.filterIsInstance<LiveFragment>()
                             .firstOrNull { it.isAdded }?.debugForceRefresh()
                     }

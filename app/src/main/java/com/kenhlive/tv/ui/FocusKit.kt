@@ -75,10 +75,19 @@ object FocusKit {
 
     private fun moveRow(host: RowHost, fromPos: Int, targetPos: Int, idx: Int): Boolean {
         val rv = host.outerRecyclerView ?: return false
-        if (targetPos < 0 || targetPos >= (rv.adapter?.itemCount ?: 0)) return true // biên dọc: nuốt
+        val total = rv.adapter?.itemCount ?: 0
+        if (targetPos < 0 || targetPos >= total) return true // biên dọc: nuốt
+        val nextItem = (rv.adapter as? androidx.recyclerview.widget.ListAdapter<*, *>)?.currentList?.getOrNull(targetPos)
+        if (nextItem is String) {
+            // Nếu hàng kế tiếp là Header ngày (String), nhảy tiếp xuống hàng trận đấu (targetPos + 1)
+            val skipPos = if (targetPos > fromPos) targetPos + 1 else targetPos - 1
+            if (skipPos in 0 until total) {
+                return moveRow(host, fromPos, skipPos, idx)
+            }
+        }
         if (focusNow(rv, targetPos, idx)) return true
-        rv.smoothScrollBy(0, if (targetPos > fromPos) 420 else -420)
-        retry(host, targetPos, idx, 7)
+        rv.scrollToPosition(targetPos)
+        retry(host, targetPos, idx, 6)
         return true
     }
 
@@ -87,7 +96,7 @@ object FocusKit {
         val rv = host.outerRecyclerView ?: return
         rv.postDelayed({
             if (!focusNow(rv, pos, idx)) retry(host, pos, idx, left - 1)
-        }, 180)
+        }, 80)
     }
 
     /** Focus ô idx của hàng adapter `pos` (hàng = RecyclerView ngang bên trong RowVH). */

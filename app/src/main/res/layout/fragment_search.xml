@@ -33,6 +33,7 @@
             android:layout_height="44dp"
             android:layout_marginLeft="10dp"
             android:src="@drawable/ic_close"
+            android:focusable="false"
             android:contentDescription="@string/search_clear" />
     </LinearLayout>
 

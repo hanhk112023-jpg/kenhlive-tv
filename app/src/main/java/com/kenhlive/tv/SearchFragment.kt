@@ -83,18 +83,16 @@ class SearchFragment : Fragment() {
         }
         input.setOnKeyListener { _, keyCode, event ->
             if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-                if (chipRow.visibility == View.VISIBLE && chipContainer.childCount > 0) {
-                    chipContainer.getChildAt(0)?.requestFocus()
-                    return@setOnKeyListener true
-                } else if (searchAdapter.itemCount > 0) {
+                if (searchAdapter.itemCount > 0) {
+                    val target = resultList.findViewHolderForAdapterPosition(0)?.itemView
+                    if (target?.requestFocus() == true) return@setOnKeyListener true
+                    resultList.scrollToPosition(0)
                     resultList.post {
-                        val vh = resultList.findViewHolderForAdapterPosition(0)
-                        if (vh?.itemView?.requestFocus() == true) return@post
-                        resultList.scrollToPosition(0)
-                        resultList.postDelayed({
-                            resultList.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
-                        }, 50)
+                        resultList.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
                     }
+                    return@setOnKeyListener true
+                } else if (chipRow.visibility == View.VISIBLE && chipContainer.childCount > 0) {
+                    chipContainer.getChildAt(0)?.requestFocus()
                     return@setOnKeyListener true
                 }
             }

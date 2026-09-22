@@ -55,10 +55,22 @@ class SearchResultAdapter(
                     if (pos >= itemCount - 1) {
                         return@setOnKeyListener true // nuốt ở cuối danh sách, giữ focus trong list
                     }
+                    val nextVh = (h.bindingAdapter as? SearchResultAdapter)?.let {
+                        val rv = h.itemView.parent as? RecyclerView
+                        rv?.findViewHolderForAdapterPosition(pos + 1)
+                    }
+                    if (nextVh?.itemView?.requestFocus() == true) return@setOnKeyListener true
                 }
-                if (keyCode == android.view.KeyEvent.KEYCODE_DPAD_UP && pos == 0) {
-                    onUpFromFirst?.invoke()
-                    return@setOnKeyListener true
+                if (keyCode == android.view.KeyEvent.KEYCODE_DPAD_UP) {
+                    if (pos == 0) {
+                        onUpFromFirst?.invoke()
+                        return@setOnKeyListener true
+                    }
+                    val prevVh = (h.bindingAdapter as? SearchResultAdapter)?.let {
+                        val rv = h.itemView.parent as? RecyclerView
+                        rv?.findViewHolderForAdapterPosition(pos - 1)
+                    }
+                    if (prevVh?.itemView?.requestFocus() == true) return@setOnKeyListener true
                 }
             }
             false
