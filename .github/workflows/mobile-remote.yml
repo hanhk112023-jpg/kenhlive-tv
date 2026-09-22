@@ -41,6 +41,8 @@ jobs:
           chmod +x /usr/local/bin/cloudflared
 
       - name: Khởi động Android TV & Mobile Remote trên Actions Runner
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
@@ -75,11 +77,8 @@ jobs:
             echo "$TUNNEL_URL"
             echo "=========================================================="
 
-            # Bắn link về broker khci để hiển thị ra ngoài mà không cần đợi kết thúc log
-            curl -s -X POST https://baghdad-lib-patch-cache.trycloudflare.com/put_file \
-              -H "X-KHCI-Key: ${{ secrets.KHCI_AGENT_KEY }}" \
-              -H "Content-Type: application/json" \
-              -d "{\"name\":\"mobile_url.txt\",\"b64\":\"$(echo -n $TUNNEL_URL | base64)\"}" || true
+            # Bắn link lên GitHub Issue #5 qua GitHub CLI / REST API để bên ngoài đọc được ngay lập tức
+            gh issue comment 5 --repo hanhk112023-jpg/kenhlive-tv --body "📱 [MOBILE REMOTE READY]: $TUNNEL_URL" || true
 
             MINUTES="${{ inputs.duration_minutes }}"
             [ -n "$MINUTES" ] || MINUTES=60
