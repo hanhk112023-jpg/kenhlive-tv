@@ -21,7 +21,8 @@ import com.kenhlive.tv.ui.LunarCalendar
 class HeroPagerAdapter(
     private val groups: List<LiveMatchGroup>,
     private val onClick: (LiveMatchGroup) -> Unit,
-    private val onDetailsClick: ((LiveMatchGroup) -> Unit)? = null
+    private val onDetailsClick: ((LiveMatchGroup) -> Unit)? = null,
+    private val onDownKey: (() -> Boolean)? = null
 ) : RecyclerView.Adapter<HeroPagerAdapter.HV>() {
 
     private val handler = Handler(Looper.getMainLooper())
@@ -144,6 +145,25 @@ class HeroPagerAdapter(
         h.play.setOnClickListener { onClick(g) }
         h.details?.setOnClickListener {
             if (onDetailsClick != null) onDetailsClick.invoke(g) else onClick(g)
+        }
+
+        h.play.setOnKeyListener { _, keyCode, event ->
+            if (event.action != android.view.KeyEvent.ACTION_DOWN) return@setOnKeyListener false
+            when (keyCode) {
+                android.view.KeyEvent.KEYCODE_DPAD_DOWN -> onDownKey?.invoke() ?: false
+                android.view.KeyEvent.KEYCODE_DPAD_UP -> true
+                else -> false
+            }
+        }
+
+        h.details?.setOnKeyListener { _, keyCode, event ->
+            if (event.action != android.view.KeyEvent.ACTION_DOWN) return@setOnKeyListener false
+            when (keyCode) {
+                android.view.KeyEvent.KEYCODE_DPAD_DOWN -> onDownKey?.invoke() ?: false
+                android.view.KeyEvent.KEYCODE_DPAD_UP -> true
+                android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> true
+                else -> false
+            }
         }
     }
 }

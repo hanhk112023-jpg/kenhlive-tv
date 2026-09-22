@@ -75,7 +75,6 @@ class SportAdapter(
     override fun onDetachedFromRecyclerView(rv: RecyclerView) { outerRecyclerView = null }
 
     override fun slotFor(key: String): Pair<Int, Int>? {
-        val rv = outerRecyclerView ?: return null
         val parts = key.split('|', limit = 3)
         if (parts.size < 3) return null
         val (kind, lg, mt) = parts
@@ -101,10 +100,20 @@ class SportAdapter(
         val rv = outerRecyclerView ?: return false
         for (i in 0 until itemCount) {
             if (getItem(i) is HeroItem) {
-                (rv.findViewHolderForAdapterPosition(i) as? HeroVH)?.let { vh ->
+                val vh = rv.findViewHolderForAdapterPosition(i) as? HeroVH
+                if (vh != null) {
                     val inner = vh.pager.getChildAt(0) as? RecyclerView
                     val page = inner?.findViewHolderForAdapterPosition(vh.pager.currentItem)?.itemView
                     if (page?.findViewById<View>(R.id.heroPlay)?.requestFocus() == true) return true
+                } else {
+                    rv.scrollToPosition(i)
+                    rv.post {
+                        val vh2 = rv.findViewHolderForAdapterPosition(i) as? HeroVH
+                        val inner = vh2?.pager?.getChildAt(0) as? RecyclerView
+                        val page = inner?.findViewHolderForAdapterPosition(vh2?.pager?.currentItem ?: 0)?.itemView
+                        page?.findViewById<View>(R.id.heroPlay)?.requestFocus()
+                    }
+                    return true
                 }
             }
         }
@@ -131,11 +140,11 @@ class SportAdapter(
         for (i in 0 until itemCount) {
             if (getItem(i) is RailItem) {
                 if (FocusKit.focusNow(rv, i, 0)) return true
-                rv.smoothScrollBy(0, 300)
+                rv.scrollToPosition(i)
                 var left = 6
                 object : Runnable {
                     override fun run() {
-                        if (left > 0 && !FocusKit.focusNow(rv, i, 0)) { left--; rv.postDelayed(this, 160) }
+                        if (left > 0 && !FocusKit.focusNow(rv, i, 0)) { left--; rv.postDelayed(this, 80) }
                     }
                 }.run()
                 return true
@@ -260,7 +269,7 @@ class SportAdapter(
                     vh.itemView.visibility = View.VISIBLE
                     val cur = (vh.pager.adapter as? HeroPagerAdapter)
                     if (cur == null || cur.itemCount != item.groups.size.coerceAtMost(8)) {
-                        val ad = HeroPagerAdapter(item.groups, onGroupClick, onGroupDetails)
+                        val ad = HeroPagerAdapter(item.groups, onGroupClick, onGroupDetails, onDownKey = { focusRailFirst() })
                         vh.pager.adapter = ad
                         ad.attach(vh.pager, vh.dots)
                     }

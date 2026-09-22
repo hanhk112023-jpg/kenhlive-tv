@@ -16,6 +16,7 @@ class SearchResultAdapter(
 ) : ListAdapter<LiveMatchGroup, SearchResultAdapter.VH>(DIFF) {
 
     var onItemFocused: ((Int) -> Unit)? = null
+    var onUpFromFirst: (() -> Unit)? = null
 
     companion object {
         private val DIFF = object : DiffUtil.ItemCallback<LiveMatchGroup>() {
@@ -48,6 +49,18 @@ class SearchResultAdapter(
             placeholder(R.drawable.logo_placeholder); error(R.drawable.logo_placeholder)
         }
         h.itemView.setOnClickListener { onClick(g) }
+        h.itemView.setOnKeyListener { _, keyCode, event ->
+            if (event.action == android.view.KeyEvent.ACTION_DOWN) {
+                if (keyCode == android.view.KeyEvent.KEYCODE_DPAD_DOWN && pos == itemCount - 1) {
+                    return@setOnKeyListener true // nuốt ở cuối danh sách, giữ focus trong list
+                }
+                if (keyCode == android.view.KeyEvent.KEYCODE_DPAD_UP && pos == 0) {
+                    onUpFromFirst?.invoke()
+                    return@setOnKeyListener true
+                }
+            }
+            false
+        }
         h.itemView.setOnFocusChangeListener { v, has ->
             if (has) {
                 onItemFocused?.invoke(pos)

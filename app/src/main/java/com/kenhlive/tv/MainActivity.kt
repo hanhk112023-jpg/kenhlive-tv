@@ -121,7 +121,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun focusContentFirst() {
         val c = findViewById<ViewGroup>(R.id.fragmentContainer) ?: return
-        c.findFocus()?.let { if (c === it.rootView || isDescendant(c, it)) return }
+        val cur = c.findFocus()
+        if (cur != null && (c === cur.rootView || isDescendant(c, cur))) return
 
         // Tìm view con của fragmentContainer đang hiển thị (VISIBLE & isShown)
         for (i in 0 until c.childCount) {
@@ -130,20 +131,27 @@ class MainActivity : AppCompatActivity() {
                 val tagged = child.findViewWithTag<View>("kl_focus_first")
                 if (tagged != null && tagged.visibility == View.VISIBLE && tagged.requestFocus()) return
 
-                val target = firstFocusableIn(child)
-                if (target != null && target.requestFocus()) return
-
-                // Nếu fragment chứa RecyclerView nhưng chưa kịp layout xong viewHolder
+                // Nếu fragment chứa RecyclerView: ưu tiên focus vào ViewHolder đầu tiên
                 val rv = findFirstRecyclerView(child)
                 if (rv != null) {
+                    val vh = rv.findViewHolderForAdapterPosition(0)
+                    if (vh != null) {
+                        val inner = firstFocusableIn(vh.itemView) ?: vh.itemView
+                        if (inner.requestFocus()) return
+                    }
                     rv.post {
-                        val vh = rv.findViewHolderForAdapterPosition(0)
-                            ?: (if ((rv.adapter?.itemCount ?: 0) > 1) rv.findViewHolderForAdapterPosition(1) else null)
-                        if (vh?.itemView?.requestFocus() == true) return@post
-                        rv.requestFocus()
+                        val vh2 = rv.findViewHolderForAdapterPosition(0)
+                        if (vh2 != null) {
+                            val inner2 = firstFocusableIn(vh2.itemView) ?: vh2.itemView
+                            if (inner2.requestFocus()) return@post
+                        }
+                        firstFocusableIn(child)?.requestFocus()
                     }
                     return
                 }
+
+                val target = firstFocusableIn(child)
+                if (target != null && target.requestFocus()) return
 
                 child.post { firstFocusableIn(child)?.requestFocus() }
                 return
@@ -188,9 +196,25 @@ class MainActivity : AppCompatActivity() {
         return if (root.isFocusable) root else null
     }
 
+    override fun onResume() {
+        super.onResume()
+        if (DeviceMode.isTv) {
+            window.decorView.post {
+                if (currentFocus == null) {
+                    focusContentFirst()
+                }
+            }
+        }
+    }
+
     override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
         if (DeviceMode.isTv && event.action == android.view.KeyEvent.ACTION_DOWN) {
-            val f = currentFocus
+            var f = currentFocus
+            if (f == null) {
+                focusContentFirst()
+                f = currentFocus
+                if (f != null) return true
+            }
             val insideRail = railPanel?.let { isDescendant(it, f) } == true
             when (event.keyCode) {
                 android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
@@ -236,6 +260,11 @@ class MainActivity : AppCompatActivity() {
             } else if (f != null) tx.hide(f)
         }
         tx.commit()
+        if (DeviceMode.isTv) {
+            findViewById<View>(R.id.fragmentContainer)?.post {
+                focusContentFirst()
+            }
+        }
     }
 
     fun hideKeyboard() {

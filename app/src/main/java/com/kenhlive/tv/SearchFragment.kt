@@ -59,6 +59,9 @@ class SearchFragment : Fragment() {
         searchAdapter.onItemFocused = { pos ->
             lastFocusedPosition = pos
         }
+        searchAdapter.onUpFromFirst = {
+            input.requestFocus()
+        }
 
         resultList.layoutManager = LinearLayoutManager(requireContext())
         resultList.itemAnimator = null
@@ -84,7 +87,12 @@ class SearchFragment : Fragment() {
                     chipContainer.getChildAt(0)?.requestFocus()
                     return@setOnKeyListener true
                 } else if (searchAdapter.itemCount > 0) {
-                    resultList.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
+                    val vh = resultList.findViewHolderForAdapterPosition(0)
+                    if (vh?.itemView?.requestFocus() == true) return@setOnKeyListener true
+                    resultList.scrollToPosition(0)
+                    resultList.postDelayed({
+                        resultList.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
+                    }, 80)
                     return@setOnKeyListener true
                 }
             }
@@ -158,6 +166,25 @@ class SearchFragment : Fragment() {
                 syncing = false
                 vm.setQuery(lg)
                 (activity as? MainActivity)?.hideKeyboard()
+            }
+            chip.setOnKeyListener { _, keyCode, ev ->
+                if (ev.action == KeyEvent.ACTION_DOWN) {
+                    if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                        if (searchAdapter.itemCount > 0) {
+                            val vh = resultList.findViewHolderForAdapterPosition(0)
+                            if (vh?.itemView?.requestFocus() == true) return@setOnKeyListener true
+                            resultList.scrollToPosition(0)
+                            resultList.postDelayed({
+                                resultList.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
+                            }, 80)
+                            return@setOnKeyListener true
+                        }
+                    } else if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                        input.requestFocus()
+                        return@setOnKeyListener true
+                    }
+                }
+                false
             }
             chipContainer.addView(chip)
         }

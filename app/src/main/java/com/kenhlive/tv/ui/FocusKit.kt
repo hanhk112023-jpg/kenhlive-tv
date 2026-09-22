@@ -93,12 +93,20 @@ object FocusKit {
     /** Focus ô idx của hàng adapter `pos` (hàng = RecyclerView ngang bên trong RowVH). */
     fun focusNow(rv: RecyclerView, pos: Int, idx: Int): Boolean {
         val vh = rv.findViewHolderForAdapterPosition(pos) ?: return false
-        val inner = vh.itemView.findViewById<RecyclerView>(R.id.rowList) ?: return false
-        val lm = inner.layoutManager as? LinearLayoutManager ?: return false
-        val target = lm.findViewByPosition(idx)
-            ?: lm.findViewByPosition(idx.coerceAtMost((inner.adapter?.itemCount ?: 1) - 1))
-            ?: return false
-        return target.requestFocus()
+        val inner = vh.itemView.findViewById<RecyclerView>(R.id.rowList)
+        if (inner != null) {
+            val lm = inner.layoutManager as? LinearLayoutManager
+            val target = lm?.findViewByPosition(idx)
+                ?: lm?.findViewByPosition(idx.coerceAtMost((inner.adapter?.itemCount ?: 1) - 1))
+                ?: inner.getChildAt(0)
+            if (target?.requestFocus() == true) return true
+            inner.post {
+                val t2 = inner.layoutManager?.findViewByPosition(idx) ?: inner.getChildAt(0)
+                t2?.requestFocus()
+            }
+            return true
+        }
+        return vh.itemView.requestFocus()
     }
 
     /** Khôi phục focus về ô đã nhớ (gọi từ onResume) — ưu tiên KHOÁ nội dung vì position drift sau refresh. */
