@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>KênhLive TV Remote & AI Controller</title>
+  <style>
+    :root {
+      --bg: #000000;
+      --card-bg: #111111;
+      --border: #222222;
+      --cyan: #00E5FF;
+      --cyan-glow: rgba(0, 229, 255, 0.25);
+      --red: #FF1744;
+      --text: #FFFFFF;
+      --text-muted: #888888;
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0;
+      padding: 0 0 40px 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      user-select: none;
+    }
+    header {
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border);
+      background: #080808;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .brand { font-size: 18px; font-weight: 800; letter-spacing: 0.5px; display: flex; align-items: center; gap: 8px; }
+    .brand span { color: var(--cyan); }
+    .badge-status {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background: rgba(0, 229, 255, 0.15);
+      color: var(--cyan);
+      border: 1px solid var(--cyan);
+    }
+    .tabs-bar {
+      display: flex;
+      overflow-x: auto;
+      gap: 8px;
+      padding: 12px 16px;
+      background: #0A0A0A;
+      border-bottom: 1px solid var(--border);
+    }
+    .tab-btn {
+      flex: 0 0 auto;
+      padding: 8px 14px;
+      border-radius: 20px;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .tab-btn:active { background: var(--cyan); color: #000; }
+    .screen-panel {
+      padding: 12px 16px;
+      text-align: center;
+    }
+    .screen-wrap {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: #050505;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .screen-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+    .screen-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 8px;
+      padding: 0 4px;
+    }
+    .btn-sm {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--cyan);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    /* D-PAD VIRTUAL REMOTE */
+    .remote-section {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .dpad-container {
+      width: 250px;
+      height: 250px;
+      position: relative;
+      border-radius: 50%;
+      background: #0D0D0D;
+      border: 2px solid var(--border);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .dpad-btn {
+      position: absolute;
+      background: #181818;
+      color: var(--text);
+      border: 1px solid #282828;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      cursor: pointer;
+      transition: background 0.1s, transform 0.1s;
+    }
+    .dpad-btn:active {
+      background: var(--cyan);
+      color: #000;
+      transform: scale(0.95);
+    }
+    .dpad-up { top: 12px; width: 70px; height: 50px; border-radius: 25px 25px 8px 8px; }
+    .dpad-down { bottom: 12px; width: 70px; height: 50px; border-radius: 8px 8px 25px 25px; }
+    .dpad-left { left: 12px; width: 50px; height: 70px; border-radius: 25px 8px 8px 25px; }
+    .dpad-right { right: 12px; width: 50px; height: 70px; border-radius: 8px 25px 25px 8px; }
+    .dpad-ok {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: #202020;
+      border: 2px solid var(--cyan);
+      color: var(--cyan);
+      font-weight: bold;
+      font-size: 16px;
+      box-shadow: 0 0 10px var(--cyan-glow);
+    }
+    .dpad-ok:active {
+      background: var(--cyan);
+      color: #000;
+      transform: scale(0.92);
+    }
+
+    .aux-keys {
+      display: flex;
+      gap: 16px;
+      margin-top: 20px;
+      width: 100%;
+      max-width: 280px;
+      justify-content: center;
+    }
+    .aux-btn {
+      flex: 1;
+      padding: 12px;
+      border-radius: 10px;
+      background: #141414;
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .aux-btn:active { background: #333; }
+    .aux-btn.danger { color: var(--red); border-color: rgba(255,23,68,0.4); }
+
+    /* AI BUG HUNTER */
+    .ai-section {
+      padding: 16px;
+      border-top: 1px solid var(--border);
+      margin-top: 12px;
+    }
+    .ai-banner {
+      background: linear-gradient(145deg, #0A0A0A, #141414);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+    }
+    .btn-hunt {
+      width: 100%;
+      padding: 14px;
+      background: var(--cyan);
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 800;
+      text-transform: uppercase;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .btn-hunt:active { opacity: 0.85; transform: scale(0.98); }
+    .bug-list {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .bug-item {
+      background: #141414;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+    }
+    .bug-item-hdr { display: flex; justify-content: space-between; font-size: 13px; font-weight: bold; margin-bottom: 6px; }
+    .badge-crit { background: var(--red); color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; }
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #222;
+      color: var(--cyan);
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      border: 1px solid var(--cyan);
+      display: none;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">📺 KÊNH<span>LIVE</span> TV</div>
+    <div class="badge-status" id="conn-status">ONLINE 1080p</div>
+  </header>
+
+  <!-- Thanh chuyển Tab 1 chạm -->
+  <div class="tabs-bar">
+    <button class="tab-btn" onclick="sendTab(0)">⚽ Live</button>
+    <button class="tab-btn" onclick="sendTab(1)">📅 Lịch</button>
+    <button class="tab-btn" onclick="sendTab(2)">📺 IPTV (VTV)</button>
+    <button class="tab-btn" onclick="sendTab(3)">🔍 Tìm Kiếm</button>
+    <button class="tab-btn" onclick="sendTab(4)">⚙️ Cài Đặt</button>
+  </div>
+
+  <!-- Live Screen Mirror -->
+  <div class="screen-panel">
+    <div class="screen-wrap">
+      <img id="live-screen" src="/api/screen" alt="Màn hình TV">
+    </div>
+    <div class="screen-controls">
+      <span style="font-size: 12px; color: var(--text-muted);" id="screen-info">Độ phân giải: 1920x1080</span>
+      <button class="btn-sm" onclick="refreshScreen()">🔄 Làm Mới Màn Hình</button>
+    </div>
+  </div>
+
+  <!-- Remote D-pad ảo -->
+  <div class="remote-section">
+    <div class="dpad-container">
+      <button class="dpad-btn dpad-up" onclick="sendKey('UP')">▲</button>
+      <button class="dpad-btn dpad-down" onclick="sendKey('DOWN')">▼</button>
+      <button class="dpad-btn dpad-left" onclick="sendKey('LEFT')">◀</button>
+      <button class="dpad-btn dpad-right" onclick="sendKey('RIGHT')">▶</button>
+      <button class="dpad-btn dpad-ok" onclick="sendKey('ENTER')">OK</button>
+    </div>
+
+    <div class="aux-keys">
+      <button class="aux-btn" onclick="sendKey('BACK')">↩ BACK</button>
+      <button class="aux-btn" onclick="sendKey('HOME')">🏠 HOME</button>
+      <button class="aux-btn danger" onclick="sendKey('BACK')">THOÁT</button>
+    </div>
+  </div>
+
+  <!-- Bảng điều khiển AI Săn Lỗi -->
+  <div class="ai-section">
+    <div class="ai-banner">
+      <h3 style="margin:0 0 6px 0; color:var(--cyan);">🧠 AI Autonomous Bug Hunter</h3>
+      <p style="font-size:13px; color:var(--text-muted); margin:0;">Đặc nhiệm AI tự động khám phá mọi ngóc ngách, soi logcat và bắt lỗi Focus Trap / Crash.</p>
+      <button class="btn-hunt" id="btn-hunt" onclick="startBugHunt()">🚀 Bắt Đầu AI Săn Lỗi</button>
+      <div id="hunt-status" style="font-size: 12px; margin-top: 8px; color: var(--cyan); display: none;">⏳ AI đang tự do khám phá app...</div>
+    </div>
+
+    <h4 style="margin: 16px 0 8px 0;">Danh Sách Lỗi Tìm Được (<span id="bug-count">0</span>)</h4>
+    <div class="bug-list" id="bug-list">
+      <div style="font-size: 13px; color: #666; text-align: center; padding: 12px;">Chưa phát hiện lỗi nào.</div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    function vibrate() {
+      if (navigator.vibrate) navigator.vibrate(25);
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.display = 'block';
+      setTimeout(() => t.style.display = 'none', 1600);
+    }
+
+    async function sendKey(action) {
+      vibrate();
+      try {
+        await fetch('/api/key', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({action})
+        });
+        showToast('Đã bấm: ' + action);
+        setTimeout(refreshScreen, 300);
+      } catch (e) {
+        showToast('Lỗi gửi phím');
+      }
+    }
+
+    async function sendTab(idx) {
+      vibrate();
+      try {
+        await fetch('/api/tab', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({tab: idx})
+        });
+        showToast('Chuyển sang Tab ' + idx);
+        setTimeout(refreshScreen, 600);
+      } catch (e) {}
+    }
+
+    function refreshScreen() {
+      const img = document.getElementById('live-screen');
+      img.src = '/api/screen?t=' + Date.now();
+    }
+
+    async function startBugHunt() {
+      vibrate();
+      const btn = document.getElementById('btn-hunt');
+      const st = document.getElementById('hunt-status');
+      btn.disabled = true;
+      btn.style.opacity = '0.5';
+      st.style.display = 'block';
+      st.textContent = '🚀 AI đang bắt đầu phiên săn lỗi tự do (20 bước)...';
+
+      try {
+        const res = await fetch('/api/hunt', {method: 'POST'});
+        const data = await res.json();
+        pollHuntProgress();
+      } catch (e) {
+        st.textContent = 'Lỗi khởi động AI Săn Lỗi';
+        btn.disabled = false;
+        btn.style.opacity = '1';
+      }
+    }
+
+    async function pollHuntProgress() {
+      const st = document.getElementById('hunt-status');
+      const btn = document.getElementById('btn-hunt');
+      const interval = setInterval(async () => {
+        try {
+          const res = await fetch('/api/hunt_status');
+          const data = await res.json();
+          if (data.running) {
+            st.textContent = `⏳ AI đang tương tác bước ${data.step}/${data.total_steps} (Đã bắt được ${data.bugs_found} bug)...`;
+          } else {
+            clearInterval(interval);
+            st.textContent = `✅ Phiên săn lỗi hoàn tất! Phát hiện ${data.bugs_found} lỗi.`;
+            btn.disabled = false;
+            btn.style.opacity = '1';
+            loadBugs();
+          }
+        } catch (e) {
+          clearInterval(interval);
+        }
+      }, 2000);
+    }
+
+    async function loadBugs() {
+      try {
+        const res = await fetch('/api/bugs');
+        const data = await res.json();
+        const list = document.getElementById('bug-list');
+        const count = document.getElementById('bug-count');
+        count.textContent = data.length;
+        if (data.length === 0) {
+          list.innerHTML = '<div style="font-size: 13px; color: var(--cyan); text-align: center; padding: 12px;">🎉 Không phát hiện lỗi nào!</div>';
+          return;
+        }
+        list.innerHTML = data.map(b => `
+          <div class="bug-item">
+            <div class="bug-item-hdr">
+              <span>${b.id}: ${b.title}</span>
+              <span class="badge-crit">${b.severity}</span>
+            </div>
+            <div style="font-size: 12px; color: #BBB;">${b.description}</div>
+            <div style="font-size: 11px; color: var(--cyan); margin-top: 4px;">Tái hiện: ${b.reproduce_steps.join(' &rarr; ')}</div>
+          </div>
+        `).join('');
+      } catch (e) {}
+    }
+
+    // Auto-refresh screenshot every 5s
+    setInterval(refreshScreen, 5000);
+    loadBugs();
+  </script>
+</body>
+</html>

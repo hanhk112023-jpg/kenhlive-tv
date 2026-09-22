@@ -1,0 +1,81 @@
+name: Mobile-Remote-Live
+# Khởi chạy Android TV Emulator + Mobile Remote Server trực tiếp trên GitHub Actions runner
+# Cho phép điều khiển bằng D-pad và xem màn hình TV thời gian thực qua Cloudflare Tunnel
+
+on:
+  workflow_dispatch:
+    inputs:
+      duration_minutes:
+        description: 'Thời gian mở phiên điều khiển (phút)'
+        required: false
+        default: '60'
+
+jobs:
+  mobile_remote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Build debug APK
+        env:
+          KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          echo "sdk.dir=$ANDROID_HOME" > local.properties
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon -q
+
+      - name: KVM Hardware Accel
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+
+      - name: Install cloudflared
+        run: |
+          curl -sSL -o /usr/local/bin/cloudflared https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+          chmod +x /usr/local/bin/cloudflared
+
+      - name: Khởi động Android TV & Mobile Remote trên Actions Runner
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 30
+          arch: x86
+          target: android-tv
+          script: |
+            adb root
+            adb shell wm size 1920x1080
+            adb shell wm density 320
+            adb shell settings put system accelerometer_rotation 0
+            adb shell settings put system user_rotation 0
+            adb install -r app/build/outputs/apk/debug/app-debug.apk
+            adb shell am start -n com.kenhlive.tv/.MainActivity
+
+            echo "🚀 Đang khởi chạy Mobile Remote Server trên Actions runner (port 8765)..."
+            python3 mobile_controller/server.py &
+            sleep 2
+
+            echo "🌐 Đang mở Cloudflare Tunnel kết nối tới Mobile Remote..."
+            nohup cloudflared tunnel --url http://127.0.0.1:8765 > /tmp/cf_tunnel.log 2>&1 &
+            sleep 6
+
+            TUNNEL_URL=""
+            for i in $(seq 1 15); do
+              TUNNEL_URL=$(grep -o 'https://[-a-z0-9.]*\.trycloudflare\.com' /tmp/cf_tunnel.log | head -1 || true)
+              if [ -n "$TUNNEL_URL" ]; then break; fi
+              sleep 2
+            done
+
+            echo "=========================================================="
+            echo "📱 LINK ĐIỀU KHIỂN TRÊN ĐIỆN THOẠI:"
+            echo "$TUNNEL_URL"
+            echo "=========================================================="
+
+            MINUTES="${{ inputs.duration_minutes }}"
+            [ -n "$MINUTES" ] || MINUTES=60
+            echo "⏳ Phiên điều khiển từ xa sẽ duy trì trong $MINUTES phút..."
+            sleep $((MINUTES * 60))
