@@ -4,24 +4,30 @@
     android:layout_height="64dp"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:paddingLeft="14dp"
-    android:paddingRight="14dp"
-    android:layout_marginLeft="8dp"
-    android:layout_marginRight="8dp"
+    android:paddingLeft="12dp"
+    android:paddingRight="12dp"
+    android:layout_marginLeft="6dp"
+    android:layout_marginRight="6dp"
     android:layout_marginTop="3dp"
     android:layout_marginBottom="3dp"
-    android:background="@drawable/bg_card_match"
-    android:foreground="@drawable/fg_card_focus_cyan"
+    android:background="@drawable/bg_iptv_channel_card"
+    android:foreground="@drawable/fg_iptv_focus"
     android:focusable="true"
     android:clickable="true">
 
-    <ImageView
-        android:id="@+id/overlayChannelLogo"
+    <FrameLayout
         android:layout_width="48dp"
-        android:layout_height="36dp"
-        android:scaleType="fitCenter"
-        android:padding="2dp"
-        android:src="@drawable/ic_nav_tv" />
+        android:layout_height="40dp"
+        android:background="#0A0B0E"
+        android:padding="3dp">
+
+        <ImageView
+            android:id="@+id/overlayChannelLogo"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_nav_tv" />
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="0dp"
@@ -34,8 +40,8 @@
             android:id="@+id/overlayChannelName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/kl_text_1"
-            android:textSize="14sp"
+            android:textColor="#FFFFFF"
+            android:textSize="13.5sp"
             android:textStyle="bold"
             android:maxLines="1"
             android:ellipsize="end" />
@@ -45,7 +51,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:textColor="@color/kl_text_3"
+            android:textColor="#94A3B8"
             android:textSize="11sp"
             android:maxLines="1"
             android:ellipsize="end" />
@@ -55,12 +61,12 @@
         android:id="@+id/overlayChannelBadge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@color/kl_cyan"
+        android:textColor="#00E5FF"
         android:textSize="10sp"
         android:textStyle="bold"
-        android:background="@drawable/bg_badge_league_cyan"
+        android:background="@drawable/bg_badge_glass"
         android:paddingLeft="8dp"
         android:paddingRight="8dp"
-        android:paddingTop="2dp"
-        android:paddingBottom="2dp" />
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp" />
 </LinearLayout>

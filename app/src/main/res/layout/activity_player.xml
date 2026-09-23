@@ -2,7 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/kl_bg_deep"
+    android:background="#000000"
     android:keepScreenOn="true">
 
     <androidx.media3.ui.PlayerView
@@ -55,10 +55,10 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingLeft="14dp"
-            android:paddingRight="14dp"
-            android:paddingTop="14dp"
-            android:paddingBottom="18dp">
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:paddingTop="18dp"
+            android:paddingBottom="20dp">
 
             <ImageButton
                 android:id="@+id/backBtn"
@@ -72,7 +72,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginLeft="14dp"
+                android:layout_marginLeft="16dp"
                 android:orientation="vertical">
 
                 <TextView
@@ -80,14 +80,16 @@
                     style="@style/KL.Text.Title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textSize="17sp"
+                    android:textSize="18sp"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold"
                     android:maxLines="1"
                     android:ellipsize="end" />
 
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="3dp"
+                    android:layout_marginTop="4dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical">
 
@@ -108,7 +110,7 @@
                 style="@style/KL.IconButton"
                 android:layout_width="44dp"
                 android:layout_height="44dp"
-                android:layout_marginLeft="8dp"
+                android:layout_marginLeft="10dp"
                 android:src="@drawable/ic_nav_tv"
                 android:contentDescription="Danh sách kênh"
                 android:visibility="gone" />
@@ -118,7 +120,7 @@
                 style="@style/KL.IconButton"
                 android:layout_width="44dp"
                 android:layout_height="44dp"
-                android:layout_marginLeft="8dp"
+                android:layout_marginLeft="10dp"
                 android:src="@drawable/ic_quality"
                 android:contentDescription="@string/settings_video_quality" />
 
@@ -127,7 +129,7 @@
                 style="@style/KL.IconButton"
                 android:layout_width="44dp"
                 android:layout_height="44dp"
-                android:layout_marginLeft="8dp"
+                android:layout_marginLeft="10dp"
                 android:src="@drawable/ic_audio"
                 android:contentDescription="@string/settings_audio_mode" />
 
@@ -136,7 +138,7 @@
                 style="@style/KL.IconButton"
                 android:layout_width="44dp"
                 android:layout_height="44dp"
-                android:layout_marginLeft="8dp"
+                android:layout_marginLeft="10dp"
                 android:src="@drawable/ic_aspect_ratio"
                 android:contentDescription="Tỉ lệ khung hình" />
 
@@ -145,7 +147,7 @@
                 style="@style/KL.IconButton"
                 android:layout_width="44dp"
                 android:layout_height="44dp"
-                android:layout_marginLeft="8dp"
+                android:layout_marginLeft="10dp"
                 android:src="@drawable/ic_info"
                 android:contentDescription="Thông số kỹ thuật" />
 
@@ -154,7 +156,7 @@
                 style="@style/KL.IconButton"
                 android:layout_width="44dp"
                 android:layout_height="44dp"
-                android:layout_marginLeft="8dp"
+                android:layout_marginLeft="10dp"
                 android:src="@drawable/ic_multiview"
                 android:contentDescription="@string/nav_multiview" />
 
@@ -163,23 +165,23 @@
                 style="@style/KL.IconButton"
                 android:layout_width="44dp"
                 android:layout_height="44dp"
-                android:layout_marginLeft="8dp"
+                android:layout_marginLeft="10dp"
                 android:src="@drawable/ic_pip"
                 android:contentDescription="@string/player_pip_unsupported"
                 android:visibility="gone" />
         </LinearLayout>
     </LinearLayout>
 
-    <!-- SIDE PANEL: DANH SÁCH KÊNH ĐỔ RA BÊN PHẢI ĐỂ CHUYỂN KÊNH NHANH -->
+    <!-- SIDE PANEL: DANH SÁCH KÊNH PURE BLACK TRƯỢT TỪ BÊN PHẢI -->
     <LinearLayout
         android:id="@+id/channelSidebar"
-        android:layout_width="320dp"
+        android:layout_width="340dp"
         android:layout_height="match_parent"
         android:layout_gravity="right"
-        android:background="#E60C1117"
+        android:background="#FA000000"
         android:orientation="vertical"
-        android:paddingTop="16dp"
-        android:paddingBottom="16dp"
+        android:paddingTop="20dp"
+        android:paddingBottom="20dp"
         android:visibility="gone">
 
         <LinearLayout
@@ -187,82 +189,111 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingLeft="16dp"
-            android:paddingRight="16dp"
-            android:paddingBottom="12dp">
+            android:paddingLeft="20dp"
+            android:paddingRight="20dp"
+            android:paddingBottom="14dp">
+
+            <View
+                android:layout_width="3.5dp"
+                android:layout_height="18dp"
+                android:background="@drawable/accent_bar"
+                android:layout_marginRight="9dp" />
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="Danh Sách Kênh"
-                android:textColor="@color/kl_text_1"
-                android:textSize="16sp"
+                android:textColor="#FFFFFF"
+                android:textSize="17sp"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/sidebarCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/kl_cyan"
-                android:textSize="12sp"
+                android:background="@drawable/bg_badge_glass"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"
+                android:textColor="#00E5FF"
+                android:textSize="11sp"
                 android:text="" />
         </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#161820"
+            android:layout_marginBottom="8dp" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/sidebarChannelList"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clipToPadding="false"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
             android:scrollbars="vertical" />
     </LinearLayout>
 
-    <!-- QUICK CHANNEL BANNER / OSD (D-PAD UP/DOWN/KEYPAD NHẢY KÊNH) -->
+    <!-- QUICK CHANNEL BANNER / OSD (D-PAD UP/DOWN/KEYPAD NHẢY KÊNH PURE BLACK) -->
     <LinearLayout
         android:id="@+id/quickChannelOsd"
         android:layout_width="wrap_content"
-        android:minWidth="480dp"
+        android:minWidth="540dp"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="36dp"
+        android:layout_marginBottom="42dp"
         android:orientation="horizontal"
-        android:background="@drawable/bg_card_match"
+        android:background="@drawable/bg_player_osd_banner"
         android:padding="16dp"
         android:gravity="center_vertical"
         android:visibility="gone">
 
+        <!-- Khung số kênh nổi bật -->
         <TextView
             android:id="@+id/osdChannelNumber"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
             android:background="@drawable/bg_badge_league_cyan"
             android:gravity="center"
-            android:textColor="@color/kl_cyan"
-            android:textSize="22sp"
+            android:textColor="#00E5FF"
+            android:textSize="24sp"
             android:textStyle="bold"
             android:text="01" />
 
-        <ImageView
-            android:id="@+id/osdChannelLogo"
-            android:layout_width="50dp"
-            android:layout_height="50dp"
+        <!-- Logo Kênh nền đen -->
+        <FrameLayout
+            android:layout_width="56dp"
+            android:layout_height="56dp"
             android:layout_marginLeft="14dp"
-            android:scaleType="fitCenter"
-            android:src="@drawable/ic_nav_tv" />
+            android:background="#0A0B0E"
+            android:padding="6dp">
 
+            <ImageView
+                android:id="@+id/osdChannelLogo"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="fitCenter"
+                android:src="@drawable/ic_nav_tv" />
+        </FrameLayout>
+
+        <!-- Thông tin Kênh & EPG -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginLeft="14dp"
+            android:layout_marginLeft="16dp"
             android:orientation="vertical">
 
             <TextView
                 android:id="@+id/osdChannelTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@color/kl_text_1"
-                android:textSize="16sp"
+                android:textColor="#FFFFFF"
+                android:textSize="17sp"
                 android:textStyle="bold"
                 android:maxLines="1"
                 android:ellipsize="end"
@@ -273,8 +304,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="3dp"
-                android:textColor="@color/kl_cyan"
+                android:textColor="#00E5FF"
                 android:textSize="12sp"
+                android:textStyle="bold"
                 android:maxLines="1"
                 android:ellipsize="end"
                 android:text="▶ Thời sự 19h" />
@@ -284,7 +316,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:textColor="@color/kl_text_3"
+                android:textColor="#94A3B8"
                 android:textSize="11sp"
                 android:maxLines="1"
                 android:ellipsize="end"
@@ -295,29 +327,29 @@
             android:id="@+id/osdTechTag"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="12dp"
-            android:background="@drawable/bg_badge_glass"
+            android:layout_marginLeft="14dp"
+            android:background="@drawable/bg_badge_live_red"
             android:paddingLeft="10dp"
             android:paddingRight="10dp"
             android:paddingTop="5dp"
             android:paddingBottom="5dp"
-            android:textColor="@color/kl_live"
+            android:textColor="#FFFFFF"
             android:textSize="11sp"
             android:textStyle="bold"
-            android:text="HD 50FPS" />
+            android:text="FHD 50FPS" />
     </LinearLayout>
 
-    <!-- STATS FOR NERDS HUD -->
+    <!-- STATS FOR NERDS HUD PURE BLACK -->
     <LinearLayout
         android:id="@+id/statsHudBox"
-        android:layout_width="290dp"
+        android:layout_width="310dp"
         android:layout_height="wrap_content"
         android:layout_gravity="top|right"
         android:layout_marginTop="24dp"
         android:layout_marginRight="24dp"
         android:orientation="vertical"
-        android:background="@drawable/bg_card_match"
-        android:padding="14dp"
+        android:background="@drawable/bg_player_hud_card"
+        android:padding="16dp"
         android:visibility="gone">
 
         <LinearLayout
@@ -331,16 +363,17 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="📊 STATS FOR NERDS"
-                android:textColor="@color/kl_cyan"
+                android:textColor="#00E5FF"
                 android:textSize="12sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:letterSpacing="0.05" />
 
             <TextView
                 android:id="@+id/tvHudClose"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="✕"
-                android:textColor="@color/kl_text_3"
+                android:textColor="#64748B"
                 android:textSize="14sp"
                 android:padding="4dp" />
         </LinearLayout>
@@ -348,61 +381,61 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginTop="6dp"
-            android:layout_marginBottom="8dp"
-            android:background="#22FFFFFF" />
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="10dp"
+            android:background="#1E232E" />
 
         <TextView
             android:id="@+id/tvStatResolution"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/kl_text_1"
-            android:textSize="11sp"
+            android:textColor="#F1F5F9"
+            android:textSize="11.5sp"
             android:text="Độ phân giải: Đang đo..." />
 
         <TextView
             android:id="@+id/tvStatFps"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:textColor="@color/kl_text_1"
-            android:textSize="11sp"
+            android:layout_marginTop="4dp"
+            android:textColor="#F1F5F9"
+            android:textSize="11.5sp"
             android:text="Khung hình: Đang đo..." />
 
         <TextView
             android:id="@+id/tvStatBitrate"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:textColor="@color/kl_text_1"
-            android:textSize="11sp"
+            android:layout_marginTop="4dp"
+            android:textColor="#F1F5F9"
+            android:textSize="11.5sp"
             android:text="Bitrate: Đang đo..." />
 
         <TextView
             android:id="@+id/tvStatCodec"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:textColor="@color/kl_text_1"
-            android:textSize="11sp"
+            android:layout_marginTop="4dp"
+            android:textColor="#F1F5F9"
+            android:textSize="11.5sp"
             android:text="Codec: H.264 / AAC" />
 
         <TextView
             android:id="@+id/tvStatBuffer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:textColor="@color/kl_text_1"
-            android:textSize="11sp"
+            android:layout_marginTop="4dp"
+            android:textColor="#F1F5F9"
+            android:textSize="11.5sp"
             android:text="Bộ đệm dự trữ: 0.0s" />
 
         <TextView
             android:id="@+id/tvStatDropped"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:textColor="@color/kl_text_1"
-            android:textSize="11sp"
+            android:layout_marginTop="4dp"
+            android:textColor="#F1F5F9"
+            android:textSize="11.5sp"
             android:text="Khung hình rớt: 0" />
     </LinearLayout>
 
@@ -413,12 +446,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="22dp"
+        android:layout_marginBottom="16dp"
         android:background="@drawable/bg_badge_glass"
         android:paddingLeft="16dp"
         android:paddingRight="16dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        android:textColor="@color/kl_text_2"
+        android:paddingTop="7dp"
+        android:paddingBottom="7dp"
+        android:textColor="#94A3B8"
+        android:textSize="11.5sp"
         android:visibility="gone" />
+
 </FrameLayout>
