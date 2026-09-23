@@ -3,6 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
+    android:focusable="false"
+    android:descendantFocusability="afterDescendants"
     android:clipChildren="false"
     android:clipToPadding="false"
     android:paddingTop="@dimen/sp_row_gap">
@@ -42,6 +44,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="6dp"
+        android:focusable="false"
+        android:descendantFocusability="afterDescendants"
         android:clipToPadding="false"
         android:clipChildren="false"
         android:paddingLeft="@dimen/sp_screen_margin"

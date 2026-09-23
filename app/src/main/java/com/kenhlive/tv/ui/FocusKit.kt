@@ -107,16 +107,15 @@ object FocusKit {
             val lm = inner.layoutManager as? LinearLayoutManager
             val target = inner.findViewHolderForAdapterPosition(idx)?.itemView
                 ?: lm?.findViewByPosition(idx)
-                ?: lm?.findViewByPosition(idx.coerceAtMost((inner.adapter?.itemCount ?: 1) - 1))
             if (target?.requestFocus() == true) return true
             inner.post {
                 val t2 = inner.findViewHolderForAdapterPosition(idx)?.itemView
                     ?: inner.layoutManager?.findViewByPosition(idx)
                 t2?.requestFocus()
             }
-            return true
+            return false // KHÔNG trả true nếu chưa focus trúng target, và KHÔNG fallback vào vh.itemView
         }
-        return vh.itemView.requestFocus()
+        return false
     }
 
     /** Khôi phục focus về ô đã nhớ (gọi từ onResume) — ưu tiên KHOÁ nội dung vì position drift sau refresh. */

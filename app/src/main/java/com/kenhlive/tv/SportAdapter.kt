@@ -139,6 +139,8 @@ class SportAdapter(
         val rv = outerRecyclerView ?: return false
         for (i in 0 until itemCount) {
             if (getItem(i) is RailItem) {
+                // Đảm bảo cuộn outer RecyclerView tới hàng rail
+                rv.scrollToPosition(i)
                 val vh = rv.findViewHolderForAdapterPosition(i) as? RailVH
                 if (vh != null) {
                     vh.list.scrollToPosition(0)
@@ -148,31 +150,26 @@ class SportAdapter(
                         FocusKit.remember(i, 0)
                         return true
                     }
-                    vh.list.post {
-                        val target = vh.list.findViewHolderForAdapterPosition(0)?.itemView
-                            ?: vh.list.layoutManager?.findViewByPosition(0)
-                        if (target != null && target.requestFocus()) {
-                            FocusKit.remember(i, 0)
-                        } else {
-                            vh.list.postDelayed({
-                                val t2 = vh.list.findViewHolderForAdapterPosition(0)?.itemView
-                                    ?: vh.list.layoutManager?.findViewByPosition(0)
-                                if (t2?.requestFocus() == true) {
-                                    FocusKit.remember(i, 0)
-                                }
-                            }, 50)
+                }
+                var left = 8
+                val runnable = object : Runnable {
+                    override fun run() {
+                        val vh2 = rv.findViewHolderForAdapterPosition(i) as? RailVH
+                        if (vh2 != null) {
+                            vh2.list.scrollToPosition(0)
+                            val c = vh2.list.findViewHolderForAdapterPosition(0)?.itemView
+                                ?: vh2.list.layoutManager?.findViewByPosition(0)
+                            if (c != null && c.requestFocus()) {
+                                FocusKit.remember(i, 0)
+                                return
+                            }
+                        }
+                        if (--left > 0) {
+                            rv.postDelayed(this, 50)
                         }
                     }
-                    return true
                 }
-                if (FocusKit.focusNow(rv, i, 0)) return true
-                rv.scrollToPosition(i)
-                var left = 6
-                object : Runnable {
-                    override fun run() {
-                        if (left > 0 && !FocusKit.focusNow(rv, i, 0)) { left--; rv.postDelayed(this, 80) }
-                    }
-                }.run()
+                rv.post(runnable)
                 return true
             }
         }

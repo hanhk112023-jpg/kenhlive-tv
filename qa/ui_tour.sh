@@ -48,12 +48,12 @@ go "RIGHT: sang Hero Chi Tiet"   22 1; foc
 # Bấm LEFT quay lại Xem Ngay
 go "LEFT: ve Hero Xem Ngay"      21 1; foc
 # BẤM XUỐNG TỪ HERO: Phải rơi chuẩn 100% vào Card LIVE 1
-go "DOWN: tu Hero xuong LIVE 1"  20 1; foc
+go "DOWN: tu Hero xuong LIVE 1"  20 3; foc
 # Ở hàng Trực Tiếp: di chuyển qua các card
-go "RIGHT: sang Card LIVE 2"     22 1; foc
-go "RIGHT: sang Card LIVE 3"     22 1; foc
-go "LEFT: ve Card LIVE 2"        21 1; foc
-go "LEFT: ve Card LIVE 1"        21 1; foc
+go "RIGHT: sang Card LIVE 2"     22 2; foc
+go "RIGHT: sang Card LIVE 3"     22 2; foc
+go "LEFT: ve Card LIVE 2"        21 2; foc
+go "LEFT: ve Card LIVE 1"        21 2; foc
 go "DOWN: danh sach BLV"         20 1
 go "RIGHT: BLV Top 2"            22 1
 go "LEFT: ve BLV Top 1"          21 1
