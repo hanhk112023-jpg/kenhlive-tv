@@ -83,6 +83,25 @@ class PlayerActivity : AppCompatActivity() {
     private var tvStatBuffer: TextView? = null
     private var tvStatDropped: TextView? = null
 
+    // Hẹn giờ tắt (Sleep Timer)
+    private var sleepMinutesLeft: Int = 0
+    private val sleepTimerRunnable: Runnable = object : Runnable {
+        override fun run() {
+            if (sleepMinutesLeft > 0) {
+                sleepMinutesLeft--
+                if (sleepMinutesLeft == 0) {
+                    Toast.makeText(this@PlayerActivity, "Hẹn giờ tắt: Đang dừng phát...", Toast.LENGTH_SHORT).show()
+                    finish()
+                } else {
+                    handler.postDelayed(this, 60000L)
+                }
+            }
+        }
+    }
+
+    // Audio Boost (Khuếch đại âm lượng)
+    private var audioBoostLevel: Int = 0 // 0: Tắt, 1: +3dB, 2: +6dB, 3: +9dB
+
     // Tỉ lệ màn hình (Aspect Ratio)
     private var currentAspectIdx: Int = 0
     private val aspectModes = intArrayOf(
@@ -164,6 +183,9 @@ class PlayerActivity : AppCompatActivity() {
         findViewById<ImageButton>(R.id.qualityBtn).setOnClickListener { showSettingsDialog(video = true) }
         findViewById<ImageButton>(R.id.audioBtn).setOnClickListener { showSettingsDialog(video = false) }
         findViewById<ImageButton>(R.id.aspectBtn)?.setOnClickListener { cycleAspectRatio() }
+        findViewById<ImageButton>(R.id.sleepBtn)?.setOnClickListener { showSleepTimerDialog() }
+        findViewById<ImageButton>(R.id.audioTrackBtn)?.setOnClickListener { showAudioTrackDialog() }
+        findViewById<ImageButton>(R.id.audioBoostBtn)?.setOnClickListener { cycleAudioBoost() }
         findViewById<ImageButton>(R.id.statsBtn)?.setOnClickListener { toggleStatsHud() }
 
         findViewById<ImageButton>(R.id.pipBtn)?.let { b ->
@@ -191,6 +213,99 @@ class PlayerActivity : AppCompatActivity() {
         currentAspectIdx = (currentAspectIdx + 1) % aspectModes.size
         pv.resizeMode = aspectModes[currentAspectIdx]
         Toast.makeText(this, "Tỉ lệ màn hình: ${aspectNames[currentAspectIdx]}", Toast.LENGTH_SHORT).show()
+        hideOnce()
+    }
+
+    // ================= HẸN GIỜ TẮT (SLEEP TIMER) =================
+    private fun showSleepTimerDialog() {
+        val options = arrayOf("Tắt hẹn giờ", "15 phút", "30 phút", "45 phút", "60 phút", "90 phút", "120 phút")
+        val minutes = intArrayOf(0, 15, 30, 45, 60, 90, 120)
+
+        AlertDialog.Builder(this, R.style.Theme_KenhLive_Dialog)
+            .setTitle("⏰ Hẹn Giờ Tắt TV")
+            .setItems(options) { d, which ->
+                val m = minutes[which]
+                handler.removeCallbacks(sleepTimerRunnable)
+                sleepMinutesLeft = m
+                if (m > 0) {
+                    handler.postDelayed(sleepTimerRunnable, 60000L)
+                    Toast.makeText(this, "Đã hẹn giờ: Tự động tắt sau $m phút", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Đã hủy hẹn giờ tắt", Toast.LENGTH_SHORT).show()
+                }
+                d.dismiss()
+            }
+            .setNegativeButton(R.string.dialog_close, null)
+            .show()
+        hideOnce()
+    }
+
+    // ================= KHUẾCH ĐẠI ÂM LƯỢNG (AUDIO BOOST) =================
+    private var loudnessEnhancer: android.media.audiofx.LoudnessEnhancer? = null
+
+    private fun cycleAudioBoost() {
+        audioBoostLevel = (audioBoostLevel + 1) % 4
+        val gains = intArrayOf(0, 300, 600, 900) // 0dB, +3dB, +6dB, +9dB
+        val sid = player?.audioSessionId ?: 0
+        if (sid != 0) {
+            try {
+                if (loudnessEnhancer == null) {
+                    loudnessEnhancer = android.media.audiofx.LoudnessEnhancer(sid)
+                }
+                loudnessEnhancer?.enabled = audioBoostLevel > 0
+                if (audioBoostLevel > 0) loudnessEnhancer?.setTargetGain(gains[audioBoostLevel])
+            } catch (_: Exception) {}
+        }
+        val label = when (audioBoostLevel) {
+            1 -> "+3 dB (Nhẹ)"
+            2 -> "+6 dB (Vừa)"
+            3 -> "+9 dB (Cực đại)"
+            else -> "Mặc định (Tắt)"
+        }
+        Toast.makeText(this, "🔊 Khuếch đại âm lượng: $label", Toast.LENGTH_SHORT).show()
+        hideOnce()
+    }
+
+    // ================= KÊNH ÂM THANH / NGÔN NGỮ (AUDIO TRACKS) =================
+    private fun showAudioTrackDialog() {
+        val p = player ?: return
+        val tracks = p.currentTracks.groups.filter { it.type == androidx.media3.common.C.TRACK_TYPE_AUDIO }
+        if (tracks.isEmpty()) {
+            Toast.makeText(this, "Kênh này chỉ có 1 luồng âm thanh mặc định", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val trackNames = mutableListOf<String>()
+        val trackIndices = mutableListOf<Pair<androidx.media3.common.Tracks.Group, Int>>()
+        var selectedIdx = 0
+
+        tracks.forEach { grp ->
+            for (i in 0 until grp.length) {
+                val fmt = grp.getTrackFormat(i)
+                val lang = fmt.language ?: "Không xác định"
+                val label = fmt.label ?: (if (lang.lowercase().contains("vi") || lang.lowercase().contains("vie")) "Tiếng Việt" else "Kênh Audio ${trackNames.size + 1} ($lang)")
+                val isSelected = grp.isTrackSelected(i)
+                if (isSelected) selectedIdx = trackNames.size
+                trackNames.add(label + (if (isSelected) "  ✓" else ""))
+                trackIndices.add(Pair(grp, i))
+            }
+        }
+
+        AlertDialog.Builder(this, R.style.Theme_KenhLive_Dialog)
+            .setTitle("🎧 Chọn Kênh Âm Thanh / Ngôn Ngữ")
+            .setSingleChoiceItems(trackNames.toTypedArray(), selectedIdx) { d, which ->
+                val pair = trackIndices[which]
+                p.trackSelectionParameters = p.trackSelectionParameters
+                    .buildUpon()
+                    .setOverrideForType(
+                        androidx.media3.common.TrackSelectionOverride(pair.first.mediaTrackGroup, listOf(pair.second))
+                    )
+                    .build()
+                Toast.makeText(this, "Đã chọn âm thanh: ${trackNames[which].replace("  ✓", "")}", Toast.LENGTH_SHORT).show()
+                d.dismiss()
+            }
+            .setNegativeButton(R.string.dialog_close, null)
+            .show()
         hideOnce()
     }
 
@@ -701,6 +816,9 @@ class PlayerActivity : AppCompatActivity() {
         handler.removeCallbacks(commitChannelSwitch)
         handler.removeCallbacks(keypadCommitRunnable)
         handler.removeCallbacks(autoRecoveryRunnable)
+        handler.removeCallbacks(sleepTimerRunnable)
+        try { loudnessEnhancer?.release() } catch (_: Exception) {}
+        loudnessEnhancer = null
         audioFx.detach()
         player?.release()
         player = null
@@ -714,6 +832,9 @@ class PlayerActivity : AppCompatActivity() {
         handler.removeCallbacks(commitChannelSwitch)
         handler.removeCallbacks(keypadCommitRunnable)
         handler.removeCallbacks(autoRecoveryRunnable)
+        handler.removeCallbacks(sleepTimerRunnable)
+        try { loudnessEnhancer?.release() } catch (_: Exception) {}
+        loudnessEnhancer = null
         if (Build.VERSION.SDK_INT >= 26 && isInPictureInPictureMode) return
         player?.release()
         player = null

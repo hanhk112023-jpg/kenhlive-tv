@@ -143,6 +143,33 @@
                 android:contentDescription="Tỉ lệ khung hình" />
 
             <ImageButton
+                android:id="@+id/sleepBtn"
+                style="@style/KL.IconButton"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_marginLeft="10dp"
+                android:src="@drawable/ic_sleep_timer"
+                android:contentDescription="Hẹn giờ tắt" />
+
+            <ImageButton
+                android:id="@+id/audioTrackBtn"
+                style="@style/KL.IconButton"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_marginLeft="10dp"
+                android:src="@drawable/ic_audio_track"
+                android:contentDescription="Kênh âm thanh (Ngôn ngữ)" />
+
+            <ImageButton
+                android:id="@+id/audioBoostBtn"
+                style="@style/KL.IconButton"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_marginLeft="10dp"
+                android:src="@drawable/ic_audio_boost"
+                android:contentDescription="Khuếch đại âm lượng" />
+
+            <ImageButton
                 android:id="@+id/statsBtn"
                 style="@style/KL.IconButton"
                 android:layout_width="44dp"
