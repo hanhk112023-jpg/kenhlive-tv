@@ -5,27 +5,28 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:layout_margin="7dp"
-    android:background="@drawable/bg_card_match"
-    android:foreground="@drawable/fg_card_focus_cyan"
+    android:background="@drawable/bg_iptv_channel_card"
+    android:foreground="@drawable/fg_iptv_focus"
     android:focusable="true"
     android:clickable="true">
 
-    <!-- Thumbnail / Logo Container chuẩn 16:9 với nền đen sâu -->
+    <!-- Top: Logo Container nền đen sâu tỉ lệ 16:9 -->
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="116dp"
-        android:background="#050608">
+        android:layout_height="112dp"
+        android:background="#000000">
 
+        <!-- Logo Kênh căn giữa gọn gàng -->
         <ImageView
             android:id="@+id/channelLogo"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:layout_gravity="center"
-            android:padding="12dp"
+            android:padding="16dp"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_nav_tv" />
 
-        <!-- Badge Group Tag nổi bật trên góc trái (VD: VIỆT NAM hoặc THỂ THAO) -->
+        <!-- Tag Nhóm Kênh (Góc trái trên) -->
         <TextView
             android:id="@+id/channelBadge"
             android:layout_width="wrap_content"
@@ -33,16 +34,16 @@
             android:layout_gravity="top|left"
             android:layout_margin="8dp"
             android:text="VIỆT NAM"
-            android:textColor="@color/kl_cyan"
-            android:textSize="10sp"
+            android:textColor="#00E5FF"
+            android:textSize="9.5sp"
             android:textStyle="bold"
             android:background="@drawable/bg_badge_league_cyan"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp" />
+            android:paddingLeft="7dp"
+            android:paddingRight="7dp"
+            android:paddingTop="2.5dp"
+            android:paddingBottom="2.5dp" />
 
-        <!-- Chấm tròn LIVE nhỏ trên góc phải -->
+        <!-- Tag LIVE đỏ phẳng (Góc phải trên) -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -59,37 +60,43 @@
             android:paddingBottom="2dp" />
     </FrameLayout>
 
-    <!-- Thông tin tên kênh phía dưới -->
+    <!-- Đường phân cách nhẹ giữa logo và nội dung -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#161820" />
+
+    <!-- Thông tin Kênh & Lịch phát sóng EPG -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="10dp"
-        android:background="#13141B">
+        android:background="#0A0B0E">
 
         <TextView
             android:id="@+id/channelName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="left|center_vertical"
-            android:textColor="@color/kl_text_1"
+            android:textColor="#FFFFFF"
             android:textSize="14sp"
             android:textStyle="bold"
             android:maxLines="1"
             android:ellipsize="end"
-            android:text="VTV3 HD" />
+            android:text="VTV1 HD" />
 
         <TextView
             android:id="@+id/channelSub"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
+            android:layout_marginTop="3dp"
             android:gravity="left|center_vertical"
-            android:textColor="@color/kl_text_3"
+            android:textColor="#64748B"
             android:textSize="11sp"
             android:maxLines="1"
             android:ellipsize="end"
-            android:text="Kênh truyền hình trực tuyến" />
+            android:text="Truyền hình Việt Nam" />
 
         <!-- EPG LIVE CONTAINER -->
         <LinearLayout
@@ -97,14 +104,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:layout_marginTop="3dp"
+            android:layout_marginTop="5dp"
             android:visibility="gone">
 
             <TextView
                 android:id="@+id/tvEpgNow"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="#E0E6ED"
+                android:textColor="#E2E8F0"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:maxLines="1"
@@ -115,18 +122,18 @@
                 android:id="@+id/epgProgress"
                 style="@style/Widget.AppCompat.ProgressBar.Horizontal"
                 android:layout_width="match_parent"
-                android:layout_height="2.5dp"
-                android:layout_marginTop="3dp"
-                android:layout_marginBottom="3dp"
+                android:layout_height="3dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="4dp"
                 android:max="100"
                 android:progress="40"
-                android:progressTint="@color/kl_cyan" />
+                android:progressTint="#00E5FF" />
 
             <TextView
                 android:id="@+id/tvEpgNext"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@color/kl_text_3"
+                android:textColor="#64748B"
                 android:textSize="10sp"
                 android:maxLines="1"
                 android:ellipsize="end"
