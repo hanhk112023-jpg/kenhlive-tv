@@ -238,6 +238,14 @@ class MainActivity : AppCompatActivity() {
     fun showTab(pos: Int, animate: Boolean = true) {
         current = pos
         navViews.forEachIndexed { i, v -> v.isSelected = i == pos }
+        if (DeviceMode.isTv && pos in 0 until navViews.size) {
+            // Khi chuyển tab: đồng bộ tiêu điểm trên rail vào đúng icon tab đang chọn
+            navViews.getOrNull(pos)?.let { selNav ->
+                if (railPanel?.let { isDescendant(it, currentFocus) } == true) {
+                    selNav.requestFocus()
+                }
+            }
+        }
         val tx = supportFragmentManager.beginTransaction()
         if (animate) tx.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
         tabTags.forEachIndexed { i, tag ->

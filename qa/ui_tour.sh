@@ -72,15 +72,18 @@ mark "CHUP ANH: Tab 1 Schedule"
 
 # 3. TAB 2: TRUYỀN HÌNH OTT (M3U / M3U8) & EPG THỜI GIAN THỰC
 relaunch 2
-sleep 4
+sleep 5
 adb exec-out screencap -p > $OUT/tab2_iptv.png
 mark "CHUP ANH: Tab 2 IPTV va EPG Live"
-go "DOWN: chon kenh VTV dau tien (hien EPG Now & Next)" 20 1
+
+# Đảm bảo đưa focus sang lưới kênh (từ menu bấm RIGHT để vào nội dung IPTV)
+adb shell input keyevent 22; sleep 1
+go "XAC NHAN: da vao kenh VTV (EPG Now & Next)" 0 1; foc
 adb exec-out screencap -p > $OUT/tab2_vtv_focused.png
-mark "CHUP ANH: Focus kenh VTV va EPG tien trinh"
-go "RIGHT: sang kenh VTV tiep theo" 22 1
-go "RIGHT: sang kenh VTV thu 3" 22 1
-go "OK: mo xem kenh VTV trong Player Pro" 23 4
+
+go "RIGHT: sang kenh VTV tiep theo" 22 2; foc
+go "RIGHT: sang kenh VTV thu 3" 22 2; foc
+go "OK: mo xem kenh VTV trong Player Pro" 23 5
 adb exec-out screencap -p > $OUT/tab2_vtv_player.png
 mark "CHUP ANH: Player Pro phat kenh VTV"
 go "UP: Quick Channel OSD Banner chuyen kenh" 19 2

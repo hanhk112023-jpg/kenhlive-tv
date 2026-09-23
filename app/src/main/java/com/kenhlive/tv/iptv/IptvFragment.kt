@@ -147,7 +147,15 @@ class IptvFragment : Fragment() {
 
         if (focusFirst && displayedChannels.isNotEmpty() && DeviceMode.isTv) {
             gridList.post {
-                gridList.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
+                val card0 = gridList.findViewHolderForAdapterPosition(0)?.itemView
+                    ?: gridList.layoutManager?.findViewByPosition(0)
+                if (card0?.requestFocus() != true) {
+                    gridList.postDelayed({
+                        val c2 = gridList.findViewHolderForAdapterPosition(0)?.itemView
+                            ?: gridList.layoutManager?.findViewByPosition(0)
+                        c2?.requestFocus()
+                    }, 100)
+                }
             }
         }
     }
