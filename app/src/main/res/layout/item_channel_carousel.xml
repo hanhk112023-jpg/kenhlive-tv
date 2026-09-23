@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="168dp"
+    android:layout_height="100dp"
+    android:orientation="vertical"
+    android:background="@drawable/bg_iptv_channel_card"
+    android:foreground="@drawable/fg_iptv_focus"
+    android:focusable="true"
+    android:clickable="true"
+    android:layout_marginLeft="6dp"
+    android:layout_marginRight="6dp"
+    android:layout_marginTop="4dp"
+    android:layout_marginBottom="4dp">
+
+    <!-- Cụm trên: Logo & Số kênh -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="62dp"
+        android:background="#0A0B0E"
+        android:padding="6dp">
+
+        <TextView
+            android:id="@+id/carouselNumber"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentLeft="true"
+            android:layout_alignParentTop="true"
+            android:textColor="#00E5FF"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:background="@drawable/bg_badge_glass"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingTop="1dp"
+            android:paddingBottom="1dp"
+            android:text="01" />
+
+        <ImageView
+            android:id="@+id/carouselLogo"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ic_nav_tv" />
+    </RelativeLayout>
+
+    <!-- Đường kẻ tinh tế -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#1E232E" />
+
+    <!-- Cụm dưới: Tên kênh & Tag -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_vertical"
+        android:paddingLeft="8dp"
+        android:paddingRight="8dp"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/carouselName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="VTV1 HD" />
+
+        <TextView
+            android:id="@+id/carouselSub"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#94A3B8"
+            android:textSize="9.5sp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:text="Việt Nam" />
+    </LinearLayout>
+</LinearLayout>

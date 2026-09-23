@@ -89,6 +89,14 @@ mark "CHUP ANH: Player Pro phat kenh VTV"
 go "UP: Quick Channel OSD Banner chuyen kenh" 19 2
 adb exec-out screencap -p > $OUT/tab2_quick_osd.png
 mark "CHUP ANH: Quick Channel OSD Banner"
+go "DOWN: mo Carousel chuyen kenh ngang duoi day TV" 20 1
+adb exec-out screencap -p > $OUT/tab2_carousel_channels.png
+mark "CHUP ANH: Bottom Channel Carousel ngang"
+go "RIGHT: luot chon kenh ke tiep tren carousel" 22 1
+go "RIGHT: luot chon them kenh nua" 22 1
+adb exec-out screencap -p > $OUT/tab2_carousel_focused.png
+mark "CHUP ANH: Carousel focus va hien EPG"
+go "BACK: dong carousel" 4 1
 go "OK: hien controls player va sidebar" 23 1
 go "RIGHT: toi nut Aspect Ratio" 22 1
 go "RIGHT: toi nut Stats for Nerds HUD" 22 1

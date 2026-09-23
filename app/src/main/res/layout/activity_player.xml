@@ -265,6 +265,81 @@
             android:scrollbars="vertical" />
     </LinearLayout>
 
+    <!-- BOTTOM CHANNEL CAROUSEL (D-PAD UP/DOWN/OK HIỆN THANH CUỘN NGANG DƯỚI ĐÁY NHƯ TIVIMATE/YOUTUBE) -->
+    <LinearLayout
+        android:id="@+id/channelCarouselPanel"
+        android:layout_width="match_parent"
+        android:layout_height="220dp"
+        android:layout_gravity="bottom"
+        android:orientation="vertical"
+        android:background="@drawable/bg_carousel_panel"
+        android:paddingBottom="16dp"
+        android:paddingTop="20dp"
+        android:visibility="gone">
+
+        <!-- Tiêu đề & Thông tin kênh đang focus -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingLeft="28dp"
+            android:paddingRight="28dp"
+            android:layout_marginBottom="12dp">
+
+            <View
+                android:layout_width="3.5dp"
+                android:layout_height="18dp"
+                android:background="@drawable/accent_bar"
+                android:layout_marginRight="10dp" />
+
+            <TextView
+                android:id="@+id/tvCarouselHeader"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:text="DANH SÁCH TRUYỀN HÌNH" />
+
+            <TextView
+                android:id="@+id/tvCarouselCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="10dp"
+                android:background="@drawable/bg_badge_glass"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"
+                android:textColor="#00E5FF"
+                android:textSize="11sp"
+                android:text="0 kênh" />
+
+            <TextView
+                android:id="@+id/tvCarouselEpgPreview"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginLeft="18dp"
+                android:textColor="#94A3B8"
+                android:textSize="12sp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:text="Bấm ◄/► để chọn kênh, OK để phát ngay" />
+        </LinearLayout>
+
+        <!-- Danh sách card cuộn ngang -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvChannelCarousel"
+            android:layout_width="match_parent"
+            android:layout_height="115dp"
+            android:clipToPadding="false"
+            android:paddingLeft="24dp"
+            android:paddingRight="24dp"
+            android:orientation="horizontal" />
+    </LinearLayout>
+
     <!-- QUICK CHANNEL BANNER / OSD (D-PAD UP/DOWN/KEYPAD NHẢY KÊNH PURE BLACK) -->
     <LinearLayout
         android:id="@+id/quickChannelOsd"

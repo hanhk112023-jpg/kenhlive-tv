@@ -74,6 +74,15 @@ class PlayerActivity : AppCompatActivity() {
     private var osdEpgNext: TextView? = null
     private var osdTechTag: TextView? = null
 
+    // Channel Carousel (Thanh cuộn ngang dưới đáy TV chuẩn TiviMate / YouTube)
+    private var channelCarouselPanel: View? = null
+    private var rvChannelCarousel: RecyclerView? = null
+    private var tvCarouselCount: TextView? = null
+    private var tvCarouselEpgPreview: TextView? = null
+    private val hideCarouselRunnable = Runnable {
+        channelCarouselPanel?.visibility = View.GONE
+    }
+
     // Stats for Nerds HUD
     private var statsHudBox: View? = null
     private var tvStatResolution: TextView? = null
@@ -169,11 +178,18 @@ class PlayerActivity : AppCompatActivity() {
             handler.removeCallbacks(statsUpdateRunnable)
         }
 
+        // Binding Channel Carousel (Thanh cuộn ngang đáy TV)
+        channelCarouselPanel = findViewById(R.id.channelCarouselPanel)
+        rvChannelCarousel = findViewById(R.id.rvChannelCarousel)
+        tvCarouselCount = findViewById(R.id.tvCarouselCount)
+        tvCarouselEpgPreview = findViewById(R.id.tvCarouselEpgPreview)
+
         val channelListBtn = findViewById<ImageButton>(R.id.channelListBtn)
         if (isIptvMode) {
             channelListBtn.visibility = View.VISIBLE
-            channelListBtn.setOnClickListener { toggleSidebar() }
+            channelListBtn.setOnClickListener { showCarousel() }
             setupSidebar()
+            setupChannelCarousel()
         }
 
         initPlayer()
@@ -451,6 +467,7 @@ class PlayerActivity : AppCompatActivity() {
         url = ch.url
         findViewById<TextView>(R.id.playerTitle).text = ch.name
         channelSidebar?.visibility = View.GONE
+        hideCarousel()
         showOverlay()
 
         player?.stop()
@@ -467,6 +484,7 @@ class PlayerActivity : AppCompatActivity() {
             topOverlay?.visibility = View.VISIBLE
             findViewById<View>(R.id.channelListBtn)?.requestFocus()
         } else {
+            hideCarousel()
             sb.visibility = View.VISIBLE
             topOverlay?.visibility = View.GONE
             hint?.visibility = View.GONE
@@ -477,6 +495,89 @@ class PlayerActivity : AppCompatActivity() {
                     ?: sidebarList?.requestFocus()
             }
         }
+    }
+
+    // ================= THANH CUỘN CHUYỂN KÊNH NGANG (BOTTOM CAROUSEL) =================
+    private fun setupChannelCarousel() {
+        val list = IptvRepository.currentChannels
+        val rv = rvChannelCarousel ?: return
+        rv.layoutManager = LinearLayoutManager(this, LinearLayoutManager.HORIZONTAL, false)
+        tvCarouselCount?.text = "${list.size} kênh"
+
+        rv.adapter = object : RecyclerView.Adapter<CarouselVH>() {
+            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CarouselVH {
+                val v = LayoutInflater.from(parent.context).inflate(R.layout.item_channel_carousel, parent, false)
+                return CarouselVH(v)
+            }
+
+            override fun onBindViewHolder(holder: CarouselVH, position: Int) {
+                val ch = list[position]
+                holder.tvNumber.text = String.format(Locale.US, "%02d", position + 1)
+                holder.tvName.text = ch.name
+                holder.tvSub.text = if (ch.isVn) "Việt Nam" else ch.group
+
+                if (ch.logo.isNotEmpty()) {
+                    holder.ivLogo.load(ch.logo) {
+                        crossfade(true)
+                        error(R.drawable.ic_nav_tv)
+                        placeholder(R.drawable.ic_nav_tv)
+                    }
+                } else {
+                    holder.ivLogo.setImageResource(R.drawable.ic_nav_tv)
+                }
+
+                holder.itemView.setOnClickListener {
+                    currentChannelIndex = position
+                    switchChannel(ch)
+                }
+
+                holder.itemView.setOnFocusChangeListener { v, hasFocus ->
+                    v.animate().scaleX(if (hasFocus) 1.08f else 1f)
+                        .scaleY(if (hasFocus) 1.08f else 1f)
+                        .translationZ(if (hasFocus) 8f else 0f)
+                        .setDuration(120).start()
+                    if (hasFocus) {
+                        val epg = EpgRepository.getCurrentAndNext(ch.id, ch.name)
+                        if (epg != null && epg.first != null) {
+                            tvCarouselEpgPreview?.text = "▶ [${epg.first!!.timeRange()}] ${epg.first!!.title}"
+                        } else {
+                            tvCarouselEpgPreview?.text = if (ch.isVn) "▶ Truyền hình trực tiếp chất lượng cao" else "▶ ${ch.group} trực tiếp"
+                        }
+                        handler.removeCallbacks(hideCarouselRunnable)
+                        handler.postDelayed(hideCarouselRunnable, 6000L)
+                    }
+                }
+            }
+
+            override fun getItemCount(): Int = list.size
+        }
+    }
+
+    private fun showCarousel() {
+        if (!isIptvMode || IptvRepository.currentChannels.isEmpty()) return
+        topOverlay?.visibility = View.GONE
+        hint?.visibility = View.GONE
+        quickChannelOsd?.visibility = View.GONE
+        channelSidebar?.visibility = View.GONE
+
+        channelCarouselPanel?.visibility = View.VISIBLE
+        val rv = rvChannelCarousel ?: return
+        rv.post {
+            val target = currentChannelIndex.coerceIn(0, (IptvRepository.currentChannels.size - 1).coerceAtLeast(0))
+            rv.scrollToPosition(target)
+            rv.postDelayed({
+                rv.findViewHolderForAdapterPosition(target)?.itemView?.requestFocus()
+                    ?: rv.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
+                    ?: rv.requestFocus()
+            }, 60)
+        }
+        handler.removeCallbacks(hideCarouselRunnable)
+        handler.postDelayed(hideCarouselRunnable, 6000L)
+    }
+
+    private fun hideCarousel() {
+        handler.removeCallbacks(hideCarouselRunnable)
+        channelCarouselPanel?.visibility = View.GONE
     }
 
     private fun initPlayer() {
@@ -705,6 +806,21 @@ class PlayerActivity : AppCompatActivity() {
             return true
         }
 
+        // 2.5 Nếu Carousel kênh ngang đang mở:
+        if (channelCarouselPanel?.visibility == View.VISIBLE) {
+            if (isDown) {
+                if (e.keyCode == KeyEvent.KEYCODE_BACK || e.keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                    hideCarousel()
+                    return true
+                }
+                if (e.keyCode == KeyEvent.KEYCODE_DPAD_LEFT || e.keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
+                    handler.removeCallbacks(hideCarouselRunnable)
+                    handler.postDelayed(hideCarouselRunnable, 6000L)
+                }
+            }
+            return super.dispatchKeyEvent(e)
+        }
+
         // 3. Nếu Sidebar kênh đang mở:
         if (channelSidebar?.visibility == View.VISIBLE) {
             if (e.keyCode == KeyEvent.KEYCODE_BACK && isDown) {
@@ -743,13 +859,17 @@ class PlayerActivity : AppCompatActivity() {
             }
         }
 
-        // 5. Khi đang xem (overlay ẩn): Phím D-pad UP/DOWN hoặc CH+/CH- chuyển kênh tức thì
+        // 5. Khi đang xem (overlay ẩn): Phím D-pad UP/DOWN mở Carousel chuyển kênh mượt mà
         if (isDown && topOverlay?.visibility != View.VISIBLE && dialog == null) {
-            if (isIptvMode && (e.keyCode == KeyEvent.KEYCODE_DPAD_UP || e.keyCode == KeyEvent.KEYCODE_CHANNEL_UP)) {
+            if (isIptvMode && (e.keyCode == KeyEvent.KEYCODE_DPAD_DOWN || e.keyCode == KeyEvent.KEYCODE_DPAD_UP)) {
+                showCarousel()
+                return true
+            }
+            if (isIptvMode && (e.keyCode == KeyEvent.KEYCODE_CHANNEL_UP)) {
                 showQuickOsd(currentChannelIndex - 1)
                 return true
             }
-            if (isIptvMode && (e.keyCode == KeyEvent.KEYCODE_DPAD_DOWN || e.keyCode == KeyEvent.KEYCODE_CHANNEL_DOWN)) {
+            if (isIptvMode && (e.keyCode == KeyEvent.KEYCODE_CHANNEL_DOWN)) {
                 showQuickOsd(currentChannelIndex + 1)
                 return true
             }
@@ -781,6 +901,10 @@ class PlayerActivity : AppCompatActivity() {
             if (statsHudBox?.visibility == View.VISIBLE) {
                 statsHudBox?.visibility = View.GONE
                 handler.removeCallbacks(statsUpdateRunnable)
+                return true
+            }
+            if (channelCarouselPanel?.visibility == View.VISIBLE) {
+                hideCarousel()
                 return true
             }
             if (quickChannelOsd?.visibility == View.VISIBLE) {
@@ -833,11 +957,19 @@ class PlayerActivity : AppCompatActivity() {
         handler.removeCallbacks(keypadCommitRunnable)
         handler.removeCallbacks(autoRecoveryRunnable)
         handler.removeCallbacks(sleepTimerRunnable)
+        handler.removeCallbacks(hideCarouselRunnable)
         try { loudnessEnhancer?.release() } catch (_: Exception) {}
         loudnessEnhancer = null
         if (Build.VERSION.SDK_INT >= 26 && isInPictureInPictureMode) return
         player?.release()
         player = null
+    }
+
+    private class CarouselVH(v: View) : RecyclerView.ViewHolder(v) {
+        val tvNumber: TextView = v.findViewById(R.id.carouselNumber)
+        val ivLogo: ImageView = v.findViewById(R.id.carouselLogo)
+        val tvName: TextView = v.findViewById(R.id.carouselName)
+        val tvSub: TextView = v.findViewById(R.id.carouselSub)
     }
 
     private class SidebarVH(v: View) : RecyclerView.ViewHolder(v) {
