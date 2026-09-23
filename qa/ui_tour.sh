@@ -40,17 +40,23 @@ stoprec() { local f="${1:-${REC_CUR:-rec1.mp4}}"; adb shell screenrecord --stop 
 startrec rec1.mp4; sleep 1; mark "MO APP: Trang Chu & Truc Tiep The Thao"
 
 # 1. TAB 0: HOME / TRỰC TIẾP
-go "RIGHT: chip giai"      22 1
-go "LEFT: ve TAT CA"       21 1
-go "DOWN: hero (Play)"     20 1; foc
-go "DOWN: card LIVE 1"     20 1; foc
-go "RIGHT: card 2"         22 1
-go "RIGHT: card 3"         22 1
-go "LEFT: ve card 2"       21 1
-go "LEFT: ve card 1"       21 1
-go "DOWN: danh sach BLV"   20 1
-go "RIGHT: BLV Top 2"      22 1
-go "LEFT: ve BLV Top 1"    21 1
+# Ban đầu focus ở Left Rail (nav_live)
+# Bấm RIGHT để vào Hero Xem Ngay
+go "RIGHT: vao Hero Xem Ngay"    22 1; foc
+# Ở Hero: bấm RIGHT sang Chi Tiết
+go "RIGHT: sang Hero Chi Tiet"   22 1; foc
+# Bấm LEFT quay lại Xem Ngay
+go "LEFT: ve Hero Xem Ngay"      21 1; foc
+# BẤM XUỐNG TỪ HERO: Phải rơi chuẩn 100% vào Card LIVE 1
+go "DOWN: tu Hero xuong LIVE 1"  20 1; foc
+# Ở hàng Trực Tiếp: di chuyển qua các card
+go "RIGHT: sang Card LIVE 2"     22 1; foc
+go "RIGHT: sang Card LIVE 3"     22 1; foc
+go "LEFT: ve Card LIVE 2"        21 1; foc
+go "LEFT: ve Card LIVE 1"        21 1; foc
+go "DOWN: danh sach BLV"         20 1
+go "RIGHT: BLV Top 2"            22 1
+go "LEFT: ve BLV Top 1"          21 1
 adb exec-out screencap -p > $OUT/tab0_home.png
 mark "CHUP ANH: Tab 0 Home"
 

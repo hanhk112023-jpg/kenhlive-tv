@@ -22,7 +22,7 @@ class HeroPagerAdapter(
     private val groups: List<LiveMatchGroup>,
     private val onClick: (LiveMatchGroup) -> Unit,
     private val onDetailsClick: ((LiveMatchGroup) -> Unit)? = null,
-    private val onDownKey: (() -> Boolean)? = null
+    var onDownKey: (() -> Boolean)? = null
 ) : RecyclerView.Adapter<HeroPagerAdapter.HV>() {
 
     private val handler = Handler(Looper.getMainLooper())
@@ -142,6 +142,13 @@ class HeroPagerAdapter(
         }
 
         h.itemView.setOnClickListener { onClick(g) }
+        h.itemView.setOnKeyListener { _, keyCode, event ->
+            if (event.action != android.view.KeyEvent.ACTION_DOWN) return@setOnKeyListener false
+            if (keyCode == android.view.KeyEvent.KEYCODE_DPAD_DOWN) {
+                onDownKey?.invoke()
+                true
+            } else false
+        }
         h.play.setOnClickListener { onClick(g) }
         h.details?.setOnClickListener {
             if (onDetailsClick != null) onDetailsClick.invoke(g) else onClick(g)

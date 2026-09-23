@@ -139,13 +139,29 @@ class SportAdapter(
         val rv = outerRecyclerView ?: return false
         for (i in 0 until itemCount) {
             if (getItem(i) is RailItem) {
-                // Ép cuộn và bắt chính xác card đầu tiên idx = 0
                 val vh = rv.findViewHolderForAdapterPosition(i) as? RailVH
                 if (vh != null) {
                     vh.list.scrollToPosition(0)
+                    val card0 = vh.list.findViewHolderForAdapterPosition(0)?.itemView
+                        ?: vh.list.layoutManager?.findViewByPosition(0)
+                    if (card0 != null && card0.requestFocus()) {
+                        FocusKit.remember(i, 0)
+                        return true
+                    }
                     vh.list.post {
-                        val target = vh.list.layoutManager?.findViewByPosition(0) ?: vh.list.getChildAt(0)
-                        target?.requestFocus()
+                        val target = vh.list.findViewHolderForAdapterPosition(0)?.itemView
+                            ?: vh.list.layoutManager?.findViewByPosition(0)
+                        if (target != null && target.requestFocus()) {
+                            FocusKit.remember(i, 0)
+                        } else {
+                            vh.list.postDelayed({
+                                val t2 = vh.list.findViewHolderForAdapterPosition(0)?.itemView
+                                    ?: vh.list.layoutManager?.findViewByPosition(0)
+                                if (t2?.requestFocus() == true) {
+                                    FocusKit.remember(i, 0)
+                                }
+                            }, 50)
+                        }
                     }
                     return true
                 }
@@ -277,11 +293,13 @@ class SportAdapter(
                 val vh = h as HeroVH
                 if (item.groups.isNotEmpty()) {
                     vh.itemView.visibility = View.VISIBLE
-                    val cur = (vh.pager.adapter as? HeroPagerAdapter)
+                    var cur = (vh.pager.adapter as? HeroPagerAdapter)
                     if (cur == null || cur.itemCount != item.groups.size.coerceAtMost(8)) {
-                        val ad = HeroPagerAdapter(item.groups, onGroupClick, onGroupDetails, onDownKey = { focusRailFirst() })
-                        vh.pager.adapter = ad
-                        ad.attach(vh.pager, vh.dots)
+                        cur = HeroPagerAdapter(item.groups, onGroupClick, onGroupDetails, onDownKey = { focusRailFirst() })
+                        vh.pager.adapter = cur
+                        cur.attach(vh.pager, vh.dots)
+                    } else {
+                        cur.onDownKey = { focusRailFirst() }
                     }
                     vh.pager.setOnKeyListener { _, code, ev ->
                         if (ev.action == android.view.KeyEvent.ACTION_DOWN &&

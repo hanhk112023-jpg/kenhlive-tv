@@ -105,12 +105,13 @@ object FocusKit {
         val inner = vh.itemView.findViewById<RecyclerView>(R.id.rowList)
         if (inner != null) {
             val lm = inner.layoutManager as? LinearLayoutManager
-            val target = lm?.findViewByPosition(idx)
+            val target = inner.findViewHolderForAdapterPosition(idx)?.itemView
+                ?: lm?.findViewByPosition(idx)
                 ?: lm?.findViewByPosition(idx.coerceAtMost((inner.adapter?.itemCount ?: 1) - 1))
-                ?: inner.getChildAt(0)
             if (target?.requestFocus() == true) return true
             inner.post {
-                val t2 = inner.layoutManager?.findViewByPosition(idx) ?: inner.getChildAt(0)
+                val t2 = inner.findViewHolderForAdapterPosition(idx)?.itemView
+                    ?: inner.layoutManager?.findViewByPosition(idx)
                 t2?.requestFocus()
             }
             return true
