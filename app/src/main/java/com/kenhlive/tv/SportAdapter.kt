@@ -139,6 +139,16 @@ class SportAdapter(
         val rv = outerRecyclerView ?: return false
         for (i in 0 until itemCount) {
             if (getItem(i) is RailItem) {
+                // Ép cuộn và bắt chính xác card đầu tiên idx = 0
+                val vh = rv.findViewHolderForAdapterPosition(i) as? RailVH
+                if (vh != null) {
+                    vh.list.scrollToPosition(0)
+                    vh.list.post {
+                        val target = vh.list.layoutManager?.findViewByPosition(0) ?: vh.list.getChildAt(0)
+                        target?.requestFocus()
+                    }
+                    return true
+                }
                 if (FocusKit.focusNow(rv, i, 0)) return true
                 rv.scrollToPosition(i)
                 var left = 6

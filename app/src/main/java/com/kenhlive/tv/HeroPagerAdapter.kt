@@ -150,7 +150,10 @@ class HeroPagerAdapter(
         h.play.setOnKeyListener { _, keyCode, event ->
             if (event.action != android.view.KeyEvent.ACTION_DOWN) return@setOnKeyListener false
             when (keyCode) {
-                android.view.KeyEvent.KEYCODE_DPAD_DOWN -> onDownKey?.invoke() ?: false
+                android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
+                    onDownKey?.invoke()
+                    true // Nuốt triệt để để Android FocusFinder không tự nhảy chéo xuống Card 2
+                }
                 android.view.KeyEvent.KEYCODE_DPAD_UP -> true
                 else -> false
             }
@@ -159,7 +162,10 @@ class HeroPagerAdapter(
         h.details?.setOnKeyListener { _, keyCode, event ->
             if (event.action != android.view.KeyEvent.ACTION_DOWN) return@setOnKeyListener false
             when (keyCode) {
-                android.view.KeyEvent.KEYCODE_DPAD_DOWN -> onDownKey?.invoke() ?: false
+                android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
+                    onDownKey?.invoke()
+                    true // Nuốt triệt để để Android FocusFinder không tự nhảy chéo xuống Card 2
+                }
                 android.view.KeyEvent.KEYCODE_DPAD_UP -> true
                 android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> true
                 else -> false

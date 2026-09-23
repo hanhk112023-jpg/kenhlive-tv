@@ -42,10 +42,11 @@ startrec rec1.mp4; sleep 1; mark "MO APP: Trang Chu & Truc Tiep The Thao"
 # 1. TAB 0: HOME / TRỰC TIẾP
 go "RIGHT: chip giai"      22 1
 go "LEFT: ve TAT CA"       21 1
-go "DOWN: hero"            20 1; foc
+go "DOWN: hero (Play)"     20 1; foc
 go "DOWN: card LIVE 1"     20 1; foc
 go "RIGHT: card 2"         22 1
 go "RIGHT: card 3"         22 1
+go "LEFT: ve card 2"       21 1
 go "LEFT: ve card 1"       21 1
 go "DOWN: danh sach BLV"   20 1
 go "RIGHT: BLV Top 2"      22 1
