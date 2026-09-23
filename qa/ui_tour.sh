@@ -16,14 +16,14 @@ adb shell am start -W -n com.kenhlive.tv/.MainActivity >/dev/null 2>&1
 
 # Chờ UI sẵn sàng nhanh qua uiautomator
 wait_ready() {
-  for w in $(seq 1 10); do
+  for w in $(seq 1 15); do
     D=$(adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1; adb shell cat /sdcard/u.xml 2>/dev/null)
     if echo "$D" | grep -qE 'XEM NGAY|phòng live|Hôm nay|Truyền hình|Việt Nam'; then return 0; fi
     if echo "$D" | grep -qE 'Không tải|THỬ LẠI|Sân vắng'; then return 1; fi
-    sleep 3
+    sleep 2
   done; return 1
 }
-wait_ready || { adb shell input tap 960 640; sleep 4; wait_ready; }
+wait_ready || true
 
 TL=$OUT/timeline.txt; : > $TL
 T0=$(date +%s)
@@ -40,13 +40,16 @@ stoprec() { local f="${1:-${REC_CUR:-rec1.mp4}}"; adb shell screenrecord --stop 
 startrec rec1.mp4; sleep 1; mark "MO APP: Trang Chu & Truc Tiep The Thao"
 
 # 1. TAB 0: HOME / TRỰC TIẾP
-# Ban đầu focus ở Left Rail (nav_live)
-# Bấm RIGHT để vào Hero Xem Ngay
-go "RIGHT: vao Hero Xem Ngay"    22 1; foc
+# Chủ động đưa focus về Hero Xem Ngay trước khi bắt đầu tour
+adb shell input keyevent 19; sleep 0.5
+adb shell input keyevent 19; sleep 0.5
+adb shell input keyevent 22; sleep 0.5
+mark "FOCUS HERO XEM NGAY"; foc
+
 # Ở Hero: bấm RIGHT sang Chi Tiết
-go "RIGHT: sang Hero Chi Tiet"   22 1; foc
+go "RIGHT: sang Hero Chi Tiet"   22 2; foc
 # Bấm LEFT quay lại Xem Ngay
-go "LEFT: ve Hero Xem Ngay"      21 1; foc
+go "LEFT: ve Hero Xem Ngay"      21 2; foc
 # BẤM XUỐNG TỪ HERO: Phải rơi chuẩn 100% vào Card LIVE 1
 go "DOWN: tu Hero xuong LIVE 1"  20 3; foc
 # Ở hàng Trực Tiếp: di chuyển qua các card

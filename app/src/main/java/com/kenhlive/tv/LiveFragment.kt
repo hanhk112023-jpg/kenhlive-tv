@@ -183,9 +183,15 @@ class LiveFragment : Fragment() {
         }
 
         val hadFocus = list.hasFocus() && FocusKit.lastSlot != null
+        val wasEmpty = adapter.itemCount == 0
         adapter.submitList(items)
         if (hadFocus) {
             list.post { list.post { FocusKit.restore(adapter) } }
+        } else if (wasEmpty && items.isNotEmpty() && DeviceMode.isTv) {
+            // Lần đầu nạp xong dữ liệu trên TV: chủ động focus ngay nút Xem Ngay trên Hero banner
+            list.post {
+                adapter.focusHero()
+            }
         }
         if (items.size > 2) state.hide()
         else if (liveGroups.isEmpty() && daysLabeled.isEmpty()) {
