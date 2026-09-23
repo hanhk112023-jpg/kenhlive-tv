@@ -37,29 +37,28 @@ startrec(){ REC_CUR="$1"; adb shell rm -f /sdcard/$REC_CUR; adb shell screenreco
 stoprec() { local f="${1:-${REC_CUR:-rec1.mp4}}"; adb shell screenrecord --stop >/dev/null 2>&1; wait $REC_PID 2>/dev/null || true; sleep 2; adb pull /sdcard/$f $OUT/$f >/dev/null 2>&1 || true; }
 
 # ==================== ĐOẠN 1 ====================
-startrec rec1.mp4; sleep 1; mark "MO APP: Trang Chu & Truc Tiep The Thao"
+startrec rec1.mp4; sleep 2; mark "MO APP: Trang Chu & Truc Tiep The Thao"
 
 # 1. TAB 0: HOME / TRỰC TIẾP
-# Chủ động đưa focus về Hero Xem Ngay trước khi bắt đầu tour
-adb shell input keyevent 19; sleep 0.5
-adb shell input keyevent 19; sleep 0.5
-adb shell input keyevent 22; sleep 0.5
-mark "FOCUS HERO XEM NGAY"; foc
+# Đảm bảo focus bắt đầu ở Left Rail menu
+adb shell input keyevent 21; sleep 0.5
+adb shell input keyevent 21; sleep 0.5
+mark "MENU TRAI: Tab Truc Tiep"; foc
 
-# Ở Hero: bấm RIGHT sang Chi Tiết
-go "RIGHT: sang Hero Chi Tiet"   22 2; foc
-# Bấm LEFT quay lại Xem Ngay
-go "LEFT: ve Hero Xem Ngay"      21 2; foc
-# BẤM XUỐNG TỪ HERO: Phải rơi chuẩn 100% vào Card LIVE 1
-go "DOWN: tu Hero xuong LIVE 1"  20 3; foc
-# Ở hàng Trực Tiếp: di chuyển qua các card
+# Từ Menu trái: bấm RIGHT vào nội dung (rơi chuẩn vào Card LIVE 1 đầu tiên)
+go "RIGHT: vao Card LIVE 1"      22 2; foc
+
+# Ở hàng Trực Tiếp: di chuyển tuần tự qua các thẻ trận
 go "RIGHT: sang Card LIVE 2"     22 2; foc
 go "RIGHT: sang Card LIVE 3"     22 2; foc
 go "LEFT: ve Card LIVE 2"        21 2; foc
 go "LEFT: ve Card LIVE 1"        21 2; foc
-go "DOWN: danh sach BLV"         20 1
-go "RIGHT: BLV Top 2"            22 1
-go "LEFT: ve BLV Top 1"          21 1
+
+# Di chuyển xuống hàng Bình luận viên
+go "DOWN: danh sach BLV"         20 2; foc
+go "RIGHT: BLV Top 2"            22 1; foc
+go "LEFT: ve BLV Top 1"          21 1; foc
+go "UP: tro lai Card LIVE 1"     19 2; foc
 adb exec-out screencap -p > $OUT/tab0_home.png
 mark "CHUP ANH: Tab 0 Home"
 
@@ -193,7 +192,8 @@ if os.path.exists(OUT+'/timeline.txt'):
         if len(p)<2: continue
         try: t=int(p[0].rstrip('s'))
         except: continue
-        if t<2 or t-last<5: continue
+        if p[1].startswith('FOCU'): continue
+        if t<1 or t-last<2: continue
         last=t; seg.append((t,p[1]))
 def esc(x): return x.replace('{','(').replace('}',')')
 def fmt(s):

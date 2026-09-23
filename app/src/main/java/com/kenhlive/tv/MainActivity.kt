@@ -128,23 +128,19 @@ class MainActivity : AppCompatActivity() {
         for (i in 0 until c.childCount) {
             val child = c.getChildAt(i)
             if (child.visibility == View.VISIBLE) {
-                val tagged = child.findViewWithTag<View>("kl_focus_first")
-                if (tagged != null && tagged.visibility == View.VISIBLE && tagged.requestFocus()) return
-
-                // Nếu fragment chứa RecyclerView: ưu tiên focus vào ViewHolder đầu tiên
+                // Nếu fragment chứa RecyclerView: ưu tiên focus vào hàng trận đấu đầu tiên
                 val rv = findFirstRecyclerView(child)
                 if (rv != null) {
+                    val ad = rv.adapter as? SportAdapter
+                    if (ad != null && ad.focusRailFirst()) return
                     val vh = rv.findViewHolderForAdapterPosition(0)
                     if (vh != null) {
                         val inner = firstFocusableIn(vh.itemView) ?: vh.itemView
                         if (inner.requestFocus()) return
                     }
                     rv.post {
-                        val vh2 = rv.findViewHolderForAdapterPosition(0)
-                        if (vh2 != null) {
-                            val inner2 = firstFocusableIn(vh2.itemView) ?: vh2.itemView
-                            if (inner2.requestFocus()) return@post
-                        }
+                        val ad2 = rv.adapter as? SportAdapter
+                        if (ad2 != null && ad2.focusRailFirst()) return@post
                         firstFocusableIn(child)?.requestFocus()
                     }
                     return
