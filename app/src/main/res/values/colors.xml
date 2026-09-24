@@ -15,16 +15,16 @@
     <color name="kl_cyan">#FF00E5FF</color>
     <color name="kl_amber">#FFFFB300</color>
 
-    <!-- surfaces (dark, layered obsidian & slate) -->
-    <color name="kl_bg">#FF0A0A0E</color>
-    <color name="kl_bg_deep">#FF08080B</color>
-    <color name="kl_surface_1">#FF13141B</color>
-    <color name="kl_surface_2">#FF1A1B24</color>
-    <color name="kl_surface_3">#FF242634</color>
-    <color name="kl_surface_translucent">#EE0E0F15</color>
-    <color name="kl_surface_glass">#1AFFFFFF</color>
-    <color name="kl_border">#22FFFFFF</color>
-    <color name="kl_border_soft">#14FFFFFF</color>
+    <!-- surfaces (pure black, obsidian & sleek glass - no navy) -->
+    <color name="kl_bg">#FF000000</color>
+    <color name="kl_bg_deep">#FF000000</color>
+    <color name="kl_surface_1">#FF0D0E12</color>
+    <color name="kl_surface_2">#FF13151B</color>
+    <color name="kl_surface_3">#FF1E212A</color>
+    <color name="kl_surface_translucent">#F2000000</color>
+    <color name="kl_surface_glass">#12FFFFFF</color>
+    <color name="kl_border">#1E2430</color>
+    <color name="kl_border_soft">#14202B</color>
 
     <!-- text -->
     <color name="kl_text_1">#FFFFFFFF</color>
@@ -37,13 +37,13 @@
     <color name="kl_live_glow">#55FF334B</color>
     <color name="kl_live_dim">#26FF334B</color>
     <color name="kl_error">#FFFF4D4D</color>
-    <color name="kl_focus_ring">#FFFFFFFF</color>
-    <color name="kl_focus_glow">#6600E676</color>
+    <color name="kl_focus_ring">#FF00E5FF</color>
+    <color name="kl_focus_glow">#6600E5FF</color>
     <color name="kl_pressed_overlay">#26FFFFFF</color>
 
     <!-- scrims -->
-    <color name="kl_scrim_start">#F20A0A0E</color>
-    <color name="kl_scrim_mid">#770A0A0E</color>
+    <color name="kl_scrim_start">#F2000000</color>
+    <color name="kl_scrim_mid">#77000000</color>
     <color name="kl_scrim_end">#00000000</color>
 
     <!-- legacy aliases kept for compatibility with existing refs -->
@@ -52,11 +52,11 @@
     <color name="brand_green_glow">@color/kl_brand_glow</color>
     <color name="brand_green_soft">@color/kl_brand_soft</color>
     <color name="brand_blue">@color/kl_cyan</color>
-    <color name="bg_base">@color/kl_bg_deep</color>
-    <color name="bg_card">@color/kl_surface_1</color>
-    <color name="bg_card_alt">@color/kl_surface_2</color>
-    <color name="bg_elevated">@color/kl_surface_2</color>
-    <color name="bg_topbar">#F20E0F15</color>
+    <color name="bg_base">#000000</color>
+    <color name="bg_card">#0D0E12</color>
+    <color name="bg_card_alt">#13151B</color>
+    <color name="bg_elevated">#181A22</color>
+    <color name="bg_topbar">#FA000000</color>
     <color name="accent_amber">@color/kl_amber</color>
     <color name="accent_cyan">@color/kl_cyan</color>
     <color name="accent_green">@color/kl_brand</color>
