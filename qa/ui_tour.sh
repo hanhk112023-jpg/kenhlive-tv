@@ -46,6 +46,9 @@ mark "CHUP ANH: Full man hinh noi dung (Side tab da an)"
 go "LEFT: cham canh trai de goi Side tab hien len" 21 2; foc
 adb exec-out screencap -p > $OUT/tab0_rail_revealed.png
 mark "CHUP ANH: Side tab tu dong hien khi tuong tac sang trai"
+go "DOWN: chuyen focus tren Side tab xuong Tab Lich thi dau" 20 1
+adb exec-out screencap -p > $OUT/tab0_rail_focus_nav.png
+mark "CHUP ANH: Focus di chuyen tren Side tab"
 go "RIGHT: tro lai noi dung (Side tab tu dong an)" 22 1; foc
 
 # Từ Menu trái: bấm RIGHT vào nội dung (rơi chuẩn vào Card LIVE 1 đầu tiên)
@@ -102,6 +105,22 @@ mark "CHUP ANH: Carousel focus va hien EPG"
 go "BACK: dong carousel" 4 1
 go "OK: hien controls player va sidebar" 23 1
 go "RIGHT: toi nut Aspect Ratio" 22 1
+go "OK: bam chuyen ti le man hinh (Fit/Fill/Zoom)" 23 1
+go "RIGHT: toi nut Sleep Timer" 22 1
+go "OK: mo dialog Hen Gio Tat TV" 23 1
+adb exec-out screencap -p > $OUT/player_sleep_timer_dialog.png
+mark "CHUP ANH: Dialog Hen Gio Tat TV"
+go "DOWN: chon hen 30 phut" 20 1
+go "OK: xac nhan hen gio" 23 1
+go "OK: hien lai controls player" 23 1
+go "RIGHT: toi nut Audio Tracks" 22 1
+go "OK: mo dialog Chon Luong Audio / BLV" 23 1
+adb exec-out screencap -p > $OUT/player_audio_tracks_dialog.png
+mark "CHUP ANH: Dialog Chon Luong Audio"
+go "BACK: dong dialog audio" 4 1
+go "OK: hien lai controls player" 23 1
+go "RIGHT: toi nut Audio Boost" 22 1
+go "OK: tang am luong phan cung (+3dB / +6dB / +9dB)" 23 1
 go "RIGHT: toi nut Stats for Nerds HUD" 22 1
 go "OK: mo Stats for Nerds HUD" 23 2
 adb exec-out screencap -p > $OUT/tab2_stats_hud.png
