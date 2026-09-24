@@ -34,6 +34,14 @@ class IptvFragment : Fragment() {
     private lateinit var countText: TextView
     private lateinit var searchInput: EditText
 
+    // Hero Preview Views (Apple TV / Netflix style)
+    private var heroPreviewBox: View? = null
+    private var heroChannelTitle: TextView? = null
+    private var heroChannelGroup: TextView? = null
+    private var heroEpgNow: TextView? = null
+    private var heroEpgNext: TextView? = null
+    private var heroLogoImg: ImageView? = null
+
     private var allChannels: List<IptvChannel> = emptyList()
     private var displayedChannels: List<IptvChannel> = emptyList()
     private var selectedGroup: String = "Việt Nam"
@@ -52,8 +60,15 @@ class IptvFragment : Fragment() {
         countText = view.findViewById(R.id.channelCountText)
         searchInput = view.findViewById(R.id.searchChannelInput)
 
-        // TV 4 cột rộng rãi 16:9, Mobile 2 cột
-        val spanCount = if (DeviceMode.isTv) 4 else 2
+        heroPreviewBox = view.findViewById(R.id.heroPreviewBox)
+        heroChannelTitle = view.findViewById(R.id.heroChannelTitle)
+        heroChannelGroup = view.findViewById(R.id.heroChannelGroup)
+        heroEpgNow = view.findViewById(R.id.heroEpgNow)
+        heroEpgNext = view.findViewById(R.id.heroEpgNext)
+        heroLogoImg = view.findViewById(R.id.heroLogoImg)
+
+        // TV: 3 cột ngang dạng card bo góc thanh thoát, Phone: 1 hoặc 2 cột
+        val spanCount = if (DeviceMode.isTv) 3 else 1
         gridList.layoutManager = GridLayoutManager(requireContext(), spanCount)
         gridList.clipChildren = false
         gridList.clipToPadding = false
@@ -72,6 +87,37 @@ class IptvFragment : Fragment() {
         })
 
         loadData()
+    }
+
+    private fun updateHeroPreview(ch: IptvChannel) {
+        heroChannelTitle?.text = ch.name
+        heroChannelGroup?.text = if (ch.isVn) "VIỆT NAM" else ch.group.uppercase()
+
+        if (ch.logo.isNotEmpty()) {
+            heroLogoImg?.load(ch.logo) {
+                crossfade(true)
+                error(R.drawable.ic_nav_tv)
+                placeholder(R.drawable.ic_nav_tv)
+            }
+        } else {
+            heroLogoImg?.setImageResource(R.drawable.ic_nav_tv)
+        }
+
+        val epg = EpgRepository.getCurrentAndNext(ch.id, ch.name)
+        if (epg != null && epg.first != null) {
+            val cur = epg.first!!
+            heroEpgNow?.text = "▶ Đang phát: [${cur.timeRange()}] ${cur.title}"
+            if (epg.second != null) {
+                val nxt = epg.second!!
+                heroEpgNext?.visibility = View.VISIBLE
+                heroEpgNext?.text = "⏭ Tiếp theo: [${nxt.startFormatted()}] ${nxt.title}"
+            } else {
+                heroEpgNext?.visibility = View.GONE
+            }
+        } else {
+            heroEpgNow?.text = if (ch.isVn) "▶ Đang phát trực tiếp từ Đài Truyền hình Việt Nam" else "▶ Đang phát trực tiếp từ ${ch.group}"
+            heroEpgNext?.visibility = View.GONE
+        }
     }
 
     private fun loadData() {
@@ -104,10 +150,12 @@ class IptvFragment : Fragment() {
                 })
                 applyFilter(focusFirst = true)
 
-                // Tải ngầm lịch phát sóng EPG thời gian thực
                 EpgRepository.initEpg(requireContext())
                 if (isAdded) {
                     gridList.adapter?.notifyDataSetChanged()
+                    if (displayedChannels.isNotEmpty()) {
+                        updateHeroPreview(displayedChannels[0])
+                    }
                 }
             }
         }
@@ -144,6 +192,10 @@ class IptvFragment : Fragment() {
         displayedChannels = list
         emptyText.visibility = if (displayedChannels.isEmpty()) View.VISIBLE else View.GONE
         setupGrid(displayedChannels)
+
+        if (displayedChannels.isNotEmpty()) {
+            updateHeroPreview(displayedChannels[0])
+        }
 
         if (focusFirst && displayedChannels.isNotEmpty() && DeviceMode.isTv) {
             gridList.post {
@@ -186,7 +238,6 @@ class IptvFragment : Fragment() {
                     notifyDataSetChanged()
                 }
 
-                // Khi bấm DOWN từ thanh nhóm -> chuyển focus xuống thẳng kênh đầu tiên của lưới
                 holder.itemView.setOnKeyListener { _, keyCode, event ->
                     if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
                         if (displayedChannels.isNotEmpty()) {
@@ -213,28 +264,8 @@ class IptvFragment : Fragment() {
             override fun onBindViewHolder(holder: ChannelViewHolder, position: Int) {
                 val ch = channels[position]
                 holder.tvName.text = ch.name
+                holder.tvSub.text = if (ch.isVn) "Việt Nam" else ch.group
                 holder.badge.text = if (ch.isVn) "VIỆT NAM" else ch.group.uppercase()
-
-                // Cập nhật EPG nếu có
-                val epgInfo = EpgRepository.getCurrentAndNext(ch.id, ch.name)
-                if (epgInfo != null && epgInfo.first != null) {
-                    val curProg = epgInfo.first!!
-                    holder.epgBox.visibility = View.VISIBLE
-                    holder.tvSub.visibility = View.GONE
-                    holder.tvEpgNow.text = "▶ [${curProg.timeRange()}] ${curProg.title}"
-                    holder.epgProgress.progress = curProg.progressPercent()
-                    if (epgInfo.second != null) {
-                        val nextProg = epgInfo.second!!
-                        holder.tvEpgNext.visibility = View.VISIBLE
-                        holder.tvEpgNext.text = "⏭ [${nextProg.startFormatted()}] ${nextProg.title}"
-                    } else {
-                        holder.tvEpgNext.visibility = View.GONE
-                    }
-                } else {
-                    holder.epgBox.visibility = View.GONE
-                    holder.tvSub.visibility = View.VISIBLE
-                    holder.tvSub.text = if (ch.isVn) "Truyền hình Việt Nam" else "${ch.group} · Thể thao quốc tế"
-                }
 
                 if (ch.logo.isNotEmpty()) {
                     holder.ivLogo.load(ch.logo) {
@@ -251,10 +282,13 @@ class IptvFragment : Fragment() {
                 }
 
                 holder.itemView.setOnFocusChangeListener { v, hasFocus ->
-                    v.animate().scaleX(if (hasFocus) 1.05f else 1f)
-                        .scaleY(if (hasFocus) 1.05f else 1f)
-                        .setDuration(150).start()
-                    v.elevation = if (hasFocus) 16f else 0f
+                    v.animate().scaleX(if (hasFocus) 1.04f else 1f)
+                        .scaleY(if (hasFocus) 1.04f else 1f)
+                        .setDuration(120).start()
+                    v.elevation = if (hasFocus) 12f else 0f
+                    if (hasFocus) {
+                        updateHeroPreview(ch)
+                    }
                 }
             }
 
@@ -283,9 +317,5 @@ class IptvFragment : Fragment() {
         val badge: TextView = v.findViewById(R.id.channelBadge)
         val tvName: TextView = v.findViewById(R.id.channelName)
         val tvSub: TextView = v.findViewById(R.id.channelSub)
-        val epgBox: View = v.findViewById(R.id.epgBox)
-        val tvEpgNow: TextView = v.findViewById(R.id.tvEpgNow)
-        val epgProgress: ProgressBar = v.findViewById(R.id.epgProgress)
-        val tvEpgNext: TextView = v.findViewById(R.id.tvEpgNext)
     }
 }
