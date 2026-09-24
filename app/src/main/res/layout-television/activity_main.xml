@@ -1,24 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- ANDROID TV / Tablet layout matching IMG_2815:
-     Slim persistent left navigation rail + full content on right -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- ANDROID TV Layout:
+     Overlay auto-hide Left Navigation Rail
+     Main content fills 100% full screen width.
+     Rail slides in on demand over content when user navigates left. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="horizontal"
     android:background="@color/kl_bg_deep">
 
-    <!-- SLIM LEFT NAVIGATION RAIL (kieu IMG_2815) -->
+    <!-- MAIN CONTENT: 100% full màn hình chiều ngang -->
+    <FrameLayout
+        android:id="@+id/fragmentContainer"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- SLIM LEFT NAVIGATION RAIL: Trượt ẩn/hiện đè lên cạnh trái khi tương tác -->
     <LinearLayout
         android:id="@+id/railPanel"
         android:layout_width="@dimen/rail_slim_w"
         android:layout_height="match_parent"
+        android:layout_gravity="left"
         android:orientation="vertical"
         android:gravity="center_horizontal"
         android:background="@drawable/bg_tv_rail_panel"
         android:paddingTop="16dp"
         android:paddingBottom="16dp"
         android:paddingLeft="6dp"
-        android:paddingRight="6dp">
+        android:paddingRight="6dp"
+        android:elevation="12dp">
 
         <!-- User / Profile circle avatar at top -->
         <FrameLayout
@@ -62,11 +71,4 @@
         <!-- 8. Settings Icon at bottom -->
         <include layout="@layout/item_nav_slim" android:id="@+id/nav_settings" />
     </LinearLayout>
-
-    <!-- MAIN CONTENT: 100% chieu ngang con lai cua man hinh -->
-    <FrameLayout
-        android:id="@+id/fragmentContainer"
-        android:layout_width="0dp"
-        android:layout_height="match_parent"
-        android:layout_weight="1" />
-</LinearLayout>
+</FrameLayout>

@@ -73,6 +73,10 @@ class MainActivity : AppCompatActivity() {
 
         if (DeviceMode.isTv) {
             railPanel = findViewById(R.id.railPanel)
+            railPanel?.post {
+                // Mặc định ban đầu ẩn sidebar về phía bên trái
+                hideRail(immediate = true)
+            }
         }
 
         UpdateManager.checkAndUpdate(this)
@@ -203,6 +207,22 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun showRail() {
+        val r = railPanel ?: return
+        r.animate().translationX(0f).alpha(1f).setDuration(180).start()
+    }
+
+    private fun hideRail(immediate: Boolean = false) {
+        val r = railPanel ?: return
+        val offset = -r.width.toFloat().coerceAtLeast(160f)
+        if (immediate) {
+            r.translationX = offset
+            r.alpha = 0f
+        } else {
+            r.animate().translationX(offset).alpha(0f).setDuration(220).start()
+        }
+    }
+
     override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
         if (DeviceMode.isTv && event.action == android.view.KeyEvent.ACTION_DOWN) {
             var f = currentFocus
@@ -215,6 +235,7 @@ class MainActivity : AppCompatActivity() {
             when (event.keyCode) {
                 android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
                     if (f != null && !insideRail && atLeftEdge(f)) {
+                        showRail()
                         navViews.getOrNull(current)?.requestFocus() ?: navViews.firstOrNull()?.requestFocus()
                         return true
                     }
@@ -226,6 +247,7 @@ class MainActivity : AppCompatActivity() {
                         if (focusedNavIdx >= 0 && focusedNavIdx != current) {
                             showTab(focusedNavIdx, animate = false)
                         }
+                        hideRail()
                         focusContentFirst()
                         return true
                     }
@@ -266,6 +288,7 @@ class MainActivity : AppCompatActivity() {
         tx.commit()
         if (DeviceMode.isTv) {
             findViewById<View>(R.id.fragmentContainer)?.post {
+                hideRail()
                 focusContentFirst()
             }
         }

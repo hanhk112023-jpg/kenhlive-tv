@@ -40,10 +40,13 @@ stoprec() { local f="${1:-${REC_CUR:-rec1.mp4}}"; adb shell screenrecord --stop 
 startrec rec1.mp4; sleep 2; mark "MO APP: Trang Chu & Truc Tiep The Thao"
 
 # 1. TAB 0: HOME / TRỰC TIẾP
-# Đảm bảo focus bắt đầu ở Left Rail menu
-adb shell input keyevent 21; sleep 0.5
-adb shell input keyevent 21; sleep 0.5
-mark "MENU TRAI: Tab Truc Tiep"; foc
+sleep 2
+adb exec-out screencap -p > $OUT/tab0_fullscreen_no_rail.png
+mark "CHUP ANH: Full man hinh noi dung (Side tab da an)"
+go "LEFT: cham canh trai de goi Side tab hien len" 21 2; foc
+adb exec-out screencap -p > $OUT/tab0_rail_revealed.png
+mark "CHUP ANH: Side tab tu dong hien khi tuong tac sang trai"
+go "RIGHT: tro lai noi dung (Side tab tu dong an)" 22 1; foc
 
 # Từ Menu trái: bấm RIGHT vào nội dung (rơi chuẩn vào Card LIVE 1 đầu tiên)
 go "RIGHT: vao Card LIVE 1"      22 2; foc
