@@ -1,20 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Bottom to top pure black fade: Đáy đen tuyệt đối #000000 hòa vào danh sách thẻ -->
     <item>
         <shape>
             <gradient
                 android:angle="90"
-                android:startColor="#F80A0A0E"
-                android:centerColor="#880A0A0E"
+                android:startColor="#FF000000"
+                android:centerColor="#B3000000"
                 android:endColor="#00000000" />
         </shape>
     </item>
+    <!-- Left to right pure black fade: Tăng tương phản chữ tiêu đề và nút CTA bên trái -->
     <item>
         <shape>
             <gradient
                 android:angle="0"
-                android:startColor="#B30A0A0E"
-                android:centerColor="#330A0A0E"
+                android:startColor="#CC000000"
+                android:centerColor="#55000000"
                 android:endColor="#00000000" />
         </shape>
     </item>
