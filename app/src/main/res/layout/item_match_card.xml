@@ -11,7 +11,7 @@
     android:focusable="true"
     android:clickable="true">
 
-    <!-- Row 1: League tag (left) + LIVE pill RED (right) (kieu IMG_2815) -->
+    <!-- Row 1: League tag (left) + LIVE pill RED (right) (Phong cách FotMob / SofaScore) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -26,8 +26,9 @@
             android:textColor="@color/kl_cyan"
             android:textSize="11sp"
             android:textStyle="bold"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
+            android:letterSpacing="0.04"
+            android:paddingLeft="9dp"
+            android:paddingRight="9dp"
             android:paddingTop="3dp"
             android:paddingBottom="3dp"
             android:maxLines="1"
@@ -49,21 +50,22 @@
             android:textStyle="bold"
             android:letterSpacing="0.06"
             android:background="@drawable/bg_badge_live_red"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp"
+            android:paddingLeft="9dp"
+            android:paddingRight="9dp"
             android:paddingTop="3dp"
             android:paddingBottom="3dp" />
     </LinearLayout>
 
-    <!-- Row 2: Doi nha (trai) | Giua: Ti so 0:0 hoac Avatar BLV | Doi khach (phai) -->
+    <!-- Row 2: Trung tâm trận đấu (FotMob Style: Team Host | VS / Tỷ số | Team Guest) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="12dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:minHeight="54dp">
+        android:minHeight="58dp">
 
+        <!-- Đội nhà (Host) -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_weight="1"
@@ -78,7 +80,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="end"
                 android:textColor="@color/kl_text_1"
-                android:textSize="@dimen/ts_fx_team"
+                android:textSize="14sp"
                 android:fontFamily="sans-serif-medium"
                 android:maxLines="2"
                 android:breakStrategy="simple"
@@ -86,44 +88,38 @@
 
             <ImageView
                 android:id="@+id/cardHostIcon"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_marginLeft="6dp"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:layout_marginLeft="8dp"
                 android:src="@drawable/ic_sports"
                 android:visibility="gone"
                 android:contentDescription="@null" />
         </LinearLayout>
 
-        <!-- Center badge: VS badge tron dong bo (kieu IMG_2815) -->
+        <!-- Tâm điểm: Pill Tỷ số / VS to rõ chuẩn TV -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp">
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp">
 
             <TextView
                 android:id="@+id/cardScore"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
+                android:layout_width="44dp"
+                android:layout_height="28dp"
                 android:gravity="center"
-                android:background="@drawable/bg_vs_circle"
+                android:background="@drawable/bg_score_pill"
                 android:textColor="#FFFFFF"
                 android:text="VS"
                 android:fontFamily="@font/oswald"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-
-            <ImageView
-                android:id="@+id/cardAvatar"
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:layout_marginTop="3dp"
-                android:background="@drawable/bg_circle"
-                android:contentDescription="@null" />
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.05" />
         </LinearLayout>
 
+        <!-- Đội khách (Guest) -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_weight="1"
@@ -133,9 +129,9 @@
 
             <ImageView
                 android:id="@+id/cardGuestIcon"
-                android:layout_width="30dp"
-                android:layout_height="30dp"
-                android:layout_marginRight="6dp"
+                android:layout_width="34dp"
+                android:layout_height="34dp"
+                android:layout_marginRight="8dp"
                 android:src="@drawable/ic_sports"
                 android:visibility="gone"
                 android:contentDescription="@null" />
@@ -147,7 +143,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="start"
                 android:textColor="@color/kl_text_1"
-                android:textSize="@dimen/ts_fx_team"
+                android:textSize="14sp"
                 android:fontFamily="sans-serif-medium"
                 android:maxLines="2"
                 android:breakStrategy="simple"
@@ -155,25 +151,28 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Row 3: Tên trận đấu đầy đủ (kieu IMG_2815) -->
-    <TextView
-        android:id="@+id/cardMatchTitle"
+    <!-- Đường chia hairline mờ thanh thoát -->
+    <View
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:textColor="@color/kl_text_1"
-        android:textSize="13sp"
-        android:textStyle="bold"
-        android:maxLines="1"
-        android:ellipsize="end" />
+        android:layout_height="1dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="8dp"
+        android:background="#151A24" />
 
-    <!-- Row 4: BLV + Viewers / Thời gian bắt đầu -->
+    <!-- Row 3: Meta info chuẩn Spotify: Avatar BLV tròn + Tên BLV + Lượt xem + Phòng -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
         android:orientation="horizontal"
         android:gravity="center_vertical">
+
+        <ImageView
+            android:id="@+id/cardAvatar"
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_marginRight="7dp"
+            android:background="@drawable/bg_circle"
+            android:contentDescription="@null" />
 
         <TextView
             android:id="@+id/cardBlv"
@@ -201,14 +200,22 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginLeft="6dp"
-            android:textColor="@color/kl_text_2"
-            android:textSize="11sp"
-            android:fontFamily="sans-serif-medium"
-            android:background="@drawable/bg_badge_glass"
-            android:paddingLeft="7dp"
-            android:paddingRight="7dp"
+            android:textColor="@color/kl_cyan"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:background="@drawable/room_badge_bg"
+            android:paddingLeft="6dp"
+            android:paddingRight="6dp"
             android:paddingTop="2dp"
             android:paddingBottom="2dp"
             android:visibility="gone" />
     </LinearLayout>
+
+    <!-- Ẩn các trường tương thích cũ không làm vỡ code Kotlin -->
+    <TextView
+        android:id="@+id/cardMatchTitle"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone" />
+
 </LinearLayout>
