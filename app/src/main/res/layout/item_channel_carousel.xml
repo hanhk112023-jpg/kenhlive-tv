@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="168dp"
-    android:layout_height="100dp"
+    android:layout_height="104dp"
     android:orientation="vertical"
-    android:background="@drawable/bg_iptv_channel_card"
-    android:foreground="@drawable/fg_iptv_focus"
+    android:background="@drawable/bg_card_match"
+    android:foreground="@drawable/fg_card_focus_cyan"
     android:focusable="true"
     android:clickable="true"
     android:layout_marginLeft="6dp"
@@ -12,12 +12,12 @@
     android:layout_marginTop="4dp"
     android:layout_marginBottom="4dp">
 
-    <!-- Cụm trên: Logo & Số kênh -->
+    <!-- Cụm trên: Logo & Số kênh (Pure Black Background) -->
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="62dp"
-        android:background="#0A0B0E"
-        android:padding="6dp">
+        android:layout_height="64dp"
+        android:background="#000000"
+        android:padding="8dp">
 
         <TextView
             android:id="@+id/carouselNumber"
@@ -28,11 +28,11 @@
             android:textColor="#00E5FF"
             android:textSize="10sp"
             android:textStyle="bold"
-            android:background="@drawable/bg_badge_glass"
-            android:paddingLeft="5dp"
-            android:paddingRight="5dp"
-            android:paddingTop="1dp"
-            android:paddingBottom="1dp"
+            android:background="@drawable/bg_badge_league_cyan"
+            android:paddingLeft="6dp"
+            android:paddingRight="6dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
             android:text="01" />
 
         <ImageView
@@ -43,19 +43,19 @@
             android:src="@drawable/ic_nav_tv" />
     </RelativeLayout>
 
-    <!-- Đường kẻ tinh tế -->
+    <!-- Đường kẻ hairline chuẩn Pure Black -->
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:background="#1E232E" />
+        android:background="#1A1F29" />
 
     <!-- Cụm dưới: Tên kênh & Tag -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center_vertical"
-        android:paddingLeft="8dp"
-        android:paddingRight="8dp"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
         android:orientation="vertical">
 
         <TextView
@@ -70,13 +70,15 @@
             android:text="VTV1 HD" />
 
         <TextView
-            android:id="@+id/carouselSub"
+            android:id="@+id/carouselEpg"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#94A3B8"
-            android:textSize="9.5sp"
+            android:layout_marginTop="2dp"
+            android:textColor="#8E9AA8"
+            android:textSize="10sp"
             android:maxLines="1"
             android:ellipsize="end"
-            android:text="Việt Nam" />
+            android:text="Thời sự 19h" />
     </LinearLayout>
+
 </LinearLayout>
