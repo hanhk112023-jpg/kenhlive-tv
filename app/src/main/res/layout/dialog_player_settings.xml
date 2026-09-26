@@ -3,22 +3,51 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:paddingLeft="22dp"
-    android:paddingRight="22dp"
-    android:paddingTop="20dp"
-    android:paddingBottom="16dp">
+    android:background="#0D0E12"
+    android:paddingLeft="24dp"
+    android:paddingRight="24dp"
+    android:paddingTop="22dp"
+    android:paddingBottom="20dp">
 
-    <TextView
-        style="@style/KL.Text.Section"
+    <!-- Tiêu đề Dialog -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="@string/player_quality_title" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
+        <View
+            android:layout_width="3.5dp"
+            android:layout_height="18dp"
+            android:background="#00E5FF"
+            android:layout_marginRight="10dp" />
+
+        <TextView
+            style="@style/KL.Text.Section"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textColor="#FFFFFF"
+            android:textSize="17sp"
+            android:textStyle="bold"
+            android:text="@string/player_quality_title" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginBottom="12dp"
+        android:background="#1A1F29" />
+
+    <!-- Nhóm: Chất lượng hình ảnh -->
     <TextView
         style="@style/KL.Text.Meta"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:textColor="#00E5FF"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.04"
         android:text="@string/player_video_label" />
 
     <LinearLayout
@@ -28,11 +57,16 @@
         android:layout_marginTop="8dp"
         android:orientation="horizontal" />
 
+    <!-- Nhóm: Chế độ âm thanh -->
     <TextView
         style="@style/KL.Text.Meta"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
+        android:textColor="#00E5FF"
+        android:textSize="12sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.04"
         android:text="@string/player_audio_label" />
 
     <LinearLayout
@@ -41,4 +75,5 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:orientation="horizontal" />
+
 </LinearLayout>

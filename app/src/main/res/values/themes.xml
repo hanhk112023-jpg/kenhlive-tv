@@ -29,12 +29,12 @@
     </style>
 
     <style name="KL.DialogButton" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
-        <item name="android:textColor">@color/kl_brand</item>
+        <item name="android:textColor">@color/csl_dialog_button_text</item>
         <item name="android:textStyle">bold</item>
         <item name="android:background">@drawable/bg_dialog_button</item>
-        <item name="android:minHeight">44dp</item>
-        <item name="android:paddingLeft">16dp</item>
-        <item name="android:paddingRight">16dp</item>
+        <item name="android:minHeight">40dp</item>
+        <item name="android:paddingLeft">20dp</item>
+        <item name="android:paddingRight">20dp</item>
     </style>
 
     <style name="KL.WindowAnim" parent="@android:style/Animation.Activity">

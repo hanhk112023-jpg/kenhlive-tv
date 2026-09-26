@@ -693,7 +693,7 @@ class PlayerActivity : AppCompatActivity() {
         box.removeAllViews()
         val inf = LayoutInflater.from(this)
         names.forEachIndexed { i, n ->
-            val chip = inf.inflate(R.layout.item_search_chip, box, false) as TextView
+            val chip = inf.inflate(R.layout.item_dialog_choice_chip, box, false) as TextView
             chip.text = n
             chip.isSelected = i == selected
             chip.setOnClickListener { onPick(i) }
