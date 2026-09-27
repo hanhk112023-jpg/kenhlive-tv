@@ -13,7 +13,7 @@ import base64, io, json, os, re, subprocess, sys, time, urllib.request
 
 KILO_BASE = os.environ.get('KILO_API_BASE', 'https://api.kilo.ai/api/gateway/v1/chat/completions')
 KILO_KEY  = os.environ.get('KILO_API_KEY', '')
-KILO_MODEL = os.environ.get('KILO_MODEL', 'inclusionai/ling-3.0-flash-vl:free')
+KILO_MODEL = os.environ.get('KILO_MODEL', 'kilo-auto/free')
 PKG = 'com.kenhlive.tv'
 
 KEY_UP = 19
