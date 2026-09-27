@@ -64,11 +64,13 @@ object Enhancer {
         // BUG-16: truoc day low-RAM dat prioritizeTime=true -> Exo bat ket 45s (~10MB/stream),
         // cap 6MB bi bo qua, multiview 4 o van phinh heap. May thap: cap BUOC bang size.
         if (KenhLiveApp.isLowRam(ctx)) {
-            b.setBufferDurationsMs(10_000, 20_000, 1_500, 3_000)
-            b.setTargetBufferBytes(6 * 1024 * 1024) // 6MB/decoder — cap that
+            b.setBufferDurationsMs(15_000, 30_000, 2_500, 4_000)
+            b.setTargetBufferBytes(8 * 1024 * 1024) // 8MB/decoder
+            b.setBackBuffer(10_000, false)
             return b.setPrioritizeTimeOverSizeThresholds(false).build()
         }
-        b.setBufferDurationsMs(25_000, 120_000, 1_500, 4_000)
+        b.setBufferDurationsMs(30_000, 120_000, 2_500, 5_000)
+        b.setBackBuffer(20_000, false)
         return b.setPrioritizeTimeOverSizeThresholds(true).build()
     }
 

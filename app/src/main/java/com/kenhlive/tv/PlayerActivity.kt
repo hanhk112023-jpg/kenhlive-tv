@@ -527,15 +527,19 @@ class PlayerActivity : AppCompatActivity() {
                 }
 
                 holder.itemView.setOnClickListener {
-                    currentChannelIndex = position
-                    switchChannel(ch)
+                    if (position != currentChannelIndex) {
+                        currentChannelIndex = position
+                        switchChannel(ch)
+                    } else {
+                        hideCarousel()
+                    }
                 }
 
                 holder.itemView.setOnFocusChangeListener { v, hasFocus ->
-                    v.animate().scaleX(if (hasFocus) 1.08f else 1f)
-                        .scaleY(if (hasFocus) 1.08f else 1f)
-                        .translationZ(if (hasFocus) 8f else 0f)
-                        .setDuration(120).start()
+                    v.animate().scaleX(if (hasFocus) 1.04f else 1f)
+                        .scaleY(if (hasFocus) 1.04f else 1f)
+                        .translationZ(if (hasFocus) 4f else 0f)
+                        .setDuration(80).start()
                     if (hasFocus) {
                         val epg = EpgRepository.getCurrentAndNext(ch.id, ch.name)
                         if (epg != null && epg.first != null) {
@@ -616,7 +620,7 @@ class PlayerActivity : AppCompatActivity() {
                         }
                         if (state == Player.STATE_BUFFERING) {
                             handler.removeCallbacks(autoRecoveryRunnable)
-                            handler.postDelayed(autoRecoveryRunnable, 3800L)
+                            handler.postDelayed(autoRecoveryRunnable, 8000L)
                         }
                         findViewById<View>(R.id.bufferBox)?.visibility =
                             if (state == Player.STATE_BUFFERING) View.VISIBLE else View.GONE
@@ -659,19 +663,23 @@ class PlayerActivity : AppCompatActivity() {
             getString(R.string.aq_night), getString(R.string.aq_auto)
         )
         buildChips(videoBox, vqNames, EnhanceSettings.videoQuality(this), audioBox, isUpRow = true) { i ->
-            EnhanceSettings.setVideoQuality(this, i)
-            (player?.trackSelector as? androidx.media3.exoplayer.trackselection.DefaultTrackSelector)
-                ?.let { Enhancer.applyVideo(it, i) }
-            Toast.makeText(this, getString(R.string.player_video_changed, vqNames[i]), Toast.LENGTH_SHORT).show()
-            markSelection(videoBox, i)
+            if (i != EnhanceSettings.videoQuality(this)) {
+                EnhanceSettings.setVideoQuality(this, i)
+                (player?.trackSelector as? androidx.media3.exoplayer.trackselection.DefaultTrackSelector)
+                    ?.let { Enhancer.applyVideo(it, i) }
+                Toast.makeText(this, getString(R.string.player_video_changed, vqNames[i]), Toast.LENGTH_SHORT).show()
+                markSelection(videoBox, i)
+            }
         }
         buildChips(audioBox, aqNames, EnhanceSettings.audioMode(this), videoBox, isUpRow = false) { i ->
-            EnhanceSettings.setAudioMode(this, i)
-            val sid = player?.audioSessionId ?: 0
-            if (sid != 0) audioFx.attach(sid, i)
-            val suffix = if (sid == 0) getString(R.string.player_audio_pending) else ""
-            Toast.makeText(this, getString(R.string.player_audio_changed, aqNames[i]) + suffix, Toast.LENGTH_SHORT).show()
-            markSelection(audioBox, i)
+            if (i != EnhanceSettings.audioMode(this)) {
+                EnhanceSettings.setAudioMode(this, i)
+                val sid = player?.audioSessionId ?: 0
+                if (sid != 0) audioFx.attach(sid, i)
+                val suffix = if (sid == 0) getString(R.string.player_audio_pending) else ""
+                Toast.makeText(this, getString(R.string.player_audio_changed, aqNames[i]) + suffix, Toast.LENGTH_SHORT).show()
+                markSelection(audioBox, i)
+            }
         }
 
         dialog = AlertDialog.Builder(this, R.style.Theme_KenhLive_Dialog)
