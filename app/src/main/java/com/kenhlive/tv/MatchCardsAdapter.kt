@@ -1,6 +1,7 @@
 package com.kenhlive.tv
 
 import android.text.format.DateFormat
+import java.util.TimeZone
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -207,9 +208,9 @@ class MatchCardsAdapter(
         }
 
         if (m.matchTimeMs > 0) {
-            val c = Calendar.getInstance(Locale.US).apply { time = Date(m.matchTimeMs) }
-            val timeStr = DateFormat.format("HH:mm", c).toString()
-            val dateStr = DateFormat.format("dd.MM", c).toString()
+            val timeStr = SocoliveRepository.formatTime(m.matchTimeMs)
+            val c = Calendar.getInstance(TimeZone.getTimeZone("Asia/Ho_Chi_Minh"), Locale.US).apply { time = Date(m.matchTimeMs) }
+            val dateStr = String.format(Locale.US, "%02d.%02d", c.get(Calendar.DAY_OF_MONTH), c.get(Calendar.MONTH) + 1)
             h.time.text = timeStr
             h.date.text = "Bắt đầu: $timeStr • $dateStr"
             val soon = m.matchTimeMs - System.currentTimeMillis()

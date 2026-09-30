@@ -198,6 +198,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        DeviceMode.updateMode(this)
         if (DeviceMode.isTv) {
             window.decorView.post {
                 if (currentFocus == null) {
@@ -205,6 +206,10 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
     }
 
     private fun showRail() {
