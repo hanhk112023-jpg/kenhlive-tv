@@ -196,7 +196,80 @@
                 android:src="@drawable/ic_pip"
                 android:contentDescription="@string/player_pip_unsupported"
                 android:visibility="gone" />
+
+            <ImageButton
+                android:id="@+id/phoneMenuBtn"
+                style="@style/KL.IconButton"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:layout_marginLeft="10dp"
+                android:src="@drawable/ic_more_vert"
+                android:contentDescription="Tùy chọn phát"
+                android:visibility="gone" />
         </LinearLayout>
+    </LinearLayout>
+
+    <!-- CENTER PLAY / PAUSE BUTTON (MOBILE TOUCH HUD) -->
+    <ImageButton
+        android:id="@+id/centerPlayPauseBtn"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
+        android:layout_gravity="center"
+        android:background="@drawable/bg_play_pause_circle"
+        android:src="@drawable/ic_pause"
+        android:scaleType="centerInside"
+        android:padding="16dp"
+        android:contentDescription="Phát/Tạm dừng"
+        android:visibility="gone" />
+
+    <!-- BOTTOM MOBILE BAR (PHONE CONTROLS: ROTATE / ASPECT / LIVE BADGE) -->
+    <LinearLayout
+        android:id="@+id/phoneBottomBar"
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:layout_gravity="bottom"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_overlay_bottom"
+        android:paddingLeft="18dp"
+        android:paddingRight="18dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tvPhoneLiveBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bg_badge_live_red"
+            android:paddingLeft="9dp"
+            android:paddingRight="9dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
+            android:text="● TRỰC TIẾP"
+            android:textColor="#FFFFFF"
+            android:textSize="11sp"
+            android:textStyle="bold" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <ImageButton
+            android:id="@+id/phoneAspectBtn"
+            style="@style/KL.IconButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginRight="8dp"
+            android:src="@drawable/ic_aspect_ratio"
+            android:contentDescription="Tỉ lệ màn hình" />
+
+        <ImageButton
+            android:id="@+id/phoneRotateBtn"
+            style="@style/KL.IconButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_fullscreen"
+            android:contentDescription="Xoay toàn màn hình" />
     </LinearLayout>
 
     <!-- SIDE PANEL: DANH SÁCH KÊNH PURE BLACK TRƯỢT TỪ BÊN PHẢI -->

@@ -2,7 +2,9 @@ package com.kenhlive.tv
 
 import android.app.PictureInPictureParams
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.graphics.Rect
 import android.os.Build
 import android.os.Bundle
@@ -49,9 +51,13 @@ class PlayerActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private var topOverlay: View? = null
     private var hint: TextView? = null
+    private var centerPlayPauseBtn: ImageButton? = null
+    private var phoneBottomBar: View? = null
     private val hideOverlay = Runnable {
         topOverlay?.visibility = View.GONE
         hint?.visibility = View.GONE
+        centerPlayPauseBtn?.visibility = View.GONE
+        phoneBottomBar?.visibility = View.GONE
     }
     private val audioFx = AudioEnhancer(this)
     private var url: String = ""
@@ -185,32 +191,70 @@ class PlayerActivity : AppCompatActivity() {
         tvCarouselEpgPreview = findViewById(R.id.tvCarouselEpgPreview)
 
         val channelListBtn = findViewById<ImageButton>(R.id.channelListBtn)
-        if (isIptvMode) {
-            channelListBtn.visibility = View.VISIBLE
-            channelListBtn.setOnClickListener { showCarousel() }
-            setupSidebar()
-            setupChannelCarousel()
+        val qualityBtn = findViewById<ImageButton>(R.id.qualityBtn)
+        val audioBtn = findViewById<ImageButton>(R.id.audioBtn)
+        val aspectBtn = findViewById<ImageButton>(R.id.aspectBtn)
+        val sleepBtn = findViewById<ImageButton>(R.id.sleepBtn)
+        val audioTrackBtn = findViewById<ImageButton>(R.id.audioTrackBtn)
+        val audioBoostBtn = findViewById<ImageButton>(R.id.audioBoostBtn)
+        val statsBtn = findViewById<ImageButton>(R.id.statsBtn)
+        val multiBtn = findViewById<ImageButton>(R.id.multiBtn)
+        val pipBtn = findViewById<ImageButton>(R.id.pipBtn)
+        val phoneMenuBtn = findViewById<ImageButton>(R.id.phoneMenuBtn)
+
+        // Mobile vs TV UI Adaptations
+        centerPlayPauseBtn = findViewById(R.id.centerPlayPauseBtn)
+        phoneBottomBar = findViewById(R.id.phoneBottomBar)
+
+        if (DeviceMode.isPhone) {
+            // Trên Phone: Tối giản Top Bar, ẩn các nút chi tiết vào menu
+            channelListBtn?.visibility = View.GONE
+            audioBtn?.visibility = View.GONE
+            aspectBtn?.visibility = View.GONE
+            sleepBtn?.visibility = View.GONE
+            audioTrackBtn?.visibility = View.GONE
+            audioBoostBtn?.visibility = View.GONE
+            statsBtn?.visibility = View.GONE
+            multiBtn?.visibility = View.GONE
+            phoneMenuBtn?.visibility = View.VISIBLE
+            phoneMenuBtn?.setOnClickListener { showPhoneMoreOptions() }
+
+            centerPlayPauseBtn?.setOnClickListener { togglePlayPause() }
+            findViewById<ImageButton>(R.id.phoneAspectBtn)?.setOnClickListener { cycleAspectRatio() }
+            findViewById<ImageButton>(R.id.phoneRotateBtn)?.setOnClickListener { toggleScreenOrientation() }
+        } else {
+            // Trên TV: Giữ nguyên bố cục đầy đủ cho remote
+            phoneMenuBtn?.visibility = View.GONE
+            phoneBottomBar?.visibility = View.GONE
+            centerPlayPauseBtn?.visibility = View.GONE
+
+            if (isIptvMode) {
+                channelListBtn.visibility = View.VISIBLE
+                channelListBtn.setOnClickListener { showCarousel() }
+                setupSidebar()
+                setupChannelCarousel()
+            }
         }
 
         initPlayer()
         val pv = findViewById<PlayerView>(R.id.playerView)
 
         findViewById<ImageButton>(R.id.backBtn).setOnClickListener { finish() }
-        findViewById<ImageButton>(R.id.qualityBtn).setOnClickListener { showSettingsDialog(video = true) }
-        findViewById<ImageButton>(R.id.audioBtn).setOnClickListener { showSettingsDialog(video = false) }
-        findViewById<ImageButton>(R.id.aspectBtn)?.setOnClickListener { cycleAspectRatio() }
-        findViewById<ImageButton>(R.id.sleepBtn)?.setOnClickListener { showSleepTimerDialog() }
-        findViewById<ImageButton>(R.id.audioTrackBtn)?.setOnClickListener { showAudioTrackDialog() }
-        findViewById<ImageButton>(R.id.audioBoostBtn)?.setOnClickListener { cycleAudioBoost() }
-        findViewById<ImageButton>(R.id.statsBtn)?.setOnClickListener { toggleStatsHud() }
+        qualityBtn.setOnClickListener { showSettingsDialog(video = true) }
+        audioBtn.setOnClickListener { showSettingsDialog(video = false) }
+        aspectBtn?.setOnClickListener { cycleAspectRatio() }
+        sleepBtn?.setOnClickListener { showSleepTimerDialog() }
+        audioTrackBtn?.setOnClickListener { showAudioTrackDialog() }
+        audioBoostBtn?.setOnClickListener { cycleAudioBoost() }
+        statsBtn?.setOnClickListener { toggleStatsHud() }
 
-        findViewById<ImageButton>(R.id.pipBtn)?.let { b ->
+        pipBtn?.let { b ->
             if (pipSupported() && !DeviceMode.isTv) {
                 b.visibility = View.VISIBLE
                 b.setOnClickListener { enterPip(manual = true) }
             }
         }
-        findViewById<ImageButton>(R.id.multiBtn).setOnClickListener {
+        multiBtn.setOnClickListener {
             startActivity(
                 Intent(this, MultiViewActivity::class.java)
                     .putExtra("initial_room", name)
@@ -221,6 +265,94 @@ class PlayerActivity : AppCompatActivity() {
 
         hint?.text = getString(if (DeviceMode.isTv) R.string.player_hint_tv else R.string.player_hint_phone)
         showOverlay()
+    }
+
+    // ================= MOBILE PHONE INTERACTIONS =================
+    private fun togglePlayPause() {
+        val p = player ?: return
+        if (p.isPlaying) {
+            p.pause()
+            centerPlayPauseBtn?.setImageResource(R.drawable.ic_play)
+            Toast.makeText(this, "Tạm dừng", Toast.LENGTH_SHORT).show()
+        } else {
+            p.play()
+            centerPlayPauseBtn?.setImageResource(R.drawable.ic_pause)
+            Toast.makeText(this, "Tiếp tục phát", Toast.LENGTH_SHORT).show()
+        }
+        showOverlay()
+    }
+
+    private fun toggleScreenOrientation() {
+        val currentOrientation = resources.configuration.orientation
+        if (currentOrientation == Configuration.ORIENTATION_LANDSCAPE) {
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            Toast.makeText(this, "Chuyển màn hình dọc", Toast.LENGTH_SHORT).show()
+        } else {
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            Toast.makeText(this, "Chuyển toàn màn hình ngang", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun showPhoneMoreOptions() {
+        val options = mutableListOf<String>()
+        val actions = mutableListOf<() -> Unit>()
+
+        // 1. Tỉ lệ khung hình
+        options.add("Tỉ lệ: ${aspectNames[currentAspectIdx]}")
+        actions.add { cycleAspectRatio() }
+
+        // 2. Chế độ âm thanh
+        val aqNames = arrayOf(
+            getString(R.string.aq_standard), getString(R.string.aq_bass), getString(R.string.aq_dialog),
+            getString(R.string.aq_night), getString(R.string.aq_auto)
+        )
+        val curAq = EnhanceSettings.audioMode(this).coerceIn(0, aqNames.size - 1)
+        options.add("Âm thanh: ${aqNames[curAq]}")
+        actions.add { showSettingsDialog(video = false) }
+
+        // 3. Khuếch đại âm lượng (Audio Boost)
+        val boostLabels = arrayOf("Tắt", "+3dB", "+6dB", "+9dB")
+        options.add("Khuếch đại âm lượng: ${boostLabels[audioBoostLevel]}")
+        actions.add { cycleAudioBoost() }
+
+        // 4. Track âm thanh / Ngôn ngữ (nếu có)
+        options.add("Kênh âm thanh (Ngôn ngữ)")
+        actions.add { showAudioTrackDialog() }
+
+        // 5. Hẹn giờ tắt
+        val timerLabel = if (sleepMinutesLeft > 0) "Còn $sleepMinutesLeft phút" else "Chưa đặt"
+        options.add("Hẹn giờ tắt ($timerLabel)")
+        actions.add { showSleepTimerDialog() }
+
+        // 6. Thông số kỹ thuật (Stats for Nerds)
+        options.add("Thông số kỹ thuật (Stats)")
+        actions.add { toggleStatsHud() }
+
+        // 7. MultiView nếu muốn xem nhiều trận
+        options.add("MultiView (Xem nhiều màn hình)")
+        actions.add {
+            startActivity(
+                Intent(this, MultiViewActivity::class.java)
+                    .putExtra("initial_room", findViewById<TextView>(R.id.playerTitle).text.toString())
+                    .putExtra("initial_url", url)
+            )
+        }
+
+        // 8. Danh sách kênh (nếu đang ở IPTV)
+        if (isIptvMode) {
+            options.add("Mở danh sách kênh")
+            actions.add { toggleSidebar() }
+        }
+
+        AlertDialog.Builder(this, R.style.Theme_KenhLive_Dialog)
+            .setTitle("⚙️ Tùy Chọn Phát")
+            .setItems(options.toTypedArray()) { d, which ->
+                d.dismiss()
+                actions[which].invoke()
+            }
+            .setNegativeButton(R.string.dialog_close, null)
+            .show()
+        hideOnce()
     }
 
     // ================= CHUYỂN TỈ LỆ MÀN HÌNH =================
@@ -633,6 +765,11 @@ class PlayerActivity : AppCompatActivity() {
         }
         player?.let { p ->
             p.addListener(object : Player.Listener {
+                override fun onIsPlayingChanged(isPlaying: Boolean) {
+                    if (DeviceMode.isPhone) {
+                        centerPlayPauseBtn?.setImageResource(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
+                    }
+                }
                 override fun onEvents(p: Player, events: Player.Events) {
                     val sid = (p as? ExoPlayer)?.audioSessionId ?: 0
                     if (sid != 0 && audioFx.notAttached) {
@@ -781,6 +918,12 @@ class PlayerActivity : AppCompatActivity() {
         quickChannelOsd?.visibility = View.GONE
         topOverlay?.visibility = View.VISIBLE
         hint?.visibility = View.VISIBLE
+        if (DeviceMode.isPhone) {
+            centerPlayPauseBtn?.visibility = View.VISIBLE
+            phoneBottomBar?.visibility = View.VISIBLE
+            val isPlaying = player?.isPlaying == true
+            centerPlayPauseBtn?.setImageResource(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
+        }
         hideOnce()
     }
 
