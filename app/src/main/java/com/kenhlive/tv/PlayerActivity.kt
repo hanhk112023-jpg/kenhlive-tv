@@ -839,8 +839,9 @@ class PlayerActivity : AppCompatActivity() {
         val inf = LayoutInflater.from(this)
         names.forEachIndexed { i, n ->
             val chip = inf.inflate(R.layout.item_dialog_choice_chip, box, false) as TextView
-            chip.text = n
-            chip.isSelected = i == selected
+            val isSel = i == selected
+            chip.text = if (isSel) "$n  ✓" else n
+            chip.isSelected = isSel
             chip.setOnClickListener { onPick(i) }
             chip.setOnKeyListener { _, keyCode, event ->
                 if (event.action == KeyEvent.ACTION_DOWN) {
@@ -861,7 +862,13 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun markSelection(box: LinearLayout, selected: Int) {
-        for (i in 0 until box.childCount) box.getChildAt(i).isSelected = i == selected
+        for (i in 0 until box.childCount) {
+            val tv = box.getChildAt(i) as? TextView ?: continue
+            val isSel = i == selected
+            tv.isSelected = isSel
+            val raw = tv.text.toString().replace("  ✓", "").trim()
+            tv.text = if (isSel) "$raw  ✓" else raw
+        }
     }
 
     // ================= PICTURE-IN-PICTURE =================

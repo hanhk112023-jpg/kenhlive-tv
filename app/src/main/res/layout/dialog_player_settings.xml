@@ -69,11 +69,17 @@
         android:letterSpacing="0.04"
         android:text="@string/player_audio_label" />
 
-    <LinearLayout
-        android:id="@+id/audioOptions"
+    <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
-        android:orientation="horizontal" />
+        android:scrollbars="none">
+
+        <LinearLayout
+            android:id="@+id/audioOptions"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal" />
+    </HorizontalScrollView>
 
 </LinearLayout>
