@@ -136,12 +136,15 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
-    // Tự động phục hồi luồng (Auto Stream Failover)
+    // Tự động phục hồi luồng khi bị kẹt buffering hoặc drop kết nối (Auto Stream Failover)
     private val autoRecoveryRunnable = Runnable {
-        if (player?.playbackState == Player.STATE_BUFFERING) {
-            Toast.makeText(this@PlayerActivity, "Đang tối ưu lại luồng phát...", Toast.LENGTH_SHORT).show()
-            player?.seekToDefaultPosition()
-            player?.prepare()
+        val p = player ?: return@Runnable
+        if (p.playbackState == Player.STATE_BUFFERING) {
+            Toast.makeText(this@PlayerActivity, "Mạng chập chờn: Đang tự kết nối lại luồng...", Toast.LENGTH_SHORT).show()
+            // Reset về Live edge (đầu luồng phát mới nhất) và nạp lại
+            p.seekToDefaultPosition()
+            p.prepare()
+            p.play()
         }
     }
 
@@ -725,6 +728,7 @@ class PlayerActivity : AppCompatActivity() {
     private fun initPlayer() {
         if (url.isBlank()) return
         player = ExoPlayer.Builder(this)
+            .setMediaSourceFactory(Enhancer.buildMediaSourceFactory(this))
             .setTrackSelector(Enhancer.buildTrackSelector(this))
             .setLoadControl(Enhancer.buildLoadControl(this))
             .build().apply {
@@ -758,7 +762,7 @@ class PlayerActivity : AppCompatActivity() {
                         }
                         if (state == Player.STATE_BUFFERING) {
                             handler.removeCallbacks(autoRecoveryRunnable)
-                            handler.postDelayed(autoRecoveryRunnable, 8000L)
+                            handler.postDelayed(autoRecoveryRunnable, 4000L)
                         }
                         findViewById<View>(R.id.bufferBox)?.visibility =
                             if (state == Player.STATE_BUFFERING) View.VISIBLE else View.GONE

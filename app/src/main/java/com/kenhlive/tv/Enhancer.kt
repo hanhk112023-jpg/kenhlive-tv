@@ -6,6 +6,8 @@ import android.media.audiofx.Equalizer
 import android.media.audiofx.LoudnessEnhancer
 import android.media.audiofx.Virtualizer
 import androidx.media3.common.MediaItem
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.LoadControl
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
@@ -18,7 +20,7 @@ object EnhanceSettings {
     const val AQ_AUTO = 4
 
     private fun sp(ctx: Context) = ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE)
-    fun videoQuality(ctx: Context) = sp(ctx).getInt("vq", VQ_HIGH)
+    fun videoQuality(ctx: Context) = sp(ctx).getInt("vq", VQ_AUTO)
     fun audioMode(ctx: Context) = sp(ctx).getInt("aq", AQ_AUTO)
     fun setVideoQuality(ctx: Context, v: Int) = sp(ctx).edit().putInt("vq", v).apply()
     fun setAudioMode(ctx: Context, v: Int) = sp(ctx).edit().putInt("aq", v).apply()
@@ -57,21 +59,42 @@ object Enhancer {
         } catch (e: Exception) { /* giữ tham số hiện tại */ }
     }
 
-    /** Buffer lớn → ít rebuffer. Máy low-RAM: buffer ngắn hơn (tiết kiệm 60–120MB mỗi player,
-     *  multiview 2 player càng cần) + giới hạn size buffer để không phình heap. */
+    /** Buffer tối ưu cho Live Stream:
+     *  Live stream (HLS / m3u8) có sliding window ngắn (~6s-18s).
+     *  Nếu đặt minBuffer 30s-120s, ExoPlayer sẽ bị đói buffer liên tục dẫn đến ngắt quãng và xoay tròn load!
+     *  Đặt minBufferMs = 1500ms, maxBufferMs = 8000ms, bufferForPlayback = 800ms để phát mượt ngay lập tức
+     *  và không bị drop connection.
+     */
     fun buildLoadControl(ctx: Context): LoadControl {
         val b = DefaultLoadControl.Builder()
-        // BUG-16: truoc day low-RAM dat prioritizeTime=true -> Exo bat ket 45s (~10MB/stream),
-        // cap 6MB bi bo qua, multiview 4 o van phinh heap. May thap: cap BUOC bang size.
         if (KenhLiveApp.isLowRam(ctx)) {
-            b.setBufferDurationsMs(15_000, 30_000, 2_500, 4_000)
-            b.setTargetBufferBytes(8 * 1024 * 1024) // 8MB/decoder
-            b.setBackBuffer(10_000, false)
+            b.setBufferDurationsMs(
+                1_500,  // minBufferMs: đủ 1.5s là bắt đầu ổn định
+                5_000,  // maxBufferMs: tối đa 5s
+                600,    // bufferForPlaybackMs: nạp 0.6s là phát ngay, không lag
+                1_000   // bufferForPlaybackAfterRebufferMs: rebuffer 1s là chạy tiếp
+            )
+            b.setTargetBufferBytes(4 * 1024 * 1024) // 4MB/decoder
+            b.setBackBuffer(3_000, false)
             return b.setPrioritizeTimeOverSizeThresholds(false).build()
         }
-        b.setBufferDurationsMs(30_000, 120_000, 2_500, 5_000)
-        b.setBackBuffer(20_000, false)
+        b.setBufferDurationsMs(
+            2_000,  // minBufferMs
+            10_000, // maxBufferMs
+            800,    // bufferForPlaybackMs
+            1_500   // bufferForPlaybackAfterRebufferMs
+        )
+        b.setBackBuffer(5_000, false)
         return b.setPrioritizeTimeOverSizeThresholds(true).build()
+    }
+
+    fun buildMediaSourceFactory(ctx: Context): DefaultMediaSourceFactory {
+        val httpSource = DefaultHttpDataSource.Factory()
+            .setConnectTimeoutMs(8000)
+            .setReadTimeoutMs(8000)
+            .setAllowCrossProtocolRedirects(true)
+            .setUserAgent("Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36")
+        return DefaultMediaSourceFactory(ctx).setDataSourceFactory(httpSource)
     }
 
     fun buildMediaItem(url: String): MediaItem = MediaItem.fromUri(url)
