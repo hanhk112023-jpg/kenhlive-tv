@@ -147,6 +147,7 @@ class PlayerActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        DeviceMode.updateMode(this)
         applyTvDensity()
         setContentView(R.layout.activity_player)
 

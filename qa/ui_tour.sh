@@ -197,16 +197,15 @@ adb shell wm density 420
 adb shell am force-stop com.kenhlive.tv; sleep 1
 
 # Mở trực tiếp PlayerActivity với URL test trên Phone dọc
-adb shell am start -n com.kenhlive.tv/.PlayerActivity --es url "https://bitdash-a.akamaihd.net/content/sintel/hls/video/master.m3u8" --es name "Chelsea vs Arsenal (Trực tiếp Mobile)" >/dev/null 2>&1
-sleep 5
-# Chạm giữa màn hình để kích hoạt hiển thị Controls OSD
-adb shell input tap 540 1200
+adb shell am start -n com.kenhlive.tv/.PlayerActivity --es url "https://bitdash-a.akamaihd.net/content/sintel/hls/video/master.m3u8" --es name "Chelsea vs Arsenal" >/dev/null 2>&1
+sleep 4
+adb shell input keyevent 23 # phím OK/Enter kích hoạt overlay
 sleep 1
 adb exec-out screencap -p > $OUT/phone_player_portrait.png
 mark "CHUP ANH: Mobile Phone Player Portrait doc"
 
 # Bấm mở Menu More Options trên Phone (nút 3 chấm ⋮ ở góc trên bên phải)
-adb shell input tap 1010 110
+adb shell input tap 990 100
 sleep 2
 adb exec-out screencap -p > $OUT/phone_player_menu_dialog.png
 mark "CHUP ANH: Mobile Phone Player More Options Menu"
@@ -218,7 +217,7 @@ adb shell settings put system user_rotation 1
 adb shell wm size 2400x1080
 sleep 3
 # Chạm nhẹ màn hình để gọi hiển thị controls trên màn hình ngang
-adb shell input tap 1200 540
+adb shell input keyevent 23
 sleep 1
 adb exec-out screencap -p > $OUT/phone_player_landscape.png
 mark "CHUP ANH: Mobile Phone Player Landscape ngang"

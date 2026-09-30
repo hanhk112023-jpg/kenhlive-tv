@@ -40,6 +40,20 @@ object DeviceMode {
         lowRam = am.isLowRamDevice || (Runtime.getRuntime().maxMemory() / 1024 / 1024) < 192
     }
 
+    /** Cập nhật lại mode động khi xoay màn hình hoặc thay đổi kích thước wm size */
+    fun updateMode(context: Context) {
+        val pm = context.packageManager
+        val uiTv = (context.resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK) ==
+            Configuration.UI_MODE_TYPE_TELEVISION
+        val dm = context.resources.displayMetrics
+        val isPortraitOrientation = dm.heightPixels > dm.widthPixels
+        mode = if (pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK) || uiTv) {
+            if (isPortraitOrientation) Mode.PHONE else Mode.TV
+        } else {
+            Mode.PHONE
+        }
+    }
+
     fun isLowRam(context: Context): Boolean = lowRam
 
     /** true nếu màn hình đang portrait (điện thoại dọc). */
