@@ -420,3 +420,29 @@ Chạy lại bộ QA CI (`qa/`), kiểm thử tay theo checklist mục 7, beta n
 1. Bạn chốt các câu **D1–D8** (đặc biệt D1, D2, D4, D5).
 2. Mình làm **Sprint 0 + Sprint 1** (nền tảng + Design System + trang Gallery) để bạn **duyệt giao diện** trên emulator/ảnh chụp trước khi làm Player.
 3. Gửi mình số đo từ thiết bị thật (mẫu TV box/phone bạn đang dùng, RAM, Android version) để đặt KPI chính xác.
+
+---
+
+## ✅ Quyết định đã chốt (30/09/2026)
+
+| # | Quyết định | Áp dụng |
+|---|---|---|
+| D1 | Giữ XML Views (không chuyển Compose) | Giữ nguyên kiến trúc, tối ưu RAM |
+| D2 | Máy mục tiêu **1GB RAM** | `DeviceMode.lowRam/ultraLowRam` theo RAM vật lý; Coil cache nhỏ; MultiView 2 ô |
+| D4 | **Không** đăng Google Play (sideload APK) | Không ép targetSdk 35 |
+| D5 | **Giữ** đồng hồ + lịch âm ở hero | Không đụng |
+
+## 📦 Đã làm trong v7.0.0 (code)
+
+- **Mở Player tức thì**: Live/Lịch/Tìm kiếm truyền `room_num`, Player tự lấy nguồn (cache 45s) → không còn chờ mạng ở màn hình trước.
+- **Nhiều nguồn phát + tự đổi nguồn** khi lỗi/đứng hình (HD HLS → HLS → HD FLV → FLV).
+- **Stale-while-revalidate**: Live & Lịch hiện ngay từ cache đĩa rồi làm mới nền; mất mạng vẫn xem được lịch.
+- **Player mới**: 1 bảng điều khiển duy nhất (bottom sheet dọc / side panel ngang + TV), thanh nút TV gọn, thông báo dạng chip thay Toast, toàn màn hình immersive, nhớ tỉ lệ khung hình.
+- **Cử chỉ (điện thoại)**: vuốt trái = độ sáng, vuốt phải = âm lượng, chạm đúp = tạm dừng, chạm 1 lần = ẩn/hiện điều khiển.
+- **Điều hướng**: TV → thanh tab ngang có chữ (←/→ chọn, ↓ vào nội dung, ↑ quay lại tab); điện thoại → pill sáng quanh tab đang chọn.
+- **Yêu thích** (chỉ kênh IPTV ở v7.0): giữ OK / nhấn giữ trên thẻ kênh, hoặc trong bảng Player; nhóm "★ Yêu thích" tự xuất hiện.
+- Sửa lỗi: chỉ số kênh IPTV khi đang lọc nhóm (Player nhảy sai kênh).
+- Dọn 9 layout/drawable không dùng.
+
+## ⏳ Chưa làm / để v7.1
+- Yêu thích cho trận/BLV Socolive; prefetch nguồn khi focus thẻ; làm mới Hero/Card; UI-Tour kiểm thử trên emulator.

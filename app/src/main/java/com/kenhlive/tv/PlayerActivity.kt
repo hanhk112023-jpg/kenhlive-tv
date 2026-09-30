@@ -469,7 +469,8 @@ class PlayerActivity : AppCompatActivity() {
                 }
                 sourceIdx = 0
                 url = list[0].url
-                if (player == null) initPlayer()
+                // nếu Activity chưa START (đang ở onCreate) thì onStart() sẽ tự khởi tạo player
+                if (player == null && lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) initPlayer()
             } else {
                 sourceIdx = list.indexOfFirst { it.url == url }.coerceAtLeast(0)
             }
@@ -1083,7 +1084,7 @@ class PlayerActivity : AppCompatActivity() {
 
     fun enterPip(manual: Boolean) {
         if (!pipSupported()) {
-            if (manual) osd(R.string.player_pip_unsupported)
+            if (manual) osd(getString(R.string.player_pip_unsupported))
             return
         }
         val p = player ?: return

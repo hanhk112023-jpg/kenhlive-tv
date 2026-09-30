@@ -131,9 +131,9 @@ class PlayerSheet(private val activity: Activity, root: Page) {
         override fun onBindViewHolder(h: VH, position: Int) {
             val r = rows[position]
             h.icon.setImageResource(r.icon)
-            h.icon.setColorFilter(if (r.selected) activity.getColor(R.color.kl_brand) else Color.WHITE, PorterDuff.Mode.SRC_IN)
+            h.icon.setColorFilter(if (r.selected) androidx.core.content.ContextCompat.getColor(activity, R.color.kl_brand) else Color.WHITE, PorterDuff.Mode.SRC_IN)
             h.title.text = r.title
-            h.title.setTextColor(activity.getColor(if (r.selected) R.color.kl_brand else R.color.kl_text_1))
+            h.title.setTextColor(androidx.core.content.ContextCompat.getColor(activity, if (r.selected) R.color.kl_brand else R.color.kl_text_1))
             h.value.text = r.value
             h.value.visibility = if (r.value.isEmpty()) View.GONE else View.VISIBLE
             h.check.visibility = if (r.chevron) View.VISIBLE else View.GONE
