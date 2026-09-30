@@ -26,7 +26,15 @@ class ScheduleViewModel : ViewModel() {
         if (!force && loadedOnce) return
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
-            _state.value = UiState.Loading
+            var showedStale = false
+            if (_state.value !is UiState.Success) {
+                val cached = SocoliveRepository.cachedSchedule(7)?.let { flatten(it) }
+                if (!cached.isNullOrEmpty()) {
+                    _state.value = UiState.Success(cached)
+                    showedStale = true
+                    loadedOnce = true
+                } else _state.value = UiState.Loading
+            }
             try {
                 val items = flatten(SocoliveRepository.fetchSchedule(7, force = true))
                 loadedOnce = true
@@ -34,6 +42,7 @@ class ScheduleViewModel : ViewModel() {
                     UiState.Empty("Sân vắng bóng", "Không có trận nào 7 ngày tới")
                 else UiState.Success(items)
             } catch (e: Exception) {
+                if (showedStale) return@launch
                 _state.value = UiState.Error("Không tải được lịch", "Kiểm tra kết nối mạng rồi thử lại")
             }
         }

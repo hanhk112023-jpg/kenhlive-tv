@@ -3,30 +3,33 @@
     android:layout_width="0dp"
     android:layout_height="match_parent"
     android:layout_weight="1"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:layout_marginLeft="4dp"
-    android:layout_marginRight="4dp"
-    android:layout_marginTop="4dp"
-    android:layout_marginBottom="4dp"
-    android:background="@drawable/bg_nav_item_phone"
-    android:paddingTop="6dp"
-    android:paddingBottom="6dp"
     android:clickable="true"
-    android:focusable="false">
+    android:focusable="false"
+    android:gravity="center"
+    android:orientation="vertical"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp">
 
-    <ImageView
-        android:id="@+id/navIcon"
-        android:layout_width="@dimen/nav_icon"
-        android:layout_height="@dimen/nav_icon"
-        android:tint="@color/csl_nav_icon"
-        android:contentDescription="@null" />
+    <!-- v7: viên thuốc (pill) sáng lên quanh icon của tab đang chọn -->
+    <FrameLayout
+        android:layout_width="58dp"
+        android:layout_height="32dp"
+        android:background="@drawable/bg_nav_pill">
+
+        <ImageView
+            android:id="@+id/navIcon"
+            android:layout_width="@dimen/nav_icon"
+            android:layout_height="@dimen/nav_icon"
+            android:layout_gravity="center"
+            android:contentDescription="@null"
+            android:tint="@color/csl_nav_icon" />
+    </FrameLayout>
 
     <TextView
         android:id="@+id/navLabel"
         style="@style/KL.Text.Nav"
-        android:textColor="@color/csl_nav_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="3dp" />
+        android:layout_marginTop="3dp"
+        android:textColor="@color/csl_nav_text" />
 </LinearLayout>

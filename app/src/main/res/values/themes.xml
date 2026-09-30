@@ -43,4 +43,20 @@
         <item name="android:activityCloseEnterAnimation">@android:anim/fade_in</item>
         <item name="android:activityCloseExitAnimation">@android:anim/fade_out</item>
     </style>
+
+    <!-- v7: Sheet điều khiển Player (bottom sheet dọc / side panel ngang + TV) -->
+    <style name="Theme.KenhLive.Sheet" parent="Theme.AppCompat.Dialog">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:backgroundDimEnabled">true</item>
+        <item name="android:backgroundDimAmount">0.55</item>
+    </style>
+    <style name="KL.SheetAnim.Bottom" parent="">
+        <item name="android:windowEnterAnimation">@anim/sheet_in_bottom</item>
+        <item name="android:windowExitAnimation">@anim/sheet_out_bottom</item>
+    </style>
+    <style name="KL.SheetAnim.Side" parent="">
+        <item name="android:windowEnterAnimation">@anim/sheet_in_right</item>
+        <item name="android:windowExitAnimation">@anim/sheet_out_right</item>
+    </style>
 </resources>

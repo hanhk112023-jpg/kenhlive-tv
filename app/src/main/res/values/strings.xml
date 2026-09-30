@@ -137,4 +137,25 @@
     <string name="nav_replay">Điểm tin</string>
     <string name="nav_fav">Yêu thích</string>
     <string name="nav_cats">Thể loại</string>
+
+    <!-- v7: Player -->
+    <string name="player_sheet_title">Tùy chọn phát</string>
+    <string name="player_sheet_source">Nguồn phát</string>
+    <string name="player_sheet_video">Chất lượng hình</string>
+    <string name="player_sheet_audio">Chế độ âm thanh</string>
+    <string name="player_sheet_aspect">Tỉ lệ khung hình</string>
+    <string name="player_sheet_boost">Khuếch đại âm lượng</string>
+    <string name="player_sheet_track">Kênh âm thanh / ngôn ngữ</string>
+    <string name="player_sheet_sleep">Hẹn giờ tắt</string>
+    <string name="player_sheet_stats">Thông số kỹ thuật</string>
+    <string name="player_sheet_channels">Danh sách kênh</string>
+    <string name="player_sheet_pip">Thu nhỏ (hình trong hình)</string>
+    <string name="player_aspect_changed">Tỉ lệ: %1$s</string>
+    <string name="player_reconnecting">Mạng chập chờn — đang kết nối lại…</string>
+    <string name="player_source_failed">Nguồn lỗi</string>
+    <string name="player_source_stalled">Nguồn đứng hình</string>
+    <string name="fav_add">Thêm vào Yêu thích</string>
+    <string name="fav_remove">Bỏ khỏi Yêu thích</string>
+    <string name="fav_added">Đã thêm vào Yêu thích</string>
+    <string name="fav_removed">Đã bỏ khỏi Yêu thích</string>
 </resources>

@@ -23,9 +23,14 @@ import coil.load
 import com.kenhlive.tv.DeviceMode
 import com.kenhlive.tv.PlayerActivity
 import com.kenhlive.tv.R
+import com.kenhlive.tv.Favorites
 import kotlinx.coroutines.launch
 
 class IptvFragment : Fragment() {
+
+    private companion object {
+        const val FAV_GROUP = "★ Yêu thích"
+    }
 
     private lateinit var groupList: RecyclerView
     private lateinit var gridList: RecyclerView
@@ -137,17 +142,7 @@ class IptvFragment : Fragment() {
                 val sportsCount = allChannels.size - vnCount
                 countText.text = "Tổng: ${allChannels.size} kênh (${vnCount} VN, ${sportsCount} Thể thao)"
 
-                val distinctGroups = mutableListOf("Việt Nam", "Thể Thao", "DAZN", "Sky Sports", "beIN Sports", "ESPN", "FIFA+", "Tất cả")
-                val otherGroups = allChannels.map { it.group }.distinct().filterNot { it in distinctGroups }
-                distinctGroups.addAll(otherGroups)
-
-                setupGroups(distinctGroups.filter { g ->
-                    g == "Tất cả" || allChannels.any {
-                        if (g == "Việt Nam") it.isVn || it.group.contains("Việt Nam", ignoreCase = true)
-                        else if (g == "Thể Thao") !it.isVn
-                        else it.group.equals(g, ignoreCase = true)
-                    }
-                })
+                setupGroups(buildGroups())
                 applyFilter(focusFirst = true)
 
                 EpgRepository.initEpg(requireContext())
@@ -161,9 +156,41 @@ class IptvFragment : Fragment() {
         }
     }
 
+    /** Danh sách nhóm kênh; v7: "★ Yêu thích" luôn đứng đầu khi đã có kênh yêu thích. */
+    private fun buildGroups(): List<String> {
+        val distinctGroups = mutableListOf("Việt Nam", "Thể Thao", "DAZN", "Sky Sports", "beIN Sports", "ESPN", "FIFA+", "Tất cả")
+        val otherGroups = allChannels.map { it.group }.distinct().filterNot { it in distinctGroups }
+        distinctGroups.addAll(otherGroups)
+        val groups = distinctGroups.filter { g ->
+            g == "Tất cả" || allChannels.any {
+                if (g == "Việt Nam") it.isVn || it.group.contains("Việt Nam", ignoreCase = true)
+                else if (g == "Thể Thao") !it.isVn
+                else it.group.equals(g, ignoreCase = true)
+            }
+        }
+        val favIds = Favorites.iptvIds(requireContext())
+        return if (allChannels.any { it.id in favIds }) listOf(FAV_GROUP) + groups else groups
+    }
+
+    private fun toggleFavorite(ch: IptvChannel) {
+        val now = Favorites.toggleIptv(requireContext(), ch.id)
+        android.widget.Toast.makeText(
+            requireContext(),
+            if (now) R.string.fav_added else R.string.fav_removed,
+            android.widget.Toast.LENGTH_SHORT
+        ).show()
+        val groups = buildGroups()
+        if (selectedGroup == FAV_GROUP && FAV_GROUP !in groups) selectedGroup = "Việt Nam"
+        setupGroups(groups)
+        applyFilter(focusFirst = false)
+    }
+
     private fun applyFilter(focusFirst: Boolean = false) {
         var list = allChannels
-        if (selectedGroup == "Việt Nam") {
+        if (selectedGroup == FAV_GROUP) {
+            val favIds = Favorites.iptvIds(requireContext())
+            list = list.filter { it.id in favIds }
+        } else if (selectedGroup == "Việt Nam") {
             list = list.filter { it.isVn || it.group.contains("Việt Nam", ignoreCase = true) }
         } else if (selectedGroup == "Thể Thao") {
             list = list.filter { !it.isVn }
@@ -197,7 +224,8 @@ class IptvFragment : Fragment() {
             updateHeroPreview(displayedChannels[0])
         }
 
-        if (focusFirst && displayedChannels.isNotEmpty() && DeviceMode.isTv) {
+        if (focusFirst && displayedChannels.isNotEmpty() && DeviceMode.isTv &&
+            (activity as? com.kenhlive.tv.MainActivity)?.focusInTabBar() != true) {
             gridList.post {
                 val card0 = gridList.findViewHolderForAdapterPosition(0)?.itemView
                     ?: gridList.layoutManager?.findViewByPosition(0)
@@ -265,7 +293,8 @@ class IptvFragment : Fragment() {
                 val ch = channels[position]
                 holder.tvName.text = ch.name
                 holder.tvSub.text = if (ch.isVn) "Việt Nam" else ch.group
-                holder.badge.text = if (ch.isVn) "VIỆT NAM" else ch.group.uppercase()
+                val fav = Favorites.isIptv(requireContext(), ch.id)
+                holder.badge.text = (if (fav) "♥ " else "") + (if (ch.isVn) "VIỆT NAM" else ch.group.uppercase())
 
                 if (ch.logo.isNotEmpty()) {
                     holder.ivLogo.load(ch.logo) {
@@ -280,6 +309,8 @@ class IptvFragment : Fragment() {
                 holder.itemView.setOnClickListener {
                     openChannel(ch, position)
                 }
+                // v7: giữ OK (TV) / nhấn giữ (điện thoại) = thêm/bỏ Yêu thích
+                holder.itemView.setOnLongClickListener { toggleFavorite(ch); true }
 
                 holder.itemView.setOnFocusChangeListener { v, hasFocus ->
                     v.animate().scaleX(if (hasFocus) 1.04f else 1f)
@@ -303,7 +334,8 @@ class IptvFragment : Fragment() {
             putExtra("pip", false)
             putExtra("is_iptv", true)
             putExtra("channel_id", ch.id)
-            putExtra("current_index", index)
+            // index phải theo danh sách đầy đủ mà Player dùng (không phải danh sách đã lọc)
+            putExtra("current_index", IptvRepository.currentChannels.indexOfFirst { it.url == ch.url }.coerceAtLeast(0))
         }
         startActivity(intent)
     }
