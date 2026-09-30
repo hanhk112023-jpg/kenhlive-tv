@@ -514,6 +514,9 @@
             android:text="FHD 50FPS" />
     </LinearLayout>
 
+    <!-- GESTURE FEEDBACK BOX (MOBILE SWIPE BRIGHTNESS / VOLUME) -->
+    <include layout="@layout/view_gesture_feedback" />
+
     <!-- STATS FOR NERDS HUD PURE BLACK -->
     <LinearLayout
         android:id="@+id/statsHudBox"

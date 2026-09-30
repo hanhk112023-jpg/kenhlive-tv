@@ -2,6 +2,10 @@ package com.kenhlive.tv
 
 import android.app.PictureInPictureParams
 import android.content.Intent
+import android.view.GestureDetector
+import android.media.AudioManager
+import android.view.WindowManager
+import android.widget.ProgressBar
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -52,6 +56,15 @@ class PlayerActivity : AppCompatActivity() {
     private var topOverlay: View? = null
     private var hint: TextView? = null
     private var centerPlayPauseBtn: ImageButton? = null
+    private var gestureFeedbackBox: View? = null
+    private var gestureIcon: ImageView? = null
+    private var gestureProgress: ProgressBar? = null
+    private var gestureText: TextView? = null
+    private var gestureDetector: GestureDetector? = null
+    private var audioManager: AudioManager? = null
+    private val hideGestureRunnable = Runnable {
+        gestureFeedbackBox?.visibility = View.GONE
+    }
     private var phoneBottomBar: View? = null
     private val hideOverlay = Runnable {
         topOverlay?.visibility = View.GONE
@@ -209,8 +222,14 @@ class PlayerActivity : AppCompatActivity() {
         // Mobile vs TV UI Adaptations
         centerPlayPauseBtn = findViewById(R.id.centerPlayPauseBtn)
         phoneBottomBar = findViewById(R.id.phoneBottomBar)
+        gestureFeedbackBox = findViewById(R.id.gestureFeedbackBox)
+        gestureIcon = findViewById(R.id.gestureIcon)
+        gestureProgress = findViewById(R.id.gestureProgress)
+        gestureText = findViewById(R.id.gestureText)
+        audioManager = getSystemService(AUDIO_SERVICE) as? AudioManager
 
         if (DeviceMode.isPhone) {
+            setupMobileGestures()
             // Trên Phone: Tối giản Top Bar, ẩn các nút chi tiết vào menu
             channelListBtn?.visibility = View.GONE
             audioBtn?.visibility = View.GONE
@@ -271,7 +290,107 @@ class PlayerActivity : AppCompatActivity() {
         showOverlay()
     }
 
-    // ================= MOBILE PHONE INTERACTIONS =================
+    // ================= MOBILE GESTURES & INTERACTIONS =================
+    private var isDraggingGesture = false
+    private var isBrightnessGesture = false
+
+    private fun setupMobileGestures() {
+        val pv = findViewById<PlayerView>(R.id.playerView) ?: return
+        gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
+            override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+                if (topOverlay?.visibility == View.VISIBLE) {
+                    hideOverlay.run()
+                } else {
+                    showOverlay()
+                }
+                return true
+            }
+
+            override fun onDoubleTap(e: MotionEvent): Boolean {
+                val screenW = resources.displayMetrics.widthPixels
+                val p = player ?: return false
+                if (e.x < screenW / 2f) {
+                    // Chạm đúp bên trái: Tua lùi 10s
+                    val target = (p.currentPosition - 10_000L).coerceAtLeast(0L)
+                    p.seekTo(target)
+                    showGestureFeedback(R.drawable.ic_back, 0, "-10s")
+                } else {
+                    // Chạm đúp bên phải: Nhảy tới Live Edge tức thì
+                    p.seekToDefaultPosition()
+                    showGestureFeedback(R.drawable.ic_play, 100, "TRỰC TIẾP")
+                }
+                return true
+            }
+
+            override fun onScroll(
+                e1: MotionEvent?,
+                e2: MotionEvent,
+                distanceX: Float,
+                distanceY: Float
+            ): Boolean {
+                if (e1 == null) return false
+                val screenW = resources.displayMetrics.widthPixels
+                val screenH = resources.displayMetrics.heightPixels
+
+                if (!isDraggingGesture) {
+                    if (Math.abs(distanceY) > Math.abs(distanceX)) {
+                        isDraggingGesture = true
+                        isBrightnessGesture = e1.x < screenW / 2f
+                    } else {
+                        return false
+                    }
+                }
+
+                val deltaPercent = (distanceY / screenH.toFloat()) * 1.5f
+                if (isBrightnessGesture) {
+                    adjustBrightness(deltaPercent)
+                } else {
+                    adjustVolume(deltaPercent)
+                }
+                return true
+            }
+        })
+
+        pv.setOnTouchListener { _, event ->
+            val handled = gestureDetector?.onTouchEvent(event) ?: false
+            if (event.actionMasked == MotionEvent.ACTION_UP || event.actionMasked == MotionEvent.ACTION_CANCEL) {
+                isDraggingGesture = false
+            }
+            handled
+        }
+    }
+
+    private fun adjustBrightness(delta: Float) {
+        val lp = window.attributes
+        var current = lp.screenBrightness
+        if (current < 0) current = 0.5f
+        val newBrightness = (current + delta).coerceIn(0.01f, 1.0f)
+        lp.screenBrightness = newBrightness
+        window.attributes = lp
+        val percent = (newBrightness * 100).toInt()
+        showGestureFeedback(R.drawable.ic_brightness, percent, "$percent%")
+    }
+
+    private fun adjustVolume(delta: Float) {
+        val am = audioManager ?: return
+        val max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        val cur = am.getStreamVolume(AudioManager.STREAM_MUSIC)
+        val step = if (delta > 0) 1 else -1
+        val newVol = (cur + step).coerceIn(0, max)
+        am.setStreamVolume(AudioManager.STREAM_MUSIC, newVol, 0)
+        val percent = (newVol * 100 / max.toFloat()).toInt()
+        showGestureFeedback(R.drawable.ic_volume, percent, "$percent%")
+    }
+
+    private fun showGestureFeedback(iconRes: Int, progress: Int, text: String) {
+        gestureFeedbackBox?.visibility = View.VISIBLE
+        gestureIcon?.setImageResource(iconRes)
+        gestureProgress?.progress = progress
+        gestureText?.text = text
+        handler.removeCallbacks(hideGestureRunnable)
+        handler.postDelayed(hideGestureRunnable, 1000L)
+    }
+
     private fun togglePlayPause() {
         val p = player ?: return
         if (p.isPlaying) {
@@ -1100,7 +1219,9 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     override fun dispatchTouchEvent(ev: MotionEvent): Boolean {
-        if (ev.actionMasked == MotionEvent.ACTION_DOWN) showOverlay()
+        if (!DeviceMode.isPhone && ev.actionMasked == MotionEvent.ACTION_DOWN) {
+            showOverlay()
+        }
         return super.dispatchTouchEvent(ev)
     }
 
