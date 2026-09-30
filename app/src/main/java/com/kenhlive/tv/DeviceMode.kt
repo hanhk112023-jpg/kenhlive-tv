@@ -29,7 +29,13 @@ object DeviceMode {
         val pm = context.packageManager
         val uiTv = (context.resources.configuration.uiMode and Configuration.UI_MODE_TYPE_MASK) ==
             Configuration.UI_MODE_TYPE_TELEVISION
-        mode = if (pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK) || uiTv) Mode.TV else Mode.PHONE
+        val dm = context.resources.displayMetrics
+        val isPortraitOrientation = dm.heightPixels > dm.widthPixels
+        mode = if (pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK) || uiTv) {
+            if (isPortraitOrientation) Mode.PHONE else Mode.TV
+        } else {
+            Mode.PHONE
+        }
         val am = context.getSystemService(Context.ACTIVITY_SERVICE) as android.app.ActivityManager
         lowRam = am.isLowRamDevice || (Runtime.getRuntime().maxMemory() / 1024 / 1024) < 192
     }
