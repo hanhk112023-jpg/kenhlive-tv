@@ -197,6 +197,8 @@ class SportAdapter(
             (v as? ViewGroup)?.clipChildren = false
             (v as? ViewGroup)?.clipToPadding = false
             list.layoutManager = LinearLayoutManager(list.context, LinearLayoutManager.HORIZONTAL, false)
+            list.setHasFixedSize(true)
+            list.setItemViewCacheSize(8)
             list.setRecycledViewPool(pool)
             list.adapter = cards
             list.clipChildren = false
@@ -217,6 +219,8 @@ class SportAdapter(
             (v as? ViewGroup)?.clipChildren = false
             (v as? ViewGroup)?.clipToPadding = false
             list.layoutManager = LinearLayoutManager(list.context, LinearLayoutManager.HORIZONTAL, false)
+            list.setHasFixedSize(true)
+            list.setItemViewCacheSize(8)
             list.setRecycledViewPool(blvPool)
             list.adapter = cards
             list.clipChildren = false
