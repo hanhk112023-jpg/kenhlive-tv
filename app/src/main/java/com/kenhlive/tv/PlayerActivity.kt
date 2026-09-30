@@ -819,12 +819,17 @@ class PlayerActivity : AppCompatActivity() {
             }
         }
 
-        dialog = AlertDialog.Builder(this, R.style.Theme_KenhLive_Dialog)
+        val d = AlertDialog.Builder(this, R.style.Theme_KenhLive_Dialog)
             .setView(v)
             .setNegativeButton(R.string.dialog_close, null)
             .setOnDismissListener { dialog = null }
             .create()
-        dialog?.show()
+        dialog = d
+        d.show()
+        d.window?.setLayout(
+            (resources.displayMetrics.widthPixels * (if (DeviceMode.isTv) 0.65 else 0.90)).toInt(),
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
         (if (video) videoBox else audioBox).post {
             val idx = if (video) EnhanceSettings.videoQuality(this) else EnhanceSettings.audioMode(this)
             (if (video) videoBox else audioBox).getChildAt(idx)?.requestFocus()
