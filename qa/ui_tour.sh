@@ -195,17 +195,11 @@ mark "BAT DAU TEST PHONE MODE: Chuyen man hinh doc dien thoai"
 adb shell wm size 1080x2400
 adb shell wm density 420
 adb shell am force-stop com.kenhlive.tv; sleep 1
-adb shell am start -W -n com.kenhlive.tv/.MainActivity >/dev/null 2>&1
-sleep 4
-adb exec-out screencap -p > $OUT/phone_tab0_home.png
-mark "CHUP ANH: Mobile Phone Tab 0 Home doc"
 
-# Vào Player ở chế độ Phone dọc
-adb shell input tap 540 800
-sleep 2
-adb shell input tap 540 1100
+# Mở trực tiếp PlayerActivity với URL test trên Phone dọc
+adb shell am start -n com.kenhlive.tv/.PlayerActivity --es url "https://bitdash-a.akamaihd.net/content/sintel/hls/video/master.m3u8" --es name "Chelsea vs Arsenal (Trực tiếp Mobile)" >/dev/null 2>&1
 sleep 5
-# Chạm nhẹ màn hình để gọi hiển thị Play/Pause và Top/Bottom bar trên Phone
+# Chạm giữa màn hình để kích hoạt hiển thị Controls OSD
 adb shell input tap 540 1200
 sleep 1
 adb exec-out screencap -p > $OUT/phone_player_portrait.png

@@ -61,7 +61,7 @@
         <!-- Player activity -->
         <activity
             android:name=".PlayerActivity"
-            android:exported="false"
+            android:exported="true"
             android:supportsPictureInPicture="true"
             android:resizeableActivity="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|density" />
