@@ -827,7 +827,7 @@ class PlayerActivity : AppCompatActivity() {
         dialog = d
         d.show()
         d.window?.setLayout(
-            (resources.displayMetrics.widthPixels * (if (DeviceMode.isTv) 0.65 else 0.90)).toInt(),
+            (resources.displayMetrics.widthPixels * (if (DeviceMode.isTv) 0.72 else 0.92)).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
         (if (video) videoBox else audioBox).post {
