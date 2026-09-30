@@ -33,13 +33,13 @@ class SettingsFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        rebuild(focusRow = if (DeviceMode.isTv) 1 else -1)
+        rebuild(focusRow = if (DeviceMode.isTv && (activity as? MainActivity)?.focusInTabBar() != true) 1 else -1)
     }
 
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
         if (!hidden) {
-            rebuild(focusRow = if (DeviceMode.isTv) 1 else -1)
+            rebuild(focusRow = if (DeviceMode.isTv && (activity as? MainActivity)?.focusInTabBar() != true) 1 else -1)
         }
     }
 

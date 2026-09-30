@@ -112,7 +112,7 @@
                 android:layout_height="44dp"
                 android:layout_marginLeft="10dp"
                 android:src="@drawable/ic_nav_tv"
-                android:contentDescription="Danh sách kênh"
+                android:contentDescription="@string/player_sheet_channels"
                 android:visibility="gone" />
 
             <ImageButton
@@ -140,7 +140,7 @@
                 android:layout_height="44dp"
                 android:layout_marginLeft="10dp"
                 android:src="@drawable/ic_aspect_ratio"
-                android:contentDescription="Tỉ lệ khung hình" />
+                android:contentDescription="@string/player_sheet_aspect" />
 
             <ImageButton
                 android:id="@+id/sleepBtn"
@@ -149,7 +149,8 @@
                 android:layout_height="44dp"
                 android:layout_marginLeft="10dp"
                 android:src="@drawable/ic_sleep_timer"
-                android:contentDescription="Hẹn giờ tắt" />
+                android:contentDescription="Hẹn giờ tắt"
+                android:visibility="gone" />
 
             <ImageButton
                 android:id="@+id/audioTrackBtn"
@@ -158,7 +159,8 @@
                 android:layout_height="44dp"
                 android:layout_marginLeft="10dp"
                 android:src="@drawable/ic_audio_track"
-                android:contentDescription="Kênh âm thanh (Ngôn ngữ)" />
+                android:contentDescription="Kênh âm thanh (Ngôn ngữ)"
+                android:visibility="gone" />
 
             <ImageButton
                 android:id="@+id/audioBoostBtn"
@@ -167,7 +169,8 @@
                 android:layout_height="44dp"
                 android:layout_marginLeft="10dp"
                 android:src="@drawable/ic_audio_boost"
-                android:contentDescription="Khuếch đại âm lượng" />
+                android:contentDescription="Khuếch đại âm lượng"
+                android:visibility="gone" />
 
             <ImageButton
                 android:id="@+id/statsBtn"
@@ -176,7 +179,8 @@
                 android:layout_height="44dp"
                 android:layout_marginLeft="10dp"
                 android:src="@drawable/ic_info"
-                android:contentDescription="Thông số kỹ thuật" />
+                android:contentDescription="Thông số kỹ thuật"
+                android:visibility="gone" />
 
             <ImageButton
                 android:id="@+id/multiBtn"
@@ -185,7 +189,8 @@
                 android:layout_height="44dp"
                 android:layout_marginLeft="10dp"
                 android:src="@drawable/ic_multiview"
-                android:contentDescription="@string/nav_multiview" />
+                android:contentDescription="@string/nav_multiview"
+                android:visibility="gone" />
 
             <ImageButton
                 android:id="@+id/pipBtn"
@@ -204,7 +209,7 @@
                 android:layout_height="44dp"
                 android:layout_marginLeft="10dp"
                 android:src="@drawable/ic_more_vert"
-                android:contentDescription="Tùy chọn phát"
+                android:contentDescription="@string/player_sheet_title"
                 android:visibility="gone" />
         </LinearLayout>
     </LinearLayout>
@@ -613,6 +618,27 @@
             android:textSize="11.5sp"
             android:text="Khung hình rớt: 0" />
     </LinearLayout>
+
+    <!-- v7: OSD chip trạng thái (đổi nguồn, sáng, âm lượng…) thay Toast -->
+    <TextView
+        android:id="@+id/osdChip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|center_horizontal"
+        android:layout_marginTop="28dp"
+        android:background="@drawable/bg_osd_chip"
+        android:elevation="6dp"
+        android:ellipsize="end"
+        android:maxWidth="420dp"
+        android:maxLines="2"
+        android:paddingLeft="18dp"
+        android:paddingRight="18dp"
+        android:paddingTop="9dp"
+        android:paddingBottom="9dp"
+        android:textColor="@color/kl_text_1"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
 
     <!-- BOTTOM HINT (TV) -->
     <TextView

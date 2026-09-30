@@ -124,12 +124,30 @@ object SocoliveParser {
         for (j in 0 until arr.length()) arr.optJSONObject(j)?.let(addMatch)
     }
 
-    /** Stream URL ưu tiên: hdM3u8 → m3u8 → hdFlv → flv. */
-    fun parseStream(body: String): String? {
-        val data = JSONObject(stripJsonp(body)).optJSONObject("data") ?: return null
-        val stream = data.optJSONObject("stream") ?: return null
-        return listOf("hdM3u8", "m3u8", "hdFlv", "flv").firstNotNullOfOrNull { k ->
-            stream.optString(k, "").takeIf { it.isNotBlank() }
+    /** Nguồn phát của 1 phòng (v7: nhiều nguồn để tự đổi khi nguồn đang xem chết). */
+    data class StreamSource(val label: String, val url: String, val hd: Boolean)
+
+    private val SOURCE_KEYS = listOf(
+        Triple("hdM3u8", "HD · HLS", true),
+        Triple("m3u8", "HLS", false),
+        Triple("hdFlv", "HD · FLV", true),
+        Triple("flv", "FLV", false)
+    )
+
+    /** Tất cả nguồn khả dụng theo thứ tự ưu tiên hdM3u8 → m3u8 → hdFlv → flv (bỏ URL trùng). */
+    fun parseStreams(body: String): List<StreamSource> {
+        val data = JSONObject(stripJsonp(body)).optJSONObject("data") ?: return emptyList()
+        val stream = data.optJSONObject("stream") ?: return emptyList()
+        val seen = mutableSetOf<String>()
+        val out = mutableListOf<StreamSource>()
+        for ((key, name, hd) in SOURCE_KEYS) {
+            val u = stream.optString(key, "").trim()
+            if (u.isBlank() || !seen.add(u)) continue
+            out.add(StreamSource("Nguồn ${out.size + 1} · $name", u, hd))
         }
+        return out
     }
+
+    /** Stream URL ưu tiên: hdM3u8 → m3u8 → hdFlv → flv. */
+    fun parseStream(body: String): String? = parseStreams(body).firstOrNull()?.url
 }

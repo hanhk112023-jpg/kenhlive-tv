@@ -76,6 +76,16 @@ class SocoliveParserTest {
     }
 
     @Test
+    fun `parseStreams returns ordered sources without duplicates`() {
+        val body = """{"data":{"stream":{"flv":"http://x/f","m3u8":"http://x/m","hdM3u8":"http://x/hd","hdFlv":"http://x/f"}}}"""
+        val list = SocoliveParser.parseStreams(body)
+        assertEquals(listOf("http://x/hd", "http://x/m", "http://x/f"), list.map { it.url })
+        assertTrue(list.first().hd)
+        assertTrue(list.first().label.startsWith("Nguồn 1"))
+        assertTrue(SocoliveParser.parseStreams("""{"data":{}}""").isEmpty())
+    }
+
+    @Test
     fun `fmtViewers formats thousands with comma decimal`() {
         assertEquals("999", SocoliveRepository.fmtViewers(999))
         assertEquals("1,2K", SocoliveRepository.fmtViewers(1200))

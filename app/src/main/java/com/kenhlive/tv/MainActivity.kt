@@ -30,7 +30,7 @@ class MainActivity : AppCompatActivity() {
     private val vm: LiveViewModel by viewModels()
     private var current = 0
     private val navViews = mutableListOf<View>()
-    private var railPanel: View? = null
+    private var tabBar: View? = null
     private val tabTags = arrayOf("tab_live", "tab_schedule", "tab_iptv", "tab_search", "tab_settings")
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,13 +71,7 @@ class MainActivity : AppCompatActivity() {
         }
         vm.load()
 
-        if (DeviceMode.isTv) {
-            railPanel = findViewById(R.id.railPanel)
-            railPanel?.post {
-                // Mặc định ban đầu ẩn sidebar về phía bên trái
-                hideRail(immediate = true)
-            }
-        }
+        tabBar = findViewById(R.id.tabBar)
 
         UpdateManager.checkAndUpdate(this)
         UpdateManager.resumePendingInstall(this)
@@ -99,9 +93,10 @@ class MainActivity : AppCompatActivity() {
             v.findViewById<TextView>(R.id.navLabel)?.setText(def.second)
             v.setOnClickListener { showTab(i) }
             if (DeviceMode.isTv) {
+                // v7: focus vào tab → nội dung đổi ngay nhưng KHÔNG cướp focus (↓ mới vào nội dung)
                 v.setOnFocusChangeListener { _, hasFocus ->
                     if (hasFocus && current != i) {
-                        showTab(i, animate = false)
+                        showTab(i, animate = false, moveFocus = false)
                     }
                 }
             }
@@ -109,15 +104,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         if (DeviceMode.isTv) {
-            findViewById<View>(R.id.nav_profile)?.setOnClickListener {
-                AlertDialog.Builder(this)
-                    .setTitle(R.string.app_name)
-                    .setMessage(R.string.settings_about_body)
-                    .setPositiveButton(R.string.dialog_close, null)
-                    .show()
-            }
             findViewById<View>(R.id.nav_multiview)?.apply {
                 findViewById<ImageView>(R.id.navIcon)?.setImageResource(R.drawable.ic_multiview)
+                findViewById<TextView>(R.id.navLabel)?.setText(R.string.nav_multiview)
                 setOnClickListener { startActivity(Intent(this@MainActivity, MultiViewActivity::class.java)) }
             }
         }
@@ -207,22 +196,14 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showRail() {
-        val r = railPanel ?: return
-        r.animate().translationX(0f).alpha(1f).setDuration(180).start()
+    /** true nếu focus đang nằm trên thanh tab (TV) — fragment không được cướp focus lúc đó. */
+    fun focusInTabBar(): Boolean {
+        val f = currentFocus
+        val b = tabBar
+        return f != null && b != null && isDescendant(b, f)
     }
 
-    private fun hideRail(immediate: Boolean = false) {
-        val r = railPanel ?: return
-        val offset = -r.width.toFloat().coerceAtLeast(160f)
-        if (immediate) {
-            r.translationX = offset
-            r.alpha = 0f
-        } else {
-            r.animate().translationX(offset).alpha(0f).setDuration(220).start()
-        }
-    }
-
+    /** v7 (TV): ↓ từ thanh tab → vào nội dung; ↑ từ hàng trên cùng → quay về tab đang chọn. */
     override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
         if (DeviceMode.isTv && event.action == android.view.KeyEvent.ACTION_DOWN) {
             var f = currentFocus
@@ -231,24 +212,17 @@ class MainActivity : AppCompatActivity() {
                 f = currentFocus
                 if (f != null) return true
             }
-            val insideRail = railPanel?.let { isDescendant(it, f) } == true
+            val bar = tabBar
+            val inBar = bar != null && f != null && isDescendant(bar, f)
             when (event.keyCode) {
-                android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
-                    if (f != null && !insideRail && atLeftEdge(f)) {
-                        showRail()
-                        navViews.getOrNull(current)?.requestFocus() ?: navViews.firstOrNull()?.requestFocus()
-                        return true
-                    }
+                android.view.KeyEvent.KEYCODE_DPAD_DOWN -> if (inBar) {
+                    focusContentFirst()
+                    return true
                 }
-                android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                    if (insideRail) {
-                        // Kích hoạt tab nếu người dùng đang đứng ở item nav tương ứng
-                        val focusedNavIdx = navViews.indexOfFirst { it === f || isDescendant(it, f) }
-                        if (focusedNavIdx >= 0 && focusedNavIdx != current) {
-                            showTab(focusedNavIdx, animate = false)
-                        }
-                        hideRail()
-                        focusContentFirst()
+                android.view.KeyEvent.KEYCODE_DPAD_UP -> if (!inBar && f != null && bar != null) {
+                    val nxt = f.focusSearch(View.FOCUS_UP)
+                    if (nxt == null || nxt === f || isDescendant(bar, nxt)) {
+                        (navViews.getOrNull(current) ?: navViews.firstOrNull())?.requestFocus()
                         return true
                     }
                 }
@@ -257,17 +231,9 @@ class MainActivity : AppCompatActivity() {
         return super.dispatchKeyEvent(event)
     }
 
-    fun showTab(pos: Int, animate: Boolean = true) {
+    fun showTab(pos: Int, animate: Boolean = true, moveFocus: Boolean = true) {
         current = pos
         navViews.forEachIndexed { i, v -> v.isSelected = i == pos }
-        if (DeviceMode.isTv && pos in 0 until navViews.size) {
-            // Khi chuyển tab: đồng bộ tiêu điểm trên rail vào đúng icon tab đang chọn
-            navViews.getOrNull(pos)?.let { selNav ->
-                if (railPanel?.let { isDescendant(it, currentFocus) } == true) {
-                    selNav.requestFocus()
-                }
-            }
-        }
         val tx = supportFragmentManager.beginTransaction()
         if (animate) tx.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
         tabTags.forEachIndexed { i, tag ->
@@ -286,11 +252,8 @@ class MainActivity : AppCompatActivity() {
             } else if (f != null) tx.hide(f)
         }
         tx.commit()
-        if (DeviceMode.isTv) {
-            findViewById<View>(R.id.fragmentContainer)?.post {
-                hideRail()
-                focusContentFirst()
-            }
+        if (DeviceMode.isTv && moveFocus) {
+            findViewById<View>(R.id.fragmentContainer)?.post { focusContentFirst() }
         }
     }
 

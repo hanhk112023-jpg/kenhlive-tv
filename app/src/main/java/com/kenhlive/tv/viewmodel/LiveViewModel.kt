@@ -34,7 +34,17 @@ class LiveViewModel : ViewModel() {
         if (!force && loadedOnce) return
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
-            _state.value = UiState.Loading
+            // v7: stale-while-revalidate — có cache đĩa thì hiện NGAY, làm mới nền ngay sau đó
+            var showedStale = false
+            if (_state.value !is UiState.Success) {
+                val cached = SocoliveRepository.cachedLiveRooms()
+                val g = cached?.let { SocoliveRepository.groupRooms(it) }
+                if (!g.isNullOrEmpty()) {
+                    _state.value = UiState.Success(g)
+                    showedStale = true
+                    loadedOnce = true
+                } else _state.value = UiState.Loading
+            }
             try {
                 val rooms = SocoliveRepository.fetchLiveRooms(force = true)
                 val groups = SocoliveRepository.groupRooms(rooms)
@@ -43,6 +53,7 @@ class LiveViewModel : ViewModel() {
                     UiState.Empty("Sân vắng bóng", "Hiện không có trận nào đang live")
                 else UiState.Success(groups)
             } catch (e: Exception) {
+                if (showedStale) return@launch // giữ dữ liệu cũ, auto-refresh sẽ thử lại
                 _state.value = UiState.Error(
                     "Không tải được danh sách trận",
                     "Kiểm tra kết nối mạng rồi thử lại"

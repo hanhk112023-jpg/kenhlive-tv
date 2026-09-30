@@ -57,7 +57,7 @@ class ScheduleFragment : Fragment() {
 
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
-        if (!hidden && DeviceMode.isTv) {
+        if (!hidden && DeviceMode.isTv && (activity as? MainActivity)?.focusInTabBar() != true) {
             focusFirstMatch()
         }
     }
@@ -123,18 +123,8 @@ class ScheduleFragment : Fragment() {
     }
 
     private fun openAnchor(anchor: AnchorInfo, match: ScheduleMatch) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            val url = SocoliveRepository.fetchStream(anchor.roomNum)
-            if (url == null) {
-                Toast.makeText(requireContext(), R.string.stream_not_ready, Toast.LENGTH_SHORT).show()
-                return@launch
-            }
-            startActivity(
-                Intent(requireContext(), PlayerActivity::class.java)
-                    .putExtra("url", url)
-                    .putExtra("name", "${match.host} vs ${match.guest} · ${anchor.nickName}")
-            )
-        }
+        // v7: mở Player tức thì — Player tự lấy nguồn phát (đã có cache/prefetch)
+        PlayerActivity.launch(requireContext(), anchor.roomNum, "${match.host} vs ${match.guest} · ${anchor.nickName}")
     }
 
     override fun onDestroyView() {

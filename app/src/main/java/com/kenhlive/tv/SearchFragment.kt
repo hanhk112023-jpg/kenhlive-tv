@@ -136,6 +136,7 @@ class SearchFragment : Fragment() {
     }
 
     private fun focusAppropriate() {
+        if ((activity as? MainActivity)?.focusInTabBar() == true) return
         if (lastFocusedPosition >= 0 && searchAdapter.itemCount > 0) {
             resultList.post {
                 val vh = resultList.findViewHolderForAdapterPosition(lastFocusedPosition)
@@ -202,18 +203,7 @@ class SearchFragment : Fragment() {
     }
 
     private fun openRoom(room: LiveRoom) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            val url = SocoliveRepository.fetchStream(room.roomNum)
-            if (url == null) {
-                Toast.makeText(requireContext(), R.string.stream_not_ready, Toast.LENGTH_SHORT).show()
-                return@launch
-            }
-            startActivity(
-                Intent(requireContext(), PlayerActivity::class.java)
-                    .putExtra("url", url)
-                    .putExtra("name", "${room.matchTitle} · ${room.blvName}")
-            )
-        }
+        PlayerActivity.launch(requireContext(), room.roomNum, "${room.matchTitle} · ${room.blvName}")
     }
 
     override fun onDestroyView() {

@@ -203,7 +203,7 @@ class LiveFragment : Fragment() {
         super.onResume()
         vm.startAutoRefresh()
         svm.startAutoRefresh()
-        if (::adapter.isInitialized) adapter.restoreFocus()
+        if (::adapter.isInitialized && (activity as? MainActivity)?.focusInTabBar() != true) adapter.restoreFocus()
     }
 
     override fun onPause() {
@@ -233,33 +233,11 @@ class LiveFragment : Fragment() {
             return
         }
         val a = live.first()
-        viewLifecycleOwner.lifecycleScope.launch {
-            val url = SocoliveRepository.fetchStream(a.roomNum)
-            if (url == null) {
-                android.widget.Toast.makeText(requireContext(), R.string.stream_not_ready, android.widget.Toast.LENGTH_SHORT).show()
-                return@launch
-            }
-            startActivity(
-                Intent(requireContext(), PlayerActivity::class.java)
-                    .putExtra("url", url)
-                    .putExtra("name", "${m.host} vs ${m.guest} · ${a.nickName}")
-            )
-        }
+        PlayerActivity.launch(requireContext(), a.roomNum, "${m.host} vs ${m.guest} · ${a.nickName}")
     }
 
     private fun openRoom(room: LiveRoom) {
-        viewLifecycleOwner.lifecycleScope.launch {
-            val url = SocoliveRepository.fetchStream(room.roomNum)
-            if (url == null) {
-                android.widget.Toast.makeText(requireContext(), R.string.stream_not_ready, android.widget.Toast.LENGTH_SHORT).show()
-                return@launch
-            }
-            startActivity(
-                Intent(requireContext(), PlayerActivity::class.java)
-                    .putExtra("url", url)
-                    .putExtra("name", "${room.matchTitle} · ${room.blvName}")
-            )
-        }
+        PlayerActivity.launch(requireContext(), room.roomNum, "${room.matchTitle} · ${room.blvName}")
     }
 
     override fun onDestroyView() {

@@ -55,4 +55,7 @@
     <dimen name="sched_time_w">92dp</dimen>
     <dimen name="sched_row_gap">6dp</dimen>
     <dimen name="hero_dots_margin">34dp</dimen>
+    <dimen name="sheet_row_h">56dp</dimen>
+    <dimen name="sheet_w">440dp</dimen>
+    <dimen name="tvbar_h">60dp</dimen>
 </resources>
