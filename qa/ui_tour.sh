@@ -191,6 +191,8 @@ adb exec-out screencap -p > $OUT/multiview4.png
 go "BACK khoi MV"          4 2
 
 # 7.5 TEST GIAO DIỆN MOBILE PHONE (CHUYỂN PROFILE PHONE 1080x2400 PORTRAIT & LANDSCAPE)
+# Tắt đoạn ghi hình TV (rec1) để tránh việc đổi kích thước màn hình adb wm size làm co giật video TV
+stoprec rec1.mp4
 mark "BAT DAU TEST PHONE MODE: Chuyen man hinh doc dien thoai"
 adb shell wm size 1080x2400
 adb shell wm density 420
@@ -226,15 +228,16 @@ mark "CHUP ANH: Mobile Phone Player Landscape ngang"
 adb shell settings put system user_rotation 0
 adb shell wm size 1920x1080
 adb shell wm density 320
-adb shell am force-stop com.kenhlive.tv; sleep 1
+adb shell am force-stop com.kenhlive.tv; sleep 2
 
-# 8. DIALOG THOAT APP
+# 8. DIALOG THOAT APP (Đoạn 2)
+startrec rec2.mp4
 relaunch 0
 go "BACK top-level"        4 2
 adb exec-out screencap -p > $OUT/back_dialog.png
 mark "DIALOG Thoat?"
 go "BACK huy (o lai)"      4 2
-sleep 1; stoprec
+sleep 1; stoprec rec2.mp4
 
 adb exec-out screencap -p > $OUT/end.png
 adb logcat -d -s AndroidRuntime:E | tail -40 > $OUT/crash.txt
