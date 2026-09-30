@@ -205,23 +205,25 @@ adb shell input tap 540 800
 sleep 2
 adb shell input tap 540 1100
 sleep 5
-adb shell input tap 540 1000
+# Chạm nhẹ màn hình để gọi hiển thị Play/Pause và Top/Bottom bar trên Phone
+adb shell input tap 540 1200
 sleep 1
 adb exec-out screencap -p > $OUT/phone_player_portrait.png
 mark "CHUP ANH: Mobile Phone Player Portrait doc"
 
-# Bấm mở Menu More Options trên Phone
-adb shell input tap 990 120
+# Bấm mở Menu More Options trên Phone (nút 3 chấm ⋮ ở góc trên bên phải)
+adb shell input tap 1010 110
 sleep 2
 adb exec-out screencap -p > $OUT/phone_player_menu_dialog.png
 mark "CHUP ANH: Mobile Phone Player More Options Menu"
 adb shell input keyevent 4 # Đóng menu
 sleep 1
 
-# Chuyển Phone sang Landscape xoay ngang
+# Chuyển Phone sang Landscape xoay ngang (2400x1080)
 adb shell settings put system user_rotation 1
 adb shell wm size 2400x1080
 sleep 3
+# Chạm nhẹ màn hình để gọi hiển thị controls trên màn hình ngang
 adb shell input tap 1200 540
 sleep 1
 adb exec-out screencap -p > $OUT/phone_player_landscape.png

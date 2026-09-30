@@ -344,14 +344,19 @@ class PlayerActivity : AppCompatActivity() {
             actions.add { toggleSidebar() }
         }
 
-        AlertDialog.Builder(this, R.style.Theme_KenhLive_Dialog)
+        val d = AlertDialog.Builder(this, R.style.Theme_KenhLive_Dialog)
             .setTitle("⚙️ Tùy Chọn Phát")
             .setItems(options.toTypedArray()) { d, which ->
                 d.dismiss()
                 actions[which].invoke()
             }
             .setNegativeButton(R.string.dialog_close, null)
-            .show()
+            .create()
+        d.show()
+        d.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.90).toInt(),
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
         hideOnce()
     }
 
