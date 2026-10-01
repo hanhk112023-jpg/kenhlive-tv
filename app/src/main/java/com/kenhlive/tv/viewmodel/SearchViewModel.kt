@@ -50,7 +50,8 @@ class SearchViewModel : ViewModel() {
         viewModelScope.launch {
             _source.value = UiState.Loading
             try {
-                val groups = SocoliveRepository.groupRooms(SocoliveRepository.fetchLiveRooms(force = true))
+                // force=false lần đầu → dùng chung cache 60s với tab Trực tiếp, không bắn thêm request
+                val groups = SocoliveRepository.groupRooms(SocoliveRepository.fetchLiveRooms(force = force))
                 loaded = true
                 _source.value = UiState.Success(groups)
                 _result.value = Result(groups, _query.value, buildChips(groups))

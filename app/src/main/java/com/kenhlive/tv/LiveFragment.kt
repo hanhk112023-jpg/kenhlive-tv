@@ -134,7 +134,15 @@ class LiveFragment : Fragment() {
 
         val now = System.currentTimeMillis()
         val upcoming = allScheduleMatches
-            .filter { it.matchTimeMs in (now - 30 * 60_000L)..(now + 24 * 3600_000L) && !it.isLive || (it.isLive && it.hasRoom && enrichedLiveGroups.none { g -> g.matchTitle == "${it.host} vs ${it.guest}" }) }
+            .filter {
+                // 1) Trận sắp diễn ra trong 24h tới
+                (it.matchTimeMs in (now - 30 * 60_000L)..(now + 24 * 3600_000L) && !it.isLive) ||
+                    // 2) Trận ĐANG live có phòng BLV nhưng chưa xuất hiện trong danh sách phòng live.
+                    //    Giới hạn 3 tiếng kể từ giờ bóng lăn — tránh trận đã đá xong từ lâu
+                    //    (API không có cờ "kết thúc") nằm lì trong rail Tâm Điểm.
+                    (it.isLive && it.hasRoom && now - it.matchTimeMs <= 3 * 3600_000L &&
+                        enrichedLiveGroups.none { g -> g.matchTitle == "${it.host} vs ${it.guest}" })
+            }
             .sortedBy { it.matchTimeMs }
         val upFiltered = when (selLeague) {
             0 -> upcoming

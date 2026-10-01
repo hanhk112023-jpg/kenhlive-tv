@@ -123,8 +123,9 @@ class IptvFragment : Fragment() {
     private fun loadData() {
         loadingView.visibility = View.VISIBLE
         emptyText.visibility = View.GONE
-        lifecycleScope.launch {
-            allChannels = IptvRepository.loadChannels(requireContext())
+        // viewLifecycleOwner: coroutine hủy khi view bị destroy → không đụng view/context chết
+        viewLifecycleOwner.lifecycleScope.launch {
+            allChannels = IptvRepository.loadChannels(requireContext().applicationContext)
             loadingView.visibility = View.GONE
 
             if (allChannels.isEmpty()) {
@@ -150,7 +151,7 @@ class IptvFragment : Fragment() {
                 })
                 applyFilter(focusFirst = true)
 
-                EpgRepository.initEpg(requireContext())
+                EpgRepository.initEpg(requireContext().applicationContext)
                 if (isAdded) {
                     gridList.adapter?.notifyDataSetChanged()
                     if (displayedChannels.isNotEmpty()) {
@@ -297,13 +298,19 @@ class IptvFragment : Fragment() {
     }
 
     private fun openChannel(ch: IptvChannel, index: Int) {
+        // index là vị trí trong danh sách ĐÃ LỌC (displayedChannels), nhưng PlayerActivity
+        // chuyển kênh trên IptvRepository.currentChannels (danh sách đầy đủ) → phải map lại,
+        // nếu không CH+/CH- và carousel sẽ trỏ sai kênh khi đang lọc nhóm/tìm kiếm.
+        val globalIndex = IptvRepository.currentChannels
+            .indexOfFirst { it.url == ch.url }
+            .takeIf { it >= 0 } ?: index
         val intent = Intent(requireContext(), PlayerActivity::class.java).apply {
             putExtra("url", ch.url)
             putExtra("name", ch.name)
             putExtra("pip", false)
             putExtra("is_iptv", true)
             putExtra("channel_id", ch.id)
-            putExtra("current_index", index)
+            putExtra("current_index", globalIndex)
         }
         startActivity(intent)
     }

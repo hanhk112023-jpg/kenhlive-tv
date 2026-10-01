@@ -22,7 +22,8 @@ class LiveViewModel : ViewModel() {
     val state: StateFlow<UiState<List<LiveMatchGroup>>> = _state.asStateFlow()
 
     private var loadJob: Job? = null
-    private var refreshJob: Job? = null
+    private var autoRefreshJob: Job? = null   // vòng lặp auto-refresh định kỳ
+    private var silentJob: Job? = null        // 1 lần refresh nền đang chạy
     private var loadedOnce = false
 
     companion object {
@@ -36,7 +37,9 @@ class LiveViewModel : ViewModel() {
         loadJob = viewModelScope.launch {
             _state.value = UiState.Loading
             try {
-                val rooms = SocoliveRepository.fetchLiveRooms(force = true)
+                // force=false: dùng cache TTL 60s của repository (MainActivity và
+                // LiveFragment có 2 instance ViewModel riêng — tránh bắn 2 request lúc mở app)
+                val rooms = SocoliveRepository.fetchLiveRooms(force = force)
                 val groups = SocoliveRepository.groupRooms(rooms)
                 loadedOnce = true
                 _state.value = if (groups.isEmpty())
@@ -54,8 +57,10 @@ class LiveViewModel : ViewModel() {
 
     /** Refresh nền: chỉ thay data khi có dữ liệu mới, giữ nguyên vị trí/focus. */
     fun silentRefresh() {
-        if (!loadedOnce || refreshJob?.isActive == true) return
-        refreshJob = viewModelScope.launch {
+        // BUG cũ: dùng chung biến với vòng lặp auto-refresh → isActive luôn true
+        // khi được chính vòng lặp gọi → auto-refresh không bao giờ chạy thật.
+        if (!loadedOnce || silentJob?.isActive == true) return
+        silentJob = viewModelScope.launch {
             try {
                 val groups = SocoliveRepository.groupRooms(SocoliveRepository.fetchLiveRooms(force = true))
                 if (groups.isNotEmpty()) {
@@ -68,7 +73,7 @@ class LiveViewModel : ViewModel() {
 
     fun startAutoRefresh() {
         stopAutoRefresh()
-        refreshJob = viewModelScope.launch {
+        autoRefreshJob = viewModelScope.launch {
             while (true) {
                 delay(AUTO_REFRESH_MS)
                 silentRefresh()
@@ -77,8 +82,8 @@ class LiveViewModel : ViewModel() {
     }
 
     fun stopAutoRefresh() {
-        refreshJob?.cancel()
-        refreshJob = null
+        autoRefreshJob?.cancel()
+        autoRefreshJob = null
     }
 
     private fun scheduleAutoRetry() {
@@ -90,6 +95,7 @@ class LiveViewModel : ViewModel() {
 
     override fun onCleared() {
         loadJob?.cancel()
-        refreshJob?.cancel()
+        autoRefreshJob?.cancel()
+        silentJob?.cancel()
     }
 }

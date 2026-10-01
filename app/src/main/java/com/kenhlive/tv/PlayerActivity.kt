@@ -912,6 +912,11 @@ class PlayerActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         if (player == null && url.isNotBlank()) initPlayer()
+        // Nối lại hẹn giờ tắt nếu đang đặt — onStop đã gỡ callback khỏi handler
+        if (sleepMinutesLeft > 0) {
+            handler.removeCallbacks(sleepTimerRunnable)
+            handler.postDelayed(sleepTimerRunnable, 60000L)
+        }
     }
 
     // ===== dialog hình & âm: chip chọn trực tiếp, focus được cho remote =====

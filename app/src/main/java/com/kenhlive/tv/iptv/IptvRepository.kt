@@ -54,15 +54,22 @@ object IptvRepository {
                 val resSports = jobSports.await()
 
                 val editor = sp.edit()
+                var anySuccess = false
                 if (!resVn.isNullOrBlank()) {
                     cachedVn = resVn
                     editor.putString(KEY_CACHE_VN, resVn)
+                    anySuccess = true
                 }
                 if (!resSports.isNullOrBlank()) {
                     cachedSports = resSports
                     editor.putString(KEY_CACHE_SPORTS, resSports)
+                    anySuccess = true
                 }
-                editor.putLong(KEY_LAST_UPDATE, System.currentTimeMillis()).apply()
+                // Chỉ ghi mốc thời gian khi tải được dữ liệu — nếu cả 2 nguồn fail
+                // (mất mạng lúc mở app) thì lần mở tab sau phải thử tải lại ngay,
+                // không bị khóa chờ hết 3 tiếng.
+                if (anySuccess) editor.putLong(KEY_LAST_UPDATE, System.currentTimeMillis())
+                editor.apply()
             }
         }
 

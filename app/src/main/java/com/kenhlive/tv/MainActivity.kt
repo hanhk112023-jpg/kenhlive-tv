@@ -66,6 +66,9 @@ class MainActivity : AppCompatActivity() {
                     val rooms = st.data.sumOf { it.count }
                     tv.visibility = View.VISIBLE
                     tv.text = getString(R.string.live_rooms_count, rooms)
+                } else if (st is UiState.Empty || st is UiState.Error) {
+                    // Hết phòng live / lỗi mạng → ẩn badge, không hiển thị số cũ gây hiểu lầm
+                    tv.visibility = View.GONE
                 }
             }
         }

@@ -74,23 +74,32 @@ object EpgRepository {
     }
 
     private fun downloadEpg(targetFile: File): Boolean {
+        // Tải vào file .tmp rồi mới rename: nếu đứt mạng giữa chừng sẽ không
+        // ghi đè cache cũ bằng file .gz hỏng (file hỏng + lastModified mới
+        // → parse fail và bị khóa 6 tiếng không tải lại).
+        val tmpFile = File(targetFile.parentFile, targetFile.name + ".tmp")
+        var conn: HttpURLConnection? = null
         return try {
             val url = URL(EPG_URL)
-            val conn = url.openConnection() as HttpURLConnection
+            conn = url.openConnection() as HttpURLConnection
             conn.connectTimeout = 12000
             conn.readTimeout = 20000
             conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Android TV; KenhLive)")
             if (conn.responseCode in 200..299) {
                 conn.inputStream.use { input ->
-                    FileOutputStream(targetFile).use { output ->
+                    FileOutputStream(tmpFile).use { output ->
                         input.copyTo(output)
                     }
                 }
-                true
+                if (targetFile.exists()) targetFile.delete()
+                tmpFile.renameTo(targetFile)
             } else false
         } catch (e: Exception) {
             Log.e(TAG, "Lỗi tải EPG: ${e.message}")
+            tmpFile.delete()
             false
+        } finally {
+            conn?.disconnect()
         }
     }
 
