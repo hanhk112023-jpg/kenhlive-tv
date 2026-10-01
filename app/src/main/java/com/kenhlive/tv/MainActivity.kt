@@ -52,11 +52,23 @@ class MainActivity : AppCompatActivity() {
         // BACK: tab khác → về Live trước; tab Live → dialog xác nhận thoát (UX TV)
         onBackPressedDispatcher.addCallback(this) {
             if (current != 0) { showTab(0); return@addCallback }
-            AlertDialog.Builder(this@MainActivity)
+            val d = AlertDialog.Builder(this@MainActivity, R.style.Theme_KenhLive_Dialog)
                 .setTitle(R.string.dialog_exit_title)
                 .setPositiveButton(R.string.dialog_exit_yes) { _, _ -> finishAffinity() }
                 .setNegativeButton(R.string.dialog_exit_no, null)
-                .show()
+                .create()
+            d.setOnShowListener {
+                val btnStay = d.getButton(AlertDialog.BUTTON_NEGATIVE)
+                val btnExit = d.getButton(AlertDialog.BUTTON_POSITIVE)
+                btnStay?.isFocusable = true
+                btnExit?.isFocusable = true
+                (btnStay?.layoutParams as? ViewGroup.MarginLayoutParams)?.let { lp ->
+                    lp.rightMargin = (16 * resources.displayMetrics.density).toInt()
+                    btnStay.layoutParams = lp
+                }
+                btnStay?.requestFocus()
+            }
+            d.show()
         }
 
         lifecycleScope.launch {

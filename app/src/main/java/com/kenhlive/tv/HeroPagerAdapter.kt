@@ -32,7 +32,9 @@ class HeroPagerAdapter(
     private val auto = object : Runnable {
         override fun run() {
             val p = pager
-            if (p != null && groups.size > 1 && !p.hasFocus()) {
+            val currentFocus = p?.rootView?.findFocus()
+            val userIsBrowsing = currentFocus != null && !p.hasFocus()
+            if (p != null && groups.size > 1 && !p.hasFocus() && !userIsBrowsing) {
                 p.currentItem = (p.currentItem + 1) % groups.size
             }
             handler.postDelayed(this, if (DeviceMode.lowRam) 9000 else 6000)

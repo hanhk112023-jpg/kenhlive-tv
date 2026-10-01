@@ -884,10 +884,11 @@ class PlayerActivity : AppCompatActivity() {
                             handler.postDelayed(autoRecoveryRunnable, 4000L)
                         }
                         findViewById<View>(R.id.bufferBox)?.visibility =
-                            if (state == Player.STATE_BUFFERING) View.VISIBLE else View.GONE
+                            if (state == Player.STATE_READY) View.GONE else View.VISIBLE
                     }
                 })
             }
+        findViewById<View>(R.id.bufferBox)?.visibility = View.VISIBLE
         findViewById<PlayerView>(R.id.playerView).apply {
             player = this@PlayerActivity.player
             resizeMode = aspectModes[currentAspectIdx]
@@ -928,7 +929,14 @@ class PlayerActivity : AppCompatActivity() {
             getString(R.string.aq_standard), getString(R.string.aq_bass), getString(R.string.aq_dialog),
             getString(R.string.aq_night), getString(R.string.aq_auto)
         )
-        buildChips(videoBox, vqNames, EnhanceSettings.videoQuality(this), audioBox, isUpRow = true) { i ->
+        val d = AlertDialog.Builder(this, R.style.Theme_KenhLive_Dialog)
+            .setView(v)
+            .setNegativeButton(R.string.dialog_close, null)
+            .setOnDismissListener { dialog = null }
+            .create()
+        dialog = d
+
+        buildChips(videoBox, vqNames, EnhanceSettings.videoQuality(this), audioBox, isUpRow = true, dialog = d) { i ->
             if (i != EnhanceSettings.videoQuality(this)) {
                 EnhanceSettings.setVideoQuality(this, i)
                 (player?.trackSelector as? androidx.media3.exoplayer.trackselection.DefaultTrackSelector)
@@ -937,7 +945,7 @@ class PlayerActivity : AppCompatActivity() {
                 markSelection(videoBox, i)
             }
         }
-        buildChips(audioBox, aqNames, EnhanceSettings.audioMode(this), videoBox, isUpRow = false) { i ->
+        buildChips(audioBox, aqNames, EnhanceSettings.audioMode(this), videoBox, isUpRow = false, dialog = d) { i ->
             if (i != EnhanceSettings.audioMode(this)) {
                 EnhanceSettings.setAudioMode(this, i)
                 val sid = player?.audioSessionId ?: 0
@@ -948,26 +956,31 @@ class PlayerActivity : AppCompatActivity() {
             }
         }
 
-        val d = AlertDialog.Builder(this, R.style.Theme_KenhLive_Dialog)
-            .setView(v)
-            .setNegativeButton(R.string.dialog_close, null)
-            .setOnDismissListener { dialog = null }
-            .create()
-        dialog = d
+        d.setOnShowListener {
+            val closeBtn = d.getButton(AlertDialog.BUTTON_NEGATIVE)
+            closeBtn?.isFocusable = true
+            closeBtn?.setOnKeyListener { _, keyCode, event ->
+                if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                    val idx = EnhanceSettings.audioMode(this@PlayerActivity).coerceAtMost(audioBox.childCount - 1)
+                    audioBox.getChildAt(idx)?.requestFocus()
+                    return@setOnKeyListener true
+                }
+                false
+            }
+            val targetBox = if (video) videoBox else audioBox
+            val idx = if (video) EnhanceSettings.videoQuality(this) else EnhanceSettings.audioMode(this)
+            targetBox.getChildAt(idx)?.requestFocus()
+        }
         d.show()
         d.window?.setLayout(
             (resources.displayMetrics.widthPixels * (if (DeviceMode.isTv) 0.72 else 0.92)).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
-        (if (video) videoBox else audioBox).post {
-            val idx = if (video) EnhanceSettings.videoQuality(this) else EnhanceSettings.audioMode(this)
-            (if (video) videoBox else audioBox).getChildAt(idx)?.requestFocus()
-        }
     }
 
     private fun buildChips(
         box: LinearLayout, names: Array<String>, selected: Int,
-        otherBox: LinearLayout, isUpRow: Boolean, onPick: (Int) -> Unit
+        otherBox: LinearLayout, isUpRow: Boolean, dialog: AlertDialog? = null, onPick: (Int) -> Unit
     ) {
         box.removeAllViews()
         val inf = LayoutInflater.from(this)
@@ -986,6 +999,9 @@ class PlayerActivity : AppCompatActivity() {
                     } else if (!isUpRow && keyCode == KeyEvent.KEYCODE_DPAD_UP) {
                         val targetIdx = i.coerceAtMost(otherBox.childCount - 1)
                         otherBox.getChildAt(targetIdx)?.requestFocus()
+                        return@setOnKeyListener true
+                    } else if (!isUpRow && keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                        dialog?.getButton(AlertDialog.BUTTON_NEGATIVE)?.requestFocus()
                         return@setOnKeyListener true
                     }
                 }

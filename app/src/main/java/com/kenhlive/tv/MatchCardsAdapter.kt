@@ -116,11 +116,9 @@ class MatchCardsAdapter(
                     else -> null
                 }
                 FocusKit.remember(rowPos, pos, key)
-                // Cuộn card vào giữa màn hình để hiển thị trọn vẹn thông tin
-                v.parent?.requestChildFocus(v, v)
             }
             v.animate().scaleX(if (has) 1.05f else 1f).scaleY(if (has) 1.05f else 1f)
-                .setDuration(150).start()
+                .setDuration(100).start()
             v.elevation = if (has) 16f else 0f
         }
         when (h) {

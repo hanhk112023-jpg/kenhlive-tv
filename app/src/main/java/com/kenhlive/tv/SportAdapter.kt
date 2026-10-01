@@ -139,8 +139,8 @@ class SportAdapter(
         val rv = outerRecyclerView ?: return false
         for (i in 0 until itemCount) {
             if (getItem(i) is RailItem) {
-                // Đảm bảo cuộn outer RecyclerView tới hàng rail
-                rv.scrollToPosition(i)
+                // Giữ outer RecyclerView ở đỉnh (offset 0) để Hero banner không bị đẩy sát mép trên
+                rv.scrollToPosition(0)
                 val vh = rv.findViewHolderForAdapterPosition(i) as? RailVH
                 if (vh != null) {
                     vh.list.scrollToPosition(0)
@@ -196,7 +196,16 @@ class SportAdapter(
         init {
             (v as? ViewGroup)?.clipChildren = false
             (v as? ViewGroup)?.clipToPadding = false
-            list.layoutManager = LinearLayoutManager(list.context, LinearLayoutManager.HORIZONTAL, false)
+            list.layoutManager = object : LinearLayoutManager(list.context, HORIZONTAL, false) {
+                override fun requestChildRectangleOnScreen(
+                    parent: RecyclerView, child: View, rect: android.graphics.Rect, immediate: Boolean, focusedChildVisible: Boolean
+                ): Boolean {
+                    val density = parent.context.resources.displayMetrics.density
+                    val extraPeek = (140 * density).toInt()
+                    val targetRect = android.graphics.Rect(rect.left, rect.top, rect.right + extraPeek, rect.bottom)
+                    return super.requestChildRectangleOnScreen(parent, child, targetRect, immediate, focusedChildVisible)
+                }
+            }
             list.setHasFixedSize(true)
             list.setItemViewCacheSize(8)
             list.setRecycledViewPool(pool)
@@ -218,7 +227,16 @@ class SportAdapter(
         init {
             (v as? ViewGroup)?.clipChildren = false
             (v as? ViewGroup)?.clipToPadding = false
-            list.layoutManager = LinearLayoutManager(list.context, LinearLayoutManager.HORIZONTAL, false)
+            list.layoutManager = object : LinearLayoutManager(list.context, HORIZONTAL, false) {
+                override fun requestChildRectangleOnScreen(
+                    parent: RecyclerView, child: View, rect: android.graphics.Rect, immediate: Boolean, focusedChildVisible: Boolean
+                ): Boolean {
+                    val density = parent.context.resources.displayMetrics.density
+                    val extraPeek = (140 * density).toInt()
+                    val targetRect = android.graphics.Rect(rect.left, rect.top, rect.right + extraPeek, rect.bottom)
+                    return super.requestChildRectangleOnScreen(parent, child, targetRect, immediate, focusedChildVisible)
+                }
+            }
             list.setHasFixedSize(true)
             list.setItemViewCacheSize(8)
             list.setRecycledViewPool(blvPool)
