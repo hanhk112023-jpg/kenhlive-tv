@@ -31,7 +31,10 @@ object DeviceMode {
             Configuration.UI_MODE_TYPE_TELEVISION
         val dm = context.resources.displayMetrics
         val isPortraitOrientation = dm.heightPixels > dm.widthPixels
-        mode = if (pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK) || uiTv) {
+        val hasTouch = pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)
+        val isLandscape = dm.widthPixels > dm.heightPixels
+        val isBoxOrTv = pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK) || uiTv || !hasTouch
+        mode = if (isBoxOrTv || (isLandscape && dm.widthPixels >= 1280)) {
             if (isPortraitOrientation) Mode.PHONE else Mode.TV
         } else {
             Mode.PHONE
@@ -47,7 +50,10 @@ object DeviceMode {
             Configuration.UI_MODE_TYPE_TELEVISION
         val dm = context.resources.displayMetrics
         val isPortraitOrientation = dm.heightPixels > dm.widthPixels
-        mode = if (pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK) || uiTv) {
+        val hasTouch = pm.hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN)
+        val isLandscape = dm.widthPixels > dm.heightPixels
+        val isBoxOrTv = pm.hasSystemFeature(PackageManager.FEATURE_LEANBACK) || uiTv || !hasTouch
+        mode = if (isBoxOrTv || (isLandscape && dm.widthPixels >= 1280)) {
             if (isPortraitOrientation) Mode.PHONE else Mode.TV
         } else {
             Mode.PHONE

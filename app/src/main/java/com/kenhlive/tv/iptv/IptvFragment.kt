@@ -67,8 +67,15 @@ class IptvFragment : Fragment() {
         heroEpgNext = view.findViewById(R.id.heroEpgNext)
         heroLogoImg = view.findViewById(R.id.heroLogoImg)
 
-        // TV: 3 cột ngang dạng card bo góc thanh thoát, Phone: 1 hoặc 2 cột
-        val spanCount = if (DeviceMode.isTv) 3 else 1
+        // Lưới thẻ TV chuẩn Leanback: Tự động phân chia 5 cột (TV 1080p), 4 cột (Tablet ngang) hoặc 2 cột (Phone)
+        val dm = resources.displayMetrics
+        val widthDp = dm.widthPixels / dm.density
+        val spanCount = when {
+            widthDp >= 800 || DeviceMode.isTv -> 5
+            widthDp >= 600 -> 4
+            widthDp >= 400 -> 3
+            else -> 2
+        }
         gridList.layoutManager = GridLayoutManager(requireContext(), spanCount)
         gridList.clipChildren = false
         gridList.clipToPadding = false
@@ -298,11 +305,11 @@ class IptvFragment : Fragment() {
 
                 holder.itemView.setOnFocusChangeListener { v, hasFocus ->
                     v.animate()
-                        .scaleX(if (hasFocus) 1.05f else 1f)
-                        .scaleY(if (hasFocus) 1.05f else 1f)
-                        .translationZ(if (hasFocus) 12f else 0f)
-                        .setDuration(150).start()
-                    v.elevation = if (hasFocus) 14f else 0f
+                        .scaleX(if (hasFocus) 1.08f else 1f)
+                        .scaleY(if (hasFocus) 1.08f else 1f)
+                        .translationZ(if (hasFocus) 16f else 0f)
+                        .setDuration(160).start()
+                    v.elevation = if (hasFocus) 16f else 0f
                     if (hasFocus) {
                         updateHeroPreview(ch)
                     }
