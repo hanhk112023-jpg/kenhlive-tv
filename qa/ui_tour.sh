@@ -40,44 +40,66 @@ stoprec() { local f="${1:-${REC_CUR:-rec1.mp4}}"; adb shell screenrecord --stop 
 startrec rec1.mp4; sleep 2; mark "MO APP: Trang Chu & Truc Tiep The Thao"
 
 # 1. TAB 0: HOME / TRỰC TIẾP
-sleep 2
+relaunch 0
+sleep 3
 adb exec-out screencap -p > $OUT/tab0_fullscreen_no_rail.png
 mark "CHUP ANH: Full man hinh noi dung (Side tab da an)"
 go "LEFT: cham canh trai de goi Side tab hien len" 21 2; foc
 adb exec-out screencap -p > $OUT/tab0_rail_revealed.png
 mark "CHUP ANH: Side tab tu dong hien khi tuong tac sang trai"
-
-# TEST DPAD CHUYỂN TAB TỰ NHIÊN:
-# Đứng tại Side tab, bấm DOWN để duyệt từng mục, bấm RIGHT/OK để vào nội dung
 go "DOWN: chuyen focus tren Side tab xuong Tab Lich thi dau" 20 1; foc
 adb exec-out screencap -p > $OUT/tab0_rail_focus_nav.png
 mark "CHUP ANH: Focus di chuyen tren Side tab"
 
-# 2. CHUYỂN SANG TAB 1 BẰNG DPAD (KHÔNG DÙNG RELAUNCH):
-go "RIGHT: vao Tab 1 Lich thi dau bang D-pad" 22 2; foc
+# 2. TAB 1: LỊCH THI ĐẤU
+relaunch 1
+sleep 3
 go "DOWN: cuon xuong tran ke tiep"                         20 1
 go "UP: cuon tro lai tran dau tien"                         19 1
 adb exec-out screencap -p > $OUT/tab1_schedule.png
 mark "CHUP ANH: Tab 1 Schedule"
 
-# 3. CHUYỂN SANG TAB 2 TRUYỀN HÌNH BẰNG DPAD:
-go "LEFT: goi lai Side tab tu Tab 1" 21 2; foc
-go "DOWN: di chuyen D-pad xuong icon Tab Truyen Hinh" 20 1; foc
-go "RIGHT: vao Tab 2 Truyen Hinh bang D-pad" 22 2; foc
-sleep 2
+# 3. TAB 2: TRUYỀN HÌNH IPTV (LƯỚI 5 CỘT & HERO PREVIEW)
+relaunch 2
+sleep 4
 adb exec-out screencap -p > $OUT/tab2_iptv.png
 mark "CHUP ANH: Tab 2 IPTV va EPG Live"
 
-# Đảm bảo đưa focus sang lưới kênh (từ menu bấm RIGHT để vào nội dung IPTV)
-go "RIGHT: vao luoi kenh VTV" 22 1; foc
-go "XAC NHAN: da vao kenh VTV (EPG Now & Next)" 0 1; foc
+# Đưa focus vào card kênh đầu tiên trong lưới 5 cột
+go "DOWN: xuong luoi kenh" 20 1; foc
+go "RIGHT: vao kenh dau tien" 22 1; foc
 adb exec-out screencap -p > $OUT/tab2_vtv_focused.png
+mark "CHUP ANH: Card kenh duoc focus va Hero Preview cap nhat"
 
-go "RIGHT: sang kenh VTV tiep theo" 22 2; foc
-go "RIGHT: sang kenh VTV thu 3" 22 2; foc
-go "OK: mo xem kenh VTV trong Player Pro" 23 5
+# Lướt D-pad qua các cột trong lưới 5 cột (cột 2, cột 3, cột 4, cột 5)
+go "RIGHT: sang cot 2" 22 1; foc
+go "RIGHT: sang cot 3" 22 1; foc
+go "RIGHT: sang cot 4" 22 1; foc
+go "RIGHT: sang cot 5" 22 1; foc
+adb exec-out screencap -p > $OUT/tab2_grid_columns.png
+mark "CHUP ANH: Duyet qua 5 cot luoi kenh"
+
+# Bấm DOWN xuống hàng thứ 2
+go "DOWN: xuong hang 2 cua luoi kenh" 20 1; foc
+adb exec-out screencap -p > $OUT/tab2_grid_row2.png
+mark "CHUP ANH: Hang 2 cua luoi kenh IPTV"
+
+# Lên nhóm danh mục để lọc Thể thao
+go "UP: len hang 1" 19 1; foc
+go "UP: len thanh danh muc nhom kenh" 19 1; foc
+go "RIGHT: sang nhom The Thao" 22 1; foc
+go "OK: kich hoat filter The Thao" 23 2; foc
+sleep 2
+adb exec-out screencap -p > $OUT/tab2_sports_filter.png
+mark "CHUP ANH: Nhom The Thao sau khi loc"
+
+# Vào một kênh thể thao và bấm OK để mở Player Pro
+go "DOWN: xuong kenh the thao dau tien" 20 1; foc
+go "OK: mo xem kenh the thao trong Player Pro" 23 5
 adb exec-out screencap -p > $OUT/tab2_vtv_player.png
-mark "CHUP ANH: Player Pro phat kenh VTV"
+mark "CHUP ANH: Player Pro phat kenh truyen hinh"
+
+# Thao tác trong Player Pro
 go "UP: Quick Channel OSD Banner chuyen kenh" 19 2
 adb exec-out screencap -p > $OUT/tab2_quick_osd.png
 mark "CHUP ANH: Quick Channel OSD Banner"
@@ -117,28 +139,19 @@ adb exec-out screencap -p > $OUT/tab2_sidebar_channels.png
 mark "CHUP ANH: Sidebar danh sach kenh IPTV"
 go "BACK: dong sidebar ve player" 4 1
 go "BACK: thoat player ve tab truyen hinh" 4 2
-go "UP: len danh muc nhom kenh" 19 1
-go "RIGHT: chon nhom The Thao" 22 1
-go "OK: active filter The Thao" 23 2
-adb exec-out screencap -p > $OUT/tab2_sports_filter.png
-mark "CHUP ANH: Nhom The Thao (DAZN/Sky/beIN)"
-go "DOWN: focus kenh the thao dau tien" 20 1
 
 # 4. TAB 3: TÌM KIẾM
-go "LEFT: goi lai Side tab tu Tab 2" 21 2; foc
-go "DOWN: di chuyen D-pad xuong icon Tab Tim Kiem" 20 1; foc
-go "RIGHT: vao Tab 3 Tim Kiem bang D-pad" 22 2; foc
-go "KIEM TRA: focus tu dong vao search input" 0 1
-adb shell input text "u23" >/dev/null 2>&1; sleep 2; mark "TYPE 'u23' -> ket qua tim kiem"
+relaunch 3
+sleep 3
+adb shell input text "vtv" >/dev/null 2>&1; sleep 2; mark "TYPE 'vtv' -> ket qua tim kiem"
 go "BACK dong ban phim"                       4 1
 go "DOWN: chuyen focus xuong chip giai hoac ket qua" 20 1
 adb exec-out screencap -p > $OUT/tab3_search.png
 mark "CHUP ANH: Tab 3 Search"
 
 # 5. TAB 4: CÀI ĐẶT
-go "LEFT: goi lai Side tab tu Tab 3" 21 2; foc
-go "DOWN: di chuyen D-pad xuong icon Tab Cai Dat" 20 1; foc
-go "RIGHT: vao Tab 4 Cai Dat bang D-pad" 22 2; foc
+relaunch 4
+sleep 3
 go "DOWN: dong cai dat dau tien (Chat luong hinh anh)" 20 1
 go "OK: mo dialog chon chat luong hinh anh"            23 2
 adb exec-out screencap -p > $OUT/tab4_dialog_video.png
@@ -156,9 +169,8 @@ adb exec-out screencap -p > $OUT/tab4_settings.png
 mark "CHUP ANH: Tab 4 Settings sau khi chinh chat luong"
 
 # 6. VÀO PHÒNG LIVE -> PLAYER EXOPLAYER
-go "LEFT: goi lai Side tab tu Tab 4" 21 2; foc
-go "UP: di chuyen D-pad len icon Tab Trang Chu" 19 4; foc
-go "RIGHT: vao lai Tab 0 Trang Chu bang D-pad" 22 2; foc
+relaunch 0
+sleep 3
 go "DOWN toi card LIVE"    20 2
 go "OK: danh sach phong"   23 2
 go "OK: vao phong"         23 6; mark "PLAYER dang phat ExoPlayer"
