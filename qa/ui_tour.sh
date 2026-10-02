@@ -192,14 +192,15 @@ go "BACK ra player"        4 2
 FG=$(focus); case "$FG" in *kenhlive*) : ;; *) relaunch 0; key 20; sleep 1;; esac
 
 # 7. MULTIVIEW (2 Ô VÀ 4 Ô)
-adb shell am start -n com.kenhlive.tv/.MultiViewActivity --ei mv_layout 0 >/dev/null 2>&1
-sleep 6; mark "MULTIVIEW 2 o"
+adb shell am force-stop com.kenhlive.tv; sleep 1
+adb shell am start -n com.kenhlive.tv/.MultiViewActivity --ei mv_layout 2 >/dev/null 2>&1
+sleep 5; mark "MULTIVIEW 2 o"
 adb exec-out screencap -p > $OUT/multiview2.png
 go "DOWN: o 2"             20 1
 go "UP: o 1"               19 1
 
-adb shell am start -n com.kenhlive.tv/.MultiViewActivity --ei mv_layout 1 >/dev/null 2>&1
-sleep 6; mark "MULTIVIEW 4 o"
+adb shell am start -n com.kenhlive.tv/.MultiViewActivity --ei mv_layout 4 >/dev/null 2>&1
+sleep 5; mark "MULTIVIEW 4 o"
 adb exec-out screencap -p > $OUT/multiview4.png
 go "BACK khoi MV"          4 2
 
