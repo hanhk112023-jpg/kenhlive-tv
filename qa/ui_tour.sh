@@ -63,7 +63,8 @@ mark "CHUP ANH: Tab 1 Schedule"
 # 3. CHUYỂN SANG TAB 2 TRUYỀN HÌNH BẰNG DPAD:
 go "LEFT: goi lai Side tab tu Tab 1" 21 2; foc
 go "DOWN: di chuyen D-pad xuong icon Tab Truyen Hinh" 20 1; foc
-go "RIGHT: vao Tab 2 Truyen Hinh bang D-pad" 22 4; foc
+go "RIGHT: vao Tab 2 Truyen Hinh bang D-pad" 22 2; foc
+sleep 2
 adb exec-out screencap -p > $OUT/tab2_iptv.png
 mark "CHUP ANH: Tab 2 IPTV va EPG Live"
 
