@@ -84,6 +84,9 @@ object SocoliveRepository {
     @Volatile private var scheduleCacheAt = 0L
     private const val SCHEDULE_TTL_MS = 5 * 60_000L
 
+    private const val FILE_CACHE_LIVE = "cache_live_rooms.json"
+    private const val FILE_CACHE_RECOMMEND = "cache_recommend_matches.json"
+
     private fun stamp(): String = (System.currentTimeMillis() / 1000).toString()
 
     @Volatile private var recommendCache: List<ScheduleMatch>? = null
@@ -91,11 +94,52 @@ object SocoliveRepository {
 
     fun invalidateLive() { liveCache = null; recommendCache = null }
 
+    /** Đọc nhanh cache live từ ổ đĩa (0s loading khi vừa mở app). */
+    fun getCachedLiveRoomsDisk(): List<LiveRoom>? {
+        if (liveCache != null) return liveCache
+        return try {
+            val file = java.io.File(KenhLiveApp.appContext.cacheDir, FILE_CACHE_LIVE)
+            if (file.exists() && file.length() > 0) {
+                val raw = file.readText()
+                val parsed = SocoliveParser.parseLiveRooms(raw)
+                if (parsed.isNotEmpty()) {
+                    liveCache = parsed
+                    liveCacheAt = System.currentTimeMillis()
+                    parsed
+                } else null
+            } else null
+        } catch (_: Exception) { null }
+    }
+
+    /** Đọc nhanh cache đề xuất từ ổ đĩa khi vừa khởi động. */
+    fun getCachedRecommendationsDisk(): List<ScheduleMatch>? {
+        if (recommendCache != null) return recommendCache
+        return try {
+            val file = java.io.File(KenhLiveApp.appContext.cacheDir, FILE_CACHE_RECOMMEND)
+            if (file.exists() && file.length() > 0) {
+                val raw = file.readText()
+                val parsed = SocoliveParser.parseRecommendMatches(raw)
+                if (parsed.isNotEmpty()) {
+                    recommendCache = parsed
+                    recommendCacheAt = System.currentTimeMillis()
+                    parsed
+                } else null
+            } else null
+        } catch (_: Exception) { null }
+    }
+
+    private fun saveDiskCache(fileName: String, data: String) {
+        try {
+            val file = java.io.File(KenhLiveApp.appContext.cacheDir, fileName)
+            file.writeText(data)
+        } catch (_: Exception) { }
+    }
+
     // ---------- TAB TRỰC TIẾP ----------
     /** force=true bỏ qua cache (pull-to-refresh / retry). */
     suspend fun fetchLiveRooms(force: Boolean = false): List<LiveRoom> {
         if (!force) {
-            val c = liveCache
+            val c = liveCache ?: getCachedLiveRoomsDisk()
             if (c != null && System.currentTimeMillis() - liveCacheAt < LIVE_TTL_MS) return c
         }
         return liveMutex.withLock {
@@ -104,6 +148,7 @@ object SocoliveRepository {
             withContext(Dispatchers.IO) {
                 val now = stamp()
                 val body = Http.getWithRetry("$API/all_live_rooms.json?callback=rooms&v=$now&_=$now")
+                saveDiskCache(FILE_CACHE_LIVE, body)
                 SocoliveParser.parseLiveRooms(body)
             }.also {
                 liveCache = it
@@ -115,13 +160,14 @@ object SocoliveRepository {
     /** Trận đề xuất / tâm điểm từ match_recommend.json (chứa cờ/logo 2 đội & danh sách BLV). */
     suspend fun fetchRecommendations(force: Boolean = false): List<ScheduleMatch> {
         if (!force) {
-            val c = recommendCache
+            val c = recommendCache ?: getCachedRecommendationsDisk()
             if (c != null && System.currentTimeMillis() - recommendCacheAt < LIVE_TTL_MS) return c
         }
         return withContext(Dispatchers.IO) {
             try {
                 val now = stamp()
                 val body = Http.getWithRetry("$API/match_recommend.json?callback=recommend&v=$now&_=$now")
+                saveDiskCache(FILE_CACHE_RECOMMEND, body)
                 SocoliveParser.parseRecommendMatches(body)
             } catch (_: Exception) { emptyList() }
         }.also {
@@ -189,8 +235,15 @@ object SocoliveRepository {
                 async {
                     try {
                         val now = stamp()
-                        Http.getWithRetry("$API/match/matches_$k.json?callback=matches&v=$now&_=$now")
-                    } catch (_: Exception) { null }
+                        val res = Http.getWithRetry("$API/match/matches_$k.json?callback=matches&v=$now&_=$now")
+                        saveDiskCache("matches_$k.json", res)
+                        res
+                    } catch (_: Exception) {
+                        try {
+                            val f = java.io.File(KenhLiveApp.appContext.cacheDir, "matches_$k.json")
+                            if (f.exists() && f.length() > 0) f.readText() else null
+                        } catch (_: Exception) { null }
+                    }
                 }
             }.awaitAll()
             for (body in bodies) {

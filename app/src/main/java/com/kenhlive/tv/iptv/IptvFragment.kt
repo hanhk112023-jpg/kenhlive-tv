@@ -121,44 +121,59 @@ class IptvFragment : Fragment() {
     }
 
     private fun loadData() {
-        loadingView.visibility = View.VISIBLE
-        emptyText.visibility = View.GONE
+        val cached = IptvRepository.getCachedChannelsDisk(requireContext())
+        if (!cached.isNullOrEmpty()) {
+            allChannels = cached
+            loadingView.visibility = View.GONE
+            emptyText.visibility = View.GONE
+            populateUi(cached, focusFirst = true)
+        } else {
+            loadingView.visibility = View.VISIBLE
+            emptyText.visibility = View.GONE
+        }
+
         lifecycleScope.launch {
-            allChannels = IptvRepository.loadChannels(requireContext())
+            val fresh = IptvRepository.loadChannels(requireContext())
             loadingView.visibility = View.GONE
 
-            if (allChannels.isEmpty()) {
+            if (fresh.isEmpty() && allChannels.isEmpty()) {
                 emptyText.visibility = View.VISIBLE
                 countText.text = "0 kênh"
                 setupGroups(emptyList())
                 setupGrid(emptyList())
-            } else {
-                val vnCount = allChannels.count { it.isVn }
-                val sportsCount = allChannels.size - vnCount
-                countText.text = "Tổng: ${allChannels.size} kênh (${vnCount} VN, ${sportsCount} Thể thao)"
+            } else if (fresh.isNotEmpty() && fresh != allChannels) {
+                allChannels = fresh
+                emptyText.visibility = View.GONE
+                populateUi(fresh, focusFirst = allChannels.isEmpty())
+            }
 
-                val distinctGroups = mutableListOf("Việt Nam", "Thể Thao", "DAZN", "Sky Sports", "beIN Sports", "ESPN", "FIFA+", "Tất cả")
-                val otherGroups = allChannels.map { it.group }.distinct().filterNot { it in distinctGroups }
-                distinctGroups.addAll(otherGroups)
-
-                setupGroups(distinctGroups.filter { g ->
-                    g == "Tất cả" || allChannels.any {
-                        if (g == "Việt Nam") it.isVn || it.group.contains("Việt Nam", ignoreCase = true)
-                        else if (g == "Thể Thao") !it.isVn
-                        else it.group.equals(g, ignoreCase = true)
-                    }
-                })
-                applyFilter(focusFirst = true)
-
-                EpgRepository.initEpg(requireContext())
-                if (isAdded) {
-                    gridList.adapter?.notifyDataSetChanged()
-                    if (displayedChannels.isNotEmpty()) {
-                        updateHeroPreview(displayedChannels[0])
-                    }
+            EpgRepository.initEpg(requireContext())
+            if (isAdded) {
+                gridList.adapter?.notifyDataSetChanged()
+                if (displayedChannels.isNotEmpty()) {
+                    updateHeroPreview(displayedChannels[0])
                 }
             }
         }
+    }
+
+    private fun populateUi(channels: List<IptvChannel>, focusFirst: Boolean) {
+        val vnCount = channels.count { it.isVn }
+        val sportsCount = channels.size - vnCount
+        countText.text = "Tổng: ${channels.size} kênh (${vnCount} VN, ${sportsCount} Thể thao)"
+
+        val distinctGroups = mutableListOf("Việt Nam", "Thể Thao", "DAZN", "Sky Sports", "beIN Sports", "ESPN", "FIFA+", "Tất cả")
+        val otherGroups = channels.map { it.group }.distinct().filterNot { it in distinctGroups }
+        distinctGroups.addAll(otherGroups)
+
+        setupGroups(distinctGroups.filter { g ->
+            g == "Tất cả" || channels.any {
+                if (g == "Việt Nam") it.isVn || it.group.contains("Việt Nam", ignoreCase = true)
+                else if (g == "Thể Thao") !it.isVn
+                else it.group.equals(g, ignoreCase = true)
+            }
+        })
+        applyFilter(focusFirst = focusFirst)
     }
 
     private fun applyFilter(focusFirst: Boolean = false) {
@@ -282,10 +297,12 @@ class IptvFragment : Fragment() {
                 }
 
                 holder.itemView.setOnFocusChangeListener { v, hasFocus ->
-                    v.animate().scaleX(if (hasFocus) 1.04f else 1f)
-                        .scaleY(if (hasFocus) 1.04f else 1f)
-                        .setDuration(120).start()
-                    v.elevation = if (hasFocus) 12f else 0f
+                    v.animate()
+                        .scaleX(if (hasFocus) 1.05f else 1f)
+                        .scaleY(if (hasFocus) 1.05f else 1f)
+                        .translationZ(if (hasFocus) 12f else 0f)
+                        .setDuration(150).start()
+                    v.elevation = if (hasFocus) 14f else 0f
                     if (hasFocus) {
                         updateHeroPreview(ch)
                     }

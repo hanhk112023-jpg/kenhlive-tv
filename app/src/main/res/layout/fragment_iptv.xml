@@ -5,18 +5,18 @@
     android:orientation="vertical"
     android:background="#000000">
 
-    <!-- CỤM TRÊN: HERO PREVIEW KÊNH ĐANG FOCUS (PHONG CÁCH NETFLIX / APPLE TV) -->
+    <!-- CỤM TRÊN: HERO PREVIEW KÊNH ĐANG FOCUS (PHONG CÁCH NETFLIX / APPLE TV CINEMA) -->
     <RelativeLayout
         android:id="@+id/heroPreviewBox"
         android:layout_width="match_parent"
-        android:layout_height="210dp"
-        android:background="#08090D"
+        android:layout_height="225dp"
+        android:background="@drawable/bg_iptv_hero"
         android:paddingLeft="28dp"
         android:paddingRight="28dp"
         android:paddingTop="20dp"
         android:paddingBottom="16dp">
 
-        <!-- Bên trái: Chi tiết kênh & EPG lớn -->
+        <!-- Bên trái: Chi tiết kênh & Lịch phát sóng EPG lớn -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -25,6 +25,7 @@
             android:gravity="center_vertical"
             android:paddingRight="24dp">
 
+            <!-- Dãy huy hiệu trạng thái sang trọng -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -37,14 +38,14 @@
                     android:layout_height="wrap_content"
                     android:text="VIỆT NAM"
                     android:textColor="#00E5FF"
-                    android:textSize="11sp"
+                    android:textSize="11.5sp"
                     android:textStyle="bold"
-                    android:letterSpacing="0.08"
+                    android:letterSpacing="0.06"
                     android:background="@drawable/bg_badge_league_cyan"
-                    android:paddingLeft="9dp"
-                    android:paddingRight="9dp"
-                    android:paddingTop="3dp"
-                    android:paddingBottom="3dp" />
+                    android:paddingLeft="10dp"
+                    android:paddingRight="10dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -55,35 +56,56 @@
                     android:textSize="10.5sp"
                     android:textStyle="bold"
                     android:background="@drawable/bg_badge_live_red"
-                    android:paddingLeft="8dp"
-                    android:paddingRight="8dp"
-                    android:paddingTop="3dp"
-                    android:paddingBottom="3dp" />
+                    android:paddingLeft="9dp"
+                    android:paddingRight="9dp"
+                    android:paddingTop="4dp"
+                    android:paddingBottom="4dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="8dp"
+                    android:text="1080P"
+                    android:textColor="#00E5FF"
+                    android:textSize="9.5sp"
+                    android:textStyle="bold"
+                    android:background="@drawable/bg_badge_hd"
+                    android:paddingLeft="6dp"
+                    android:paddingRight="6dp"
+                    android:paddingTop="2dp"
+                    android:paddingBottom="2dp" />
             </LinearLayout>
 
+            <!-- Tên kênh truyền hình -->
             <TextView
                 android:id="@+id/heroChannelTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="8dp"
                 android:text="VTV1 HD"
                 android:textColor="#FFFFFF"
-                android:textSize="28sp"
+                android:textSize="30sp"
                 android:textStyle="bold"
+                android:shadowColor="#80000000"
+                android:shadowDx="0"
+                android:shadowDy="2"
+                android:shadowRadius="4"
                 android:fontFamily="@font/oswald" />
 
+            <!-- Lịch EPG: Đang phát -->
             <TextView
                 android:id="@+id/heroEpgNow"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:text="▶ Đang phát: Thời sự 19h00"
-                android:textColor="#E2E8F0"
-                android:textSize="14sp"
+                android:textColor="#F1F5F9"
+                android:textSize="14.5sp"
                 android:textStyle="bold"
                 android:maxLines="1"
                 android:ellipsize="end" />
 
+            <!-- Lịch EPG: Tiếp theo -->
             <TextView
                 android:id="@+id/heroEpgNext"
                 android:layout_width="wrap_content"
@@ -91,18 +113,28 @@
                 android:layout_marginTop="3dp"
                 android:text="⏭ Tiếp theo: Phim truyện Việt Nam"
                 android:textColor="#94A3B8"
-                android:textSize="12.5sp"
+                android:textSize="13sp"
                 android:maxLines="1"
                 android:ellipsize="end" />
+
+            <!-- Gợi ý điều khiển TV -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Bấm [OK] để xem toàn màn hình • Bấm [Tua/Chọn] để đổi kênh"
+                android:textColor="#64748B"
+                android:textSize="11sp" />
         </LinearLayout>
 
-        <!-- Bên phải: Khung kính Logo Kênh nổi bật -->
+        <!-- Bên phải: Khung kính Logo Kênh 3D nổi bật -->
         <FrameLayout
             android:id="@+id/heroLogoContainer"
-            android:layout_width="160dp"
-            android:layout_height="match_parent"
+            android:layout_width="170dp"
+            android:layout_height="130dp"
             android:layout_alignParentRight="true"
-            android:background="@drawable/bg_iptv_channel_card"
+            android:layout_centerVertical="true"
+            android:background="@drawable/bg_iptv_logo_frame"
             android:padding="16dp">
 
             <ImageView
@@ -113,15 +145,15 @@
                 android:src="@drawable/ic_nav_tv" />
         </FrameLayout>
 
-        <!-- Đường kẻ chân Hero mờ dần -->
+        <!-- Đường kẻ viền chân Hero mờ dần -->
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_alignParentBottom="true"
-            android:background="#1A1F29" />
+            android:background="#1F2637" />
     </RelativeLayout>
 
-    <!-- THANH DANH MỤC NHÓM KÊNH (VIỆT NAM | THỂ THAO | QUỐC TẾ...) -->
+    <!-- THANH DANH MỤC NHÓM KÊNH & Ô TÌM KIẾM -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -140,24 +172,24 @@
             android:orientation="horizontal"
             android:clipToPadding="false" />
 
-        <!-- Ô Tìm kiếm nhanh -->
+        <!-- Ô Tìm kiếm nhanh phong cách bo tròn -->
         <EditText
             android:id="@+id/searchChannelInput"
             android:layout_width="220dp"
-            android:layout_height="36dp"
-            android:layout_marginLeft="12dp"
+            android:layout_height="38dp"
+            android:layout_marginLeft="14dp"
             android:hint="Tìm kênh TV..."
-            android:textColorHint="#475569"
+            android:textColorHint="#64748B"
             android:textColor="#FFFFFF"
-            android:textSize="12sp"
-            android:background="@drawable/bg_chip"
-            android:paddingLeft="12dp"
-            android:paddingRight="12dp"
+            android:textSize="12.5sp"
+            android:background="@drawable/bg_iptv_chip"
+            android:paddingLeft="14dp"
+            android:paddingRight="14dp"
             android:singleLine="true"
             android:imeOptions="actionSearch" />
     </LinearLayout>
 
-    <!-- CỤM DƯỚI: LƯỚI / DẢI KÊNH PURE BLACK BO GÓC MỀM -->
+    <!-- CỤM DƯỚI: LƯỚI KÊNH -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"

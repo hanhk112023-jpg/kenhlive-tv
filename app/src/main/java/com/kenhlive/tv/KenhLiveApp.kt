@@ -17,12 +17,17 @@ import coil.disk.DiskCache
 class KenhLiveApp : Application(), ImageLoaderFactory {
 
     companion object {
+        lateinit var app: KenhLiveApp
+            private set
+        val appContext: Context get() = app.applicationContext
+
         val lowRam: Boolean get() = DeviceMode.lowRam
         fun isLowRam(ctx: Context): Boolean = DeviceMode.lowRam
     }
 
     override fun onCreate() {
         super.onCreate()
+        app = this
         DeviceMode.init(this)
         Http.init(this)
     }

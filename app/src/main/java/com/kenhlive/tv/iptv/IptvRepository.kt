@@ -24,9 +24,60 @@ object IptvRepository {
     private const val KEY_CACHE_VN = "m3u_cache_vn"
     private const val KEY_CACHE_SPORTS = "m3u_cache_sports"
     private const val KEY_LAST_UPDATE = "m3u_last_update"
+    private const val FILE_CACHE_PARSED = "cache_iptv_parsed.json"
 
     // Bộ nhớ RAM tĩnh để PlayerActivity mở sidebar chuyển kênh tức thì
     var currentChannels: List<IptvChannel> = emptyList()
+
+    /** Đọc nhanh danh sách kênh đã parse từ ổ đĩa (0s parsing, hiển thị tức thì) */
+    fun getCachedChannelsDisk(context: Context): List<IptvChannel>? {
+        if (currentChannels.isNotEmpty()) return currentChannels
+        return try {
+            val file = java.io.File(context.cacheDir, FILE_CACHE_PARSED)
+            if (file.exists() && file.length() > 0) {
+                val jsonArr = org.json.JSONArray(file.readText())
+                val list = mutableListOf<IptvChannel>()
+                for (i in 0 until jsonArr.length()) {
+                    val obj = jsonArr.optJSONObject(i) ?: continue
+                    list.add(
+                        IptvChannel(
+                            id = obj.optString("id", ""),
+                            name = obj.optString("name", ""),
+                            group = obj.optString("group", ""),
+                            logo = obj.optString("logo", ""),
+                            url = obj.optString("url", ""),
+                            isVn = obj.optBoolean("isVn", false),
+                            country = obj.optString("country", "")
+                        )
+                    )
+                }
+                if (list.isNotEmpty()) {
+                    currentChannels = list
+                    list
+                } else null
+            } else null
+        } catch (_: Exception) { null }
+    }
+
+    private fun saveParsedChannelsDisk(context: Context, list: List<IptvChannel>) {
+        try {
+            val jsonArr = org.json.JSONArray()
+            for (ch in list) {
+                val obj = org.json.JSONObject().apply {
+                    put("id", ch.id)
+                    put("name", ch.name)
+                    put("group", ch.group)
+                    put("logo", ch.logo)
+                    put("url", ch.url)
+                    put("isVn", ch.isVn)
+                    put("country", ch.country)
+                }
+                jsonArr.put(obj)
+            }
+            val file = java.io.File(context.cacheDir, FILE_CACHE_PARSED)
+            file.writeText(jsonArr.toString())
+        } catch (_: Exception) { }
+    }
 
     // Nguồn cố định: Việt Nam & Thể thao từ iptv-org
     const val URL_VN = "https://iptv-org.github.io/iptv/countries/vn.m3u"
@@ -94,6 +145,7 @@ object IptvRepository {
 
         val distinctList = result.distinctBy { it.url }
         currentChannels = distinctList
+        saveParsedChannelsDisk(context, distinctList)
         distinctList
     }
 

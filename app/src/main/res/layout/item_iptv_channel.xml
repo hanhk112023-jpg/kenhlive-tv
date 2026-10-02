@@ -2,27 +2,27 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/cardIptvRoot"
     android:layout_width="match_parent"
-    android:layout_height="72dp"
+    android:layout_height="78dp"
     android:orientation="horizontal"
     android:gravity="center_vertical"
     android:layout_marginLeft="6dp"
     android:layout_marginRight="6dp"
-    android:layout_marginTop="4dp"
-    android:layout_marginBottom="4dp"
+    android:layout_marginTop="5dp"
+    android:layout_marginBottom="5dp"
     android:background="@drawable/bg_iptv_channel_card"
     android:foreground="@drawable/fg_iptv_focus"
-    android:paddingLeft="10dp"
-    android:paddingRight="12dp"
-    android:paddingTop="6dp"
-    android:paddingBottom="6dp"
+    android:paddingLeft="12dp"
+    android:paddingRight="14dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="8dp"
     android:focusable="true"
     android:clickable="true">
 
-    <!-- Cụm trái: Khung Logo kênh 16:9 căn giữa -->
+    <!-- Khung Logo kênh tỉ lệ đẹp, bo tròn bóng mờ -->
     <FrameLayout
-        android:layout_width="72dp"
+        android:layout_width="74dp"
         android:layout_height="match_parent"
-        android:background="#050608"
+        android:background="@drawable/bg_iptv_logo_frame"
         android:padding="6dp">
 
         <ImageView
@@ -33,13 +33,13 @@
             android:src="@drawable/ic_nav_tv" />
     </FrameLayout>
 
-    <!-- Cụm giữa: Tên kênh & Nhóm đài (chiếm toàn bộ không gian còn lại) -->
+    <!-- Tên kênh & Đài phát sóng -->
     <LinearLayout
         android:layout_width="0dp"
         android:layout_weight="1"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="12dp"
-        android:layout_marginRight="8dp"
+        android:layout_marginLeft="14dp"
+        android:layout_marginRight="10dp"
         android:orientation="vertical">
 
         <TextView
@@ -47,7 +47,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="#FFFFFF"
-            android:textSize="14sp"
+            android:textSize="15sp"
             android:textStyle="bold"
             android:maxLines="1"
             android:ellipsize="end"
@@ -57,29 +57,49 @@
             android:id="@+id/channelSub"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
+            android:layout_marginTop="3dp"
             android:textColor="#94A3B8"
-            android:textSize="11sp"
+            android:textSize="12sp"
             android:maxLines="1"
             android:ellipsize="end"
-            android:text="Việt Nam" />
+            android:text="Đài Truyền Hình Việt Nam" />
     </LinearLayout>
 
-    <!-- Cụm phải: Chấm LIVE đỏ tinh gọn -->
-    <TextView
+    <!-- Cụm bên phải: Huy hiệu HD & LIVE -->
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="● LIVE"
-        android:textColor="#FFFFFF"
-        android:textSize="9sp"
-        android:textStyle="bold"
-        android:background="@drawable/bg_badge_live_red"
-        android:paddingLeft="6dp"
-        android:paddingRight="6dp"
-        android:paddingTop="2dp"
-        android:paddingBottom="2dp" />
+        android:orientation="vertical"
+        android:gravity="end|center_vertical">
 
-    <!-- Ẩn badge nhóm dài dòng trong card vì đã có trên Hero -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="● LIVE"
+            android:textColor="#FFFFFF"
+            android:textSize="9sp"
+            android:textStyle="bold"
+            android:background="@drawable/bg_badge_live_red"
+            android:paddingLeft="7dp"
+            android:paddingRight="7dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:text="HD"
+            android:textColor="#00E5FF"
+            android:textSize="8.5sp"
+            android:textStyle="bold"
+            android:background="@drawable/bg_badge_hd"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingTop="1dp"
+            android:paddingBottom="1dp" />
+    </LinearLayout>
+
     <TextView
         android:id="@+id/channelBadge"
         android:layout_width="wrap_content"
