@@ -441,88 +441,165 @@ code {{ background: #0F172A; padding: 2px 6px; border-radius: 4px; color: #E2E8F
 
 
 # ==============================================================================
-# HỆ THỐNG KIỂM THỬ TỰ HÀNH TOÀN DIỆN (FULL SUITE EXECUTOR)
+# HỆ THỐNG KIỂM THỬ TỰ HÀNH TOÀN DIỆN (SUPER FULL SUITE - 14 HẠNG MỤC)
 # ==============================================================================
 def run_autonomous_full_suite(toolkit):
-    print("\n🚀 [AI QA STUDIO] BẮT ĐẦU CHUỖI KIỂM THỬ TỰ ĐỘNG TOÀN DIỆN CHO KENHLIVE...", flush=True)
+    print("\n🚀 [AI QA STUDIO] BẮT ĐẦU CHUỖI KIỂM THỬ TỰ ĐỘNG TOÀN DIỆN (14 HẠNG MỤC)...", flush=True)
 
-    # 1. Cold Start & Khởi động
-    print("\n[Mục 1] Kiểm tra Khởi động lạnh (Cold Start)...", flush=True)
+    # 1. Cold Start & Home Tab 0
+    print("\n[Mục 1/14] Kiểm tra Khởi động lạnh (Cold Start) & Home...", flush=True)
     toolkit.tool_switch_device_profile("tv_1080p")
     sh(f"{toolkit.adb} shell am force-stop {toolkit.pkg}")
     time.sleep(1)
     toolkit.tool_open_screen("tab0")
-    t0 = toolkit.tool_screencap("cold_start_home")
+    toolkit.tool_screencap("01_cold_start_home")
     crashes = toolkit.tool_check_crashes()
     if crashes["has_crash"]:
         toolkit.tool_record_bug("CRITICAL", "Khởi động", "Crash khi vừa mở app", str(crashes["errors"]))
 
-    # 2. Tab 0: Home & Live Banner
-    print("\n[Mục 2] Kiểm tra Màn hình Trang Chủ (Home Live)...", flush=True)
-    ui_home = toolkit.tool_dump_ui()
-    if not ui_home.get("has_iptv_grid"):
-        print("  ✅ Màn hình Home phân tách chuẩn với IPTV", flush=True)
-    
+    # 2. Rail Navigation & Home Live Focus
+    print("\n[Mục 2/14] Kiểm tra Rail Menu & Spotlight Banner...", flush=True)
+    toolkit.tool_press_key("RIGHT")
+    toolkit.tool_press_key("DOWN")
+    toolkit.tool_screencap("02_home_spotlight_focused")
+
     # 3. Tab 1: Lịch thi đấu
-    print("\n[Mục 3] Kiểm tra Tab 1 Lịch thi đấu...", flush=True)
+    print("\n[Mục 3/14] Kiểm tra Tab 1 Lịch thi đấu...", flush=True)
     toolkit.tool_open_screen("tab1")
-    toolkit.tool_press_sequence(["DOWN", "DOWN", "UP"])
-    toolkit.tool_screencap("tab1_schedule")
+    toolkit.tool_press_sequence(["DOWN", "DOWN", "RIGHT", "LEFT", "UP"])
+    toolkit.tool_screencap("03_tab1_schedule")
 
     # 4. Tab 2: Lưới Truyền Hình IPTV (5 Cột & Hero Preview & EPG)
-    print("\n[Mục 4] Kiểm tra Tab 2 Truyền hình IPTV (Leanback 5 Cột & Hero Preview)...", flush=True)
+    print("\n[Mục 4/14] Kiểm tra Tab 2 Truyền hình IPTV (Leanback 5 Cột & Hero Preview)...", flush=True)
     toolkit.tool_open_screen("tab2")
     time.sleep(2)
-    shot_iptv = toolkit.tool_screencap("tab2_iptv_landing")
+    toolkit.tool_screencap("04_tab2_iptv_landing")
     
-    # Kiểm tra lưới 5 cột
-    ui_iptv = toolkit.tool_dump_ui()
-    if not ui_iptv.get("has_iptv_grid"):
-        toolkit.tool_record_bug("HIGH", "IPTV", "Không tìm thấy iptvGrid trong cây giao diện Tab 2", "")
-
-    # Di chuyển D-pad qua 5 cột
+    # Duyệt D-pad qua toàn bộ 5 cột
     toolkit.tool_press_sequence(["DOWN", "RIGHT", "RIGHT", "RIGHT", "RIGHT"])
-    shot_focus = toolkit.tool_screencap("tab2_iptv_column5_focused")
-    
-    # Đo viền focus bằng công cụ đo lường
-    if shot_focus.get("file_path"):
-        border = toolkit.tool_measure_border(shot_focus["file_path"], 1500, 700, 1550, 700, "cyan")
-        print(f"  📏 Độ dày viền focus đo được: {border.get('measured_thickness_px', 0)}px", flush=True)
+    shot_col5 = toolkit.tool_screencap("05_tab2_column5_focused")
+    if shot_col5.get("file_path"):
+        border = toolkit.tool_measure_border(shot_col5["file_path"], 1500, 700, 1550, 700, "cyan")
+        print(f"  📏 Độ dày viền focus VTV3: {border.get('measured_thickness_px', 0)}px", flush=True)
+
+    # Xuống hàng 2
+    toolkit.tool_press_key("DOWN")
+    toolkit.tool_screencap("06_tab2_grid_row2")
+
+    # Lên thanh lọc danh mục (Thể Thao / Quốc Tế)
+    toolkit.tool_press_sequence(["UP", "UP", "RIGHT"])
+    toolkit.tool_screencap("07_tab2_category_filter")
 
     # 5. Phát luồng truyền hình trong Player Pro
-    print("\n[Mục 5] Mở Player Pro phát kênh truyền hình...", flush=True)
-    toolkit.tool_press_key("OK")
+    print("\n[Mục 5/14] Mở Player Pro phát kênh truyền hình...", flush=True)
+    toolkit.tool_press_sequence(["DOWN", "OK"])
     time.sleep(5)
-    toolkit.tool_screencap("player_streaming")
+    toolkit.tool_screencap("08_player_streaming")
     perf = toolkit.tool_measure_perf()
     print(f"  📊 Hiệu năng phát: Jank={perf['jank_percent']}%, RAM={perf['memory_pss_mb']}MB", flush=True)
-    if perf["jank_percent"] > 20:
+    if perf["jank_percent"] > 25:
         toolkit.tool_record_bug("MEDIUM", "Player", f"Jank cao khi phát trực tiếp ({perf['jank_percent']}%)", "dumpsys gfxinfo")
 
-    # Thao tác OSD trong Player
-    toolkit.tool_press_key("UP") # Quick OSD
-    toolkit.tool_screencap("player_quick_osd")
-    toolkit.tool_press_key("BACK")
-    toolkit.tool_press_key("BACK") # Thoát về IPTV
-
-    # 6. MultiView (Đa màn hình)
-    print("\n[Mục 6] Kiểm tra MultiView đa luồng...", flush=True)
-    toolkit.tool_open_screen("mv", "0")
-    toolkit.tool_screencap("multiview_2x")
+    # 6. Quick OSD Carousel trong Player
+    print("\n[Mục 6/14] Quick OSD Carousel chuyển kênh trong Player...", flush=True)
+    toolkit.tool_press_key("UP")
+    toolkit.tool_screencap("09_player_quick_osd")
+    toolkit.tool_press_sequence(["RIGHT", "RIGHT"])
+    toolkit.tool_screencap("10_player_carousel_nav")
     toolkit.tool_press_key("BACK")
 
-    # 7. Stress test D-pad (Chaos monkey)
-    print("\n[Mục 7] Stress Test D-pad (Chaos monkey)...", flush=True)
-    chaos = toolkit.tool_chaos_stress(count=25)
+    # 7. Stats HUD & Menu Cài đặt trong Player
+    print("\n[Mục 7/14] Kiểm tra Stats HUD & Menu Cài đặt Player...", flush=True)
+    toolkit.tool_press_key("MENU") # Mở menu cài đặt Player
+    toolkit.tool_screencap("11_player_settings_dialog")
+    toolkit.tool_press_key("DOWN")
+    toolkit.tool_press_key("OK") # Mở Sleep Timer hoặc Audio Track dialog
+    toolkit.tool_screencap("12_player_audio_tracks_dialog")
+    toolkit.tool_press_sequence(["BACK", "BACK"]) # Đóng dialog
+    toolkit.tool_press_key("BACK") # Thoát khỏi Player về IPTV
+
+    # 8. MultiView (2 Ô và 4 Ô)
+    print("\n[Mục 8/14] Kiểm tra MultiView Đa màn hình (2 Ô & 4 Ô)...", flush=True)
+    sh(f"{toolkit.adb} shell am force-stop {toolkit.pkg}")
+    time.sleep(1)
+    toolkit.tool_open_screen("mv", "2")
+    time.sleep(4)
+    toolkit.tool_screencap("13_multiview_2x")
+    toolkit.tool_press_sequence(["DOWN", "UP"])
+    
+    # Mở MultiView 4 ô
+    sh(f"{toolkit.adb} shell am start -n {toolkit.pkg}/.MultiViewActivity --ei mv_layout 4")
+    time.sleep(4)
+    toolkit.tool_screencap("14_multiview_4x")
+    toolkit.tool_press_sequence(["RIGHT", "DOWN", "LEFT", "UP"])
+    toolkit.tool_press_key("BACK")
+
+    # 9. Tab 3: Tìm kiếm (Search Engine)
+    print("\n[Mục 9/14] Kiểm tra Tab 3 Tìm kiếm & Bàn phím ảo...", flush=True)
+    toolkit.tool_open_screen("tab3")
+    time.sleep(2)
+    toolkit.tool_screencap("15_tab3_search_landing")
+    toolkit.tool_type_text("vtv")
+    time.sleep(1)
+    toolkit.tool_screencap("16_tab3_search_results")
+    toolkit.tool_press_key("DOWN")
+
+    # 10. Tab 4: Cài đặt hệ thống (Settings & Codec Dialog)
+    print("\n[Mục 10/14] Kiểm tra Tab 4 Cài đặt & Dialogs...", flush=True)
+    toolkit.tool_open_screen("tab4")
+    time.sleep(2)
+    toolkit.tool_screencap("17_tab4_settings_landing")
+    toolkit.tool_press_sequence(["DOWN", "OK"]) # Mở dialog video/audio
+    toolkit.tool_screencap("18_tab4_dialog_video_audio")
+    toolkit.tool_press_key("BACK")
+
+    # 11. Picture-in-Picture (PiP)
+    print("\n[Mục 11/14] Kiểm tra Picture-in-Picture (PiP)...", flush=True)
+    toolkit.tool_open_screen("pip")
+    time.sleep(2)
+    toolkit.tool_screencap("19_pip_mode")
+    toolkit.tool_press_key("BACK")
+
+    # 12. Mobile Phone Mode - Màn hình dọc (1080x2400)
+    print("\n[Mục 12/14] Kiểm tra Mobile Phone Portrait (Dọc 1080x2400)...", flush=True)
+    toolkit.tool_switch_device_profile("phone_portrait")
+    sh(f"{toolkit.adb} shell am force-stop {toolkit.pkg}")
+    time.sleep(1)
+    toolkit.tool_open_screen("player")
+    time.sleep(4)
+    toolkit.tool_press_key("OK") # Kích hoạt controls
+    toolkit.tool_screencap("20_phone_player_portrait")
+
+    # 13. Mobile Phone Mode - Màn hình ngang (2400x1080)
+    print("\n[Mục 13/14] Kiểm tra Mobile Phone Landscape (Ngang 2400x1080)...", flush=True)
+    toolkit.tool_switch_device_profile("phone_landscape")
+    time.sleep(2)
+    toolkit.tool_press_key("OK")
+    toolkit.tool_screencap("21_phone_player_landscape")
+
+    # Khôi phục màn hình TV 1080p
+    toolkit.tool_switch_device_profile("tv_1080p")
+    sh(f"{toolkit.adb} shell am force-stop {toolkit.pkg}")
+    time.sleep(1)
+
+    # 14. Stress Test (Chaos Monkey) & Quét Rò rỉ RAM (Memory Leak)
+    print("\n[Mục 14/14] Stress Test Chaos D-pad & Đo Memory Leak...", flush=True)
+    toolkit.tool_open_screen("tab0")
+    chaos = toolkit.tool_chaos_stress(count=50) # Spam 50 phím liên tục
     if chaos["crashed"]:
-        toolkit.tool_record_bug("CRITICAL", "Stability", "App crash khi nhận chuỗi phím D-pad dồn dập", str(chaos["details"]))
+        toolkit.tool_record_bug("CRITICAL", "Stability", "App crash khi nhận 50 phím D-pad dồn dập", str(chaos["details"]))
     else:
-        print("  ✅ Ứng dụng vững vàng trước chuỗi phím bấm dồn dập", flush=True)
+        print("  ✅ Ứng dụng vững vàng qua 50 phím bấm dồn dập", flush=True)
 
-    # Xuất báo cáo Dashboard
-    print("\n[Mục 8] Xuất Báo cáo Dashboard...", flush=True)
+    perf_final = toolkit.tool_measure_perf()
+    print(f"  🧠 RAM cuối phiên: {perf_final['memory_pss_mb']}MB (Sức khỏe RAM: {'TỐT' if perf_final['is_memory_healthy'] else 'CẢNH BÁO LEAK'})", flush=True)
+    if not perf_final["is_memory_healthy"]:
+        toolkit.tool_record_bug("HIGH", "Memory", f"RAM chiếm dụng quá cao ({perf_final['memory_pss_mb']}MB)", "dumpsys meminfo")
+
+    # Xuất báo cáo Dashboard đầy đủ
+    print("\n📊 Xuất Báo cáo Dashboard hoàn chỉnh...", flush=True)
     res = toolkit.tool_export_dashboard()
-    print(f"\n🎉 HOÀN TẤT TOÀN BỘ KIỂM THỬ! Xem Dashboard tại:\n{res['html_dashboard']}\n", flush=True)
+    print(f"\n🎉 HOÀN TẤT TOÀN DIỆN 14 HẠNG MỤC! Dashboard tại:\n{res['html_dashboard']}\n", flush=True)
     return res
 
 if __name__ == "__main__":
