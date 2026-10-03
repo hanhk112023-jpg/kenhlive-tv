@@ -258,7 +258,7 @@ class AIToolkit:
         elif target in ["player", "stream"]:
             cmd = f"{self.adb} shell am start -n {self.pkg}/.MainActivity --es open player"
         elif target in ["multiview", "mv"]:
-            layout = extra_arg if extra_arg in ["0", "1"] else "0"
+            layout = str(extra_arg) if str(extra_arg) in ["0", "1", "2", "4"] else "2"
             cmd = f"{self.adb} shell am start -n {self.pkg}/.MultiViewActivity --ei mv_layout {layout}"
         elif target == "pip":
             cmd = f"{self.adb} shell am start -n {self.pkg}/.MainActivity --es open pip"
@@ -493,7 +493,10 @@ def run_autonomous_full_suite(toolkit):
     # 5. Phát luồng truyền hình trong Player Pro
     print("\n[Mục 5/14] Mở Player Pro phát kênh truyền hình...", flush=True)
     toolkit.tool_press_sequence(["DOWN", "OK"])
-    time.sleep(5)
+    time.sleep(3)
+    # Reset gfxinfo sau khi player bắt đầu để đo frame metrics chuẩn
+    sh(f"{toolkit.adb} shell dumpsys gfxinfo {toolkit.pkg} reset")
+    time.sleep(3)
     toolkit.tool_screencap("08_player_streaming")
     perf = toolkit.tool_measure_perf()
     print(f"  📊 Hiệu năng phát: Jank={perf['jank_percent']}%, RAM={perf['memory_pss_mb']}MB", flush=True)
@@ -515,24 +518,23 @@ def run_autonomous_full_suite(toolkit):
     toolkit.tool_press_key("DOWN")
     toolkit.tool_press_key("OK") # Mở Sleep Timer hoặc Audio Track dialog
     toolkit.tool_screencap("12_player_audio_tracks_dialog")
-    toolkit.tool_press_sequence(["BACK", "BACK"]) # Đóng dialog
-    toolkit.tool_press_key("BACK") # Thoát khỏi Player về IPTV
+    toolkit.tool_press_key("BACK") # Đóng dialog
+    sh(f"{toolkit.adb} shell am force-stop {toolkit.pkg}") # Dọn dẹp sạch sẽ trước khi sang MultiView
 
     # 8. MultiView (2 Ô và 4 Ô)
     print("\n[Mục 8/14] Kiểm tra MultiView Đa màn hình (2 Ô & 4 Ô)...", flush=True)
-    sh(f"{toolkit.adb} shell am force-stop {toolkit.pkg}")
-    time.sleep(1)
     toolkit.tool_open_screen("mv", "2")
     time.sleep(4)
     toolkit.tool_screencap("13_multiview_2x")
     toolkit.tool_press_sequence(["DOWN", "UP"])
     
     # Mở MultiView 4 ô
-    sh(f"{toolkit.adb} shell am start -n {toolkit.pkg}/.MultiViewActivity --ei mv_layout 4")
+    sh(f"{toolkit.adb} shell am force-stop {toolkit.pkg}")
+    toolkit.tool_open_screen("mv", "4")
     time.sleep(4)
     toolkit.tool_screencap("14_multiview_4x")
     toolkit.tool_press_sequence(["RIGHT", "DOWN", "LEFT", "UP"])
-    toolkit.tool_press_key("BACK")
+    sh(f"{toolkit.adb} shell am force-stop {toolkit.pkg}")
 
     # 9. Tab 3: Tìm kiếm (Search Engine)
     print("\n[Mục 9/14] Kiểm tra Tab 3 Tìm kiếm & Bàn phím ảo...", flush=True)

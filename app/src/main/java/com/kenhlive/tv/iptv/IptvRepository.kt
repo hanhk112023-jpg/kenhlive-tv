@@ -25,6 +25,7 @@ object IptvRepository {
     private const val KEY_CACHE_SPORTS = "m3u_cache_sports"
     private const val KEY_LAST_UPDATE = "m3u_last_update"
     private const val FILE_CACHE_PARSED = "cache_iptv_parsed.json"
+    private const val ASSET_FALLBACK_VN = "fallback_vn.m3u"
 
     // Bộ nhớ RAM tĩnh để PlayerActivity mở sidebar chuyển kênh tức thì
     var currentChannels: List<IptvChannel> = emptyList()
@@ -115,6 +116,12 @@ object IptvRepository {
                 }
                 editor.putLong(KEY_LAST_UPDATE, System.currentTimeMillis()).apply()
             }
+        }
+
+        if (cachedVn.isNullOrBlank()) {
+            cachedVn = try {
+                context.assets.open(ASSET_FALLBACK_VN).bufferedReader().use { it.readText() }
+            } catch (_: Exception) { null }
         }
 
         val result = mutableListOf<IptvChannel>()

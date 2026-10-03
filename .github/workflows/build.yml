@@ -21,18 +21,25 @@ jobs:
       - name: Use pre-installed Android SDK (nho setup-android@v3 — action gay preview-license loi hom 14/09)
         run: echo "ANDROID_HOME=$ANDROID_HOME"
 
-      - name: Build debug APK
+      - name: Build APKs
         env:
           KEYSTORE_B64: ${{ secrets.KEYSTORE_B64 }}
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
         run: |
           chmod +x gradlew
           echo "sdk.dir=$ANDROID_HOME" > local.properties
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleRelease assembleDebug --no-daemon
 
-      - name: Upload APK artifact
+      - name: Upload Debug APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: socolive-tv-debug
           path: app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+
+      - name: Upload Release APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kenhlive-release
+          path: app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error

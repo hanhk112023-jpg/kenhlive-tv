@@ -86,6 +86,8 @@ object SocoliveRepository {
 
     private const val FILE_CACHE_LIVE = "cache_live_rooms.json"
     private const val FILE_CACHE_RECOMMEND = "cache_recommend_matches.json"
+    private const val ASSET_FALLBACK_LIVE = "fallback_live_rooms.json"
+    private const val ASSET_FALLBACK_SCHEDULE = "fallback_schedule.json"
 
     private fun stamp(): String = (System.currentTimeMillis() / 1000).toString()
 
@@ -94,13 +96,24 @@ object SocoliveRepository {
 
     fun invalidateLive() { liveCache = null; recommendCache = null }
 
-    /** Đọc nhanh cache live từ ổ đĩa (0s loading khi vừa mở app). */
+    /** Đọc fallback từ assets nếu chưa có cache và mạng fail */
+    private fun getAssetFallback(assetName: String): String? {
+        return try {
+            KenhLiveApp.appContext.assets.open(assetName).bufferedReader().use { it.readText() }
+        } catch (_: Exception) { null }
+    }
+
+    /** Đọc nhanh cache live từ ổ đĩa (0s loading khi vừa mở app), fallback assets nếu rỗng. */
     fun getCachedLiveRoomsDisk(): List<LiveRoom>? {
         if (liveCache != null) return liveCache
         return try {
             val file = java.io.File(KenhLiveApp.appContext.cacheDir, FILE_CACHE_LIVE)
-            if (file.exists() && file.length() > 0) {
-                val raw = file.readText()
+            val raw = if (file.exists() && file.length() > 0) {
+                file.readText()
+            } else {
+                getAssetFallback(ASSET_FALLBACK_LIVE)
+            }
+            if (!raw.isNullOrBlank()) {
                 val parsed = SocoliveParser.parseLiveRooms(raw)
                 if (parsed.isNotEmpty()) {
                     liveCache = parsed
@@ -145,15 +158,22 @@ object SocoliveRepository {
         return liveMutex.withLock {
             val c = liveCache
             if (!force && c != null && System.currentTimeMillis() - liveCacheAt < LIVE_TTL_MS) return@withLock c
-            withContext(Dispatchers.IO) {
-                val now = stamp()
-                val body = Http.getWithRetry("$API/all_live_rooms.json?callback=rooms&v=$now&_=$now")
-                saveDiskCache(FILE_CACHE_LIVE, body)
-                SocoliveParser.parseLiveRooms(body)
-            }.also {
-                liveCache = it
+            val list = withContext(Dispatchers.IO) {
+                try {
+                    val now = stamp()
+                    val body = Http.getWithRetry("$API/all_live_rooms.json?callback=rooms&v=$now&_=$now")
+                    saveDiskCache(FILE_CACHE_LIVE, body)
+                    SocoliveParser.parseLiveRooms(body)
+                } catch (_: Exception) {
+                    // Mạng lỗi hoặc timeout -> đọc cache disk hoặc asset fallback
+                    getCachedLiveRoomsDisk() ?: emptyList()
+                }
+            }
+            if (list.isNotEmpty()) {
+                liveCache = list
                 liveCacheAt = System.currentTimeMillis()
             }
+            list
         }
     }
 
@@ -249,6 +269,14 @@ object SocoliveRepository {
             for (body in bodies) {
                 if (body == null) continue
                 try { SocoliveParser.parseScheduleDay(body, ::addMatch) } catch (_: Exception) { }
+            }
+
+            // Nếu mạng lỗi và danh sách rỗng -> nạp từ asset fallback
+            if (byDay.isEmpty()) {
+                val assetRaw = getAssetFallback(ASSET_FALLBACK_SCHEDULE)
+                if (!assetRaw.isNullOrBlank()) {
+                    try { SocoliveParser.parseScheduleDay(assetRaw, ::addMatch) } catch (_: Exception) { }
+                }
             }
 
             byDay.map { (k, list) ->

@@ -69,7 +69,7 @@
         <!-- Multiview (TV 2x2) -->
         <activity
             android:name=".MultiViewActivity"
-            android:exported="false"
+            android:exported="true"
             android:configChanges="orientation|screenSize|keyboardHidden" />
     </application>
 </manifest>
