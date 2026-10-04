@@ -76,15 +76,18 @@ RUBRIC = """Đóng vai Senior QA Engineer chuyên về Android TV 10-foot UI.
 Đánh giá màn hình TV (1920x1080) chụp từ app xem bóng đá/thể thao 'KênhLive'.
 
 QUY TẮC PHÁN QUYẾT:
-1. FOCUS D-PAD:
-   - Ô đang focus trên TV được chỉ báo bằng viền TRẮNG (stroke ~2dp + glow 6dp) hoặc viền CYAN NEON và PHÓNG TO nhẹ (scale ~1.05x).
-   - Thấy viền trắng hoặc cyan hoặc phóng to rõ = HỢP LỆ.
-2. NỀN & BỐ CỤC:
-   - Nền app là đen thuần (#000000) hoặc tối sâu.
-   - Thẻ card chuẩn tỉ lệ 16:9, text không bị cắt cụt.
-3. VIDEO & DATA NGOÀI:
-   - Màn hình Player có luồng phát hoặc thông báo mạng rõ ràng.
-   - Banner, logo đài hiển thị đầy đủ, không bị méo.
+# 1. FOCUS D-PAD:
+#    - Ô đang focus trên TV được chỉ báo bằng viền TRẮNG (stroke ~2dp + glow 6dp) hoặc viền CYAN NEON và PHÓNG TO nhẹ (scale ~1.05x).
+#    - Thấy viền trắng hoặc cyan hoặc phóng to rõ = HỢP LỆ.
+#    - Nếu không thấy viền nổi bật hoặc nghi ngờ mất focus -> Kiểm tra kỹ.
+# 2. NỀN & BỐ CỤC:
+#    - Nền app là đen thuần (#000000) hoặc tối sâu.
+#    - Thẻ card chuẩn tỉ lệ 16:9, text không bị cắt cụt/đè chữ.
+# 3. VIDEO & DATA NGOÀI:
+#    - Màn hình Player có luồng phát hoặc thông báo mạng rõ ràng.
+#    - Banner, logo đài hiển thị đầy đủ, không bị méo.
+# 4. TRẠNG THÁI RỖNG / ĐEN:
+#    - Nếu màn hình rỗng hoặc đen xì không có nội dung sau khi chuyển cảnh -> Báo lỗi DEAD SCREEN.
 
 Trả về duy nhất JSON object theo định dạng:
 {

@@ -670,6 +670,21 @@ cr = P.crashes()
 add_check('Không crash suốt phiên QA', not cr, f'{len(cr)} crash/ANR' if cr else 'sạch')
 for c in cr: add_finding('Crash', 'CRITICAL', c['type'] + ' trong phiên', c['detail'][:200], 'fix theo stacktrace')
 
+# ---------- 8.5 AI AUTONOMOUS EXPLORATION & STRESS TEST ----------
+try:
+    print('[8.5] AI Autonomous Exploration & Stress Hunter', flush=True)
+    from grand_engine import GrandQAEngine
+    ge = GrandQAEngine(pkg=PKG, serial=args.serial, out_dir=args.out)
+    ge.run_autonomous_hunter(steps=25)
+    for f in ge.findings:
+        findings.append(f)
+    for c in ge.checks:
+        checks.append(c)
+    for s in ge.screenshots:
+        shots.append(s)
+except Exception as e:
+    print('  (AI Hunter skip:', str(e)[:80], ')', flush=True)
+
 # ---------- REPORT ----------
 sc = score(findings, sum(1 for c in checks if c['ok']), len(checks))
 report = {
