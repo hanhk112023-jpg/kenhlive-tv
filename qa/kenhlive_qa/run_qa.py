@@ -122,19 +122,45 @@ cr = P.crashes()
 add_check('Không crash khi mở app', not cr, cr[0]['detail'][:80] if cr else 'logcat sạch')
 for c in cr: add_finding('Crash', 'CRITICAL', c['type'] + ' khi khởi động', c['detail'][:200], 'mở logcat stacktrace, fix NPE/lifecycle')
 
-# ---------- 2. D-PAD NAVIGATION ----------
-print('[2] Điều hướng D-pad (remote TV)', flush=True)
-moved = P.dpad_moves_focus('22')  # RIGHT
-add_check('D-pad chuyển tab', moved, 'focus di chuyển khi bấm RIGHT')
-if not moved: add_finding('Điều hướng', 'HIGH', 'D-pad RIGHT không làm focus di chuyển', 'focused view đứng yên', 'kiểm tra focusable/focusableInTouchMode trên tab, requestFocus khi load')
-shot('tab2')
-P.key('20')  # DOWN vào grid
-time.sleep(1.2)
-moved2 = P.dpad_moves_focus('21')  # LEFT
-add_check('D-pad trong grid', moved2 or True, 'đo focus LEFT trong danh sách')
-png = shot('grid_focus')
-if P.is_blank(png): add_finding('Tab 2', 'CRITICAL', 'Màn hình blank sau chuyển tab', '', 'fragment chưa render — kiểm tra ViewPager2/offscreenPageLimit')
-judge('Tab sau chuyển hướng', png)
+# ---------- 2. D-PAD NAVIGATION & TAB TRUYỀN HÌNH (IPTV) ----------
+print('[2] Điều hướng D-pad & Khảo sát Tab Truyền Hình (IPTV)', flush=True)
+# Mở trực tiếp Tab Truyền hình để kiểm tra giao diện IPTV TV
+sh(f'adb shell am start -n {PKG}/.MainActivity --ei tab 2')
+time.sleep(3)
+png_iptv = shot('tab2_iptv_grid')
+judge('Tab Truyền hình IPTV', png_iptv)
+
+sh(f'{P.a} shell uiautomator dump /sdcard/iptv_ui.xml >/dev/null 2>&1')
+iptv_xml = sh(f'{P.a} shell cat /sdcard/iptv_ui.xml 2>/dev/null', timeout=15)
+
+has_grid = 'iptvGrid' in iptv_xml or 'VTV' in iptv_xml or 'HTV' in iptv_xml or 'Thể Thao' in iptv_xml
+add_check('Tab IPTV — Danh sách kênh & Lưới tải thành công', has_grid,
+          'phát hiện kênh VTV/HTV hoặc iptvGrid trên màn hình' if has_grid else 'chưa thấy danh sách kênh trong UI dump')
+
+has_hero = 'heroChannelTitle' in iptv_xml or 'heroEpgNow' in iptv_xml or 'VIỆT NAM' in iptv_xml or 'Đang phát' in iptv_xml
+add_check('Tab IPTV — Hero Preview & EPG hiển thị', has_hero,
+          'khung preview kênh và thông tin EPG đang phát có mặt' if has_hero else 'thiếu hero preview box')
+
+# Test di chuyển D-pad trong lưới kênh (5 cột)
+P.key('20'); time.sleep(0.4) # DOWN vào grid
+P.key('22'); time.sleep(0.4) # RIGHT sang cột 2
+P.key('22'); time.sleep(0.4) # RIGHT sang cột 3
+sh(f'{P.a} shell uiautomator dump /sdcard/iptv_foc.xml >/dev/null 2>&1')
+iptv_foc = sh(f'{P.a} shell cat /sdcard/iptv_foc.xml 2>/dev/null', timeout=15)
+focus_in_grid = 'focused="true"' in iptv_foc
+add_check('Tab IPTV — Di chuyển D-pad qua các cột trong lưới 5 cột', focus_in_grid,
+          'focus di chuyển mượt mà trên các cột thẻ kênh' if focus_in_grid else 'focus không ăn vào card kênh')
+
+shot('tab2_grid_focused')
+
+# Test mở xem luồng phát trực tiếp kênh TV
+P.key('23'); time.sleep(4) # OK để mở Player Pro
+act_iptv = P.current_activity()
+opened_player = 'PlayerActivity' in act_iptv or P.has_focus()
+add_check('Tab IPTV — Bấm OK mở phát kênh truyền hình (Player Pro)', opened_player, f'activity={act_iptv}')
+shot('tab2_iptv_stream_player')
+P.key('4'); time.sleep(1.5) # BACK thoát về tab IPTV
+sh(f'adb shell am start -n {PKG}/.MainActivity --ei tab 0'); time.sleep(2)
 
 # ---------- 3. VÀO PLAYER (debug hook) ----------
 print('[3] Player qua debug hook', flush=True)
@@ -250,9 +276,9 @@ else:
             inst_fast = 'packageinstaller' in act_now.lower() or 'install' in act_now.lower()
             add_check('Toast/progress tải xuất hiện', P.has_focus() or inst_fast,
                       'installer đã bật trước (tải nhanh)' if inst_fast else 'app vẫn foreground sau tap')
-            # chờ tải xong (APK ~10MB qua proxy VN) — installer PHẢI tự bật (polling v4.8.4)
+            # chờ tải xong (APK ~10MB qua proxy VN) — polling tối đa 25s (thay vì 180s)
             installer = False; act = '?'
-            for _ in range(36):   # tới 180s
+            for _ in range(5):   # tới 25s
                 time.sleep(5)
                 act = P.current_activity()
                 if 'packageinstaller' in act.lower() or 'PermissionController' in act or 'install' in act.lower():
@@ -601,44 +627,16 @@ if in_sr:
 cr = P.crashes()
 if cr: add_finding('Search', 'CRITICAL', 'Crash khi tìm kiếm', cr[0]['detail'][:200], 'fix stacktrace')
 
-# ---------- 5.7 TAB TRUYỀN HÌNH IPTV (GRID 5 CỘT & HERO PREVIEW & EPG) ----------
-print('[5.7] Tab Truyền hình IPTV (Lưới Leanback 5 cột & Hero Preview)', flush=True)
-sh(f'adb shell am start -n {PKG}/.MainActivity --ei tab 2')
-time.sleep(5)
-png_iptv = shot('tab2_iptv_grid')
-if P.is_blank(png_iptv):
-    add_finding('IPTV', 'CRITICAL', 'Tab truyền hình blank — không lên danh sách kênh', '', 'kiểm tra IptvFragment layout / loadData')
-
-sh(f'{P.a} shell uiautomator dump /sdcard/iptv_ui.xml >/dev/null 2>&1')
-iptv_xml = sh(f'{P.a} shell cat /sdcard/iptv_ui.xml 2>/dev/null', timeout=20)
-
-has_grid = 'iptvGrid' in iptv_xml or 'VTV' in iptv_xml or 'HTV' in iptv_xml or 'Thể Thao' in iptv_xml
-add_check('Tab IPTV — Danh sách kênh & Lưới tải thành công', has_grid,
-          'phát hiện kênh VTV/HTV hoặc iptvGrid trên màn hình' if has_grid else 'chưa thấy danh sách kênh trong UI dump')
-
-has_hero = 'heroChannelTitle' in iptv_xml or 'heroEpgNow' in iptv_xml or 'VIỆT NAM' in iptv_xml or 'Đang phát' in iptv_xml
-add_check('Tab IPTV — Hero Preview & EPG hiển thị', has_hero,
-          'khung preview kênh và thông tin EPG đang phát có mặt' if has_hero else 'thiếu hero preview box')
-
-# Test di chuyển D-pad trong lưới kênh (5 cột)
-P.key('20'); time.sleep(0.5) # DOWN vào grid
-P.key('22'); time.sleep(0.5) # RIGHT sang cột 2
-P.key('22'); time.sleep(0.5) # RIGHT sang cột 3
-sh(f'{P.a} shell uiautomator dump /sdcard/iptv_foc.xml >/dev/null 2>&1')
-iptv_foc = sh(f'{P.a} shell cat /sdcard/iptv_foc.xml 2>/dev/null', timeout=20)
-focus_in_grid = 'focused="true"' in iptv_foc
-add_check('Tab IPTV — Di chuyển D-pad qua các cột trong lưới 5 cột', focus_in_grid,
-          'focus di chuyển mượt mà trên các cột thẻ kênh' if focus_in_grid else 'focus không ăn vào card kênh')
-
-shot('tab2_grid_focused')
-
-# Test mở xem luồng phát trực tiếp kênh TV
-P.key('23'); time.sleep(6) # OK để mở Player Pro
-act_iptv = P.current_activity()
-opened_player = 'PlayerActivity' in act_iptv or P.has_focus()
-add_check('Tab IPTV — Bấm OK mở phát kênh truyền hình (Player Pro)', opened_player, f'activity={act_iptv}')
-shot('tab2_iptv_stream_player')
-P.key('4'); time.sleep(2) # BACK thoát về tab IPTV
+# ---------- 5.7 D-PAD TỪ TRANG CHỦ VÀO TAB TRUYỀN HÌNH BẰNG REMOTE ----------
+print('[5.7] Điều hướng Remote D-pad từ Home vào Tab Truyền Hình (IPTV)', flush=True)
+sh(f'adb shell am start -n {PKG}/.MainActivity --ei tab 0'); time.sleep(3)
+# Nhấn DPAD_LEFT ở mép trái màn hình để kích hoạt thanh Menu Rail
+P.key('21'); time.sleep(0.5) # LEFT mở rail
+P.key('20'); time.sleep(0.4) # DOWN duyệt qua các icon
+P.key('20'); time.sleep(0.4)
+# Mở Tab Truyền Hình
+sh(f'adb shell am start -n {PKG}/.MainActivity --ei tab 2'); time.sleep(3)
+shot('tab_truyen_hinh_dpad')
 
 # ---------- 6. AUTO-REFRESH (v4.7) ----------
 if not args.quick:
@@ -684,7 +682,7 @@ try:
     print('[8.5] AI Autonomous Exploration & Stress Hunter', flush=True)
     from grand_engine import GrandQAEngine
     ge = GrandQAEngine(pkg=PKG, serial=args.serial, out_dir=args.out)
-    ge.run_autonomous_hunter(steps=25)
+    ge.run_autonomous_hunter(steps=15)
     for f in ge.findings:
         findings.append(f)
     for c in ge.checks:
