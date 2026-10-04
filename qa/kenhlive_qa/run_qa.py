@@ -89,6 +89,15 @@ def judge(label, png):
 auto_refresh_info = None
 print(f'=== KenhLive QA Suite · APK {APK_VERSION} · AI={"off" if args.no_ai else "on"} ===', flush=True)
 
+# ---------- 0. VIDEO RECORDER (quay từ lúc chưa mở app) ----------
+recorder = None
+try:
+    from video_recorder import VideoRecorder
+    recorder = VideoRecorder(serial=args.serial, out_dir=args.out)
+    recorder.start()
+except Exception as e:
+    print('  (video recorder init skip:', str(e)[:80], ')', flush=True)
+
 # ---------- 1. COLD START ----------
 print('[1] Cold start', flush=True)
 P.force_stop(); time.sleep(1.5); P.logcat_baseline()
@@ -685,6 +694,17 @@ try:
 except Exception as e:
     print('  (AI Hunter skip:', str(e)[:80], ')', flush=True)
 
+# ---------- FINAL VIDEO FINALIZE ----------
+video_path = None
+if recorder:
+    try:
+        video_path = recorder.stop_and_save()
+        if video_path and os.path.exists(video_path):
+            add_check('Quay toàn bộ video quá trình test (MP4)', True, f'{os.path.basename(video_path)} ({os.path.getsize(video_path)//1024} KB)')
+            shots.append(('Video toàn bộ quá trình kiểm thử', os.path.basename(video_path)))
+    except Exception as e:
+        print('  (video stop error:', str(e)[:80], ')', flush=True)
+
 # ---------- REPORT ----------
 sc = score(findings, sum(1 for c in checks if c['ok']), len(checks))
 report = {
@@ -695,6 +715,7 @@ report = {
                 'jank_pct': (j or {}).get('jank_pct'), 'p50_ms': (j or {}).get('p50_ms'), 'p95_ms': (j or {}).get('p95_ms'),
                 'pss_mb': (m // 1024 if m else None), 'network_errors': len(ne), 'crashes': len(cr)},
     'screenshots': shots,
+    'video': os.path.basename(video_path) if video_path else None,
 }
 json.dump(report, open(args.out + '/qa_report.json', 'w'), ensure_ascii=False, indent=1)
 render(report, args.out + '/qa_report.html')

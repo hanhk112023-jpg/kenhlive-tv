@@ -36,7 +36,16 @@ def render(report, out_path):
         for x in f_sorted) or "<tr><td colspan='4' class='empty'>Không phát hiện vấn đề 🎉</td></tr>"
     shots_html = ''.join(
         f"<figure><img src='{esc(p)}' loading='lazy'><figcaption>{esc(lbl)}</figcaption></figure>"
-        for lbl, p in report.get('screenshots', []))
+        for lbl, p in report.get('screenshots', []) if not str(p).endswith('.mp4'))
+    video_html = ""
+    if report.get('video'):
+        video_html = f"""<h2>🎬 Video Toàn Bộ Quá Trình Kiểm Thử</h2>
+<div style='background:var(--s1);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center;'>
+  <video controls style='width:100%;max-width:860px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.5);' preload='metadata'>
+    <source src='{esc(report["video"])}' type='video/mp4'>
+    Trình duyệt không hỗ trợ xem video trực tiếp. Hãy tải file MP4 trong artifact.
+  </video>
+</div>"""
     metrics_rows = ''.join(f"<tr><td>{esc(k)}</td><td class='mono'>{esc(v)}</td></tr>" for k, v in report.get('metrics', {}).items())
 
     doc = f"""<!DOCTYPE html><html lang="vi"><head><meta charset="utf-8">
@@ -79,6 +88,7 @@ footer{{margin-top:30px;color:#454e66;font-size:11.5px;text-align:center}}
 <table><thead><tr><th>Mức độ</th><th>Khu vực</th><th>Vấn đề</th><th>Gợi ý khắc phục</th></tr></thead><tbody>{finding_rows}</tbody></table>
 <h2>📐 Số liệu đo được</h2>
 <table><tbody>{metrics_rows or '<tr><td class=empty>—</td></tr>'}</tbody></table>
+{video_html}
 <h2>📸 Ảnh hiện trường</h2>
 <div class="shots">{shots_html or '<div class="empty">không có ảnh</div>'}</div>
 <footer>KênhLive QA Suite · probes: crash/ANR/jank/mem/network/blank/D-pad/auto-refresh · AI: vision judge + logcat triage + perf analysis</footer>
