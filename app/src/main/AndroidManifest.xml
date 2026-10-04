@@ -47,6 +47,7 @@
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTask"
+            android:screenOrientation="landscape"
             android:icon="@mipmap/ic_launcher"
             android:roundIcon="@mipmap/ic_launcher_round"
             android:banner="@drawable/banner"

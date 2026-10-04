@@ -39,8 +39,8 @@ class VideoRecorder:
             idx += 1
             remote_path = f"/sdcard/qa_rec_{idx:02d}.mp4"
             self.remote_chunks.append(remote_path)
-            # adb screenrecord toi da 175s moi chunk, bitrate 4Mbps de nhe va net tren 1080p
-            cmd = f"{self.adb} shell screenrecord --time-limit 175 --bit-rate 4000000 --size 1280x720 {remote_path}"
+            # adb screenrecord toi da 175s moi chunk, full resolution 1920x1080 6Mbps
+            cmd = f"{self.adb} shell screenrecord --time-limit 175 --bit-rate 6000000 --size 1920x1080 {remote_path}"
             p = subprocess.Popen(cmd, shell=True)
             while p.poll() is None:
                 if self.stop_event.is_set():

@@ -80,10 +80,12 @@ jobs:
           api-level: 30
           arch: x86
           target: android-tv
+          profile: tv_1080p
           script: |
             adb root
             adb shell settings put global http_proxy 10.0.2.2:7891
             adb shell wm size 1920x1080
+            adb shell wm density 320
             adb shell settings put system accelerometer_rotation 0
             adb shell settings put system user_rotation 0
             adb install -r app/build/outputs/apk/debug/app-debug.apk

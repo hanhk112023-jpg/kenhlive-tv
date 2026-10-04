@@ -52,8 +52,8 @@ def shot(label):
     path = f'{args.out}/shots/{len(shots)+1:02d}_{safe}.jpg'
     try:
         from PIL import Image
-        im = Image.open(io.BytesIO(png)).convert('RGB'); im.thumbnail((860, 860))
-        im.save(path, 'JPEG', quality=62)
+        im = Image.open(io.BytesIO(png)).convert('RGB')
+        im.save(path, 'JPEG', quality=85)
     except Exception:
         open(path.replace('.jpg', '.png'), 'wb').write(png); path = path.replace('.jpg', '.png')
     shots.append((label, os.path.basename(path)))
