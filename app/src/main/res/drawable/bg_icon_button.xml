@@ -4,7 +4,7 @@
         <layer-list>
             <item>
                 <shape android:shape="oval">
-                    <solid android:color="#2600E5FF" />
+                    <solid android:color="@color/kl_brand_dim" />
                     <stroke android:width="2dp" android:color="@color/kl_focus_ring" />
                 </shape>
             </item>

@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="#0D0E12"
+    android:background="@drawable/bg_dialog"
     android:paddingLeft="24dp"
     android:paddingRight="24dp"
     android:paddingTop="22dp"
@@ -19,7 +19,7 @@
         <View
             android:layout_width="3.5dp"
             android:layout_height="18dp"
-            android:background="#00E5FF"
+            android:background="@color/kl_brand"
             android:layout_marginRight="10dp" />
 
         <TextView
@@ -44,7 +44,7 @@
         style="@style/KL.Text.Meta"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="#00E5FF"
+        android:textColor="@color/kl_brand"
         android:textSize="12sp"
         android:textStyle="bold"
         android:letterSpacing="0.04"
@@ -63,7 +63,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        android:textColor="#00E5FF"
+        android:textColor="@color/kl_brand"
         android:textSize="12sp"
         android:textStyle="bold"
         android:letterSpacing="0.04"

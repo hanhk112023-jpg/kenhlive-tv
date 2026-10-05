@@ -317,7 +317,7 @@
                 android:paddingRight="8dp"
                 android:paddingTop="3dp"
                 android:paddingBottom="3dp"
-                android:textColor="#00E5FF"
+                android:textColor="@color/kl_brand"
                 android:textSize="11sp"
                 android:text="" />
         </LinearLayout>
@@ -557,7 +557,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="📊 STATS FOR NERDS"
-                android:textColor="#00E5FF"
+                android:textColor="@color/kl_brand"
                 android:textSize="12sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.05" />

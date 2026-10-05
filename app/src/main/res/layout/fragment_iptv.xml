@@ -224,7 +224,7 @@
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:layout_gravity="center"
-            android:indeterminateTint="#00E5FF"
+            android:indeterminateTint="@color/kl_brand"
             android:visibility="gone" />
 
         <TextView

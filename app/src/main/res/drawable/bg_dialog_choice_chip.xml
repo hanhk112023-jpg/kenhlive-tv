@@ -2,12 +2,12 @@
 <selector xmlns:android="http://schemas.android.com/apk/res/android"
     android:enterFadeDuration="0"
     android:exitFadeDuration="0">
-    <!-- Focused & Selected: Viền Cyan sáng rực 2.5dp, nền xanh ngọc đằm -->
+    <!-- Focused & Selected: Viền Cam FPT sáng rực 2.5dp, nền cam đằm -->
     <item android:state_focused="true" android:state_selected="true">
         <shape android:shape="rectangle">
-            <solid android:color="#3300E5FF" />
+            <solid android:color="#33FF6500" />
             <corners android:radius="10dp" />
-            <stroke android:width="2.5dp" android:color="#FF00E5FF" />
+            <stroke android:width="2.5dp" android:color="@color/kl_focus_ring" />
         </shape>
     </item>
     <!-- Focused (chưa chọn): Viền trắng sáng 2.5dp, nền xám than -->
@@ -18,12 +18,12 @@
             <stroke android:width="2.5dp" android:color="#FFFFFFFF" />
         </shape>
     </item>
-    <!-- Selected (không focus): Nền xám xanh cyan dịu, KHÔNG VIỀN SÁNG để không lẫn với Focus! -->
+    <!-- Selected (không focus): Nền cam dịu, KHÔNG VIỀN SÁNG để không lẫn với Focus! -->
     <item android:state_selected="true">
         <shape android:shape="rectangle">
-            <solid android:color="#2600E5FF" />
+            <solid android:color="#26FF6500" />
             <corners android:radius="10dp" />
-            <stroke android:width="1dp" android:color="#3300E5FF" />
+            <stroke android:width="1dp" android:color="#66FF6500" />
         </shape>
     </item>
     <!-- Bình thường (chưa chọn, không focus) -->

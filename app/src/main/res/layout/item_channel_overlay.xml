@@ -61,7 +61,7 @@
         android:id="@+id/overlayChannelBadge"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="#00E5FF"
+        android:textColor="@color/kl_brand"
         android:textSize="10sp"
         android:textStyle="bold"
         android:background="@drawable/bg_badge_glass"
