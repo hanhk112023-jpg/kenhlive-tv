@@ -108,7 +108,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="8dp"
                 android:background="@drawable/bg_badge_league_cyan"
-                android:textColor="@color/kl_cyan"
+                android:textColor="@color/kl_brand"
                 android:textSize="11sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.04"
