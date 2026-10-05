@@ -39,12 +39,13 @@ class IptvFragment : Fragment() {
     private var heroChannelTitle: TextView? = null
     private var heroChannelGroup: TextView? = null
     private var heroEpgNow: TextView? = null
+    private var heroEpgProgress: ProgressBar? = null
     private var heroEpgNext: TextView? = null
     private var heroLogoImg: ImageView? = null
 
     private var allChannels: List<IptvChannel> = emptyList()
     private var displayedChannels: List<IptvChannel> = emptyList()
-    private var selectedGroup: String = "Việt Nam"
+    private var selectedGroup: String = "VTV"
     private var currentKeyword: String = ""
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
@@ -64,6 +65,7 @@ class IptvFragment : Fragment() {
         heroChannelTitle = view.findViewById(R.id.heroChannelTitle)
         heroChannelGroup = view.findViewById(R.id.heroChannelGroup)
         heroEpgNow = view.findViewById(R.id.heroEpgNow)
+        heroEpgProgress = view.findViewById(R.id.heroEpgProgress)
         heroEpgNext = view.findViewById(R.id.heroEpgNext)
         heroLogoImg = view.findViewById(R.id.heroLogoImg)
 
@@ -98,7 +100,13 @@ class IptvFragment : Fragment() {
 
     private fun updateHeroPreview(ch: IptvChannel) {
         heroChannelTitle?.text = ch.name
-        heroChannelGroup?.text = if (ch.isVn) "VIỆT NAM" else ch.group.uppercase()
+        heroChannelGroup?.text = when {
+            ch.name.contains("VTV", ignoreCase = true) -> "ĐÀI TRUYỀN HÌNH VIỆT NAM (VTV)"
+            ch.name.contains("HTV", ignoreCase = true) -> "ĐÀI TRUYỀN HÌNH TP.HCM (HTV)"
+            ch.name.contains("VTC", ignoreCase = true) -> "TRUYỀN HÌNH KỸ THUẬT SỐ (VTC)"
+            ch.isVn -> "VIỆT NAM"
+            else -> ch.group.uppercase()
+        }
 
         if (ch.logo.isNotEmpty()) {
             heroLogoImg?.load(ch.logo) {
@@ -114,6 +122,10 @@ class IptvFragment : Fragment() {
         if (epg != null && epg.first != null) {
             val cur = epg.first!!
             heroEpgNow?.text = "▶ Đang phát: [${cur.timeRange()}] ${cur.title}"
+            val pct = cur.progressPercent()
+            heroEpgProgress?.visibility = View.VISIBLE
+            heroEpgProgress?.progress = pct
+
             if (epg.second != null) {
                 val nxt = epg.second!!
                 heroEpgNext?.visibility = View.VISIBLE
@@ -122,7 +134,8 @@ class IptvFragment : Fragment() {
                 heroEpgNext?.visibility = View.GONE
             }
         } else {
-            heroEpgNow?.text = if (ch.isVn) "▶ Đang phát trực tiếp từ Đài Truyền hình Việt Nam" else "▶ Đang phát trực tiếp từ ${ch.group}"
+            heroEpgNow?.text = if (ch.isVn) "▶ Đang phát trực tiếp từ Đài Truyền hình Quốc gia" else "▶ Đang phát trực tiếp từ ${ch.group}"
+            heroEpgProgress?.visibility = View.GONE
             heroEpgNext?.visibility = View.GONE
         }
     }
@@ -169,38 +182,38 @@ class IptvFragment : Fragment() {
         val sportsCount = channels.size - vnCount
         countText.text = "Tổng: ${channels.size} kênh (${vnCount} VN, ${sportsCount} Thể thao)"
 
-        val distinctGroups = mutableListOf("Việt Nam", "Thể Thao", "DAZN", "Sky Sports", "beIN Sports", "ESPN", "FIFA+", "Tất cả")
-        val otherGroups = channels.map { it.group }.distinct().filterNot { it in distinctGroups }
-        distinctGroups.addAll(otherGroups)
+        // Phân nhóm EPG FPT Play: VTV -> HTV / VTC -> Thể Thao -> Giải Trí / Phim -> Tin Tức / Tỉnh -> Tất cả
+        val distinctGroups = mutableListOf("VTV", "HTV / VTC", "Thể Thao", "Giải Trí & Phim", "Tin Tức / Địa Phương", "Tất cả")
+        val sportsBrandGroups = listOf("DAZN", "Sky Sports", "beIN Sports", "ESPN")
+        distinctGroups.addAll(sportsBrandGroups)
 
-        setupGroups(distinctGroups.filter { g ->
-            g == "Tất cả" || channels.any {
-                if (g == "Việt Nam") it.isVn || it.group.contains("Việt Nam", ignoreCase = true)
-                else if (g == "Thể Thao") !it.isVn
-                else it.group.equals(g, ignoreCase = true)
-            }
-        })
+        setupGroups(distinctGroups)
         applyFilter(focusFirst = focusFirst)
     }
 
     private fun applyFilter(focusFirst: Boolean = false) {
         var list = allChannels
-        if (selectedGroup == "Việt Nam") {
-            list = list.filter { it.isVn || it.group.contains("Việt Nam", ignoreCase = true) }
-        } else if (selectedGroup == "Thể Thao") {
-            list = list.filter { !it.isVn }
-        } else if (selectedGroup == "DAZN") {
-            list = list.filter { it.group.equals("DAZN", ignoreCase = true) }
-        } else if (selectedGroup == "Sky Sports") {
-            list = list.filter { it.group.equals("Sky Sports", ignoreCase = true) }
-        } else if (selectedGroup == "beIN Sports") {
-            list = list.filter { it.group.equals("beIN Sports", ignoreCase = true) }
-        } else if (selectedGroup == "ESPN") {
-            list = list.filter { it.group.equals("ESPN", ignoreCase = true) }
-        } else if (selectedGroup == "FIFA+") {
-            list = list.filter { it.group.equals("FIFA+", ignoreCase = true) }
-        } else if (selectedGroup != "Tất cả") {
-            list = list.filter { it.group.equals(selectedGroup, ignoreCase = true) }
+        when (selectedGroup) {
+            "VTV" -> list = list.filter { it.isVn && it.name.contains("VTV", ignoreCase = true) }
+            "HTV / VTC" -> list = list.filter { it.isVn && (it.name.contains("HTV", ignoreCase = true) || it.name.contains("VTC", ignoreCase = true) || it.name.contains("THVL", ignoreCase = true)) }
+            "Thể Thao" -> list = list.filter {
+                !it.isVn || it.name.contains("Sport", ignoreCase = true) || it.name.contains("Thể Thao", ignoreCase = true) || it.name.contains("On Sports", ignoreCase = true)
+            }
+            "Giải Trí & Phim" -> list = list.filter {
+                val n = it.name.lowercase(Locale.ROOT)
+                n.contains("movie") || n.contains("cinema") || n.contains("phim") || n.contains("drama") ||
+                n.contains("hbo") || n.contains("axn") || n.contains("music") || n.contains("nhạc") ||
+                n.contains("cartoon") || n.contains("hoạt hình") || n.contains("entertainment") || n.contains("giải trí")
+            }
+            "Tin Tức / Địa Phương" -> list = list.filter {
+                it.isVn && !it.name.contains("VTV", ignoreCase = true) && !it.name.contains("HTV", ignoreCase = true) && !it.name.contains("VTC", ignoreCase = true)
+            }
+            "DAZN" -> list = list.filter { it.group.equals("DAZN", ignoreCase = true) || it.name.contains("DAZN", ignoreCase = true) }
+            "Sky Sports" -> list = list.filter { it.group.equals("Sky Sports", ignoreCase = true) || it.name.contains("Sky", ignoreCase = true) }
+            "beIN Sports" -> list = list.filter { it.group.equals("beIN Sports", ignoreCase = true) || it.name.contains("beIN", ignoreCase = true) }
+            "ESPN" -> list = list.filter { it.group.equals("ESPN", ignoreCase = true) || it.name.contains("ESPN", ignoreCase = true) }
+            "Tất cả" -> { /* giữ nguyên toàn bộ */ }
+            else -> list = list.filter { it.group.equals(selectedGroup, ignoreCase = true) }
         }
 
         if (currentKeyword.isNotEmpty()) {
@@ -247,7 +260,7 @@ class IptvFragment : Fragment() {
                 val isSel = g.equals(selectedGroup, ignoreCase = true)
                 holder.tv.isSelected = isSel
                 if (isSel) {
-                    holder.tv.setTextColor(Color.parseColor("#FF00E5FF"))
+                    holder.tv.setTextColor(Color.parseColor("#FFFF6500"))
                     holder.tv.setBackgroundResource(R.drawable.bg_badge_league_cyan)
                 } else {
                     holder.tv.setTextColor(Color.parseColor("#FFCBD5E1"))

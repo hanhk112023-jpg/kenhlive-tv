@@ -385,7 +385,7 @@
                 android:paddingRight="8dp"
                 android:paddingTop="2dp"
                 android:paddingBottom="2dp"
-                android:textColor="#00E5FF"
+                android:textColor="#FFFF6500"
                 android:textSize="11sp"
                 android:text="0 kênh" />
 
@@ -414,28 +414,32 @@
     </LinearLayout>
 
     <!-- QUICK CHANNEL BANNER / OSD (D-PAD UP/DOWN/KEYPAD NHẢY KÊNH PURE BLACK) -->
+    <!-- QUICK CHANNEL SWITCHER OSD BANNER (FPT PLAY BOX STYLE) -->
     <LinearLayout
         android:id="@+id/quickChannelOsd"
-        android:layout_width="wrap_content"
-        android:minWidth="540dp"
+        android:layout_width="match_parent"
+        android:maxWidth="720dp"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="42dp"
+        android:layout_marginBottom="36dp"
         android:orientation="horizontal"
         android:background="@drawable/bg_player_osd_banner"
-        android:padding="16dp"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="14dp"
         android:gravity="center_vertical"
         android:visibility="gone">
 
-        <!-- Khung số kênh nổi bật -->
+        <!-- Khung số kênh nổi bật màu cam FPT -->
         <TextView
             android:id="@+id/osdChannelNumber"
-            android:layout_width="60dp"
-            android:layout_height="60dp"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
             android:background="@drawable/bg_badge_league_cyan"
             android:gravity="center"
-            android:textColor="#00E5FF"
-            android:textSize="24sp"
+            android:textColor="#FFFF6500"
+            android:textSize="22sp"
             android:textStyle="bold"
             android:text="01" />
 
@@ -479,18 +483,30 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="3dp"
-                android:textColor="#00E5FF"
+                android:textColor="#FFFF6500"
                 android:textSize="12sp"
                 android:textStyle="bold"
                 android:maxLines="1"
                 android:ellipsize="end"
                 android:text="▶ Thời sự 19h" />
 
+            <!-- Progress bar tiến độ chương trình OSD -->
+            <ProgressBar
+                android:id="@+id/osdEpgProgress"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="3.5dp"
+                android:layout_marginTop="4dp"
+                android:max="100"
+                android:progress="50"
+                android:progressDrawable="@drawable/bg_progress_horizontal"
+                android:visibility="gone" />
+
             <TextView
                 android:id="@+id/osdEpgNext"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
+                android:layout_marginTop="3dp"
                 android:textColor="#94A3B8"
                 android:textSize="11sp"
                 android:maxLines="1"

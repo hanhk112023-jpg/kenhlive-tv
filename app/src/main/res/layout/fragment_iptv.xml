@@ -37,7 +37,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="VIỆT NAM"
-                    android:textColor="#00E5FF"
+                    android:textColor="#FFFF6500"
                     android:textSize="11sp"
                     android:textStyle="bold"
                     android:letterSpacing="0.06"
@@ -51,7 +51,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="8dp"
-                    android:text="● TRỰC TIẾP HD"
+                    android:text="● TRỰC TIẾP"
                     android:textColor="#FFFFFF"
                     android:textSize="10sp"
                     android:textStyle="bold"
@@ -65,8 +65,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="6dp"
-                    android:text="1080P"
-                    android:textColor="#00E5FF"
+                    android:text="FHD"
+                    android:textColor="#FFFF6500"
                     android:textSize="9.5sp"
                     android:textStyle="bold"
                     android:background="@drawable/bg_badge_hd"
@@ -105,12 +105,24 @@
                 android:maxLines="1"
                 android:ellipsize="end" />
 
+            <!-- Progress bar tiến độ EPG FPT Play -->
+            <ProgressBar
+                android:id="@+id/heroEpgProgress"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="280dp"
+                android:layout_height="4dp"
+                android:layout_marginTop="5dp"
+                android:max="100"
+                android:progress="45"
+                android:progressDrawable="@drawable/bg_progress_horizontal"
+                android:visibility="gone" />
+
             <!-- Lịch EPG: Tiếp theo -->
             <TextView
                 android:id="@+id/heroEpgNext"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
+                android:layout_marginTop="3dp"
                 android:text="⏭ Tiếp theo: Phim truyện Việt Nam"
                 android:textColor="#94A3B8"
                 android:textSize="12.5sp"
@@ -229,6 +241,12 @@
             android:id="@+id/channelCountText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_gravity="bottom|right"
+            android:layout_marginRight="28dp"
+            android:layout_marginBottom="16dp"
+            android:textColor="#FFFF6500"
+            android:textSize="12sp"
+            android:textStyle="bold"
             android:visibility="gone" />
     </FrameLayout>
 

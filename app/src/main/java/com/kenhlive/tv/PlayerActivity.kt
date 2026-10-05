@@ -90,6 +90,7 @@ class PlayerActivity : AppCompatActivity() {
     private var osdChannelLogo: ImageView? = null
     private var osdChannelTitle: TextView? = null
     private var osdEpgNow: TextView? = null
+    private var osdEpgProgress: ProgressBar? = null
     private var osdEpgNext: TextView? = null
     private var osdTechTag: TextView? = null
 
@@ -185,6 +186,7 @@ class PlayerActivity : AppCompatActivity() {
         osdChannelLogo = findViewById(R.id.osdChannelLogo)
         osdChannelTitle = findViewById(R.id.osdChannelTitle)
         osdEpgNow = findViewById(R.id.osdEpgNow)
+        osdEpgProgress = findViewById(R.id.osdEpgProgress)
         osdEpgNext = findViewById(R.id.osdEpgNext)
         osdTechTag = findViewById(R.id.osdTechTag)
 
@@ -661,17 +663,24 @@ class PlayerActivity : AppCompatActivity() {
 
         val epg = EpgRepository.getCurrentAndNext(ch.id, ch.name)
         if (epg != null && epg.first != null) {
+            val cur = epg.first!!
             osdEpgNow?.visibility = View.VISIBLE
-            osdEpgNow?.text = "▶ [${epg.first!!.timeRange()}] ${epg.first!!.title}"
+            osdEpgNow?.text = "▶ [${cur.timeRange()}] ${cur.title}"
+            val pct = cur.progressPercent()
+            osdEpgProgress?.visibility = View.VISIBLE
+            osdEpgProgress?.progress = pct
+
             if (epg.second != null) {
+                val nxt = epg.second!!
                 osdEpgNext?.visibility = View.VISIBLE
-                osdEpgNext?.text = "⏭ [${epg.second!!.startFormatted()}] ${epg.second!!.title}"
+                osdEpgNext?.text = "⏭ [${nxt.startFormatted()}] ${nxt.title}"
             } else {
                 osdEpgNext?.visibility = View.GONE
             }
         } else {
             osdEpgNow?.visibility = View.VISIBLE
             osdEpgNow?.text = if (ch.isVn) "▶ Truyền hình Việt Nam trực tiếp" else "▶ ${ch.group} trực tiếp"
+            osdEpgProgress?.visibility = View.GONE
             osdEpgNext?.visibility = View.GONE
         }
 
