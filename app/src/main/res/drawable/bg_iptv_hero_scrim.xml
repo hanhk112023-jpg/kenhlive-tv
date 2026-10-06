@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Lớp gradient ngang: Đen sâu bên trái bảo vệ chữ EPG nét tuyệt đối, trong suốt dần sang phải để lộ video -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="linear"
+                android:angle="0"
+                android:startColor="#F507090E"
+                android:centerColor="#B807090E"
+                android:endColor="#3507090E" />
+        </shape>
+    </item>
+    <!-- Lớp gradient dọc: Làm dịu viền trên và chân hero box hòa vào nền đen tổng thể -->
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:type="linear"
+                android:angle="270"
+                android:startColor="#6007090E"
+                android:centerColor="#00000000"
+                android:endColor="#E607090E" />
+        </shape>
+    </item>
+</layer-list>

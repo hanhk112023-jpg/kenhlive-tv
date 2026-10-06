@@ -17,13 +17,22 @@ import android.widget.TextView
 import java.util.Locale
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.ui.PlayerView
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.kenhlive.tv.DeviceMode
+import com.kenhlive.tv.Enhancer
 import com.kenhlive.tv.PlayerActivity
 import com.kenhlive.tv.R
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class IptvFragment : Fragment() {
@@ -37,12 +46,18 @@ class IptvFragment : Fragment() {
 
     // Hero Preview Views (Apple TV / Netflix style)
     private var heroPreviewBox: View? = null
+    private var heroPlayerView: PlayerView? = null
+    private var heroPlayer: ExoPlayer? = null
     private var heroChannelTitle: TextView? = null
     private var heroChannelGroup: TextView? = null
     private var heroEpgNow: TextView? = null
     private var heroEpgProgress: ProgressBar? = null
     private var heroEpgNext: TextView? = null
     private var heroLogoImg: ImageView? = null
+
+    private var previewJob: Job? = null
+    private var currentPreviewUrl: String? = null
+    private var currentlyFocusedChannel: IptvChannel? = null
 
     private var allChannels: List<IptvChannel> = emptyList()
     private var displayedChannels: List<IptvChannel> = emptyList()
@@ -63,12 +78,20 @@ class IptvFragment : Fragment() {
         searchInput = view.findViewById(R.id.searchChannelInput)
 
         heroPreviewBox = view.findViewById(R.id.heroPreviewBox)
+        heroPlayerView = view.findViewById(R.id.heroPlayerView)
         heroChannelTitle = view.findViewById(R.id.heroChannelTitle)
         heroChannelGroup = view.findViewById(R.id.heroChannelGroup)
         heroEpgNow = view.findViewById(R.id.heroEpgNow)
         heroEpgProgress = view.findViewById(R.id.heroEpgProgress)
         heroEpgNext = view.findViewById(R.id.heroEpgNext)
         heroLogoImg = view.findViewById(R.id.heroLogoImg)
+
+        heroPreviewBox?.setOnClickListener {
+            currentlyFocusedChannel?.let { ch ->
+                val idx = displayedChannels.indexOf(ch).coerceAtLeast(0)
+                openChannel(ch, idx)
+            }
+        }
 
         // Lưới thẻ TV chuẩn Leanback: Tự động phân chia 5 cột (TV 1080p), 4 cột (Tablet ngang) hoặc 2 cột (Phone)
         val dm = resources.displayMetrics
@@ -139,6 +162,9 @@ class IptvFragment : Fragment() {
             heroEpgProgress?.visibility = View.GONE
             heroEpgNext?.visibility = View.GONE
         }
+
+        currentlyFocusedChannel = ch
+        scheduleHeroPreview(ch)
     }
 
     private fun loadData() {
@@ -332,6 +358,99 @@ class IptvFragment : Fragment() {
 
             override fun getItemCount(): Int = channels.size
         }
+    }
+
+    private fun scheduleHeroPreview(ch: IptvChannel) {
+        previewJob?.cancel()
+        if (ch.url.isBlank()) {
+            stopHeroPreview()
+            return
+        }
+        if (ch.url == currentPreviewUrl && heroPlayer != null) return
+
+        previewJob = lifecycleScope.launch {
+            // Chờ 650ms để người dùng dừng lại ở kênh này trước khi khởi tạo stream nền
+            delay(650)
+            if (!isAdded) return@launch
+            startHeroPreview(ch)
+        }
+    }
+
+    private fun startHeroPreview(ch: IptvChannel) {
+        val pv = heroPlayerView ?: return
+        val ctx = context ?: return
+        currentPreviewUrl = ch.url
+
+        try {
+            if (heroPlayer == null) {
+                heroPlayer = ExoPlayer.Builder(ctx)
+                    .setMediaSourceFactory(Enhancer.buildMediaSourceFactory(ctx))
+                    .setTrackSelector(Enhancer.buildTrackSelector(ctx))
+                    .setLoadControl(Enhancer.buildLoadControl(ctx))
+                    .build().apply {
+                        setAudioAttributes(
+                            AudioAttributes.Builder().setUsage(C.USAGE_MEDIA)
+                                .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE).build(), false
+                        )
+                        volume = 0f // Tắt tiếng hoàn toàn cho video preview nền
+                        playWhenReady = true
+                        addListener(object : Player.Listener {
+                            override fun onPlaybackStateChanged(state: Int) {
+                                if (state == Player.STATE_READY) {
+                                    // Hiện video với hiệu ứng mờ mờ mượt mà (alpha 0.72)
+                                    pv.animate()?.alpha(0.72f)?.setDuration(400)?.start()
+                                }
+                            }
+                            override fun onPlayerError(error: PlaybackException) {
+                                // Nếu stream lỗi hoặc geoblock, ẩn nhẹ nhàng để lộ logo
+                                pv.animate()?.alpha(0f)?.setDuration(200)?.start()
+                            }
+                        })
+                    }
+                pv.player = heroPlayer
+            }
+
+            pv.alpha = 0f
+            heroPlayer?.setMediaItem(Enhancer.buildMediaItem(ch.url))
+            heroPlayer?.prepare()
+        } catch (_: Exception) {
+            pv.alpha = 0f
+        }
+    }
+
+    private fun stopHeroPreview() {
+        previewJob?.cancel()
+        currentPreviewUrl = null
+        heroPlayerView?.animate()?.cancel()
+        heroPlayerView?.alpha = 0f
+        heroPlayer?.stop()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        stopHeroPreview()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        currentlyFocusedChannel?.let { scheduleHeroPreview(it) }
+    }
+
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (hidden) {
+            stopHeroPreview()
+        } else {
+            currentlyFocusedChannel?.let { scheduleHeroPreview(it) }
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        previewJob?.cancel()
+        heroPlayer?.release()
+        heroPlayer = null
+        heroPlayerView = null
     }
 
     private fun openChannel(ch: IptvChannel, index: Int) {
