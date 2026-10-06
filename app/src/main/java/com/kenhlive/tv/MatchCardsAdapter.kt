@@ -117,6 +117,7 @@ class MatchCardsAdapter(
                 }
                 FocusKit.remember(rowPos, pos, key)
             }
+            v.animate().cancel()
             v.animate().scaleX(if (has) 1.05f else 1f).scaleY(if (has) 1.05f else 1f)
                 .setDuration(100).start()
             v.elevation = if (has) 16f else 0f

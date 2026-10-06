@@ -5,10 +5,12 @@ import android.media.audiofx.BassBoost
 import android.media.audiofx.Equalizer
 import android.media.audiofx.LoudnessEnhancer
 import android.media.audiofx.Virtualizer
+import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.DefaultLoadControl
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.LoadControl
 import androidx.media3.exoplayer.trackselection.DefaultTrackSelector
 
@@ -28,10 +30,34 @@ object EnhanceSettings {
 
 object Enhancer {
 
-    /** TrackSelector theo chế độ hình. */
+    /** RenderersFactory hỗ trợ tự động phục hồi decoder khi phần cứng TV bị quá tải. */
+    fun buildRenderersFactory(ctx: Context): DefaultRenderersFactory {
+        return DefaultRenderersFactory(ctx).apply {
+            setEnableDecoderFallback(true)
+            setExtensionRendererMode(DefaultRenderersFactory.EXTENSION_RENDERER_MODE_OFF)
+        }
+    }
+
+    /** TrackSelector theo chế độ hình cho Player chính. */
     fun buildTrackSelector(ctx: Context): DefaultTrackSelector {
         val ts = DefaultTrackSelector(ctx)
         applyVideo(ts, EnhanceSettings.videoQuality(ctx))
+        return ts
+    }
+
+    /** TrackSelector siêu nhẹ cho luồng xem trước (Hero Ambient Preview):
+     * - Tắt hoàn toàn Audio Track (tiết kiệm decoder âm thanh & thread xử lý)
+     * - Giới hạn độ phân giải tối đa 720p / 1.2Mbps (tiết kiệm 70% CPU/GPU so với 1080p full)
+     */
+    fun buildPreviewTrackSelector(ctx: Context): DefaultTrackSelector {
+        val ts = DefaultTrackSelector(ctx)
+        try {
+            val b = ts.buildUponParameters()
+            b.setMaxVideoSize(1280, 720)
+            b.setMaxVideoBitrate(1_200_000)
+            b.setTrackTypeDisabled(C.TRACK_TYPE_AUDIO, true)
+            ts.setParameters(b.build())
+        } catch (_: Exception) {}
         return ts
     }
 

@@ -65,6 +65,7 @@ class SettingsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                 else { vh.value.visibility = View.VISIBLE; vh.value.text = item.value }
                 vh.chevron.visibility = if (item.chevron) View.VISIBLE else View.GONE
                 vh.itemView.setOnFocusChangeListener { v, has ->
+                    v.animate().cancel()
                     v.animate().scaleX(if (has) 1.01f else 1f).scaleY(if (has) 1.01f else 1f)
                         .setDuration(120).start()
                     v.elevation = if (has) 8f else 0f

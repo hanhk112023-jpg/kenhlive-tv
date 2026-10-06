@@ -855,7 +855,7 @@ class PlayerActivity : AppCompatActivity() {
 
     private fun initPlayer() {
         if (url.isBlank()) return
-        player = ExoPlayer.Builder(this)
+        player = ExoPlayer.Builder(this, Enhancer.buildRenderersFactory(this))
             .setMediaSourceFactory(Enhancer.buildMediaSourceFactory(this))
             .setTrackSelector(Enhancer.buildTrackSelector(this))
             .setLoadControl(Enhancer.buildLoadControl(this))

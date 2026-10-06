@@ -199,7 +199,7 @@ class MultiViewActivity : AppCompatActivity() {
                 return@launch
             }
             s.player?.release(); s.fx.detach()
-            s.player = ExoPlayer.Builder(this@MultiViewActivity)
+            s.player = ExoPlayer.Builder(this@MultiViewActivity, Enhancer.buildRenderersFactory(this@MultiViewActivity))
                 .setMediaSourceFactory(Enhancer.buildMediaSourceFactory(this@MultiViewActivity))
                 .setTrackSelector(Enhancer.buildTrackSelector(this@MultiViewActivity))
                 .setLoadControl(Enhancer.buildLoadControl(this@MultiViewActivity))

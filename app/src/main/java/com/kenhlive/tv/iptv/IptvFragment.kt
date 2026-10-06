@@ -65,6 +65,9 @@ class IptvFragment : Fragment() {
     private var currentKeyword: String = ""
     private var lastFocusedChannelIndex: Int = 0
 
+    private var groupsAdapter: GroupsAdapter? = null
+    private var channelsAdapter: ChannelsAdapter? = null
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return inflater.inflate(R.layout.fragment_iptv, container, false)
     }
@@ -106,10 +109,17 @@ class IptvFragment : Fragment() {
         gridList.layoutManager = GridLayoutManager(requireContext(), spanCount)
         gridList.clipChildren = false
         gridList.clipToPadding = false
+        gridList.setHasFixedSize(true)
+        gridList.setItemViewCacheSize(10)
+        channelsAdapter = ChannelsAdapter()
+        gridList.adapter = channelsAdapter
 
         groupList.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
         groupList.clipChildren = false
         groupList.clipToPadding = false
+        groupList.setHasFixedSize(true)
+        groupsAdapter = GroupsAdapter()
+        groupList.adapter = groupsAdapter
 
         searchInput.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -276,103 +286,114 @@ class IptvFragment : Fragment() {
     }
 
     private fun setupGroups(groups: List<String>) {
-        groupList.adapter = object : RecyclerView.Adapter<GroupViewHolder>() {
-            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GroupViewHolder {
-                val v = LayoutInflater.from(parent.context).inflate(R.layout.item_iptv_group, parent, false)
-                return GroupViewHolder(v)
-            }
-
-            override fun onBindViewHolder(holder: GroupViewHolder, position: Int) {
-                val g = groups[position]
-                holder.tv.text = g
-                val isSel = g.equals(selectedGroup, ignoreCase = true)
-                holder.tv.isSelected = isSel
-                if (isSel) {
-                    holder.tv.setTextColor(Color.parseColor("#FFFF6500"))
-                    holder.tv.setBackgroundResource(R.drawable.bg_badge_league_cyan)
-                } else {
-                    holder.tv.setTextColor(Color.parseColor("#FFCBD5E1"))
-                    holder.tv.setBackgroundResource(R.drawable.bg_chip)
-                }
-
-                holder.itemView.setOnClickListener {
-                    selectedGroup = g
-                    applyFilter(focusFirst = true)
-                    notifyDataSetChanged()
-                }
-
-                holder.itemView.setOnKeyListener { _, keyCode, event ->
-                    if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-                        if (displayedChannels.isNotEmpty()) {
-                            gridList.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
-                                ?: gridList.scrollToPosition(0)
-                            return@setOnKeyListener true
-                        }
-                    }
-                    false
-                }
-            }
-
-            override fun getItemCount(): Int = groups.size
-        }
+        groupsAdapter?.groups = groups
+        groupsAdapter?.notifyDataSetChanged()
     }
 
     private fun setupGrid(channels: List<IptvChannel>) {
-        gridList.adapter = object : RecyclerView.Adapter<ChannelViewHolder>() {
-            override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelViewHolder {
-                val v = LayoutInflater.from(parent.context).inflate(R.layout.item_iptv_channel, parent, false)
-                return ChannelViewHolder(v)
-            }
+        channelsAdapter?.channels = channels
+        channelsAdapter?.notifyDataSetChanged()
+    }
 
-            override fun onBindViewHolder(holder: ChannelViewHolder, position: Int) {
-                val ch = channels[position]
-                holder.tvName.text = ch.name
-                holder.tvSub.text = if (ch.isVn) "Việt Nam" else ch.group
-                holder.badge.text = if (ch.isVn) "VIỆT NAM" else ch.group.uppercase()
+    inner class GroupsAdapter : RecyclerView.Adapter<GroupViewHolder>() {
+        var groups: List<String> = emptyList()
 
-                if (ch.logo.isNotEmpty()) {
-                    holder.ivLogo.load(ch.logo) {
-                        crossfade(true)
-                        error(R.drawable.ic_nav_tv)
-                        placeholder(R.drawable.ic_nav_tv)
-                    }
-                } else {
-                    holder.ivLogo.setImageResource(R.drawable.ic_nav_tv)
-                }
-
-                holder.itemView.setOnClickListener {
-                    openChannel(ch, position)
-                }
-
-                holder.itemView.setOnFocusChangeListener { v, hasFocus ->
-                    v.animate()
-                        .scaleX(if (hasFocus) 1.08f else 1f)
-                        .scaleY(if (hasFocus) 1.08f else 1f)
-                        .translationZ(if (hasFocus) 16f else 0f)
-                        .setDuration(160).start()
-                    v.elevation = if (hasFocus) 16f else 0f
-                    if (hasFocus) {
-                        lastFocusedChannelIndex = position
-                        updateHeroPreview(ch)
-                    }
-                }
-            }
-
-            override fun getItemCount(): Int = channels.size
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GroupViewHolder {
+            val v = LayoutInflater.from(parent.context).inflate(R.layout.item_iptv_group, parent, false)
+            return GroupViewHolder(v)
         }
+
+        override fun onBindViewHolder(holder: GroupViewHolder, position: Int) {
+            val g = groups[position]
+            holder.tv.text = g
+            val isSel = g.equals(selectedGroup, ignoreCase = true)
+            holder.tv.isSelected = isSel
+            if (isSel) {
+                holder.tv.setTextColor(Color.parseColor("#FFFF6500"))
+                holder.tv.setBackgroundResource(R.drawable.bg_badge_league_cyan)
+            } else {
+                holder.tv.setTextColor(Color.parseColor("#FFCBD5E1"))
+                holder.tv.setBackgroundResource(R.drawable.bg_chip)
+            }
+
+            holder.itemView.setOnClickListener {
+                selectedGroup = g
+                applyFilter(focusFirst = true)
+                notifyDataSetChanged()
+            }
+
+            holder.itemView.setOnKeyListener { _, keyCode, event ->
+                if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                    if (displayedChannels.isNotEmpty()) {
+                        gridList.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
+                            ?: gridList.scrollToPosition(0)
+                        return@setOnKeyListener true
+                    }
+                }
+                false
+            }
+        }
+
+        override fun getItemCount(): Int = groups.size
+    }
+
+    inner class ChannelsAdapter : RecyclerView.Adapter<ChannelViewHolder>() {
+        var channels: List<IptvChannel> = emptyList()
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelViewHolder {
+            val v = LayoutInflater.from(parent.context).inflate(R.layout.item_iptv_channel, parent, false)
+            return ChannelViewHolder(v)
+        }
+
+        override fun onBindViewHolder(holder: ChannelViewHolder, position: Int) {
+            val ch = channels[position]
+            holder.tvName.text = ch.name
+            holder.tvSub.text = if (ch.isVn) "Việt Nam" else ch.group
+            holder.badge.text = if (ch.isVn) "VIỆT NAM" else ch.group.uppercase()
+
+            if (ch.logo.isNotEmpty()) {
+                holder.ivLogo.load(ch.logo) {
+                    crossfade(false)
+                    error(R.drawable.ic_nav_tv)
+                    placeholder(R.drawable.ic_nav_tv)
+                }
+            } else {
+                holder.ivLogo.setImageResource(R.drawable.ic_nav_tv)
+            }
+
+            holder.itemView.setOnClickListener {
+                openChannel(ch, position)
+            }
+
+            holder.itemView.setOnFocusChangeListener { v, hasFocus ->
+                v.animate().cancel()
+                v.animate()
+                    .scaleX(if (hasFocus) 1.08f else 1f)
+                    .scaleY(if (hasFocus) 1.08f else 1f)
+                    .translationZ(if (hasFocus) 16f else 0f)
+                    .setDuration(140).start()
+                v.elevation = if (hasFocus) 16f else 0f
+                if (hasFocus) {
+                    lastFocusedChannelIndex = position
+                    updateHeroPreview(ch)
+                }
+            }
+        }
+
+        override fun getItemCount(): Int = channels.size
     }
 
     private fun scheduleHeroPreview(ch: IptvChannel) {
         previewJob?.cancel()
-        if (ch.url.isBlank()) {
+        if (ch.url.isBlank() || DeviceMode.lowRam) {
             stopHeroPreview()
             return
         }
         if (ch.url == currentPreviewUrl && heroPlayer != null) return
 
         previewJob = lifecycleScope.launch {
-            // Chờ 650ms để người dùng dừng lại ở kênh này trước khi khởi tạo stream nền
-            delay(650)
+            // Chờ 700ms để người dùng dừng lại ở kênh này trước khi khởi tạo stream nền
+            delay(700)
             if (!isAdded) return@launch
             startHeroPreview(ch)
         }
@@ -385,9 +406,9 @@ class IptvFragment : Fragment() {
 
         try {
             if (heroPlayer == null) {
-                heroPlayer = ExoPlayer.Builder(ctx)
+                heroPlayer = ExoPlayer.Builder(ctx, Enhancer.buildRenderersFactory(ctx))
                     .setMediaSourceFactory(Enhancer.buildMediaSourceFactory(ctx))
-                    .setTrackSelector(Enhancer.buildTrackSelector(ctx))
+                    .setTrackSelector(Enhancer.buildPreviewTrackSelector(ctx))
                     .setLoadControl(Enhancer.buildLoadControl(ctx))
                     .build().apply {
                         setAudioAttributes(
@@ -400,7 +421,7 @@ class IptvFragment : Fragment() {
                             override fun onPlaybackStateChanged(state: Int) {
                                 if (state == Player.STATE_READY) {
                                     // Hiện video với hiệu ứng mờ mờ mượt mà (alpha 0.72)
-                                    pv.animate()?.alpha(0.72f)?.setDuration(400)?.start()
+                                    pv.animate()?.alpha(0.72f)?.setDuration(350)?.start()
                                 }
                             }
                             override fun onPlayerError(error: PlaybackException) {

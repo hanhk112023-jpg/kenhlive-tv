@@ -82,6 +82,7 @@ class BlvCardsAdapter(
         }
 
         h.root.setOnFocusChangeListener { v, hasFocus ->
+            v.animate().cancel()
             v.animate()
                 .scaleX(if (hasFocus) 1.05f else 1.0f)
                 .scaleY(if (hasFocus) 1.05f else 1.0f)

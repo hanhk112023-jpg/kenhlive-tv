@@ -36,6 +36,7 @@ object FocusKit {
     /** Gắn hiệu ứng focus chuẩn cho card. */
     fun decorateCard(card: View, scale: Float = 1.06f, elevation: Float = 16f) {
         card.setOnFocusChangeListener { v, has ->
+            v.animate().cancel()
             v.animate()
                 .scaleX(if (has) scale else 1f).scaleY(if (has) scale else 1f)
                 .setDuration(150).setInterpolator(DecelerateInterpolator()).start()

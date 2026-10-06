@@ -71,6 +71,7 @@ class ScheduleAdapter(
                     if (has) {
                         v.parent?.requestChildFocus(v, v)
                     }
+                    v.animate().cancel()
                     v.animate().scaleX(if (has) 1.015f else 1f).scaleY(if (has) 1.015f else 1f)
                         .setDuration(130).start()
                     v.elevation = if (has) 10f else 0f

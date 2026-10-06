@@ -105,6 +105,7 @@ class SearchResultAdapter(
             if (has) {
                 onItemFocused?.invoke(pos)
             }
+            v.animate().cancel()
             v.animate().scaleX(if (has) 1.02f else 1f).scaleY(if (has) 1.02f else 1f)
                 .setDuration(130).start()
             v.elevation = if (has) 10f else 0f
