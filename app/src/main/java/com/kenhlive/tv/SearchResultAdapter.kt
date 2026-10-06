@@ -55,22 +55,38 @@ class SearchResultAdapter(
                     if (pos >= itemCount - 1) {
                         return@setOnKeyListener true // nuốt ở cuối danh sách, giữ focus trong list
                     }
-                    val nextVh = (h.bindingAdapter as? SearchResultAdapter)?.let {
-                        val rv = h.itemView.parent as? RecyclerView
-                        rv?.findViewHolderForAdapterPosition(pos + 1)
+                    val rv = h.itemView.parent as? RecyclerView
+                    if (rv != null) {
+                        val nextView = rv.layoutManager?.findViewByPosition(pos + 1)
+                            ?: rv.findViewHolderForAdapterPosition(pos + 1)?.itemView
+                        if (nextView != null && nextView.requestFocus()) return@setOnKeyListener true
+                        rv.smoothScrollToPosition(pos + 1)
+                        rv.post {
+                            val v = rv.layoutManager?.findViewByPosition(pos + 1)
+                                ?: rv.findViewHolderForAdapterPosition(pos + 1)?.itemView
+                            v?.requestFocus()
+                        }
+                        return@setOnKeyListener true
                     }
-                    if (nextVh?.itemView?.requestFocus() == true) return@setOnKeyListener true
                 }
                 if (keyCode == android.view.KeyEvent.KEYCODE_DPAD_UP) {
                     if (pos == 0) {
                         onUpFromFirst?.invoke()
                         return@setOnKeyListener true
                     }
-                    val prevVh = (h.bindingAdapter as? SearchResultAdapter)?.let {
-                        val rv = h.itemView.parent as? RecyclerView
-                        rv?.findViewHolderForAdapterPosition(pos - 1)
+                    val rv = h.itemView.parent as? RecyclerView
+                    if (rv != null) {
+                        val prevView = rv.layoutManager?.findViewByPosition(pos - 1)
+                            ?: rv.findViewHolderForAdapterPosition(pos - 1)?.itemView
+                        if (prevView != null && prevView.requestFocus()) return@setOnKeyListener true
+                        rv.smoothScrollToPosition(pos - 1)
+                        rv.post {
+                            val v = rv.layoutManager?.findViewByPosition(pos - 1)
+                                ?: rv.findViewHolderForAdapterPosition(pos - 1)?.itemView
+                            v?.requestFocus()
+                        }
+                        return@setOnKeyListener true
                     }
-                    if (prevVh?.itemView?.requestFocus() == true) return@setOnKeyListener true
                 }
             }
             false

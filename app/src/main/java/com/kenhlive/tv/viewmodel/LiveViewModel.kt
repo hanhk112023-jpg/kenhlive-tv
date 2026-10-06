@@ -22,7 +22,8 @@ class LiveViewModel : ViewModel() {
     val state: StateFlow<UiState<List<LiveMatchGroup>>> = _state.asStateFlow()
 
     private var loadJob: Job? = null
-    private var refreshJob: Job? = null
+    private var refreshLoopJob: Job? = null
+    private var silentFetchJob: Job? = null
     private var loadedOnce = false
 
     companion object {
@@ -70,8 +71,8 @@ class LiveViewModel : ViewModel() {
 
     /** Refresh nền: chỉ thay data khi có dữ liệu mới, giữ nguyên vị trí/focus. */
     fun silentRefresh() {
-        if (!loadedOnce || refreshJob?.isActive == true) return
-        refreshJob = viewModelScope.launch {
+        if (!loadedOnce || silentFetchJob?.isActive == true) return
+        silentFetchJob = viewModelScope.launch {
             try {
                 val groups = SocoliveRepository.groupRooms(SocoliveRepository.fetchLiveRooms(force = true))
                 if (groups.isNotEmpty()) {
@@ -84,7 +85,7 @@ class LiveViewModel : ViewModel() {
 
     fun startAutoRefresh() {
         stopAutoRefresh()
-        refreshJob = viewModelScope.launch {
+        refreshLoopJob = viewModelScope.launch {
             while (true) {
                 delay(AUTO_REFRESH_MS)
                 silentRefresh()
@@ -93,8 +94,8 @@ class LiveViewModel : ViewModel() {
     }
 
     fun stopAutoRefresh() {
-        refreshJob?.cancel()
-        refreshJob = null
+        refreshLoopJob?.cancel()
+        refreshLoopJob = null
     }
 
     private fun scheduleAutoRetry() {
@@ -106,6 +107,7 @@ class LiveViewModel : ViewModel() {
 
     override fun onCleared() {
         loadJob?.cancel()
-        refreshJob?.cancel()
+        refreshLoopJob?.cancel()
+        silentFetchJob?.cancel()
     }
 }

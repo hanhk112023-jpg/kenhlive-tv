@@ -23,8 +23,7 @@
             android:layout_weight="1"
             android:hint="@string/search_hint"
             android:drawableLeft="@drawable/ic_nav_search"
-            app:drawableTint="@color/kl_text_3"
-            android:nextFocusDown="@+id/resultList" />
+            app:drawableTint="@color/kl_text_3" />
 
         <ImageButton
             android:id="@+id/clearBtn"

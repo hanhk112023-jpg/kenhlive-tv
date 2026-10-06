@@ -66,7 +66,7 @@ class SportAdapter(
     }
 
     override var outerRecyclerView: RecyclerView? = null
-    override val headerPositions: Int get() = 4
+    override val headerPositions: Int get() = 2
 
     private val pool = RecyclerView.RecycledViewPool()
     private val blvPool = RecyclerView.RecycledViewPool()
