@@ -8,6 +8,7 @@
     android:background="@drawable/bg_card_match"
     android:foreground="@drawable/fg_card_focus_cyan"
     android:padding="14dp"
+    android:descendantFocusability="blocksDescendants"
     android:focusable="true"
     android:clickable="true">
 

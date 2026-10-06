@@ -63,6 +63,7 @@ class IptvFragment : Fragment() {
     private var displayedChannels: List<IptvChannel> = emptyList()
     private var selectedGroup: String = "VTV"
     private var currentKeyword: String = ""
+    private var lastFocusedChannelIndex: Int = 0
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return inflater.inflate(R.layout.fragment_iptv, container, false)
@@ -351,6 +352,7 @@ class IptvFragment : Fragment() {
                         .setDuration(160).start()
                     v.elevation = if (hasFocus) 16f else 0f
                     if (hasFocus) {
+                        lastFocusedChannelIndex = position
                         updateHeroPreview(ch)
                     }
                 }
@@ -434,6 +436,20 @@ class IptvFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         currentlyFocusedChannel?.let { scheduleHeroPreview(it) }
+        if (DeviceMode.isTv && displayedChannels.isNotEmpty()) {
+            gridList.post {
+                if (gridList.findFocus() == null) {
+                    val targetPos = if (lastFocusedChannelIndex in displayedChannels.indices) lastFocusedChannelIndex else 0
+                    val vh = gridList.findViewHolderForAdapterPosition(targetPos)
+                    if (vh?.itemView?.requestFocus() != true) {
+                        gridList.scrollToPosition(targetPos)
+                        gridList.postDelayed({
+                            gridList.findViewHolderForAdapterPosition(targetPos)?.itemView?.requestFocus()
+                        }, 60)
+                    }
+                }
+            }
+        }
     }
 
     override fun onHiddenChanged(hidden: Boolean) {

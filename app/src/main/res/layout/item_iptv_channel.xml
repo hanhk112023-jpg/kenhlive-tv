@@ -11,6 +11,7 @@
     android:background="@drawable/bg_iptv_channel_card"
     android:foreground="@drawable/fg_iptv_focus"
     android:padding="6dp"
+    android:descendantFocusability="blocksDescendants"
     android:focusable="true"
     android:clickable="true">
 

@@ -365,6 +365,20 @@ class SportAdapter(
                     v.elevation = if (has) 10f else 0f
                 }
                 vh.itemView.setOnClickListener { onFixtureClick(item) }
+                vh.itemView.setOnKeyListener { _, keyCode, event ->
+                    if (event.action == android.view.KeyEvent.ACTION_DOWN && keyCode == android.view.KeyEvent.KEYCODE_DPAD_UP) {
+                        for (prevPos in pos - 1 downTo 0) {
+                            val prevItem = getItem(prevPos)
+                            if (prevItem is RailItem) {
+                                focusRailFirst()
+                                return@setOnKeyListener true
+                            } else if (prevItem is ScheduleMatch) {
+                                break
+                            }
+                        }
+                    }
+                    false
+                }
                 vh.name.text = "${item.host} vs ${item.guest}"
                 vh.league.text = item.league
                 vh.time.text = SocoliveRepository.formatTime(item.matchTimeMs)

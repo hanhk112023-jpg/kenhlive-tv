@@ -60,11 +60,16 @@ class SearchResultAdapter(
                         val nextView = rv.layoutManager?.findViewByPosition(pos + 1)
                             ?: rv.findViewHolderForAdapterPosition(pos + 1)?.itemView
                         if (nextView != null && nextView.requestFocus()) return@setOnKeyListener true
-                        rv.smoothScrollToPosition(pos + 1)
+                        rv.scrollToPosition(pos + 1)
                         rv.post {
                             val v = rv.layoutManager?.findViewByPosition(pos + 1)
                                 ?: rv.findViewHolderForAdapterPosition(pos + 1)?.itemView
-                            v?.requestFocus()
+                            if (v?.requestFocus() != true) {
+                                rv.postDelayed({
+                                    (rv.layoutManager?.findViewByPosition(pos + 1)
+                                        ?: rv.findViewHolderForAdapterPosition(pos + 1)?.itemView)?.requestFocus()
+                                }, 40)
+                            }
                         }
                         return@setOnKeyListener true
                     }
@@ -79,11 +84,16 @@ class SearchResultAdapter(
                         val prevView = rv.layoutManager?.findViewByPosition(pos - 1)
                             ?: rv.findViewHolderForAdapterPosition(pos - 1)?.itemView
                         if (prevView != null && prevView.requestFocus()) return@setOnKeyListener true
-                        rv.smoothScrollToPosition(pos - 1)
+                        rv.scrollToPosition(pos - 1)
                         rv.post {
                             val v = rv.layoutManager?.findViewByPosition(pos - 1)
                                 ?: rv.findViewHolderForAdapterPosition(pos - 1)?.itemView
-                            v?.requestFocus()
+                            if (v?.requestFocus() != true) {
+                                rv.postDelayed({
+                                    (rv.layoutManager?.findViewByPosition(pos - 1)
+                                        ?: rv.findViewHolderForAdapterPosition(pos - 1)?.itemView)?.requestFocus()
+                                }, 40)
+                            }
                         }
                         return@setOnKeyListener true
                     }

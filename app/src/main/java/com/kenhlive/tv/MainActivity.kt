@@ -246,7 +246,7 @@ class MainActivity : AppCompatActivity() {
             if (f == null) {
                 focusContentFirst()
                 f = currentFocus
-                if (f != null) return true
+                if (f != null) return super.dispatchKeyEvent(event)
             }
             val insideRail = railPanel?.let { isDescendant(it, f) } == true
             when (event.keyCode) {

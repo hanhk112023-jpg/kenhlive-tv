@@ -99,7 +99,7 @@ object FocusKit {
         }, 80)
     }
 
-    /** Focus ô idx của hàng adapter `pos` (hàng = RecyclerView ngang bên trong RowVH). */
+    /** Focus ô idx của hàng adapter `pos` (hàng = RecyclerView ngang bên trong RowVH hoặc hàng dọc độc lập). */
     fun focusNow(rv: RecyclerView, pos: Int, idx: Int): Boolean {
         val vh = rv.findViewHolderForAdapterPosition(pos) ?: return false
         val inner = vh.itemView.findViewById<RecyclerView>(R.id.rowList)
@@ -113,9 +113,24 @@ object FocusKit {
                     ?: inner.layoutManager?.findViewByPosition(idx)
                 t2?.requestFocus()
             }
-            return false // KHÔNG trả true nếu chưa focus trúng target, và KHÔNG fallback vào vh.itemView
+            return false
         }
-        return false
+        // Hàng đơn lẻ (ScheduleMatch, v.v.): focus trực tiếp vào itemView hoặc con đầu tiên
+        if (vh.itemView.isFocusable && vh.itemView.requestFocus()) return true
+        val target = vh.itemView.findFocus() ?: firstFocusableIn(vh.itemView)
+        return target?.requestFocus() == true
+    }
+
+    fun firstFocusableIn(root: View): View? {
+        if (root.visibility != View.VISIBLE) return null
+        if (root.isFocusable) return root
+        if (root is android.view.ViewGroup) {
+            for (i in 0 until root.childCount) {
+                val f = firstFocusableIn(root.getChildAt(i))
+                if (f != null) return f
+            }
+        }
+        return null
     }
 
     /** Khôi phục focus về ô đã nhớ (gọi từ onResume) — ưu tiên KHOÁ nội dung vì position drift sau refresh. */

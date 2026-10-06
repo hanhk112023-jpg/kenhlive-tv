@@ -83,6 +83,7 @@ class SearchFragment : Fragment() {
         }
         input.setOnKeyListener { _, keyCode, event ->
             if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                (activity as? MainActivity)?.hideKeyboard()
                 if (searchAdapter.itemCount > 0) {
                     val target = resultList.layoutManager?.findViewByPosition(0)
                         ?: resultList.findViewHolderForAdapterPosition(0)?.itemView
@@ -98,7 +99,7 @@ class SearchFragment : Fragment() {
                                 (resultList.layoutManager?.findViewByPosition(0)
                                     ?: resultList.findViewHolderForAdapterPosition(0)?.itemView
                                     ?: resultList.getChildAt(0))?.requestFocus()
-                            }, 80)
+                            }, 50)
                         }
                     }
                     return@setOnKeyListener true
