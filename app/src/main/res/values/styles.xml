@@ -35,6 +35,8 @@
         <item name="android:fontFamily">sans-serif</item>
     </style>
 
+    <style name="KL.Text.Regular" parent="KL.Text.Body" />
+
     <style name="KL.Text.Meta" parent="">
         <item name="android:textSize">@dimen/ts_meta</item>
         <item name="android:textColor">@color/kl_text_3</item>
