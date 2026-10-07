@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_marginBottom="18dp">
+
+    <!-- Section Header Row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:layout_marginBottom="8dp">
+
+        <View
+            android:id="@+id/rowAccentDot"
+            android:layout_width="4dp"
+            android:layout_height="16dp"
+            android:background="@drawable/bg_badge_hd" />
+
+        <TextView
+            android:id="@+id/rowTitle"
+            style="@style/KL.Text.Section"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.04"
+            android:textColor="#FFFFFF" />
+
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:id="@+id/rowCount"
+            style="@style/KL.Text.Meta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="11.5sp"
+            android:textColor="@color/kl_text_3" />
+    </LinearLayout>
+
+    <!-- Horizontal Carousel List -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rowCarousel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:clipToPadding="false"
+        android:paddingLeft="20dp"
+        android:paddingRight="20dp"
+        android:scrollbars="none" />
+
+</LinearLayout>

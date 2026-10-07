@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="220dp"
+    android:layout_marginBottom="16dp"
+    android:background="@color/kl_bg_deep">
+
+    <!-- Hero Backdrop Image -->
+    <ImageView
+        android:id="@+id/heroBackdrop"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:contentDescription="Phim nổi bật" />
+
+    <!-- Dark Gradient Scrim Overlay (Left to Right + Bottom to Top) -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_overlay_top"
+        android:rotation="180" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#990B0D17" />
+
+    <!-- Content Details Overlay -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:gravity="bottom"
+        android:paddingLeft="24dp"
+        android:paddingRight="24dp"
+        android:paddingBottom="16dp">
+
+        <!-- Tags Row -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="6dp">
+
+            <TextView
+                style="@style/KL.Text.Meta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_badge_hd"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"
+                android:text="TÂM ĐIỂM ĐIỆN ẢNH"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF" />
+
+            <TextView
+                android:id="@+id/heroYear"
+                style="@style/KL.Text.Meta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="6dp"
+                android:background="@drawable/bg_badge_glass"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"
+                android:text="2026"
+                android:textSize="10.5sp"
+                android:textColor="#FFFFFF" />
+
+            <TextView
+                android:id="@+id/heroQuality"
+                style="@style/KL.Text.Meta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="6dp"
+                android:text="HD · Vietsub"
+                android:textSize="11sp"
+                android:textColor="@color/kl_brand" />
+        </LinearLayout>
+
+        <!-- Movie Title -->
+        <TextView
+            android:id="@+id/heroTitle"
+            style="@style/KL.Text.Section"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textColor="#FFFFFF" />
+
+        <!-- Short Description -->
+        <TextView
+            android:id="@+id/heroDesc"
+            style="@style/KL.Text.Meta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:maxWidth="540dp"
+            android:maxLines="2"
+            android:ellipsize="end"
+            android:textSize="12sp"
+            android:textColor="@color/kl_text_2" />
+
+        <!-- Action CTAs Row -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnHeroPlay"
+                style="@style/KL.Button.Primary"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:text="▶  XEM NGAY"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:focusable="true" />
+
+            <Button
+                android:id="@+id/btnHeroEpisodes"
+                style="@style/KL.Button.Ghost"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:layout_marginLeft="10dp"
+                android:text="DANH SÁCH TẬP"
+                android:textSize="12sp"
+                android:focusable="true" />
+        </LinearLayout>
+    </LinearLayout>
+
+</FrameLayout>

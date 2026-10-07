@@ -14,6 +14,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.kenhlive.tv.iptv.IptvFragment
+import com.kenhlive.tv.phim.PhimFragment
 import com.kenhlive.tv.ui.applyTvDensity
 import androidx.lifecycle.lifecycleScope
 import com.kenhlive.tv.viewmodel.LiveViewModel
@@ -21,7 +22,7 @@ import kotlinx.coroutines.launch
 
 /**
  * Shell ứng dụng — 1 codebase, 2 hình hài:
- * - PHONE: top app bar + bottom navigation (4 mục), fragment show/hide giữ state
+ * - PHONE: top app bar + bottom navigation (5 mục), fragment show/hide giữ state
  * - TV:    navigation rail trái (D-pad), cùng id/fragment → chung logic
  * Layout chọn tự động qua resource qualifier (layout/ vs layout-television/).
  */
@@ -31,7 +32,10 @@ class MainActivity : AppCompatActivity() {
     private var current = 0
     private val navViews = mutableListOf<View>()
     private var railPanel: View? = null
-    private val tabTags = arrayOf("tab_live", "tab_schedule", "tab_iptv", "tab_search", "tab_settings")
+
+    // 0: Live, 1: Schedule, 2: IPTV, 3: Search, 4: Settings, 5: Phim
+    private val tabTags = arrayOf("tab_live", "tab_schedule", "tab_iptv", "tab_search", "tab_settings", "tab_phim")
+    private val navIdToTab = mutableMapOf<Int, Int>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -45,9 +49,9 @@ class MainActivity : AppCompatActivity() {
 
         setupNav()
 
-        // deep-link: --ei tab N mở thẳng tab N (0 Live / 1 Lịch / 2 IPTV / 3 Tìm / 4 Cài đặt — CI + QA)
+        // deep-link: --ei tab N mở thẳng tab N (0 Live / 1 Lịch / 2 IPTV / 3 Tìm / 4 Cài đặt / 5 Phim)
         val tabX = intent?.getIntExtra("tab", -1) ?: -1
-        showTab(if (tabX in 0..4) tabX else 0, animate = false)
+        showTab(if (tabX in 0..5) tabX else 0, animate = false)
 
         // BACK: tab khác → về Live trước; tab Live → dialog xác nhận thoát (UX TV)
         onBackPressedDispatcher.addCallback(this) {
@@ -98,26 +102,35 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupNav() {
         val defs = listOf(
-            R.id.nav_live to Pair(R.drawable.ic_nav_live, R.string.nav_live),
-            R.id.nav_schedule to Pair(if (DeviceMode.isTv) R.drawable.ic_sports else R.drawable.ic_nav_schedule, R.string.nav_schedule),
-            R.id.nav_iptv to Pair(R.drawable.ic_nav_tv, R.string.nav_iptv),
-            R.id.nav_search to Pair(R.drawable.ic_nav_search, R.string.nav_search),
-            R.id.nav_settings to Pair(R.drawable.ic_nav_settings, R.string.nav_settings)
+            Triple(R.id.nav_live, 0, Pair(R.drawable.ic_nav_live, R.string.nav_live)),
+            Triple(R.id.nav_iptv, 2, Pair(R.drawable.ic_nav_tv, R.string.nav_iptv)),
+            Triple(R.id.nav_phim, 5, Pair(R.drawable.ic_nav_phim, R.string.nav_phim)),
+            Triple(R.id.nav_schedule, 1, Pair(if (DeviceMode.isTv) R.drawable.ic_sports else R.drawable.ic_nav_schedule, R.string.nav_schedule)),
+            Triple(R.id.nav_search, 3, Pair(R.drawable.ic_nav_search, R.string.nav_search)),
+            Triple(R.id.nav_settings, 4, Pair(R.drawable.ic_nav_settings, R.string.nav_settings))
         )
+
         navViews.clear()
-        defs.forEachIndexed { i, (id, def) ->
-            val v = findViewById<View>(id) ?: return@forEachIndexed
+        navIdToTab.clear()
+
+        defs.forEach { (id, tabIdx, def) ->
+            navIdToTab[id] = tabIdx
+            val v = findViewById<View>(id) ?: return@forEach
             v.findViewById<ImageView>(R.id.navIcon)?.setImageResource(def.first)
             v.findViewById<TextView>(R.id.navLabel)?.setText(def.second)
-            v.setOnClickListener { showTab(i) }
+            v.setOnClickListener { showTab(tabIdx) }
             if (DeviceMode.isTv) {
                 v.setOnFocusChangeListener { _, hasFocus ->
-                    if (hasFocus && current != i) {
-                        showTab(i, animate = false)
+                    if (hasFocus && current != tabIdx) {
+                        showTab(tabIdx, animate = false)
                     }
                 }
             }
             navViews.add(v)
+        }
+
+        findViewById<View>(R.id.btnTopSettings)?.setOnClickListener {
+            showTab(4)
         }
 
         if (DeviceMode.isTv) {
@@ -253,16 +266,20 @@ class MainActivity : AppCompatActivity() {
                 android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
                     if (f != null && !insideRail && atLeftEdge(f)) {
                         showRail()
-                        navViews.getOrNull(current)?.requestFocus() ?: navViews.firstOrNull()?.requestFocus()
+                        val activeNav = navViews.firstOrNull { navIdToTab[it.id] == current }
+                        activeNav?.requestFocus() ?: navViews.firstOrNull()?.requestFocus()
                         return true
                     }
                 }
                 android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> {
                     if (insideRail) {
                         // Kích hoạt tab nếu người dùng đang đứng ở item nav tương ứng
-                        val focusedNavIdx = navViews.indexOfFirst { it === f || isDescendant(it, f) }
-                        if (focusedNavIdx >= 0 && focusedNavIdx != current) {
-                            showTab(focusedNavIdx, animate = false)
+                        val focusedNav = navViews.firstOrNull { it === f || isDescendant(it, f) }
+                        if (focusedNav != null) {
+                            val targetTab = navIdToTab[focusedNav.id] ?: 0
+                            if (targetTab != current) {
+                                showTab(targetTab, animate = false)
+                            }
                         }
                         hideRail()
                         focusContentFirst()
@@ -276,13 +293,15 @@ class MainActivity : AppCompatActivity() {
 
     fun showTab(pos: Int, animate: Boolean = true) {
         current = pos
-        navViews.forEachIndexed { i, v -> v.isSelected = i == pos }
-        if (DeviceMode.isTv && pos in 0 until navViews.size) {
+        navViews.forEach { v ->
+            val target = navIdToTab[v.id] ?: -1
+            v.isSelected = (target == pos)
+        }
+        if (DeviceMode.isTv) {
             // Khi chuyển tab: đồng bộ tiêu điểm trên rail vào đúng icon tab đang chọn
-            navViews.getOrNull(pos)?.let { selNav ->
-                if (railPanel?.let { isDescendant(it, currentFocus) } == true) {
-                    selNav.requestFocus()
-                }
+            val activeNav = navViews.firstOrNull { navIdToTab[it.id] == pos }
+            if (railPanel?.let { isDescendant(it, currentFocus) } == true) {
+                activeNav?.requestFocus()
             }
         }
         val tx = supportFragmentManager.beginTransaction()
@@ -296,7 +315,9 @@ class MainActivity : AppCompatActivity() {
                         1 -> ScheduleFragment()
                         2 -> IptvFragment()
                         3 -> SearchFragment()
-                        else -> SettingsFragment()
+                        4 -> SettingsFragment()
+                        5 -> PhimFragment()
+                        else -> LiveFragment()
                     }
                     tx.add(R.id.fragmentContainer, f, tag)
                 } else tx.show(f)
@@ -335,6 +356,7 @@ class MainActivity : AppCompatActivity() {
                 "iptv" -> showTab(2, animate = false)
                 "search" -> showTab(3, animate = false)
                 "settings" -> showTab(4, animate = false)
+                "phim" -> showTab(5, animate = false)
                 "player" -> lifecycleScope.launch { openPlayer(pip = false) }
                 else -> {}
             }
@@ -363,7 +385,7 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         val tabX = intent.getIntExtra("tab", -1)
-        if (tabX in 0..4) showTab(tabX, animate = false)
+        if (tabX in 0..5) showTab(tabX, animate = false)
         handleDebugIntent(intent)
     }
 }

@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="134dp"
+    android:layout_height="224dp"
+    android:layout_marginRight="12dp"
+    android:layout_marginBottom="8dp"
+    android:orientation="vertical"
+    android:background="@drawable/bg_phim_card"
+    android:foreground="@drawable/fg_iptv_focus"
+    android:focusable="true"
+    android:clickable="true"
+    android:clipToPadding="false"
+    android:padding="3dp">
+
+    <!-- Poster with rounded corners & top badges -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="174dp">
+
+        <ImageView
+            android:id="@+id/phimPoster"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:background="@drawable/thumb_round_bg"
+            android:contentDescription="Poster phim" />
+
+        <!-- Top Right Quality Badge -->
+        <TextView
+            android:id="@+id/phimQualityBadge"
+            style="@style/KL.Text.Meta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|right"
+            android:layout_margin="6dp"
+            android:background="@drawable/bg_badge_hd"
+            android:paddingLeft="6dp"
+            android:paddingRight="6dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:text="HD"
+            android:textSize="9.5sp"
+            android:textColor="#FFFFFF" />
+
+        <!-- Bottom Left Episode Badge (Gradient Scrim) -->
+        <TextView
+            android:id="@+id/phimEpisodeBadge"
+            style="@style/KL.Text.Meta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|left"
+            android:layout_margin="6dp"
+            android:background="@drawable/bg_badge_glass"
+            android:paddingLeft="7dp"
+            android:paddingRight="7dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
+            android:text="Tập 1"
+            android:textSize="10sp"
+            android:textColor="@color/kl_brand" />
+    </FrameLayout>
+
+    <!-- Movie Title & Year / Language -->
+    <TextView
+        android:id="@+id/phimTitle"
+        style="@style/KL.Text.Section"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:layout_marginLeft="4dp"
+        android:layout_marginRight="4dp"
+        android:textSize="12.5sp"
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:textColor="#FFFFFF" />
+
+    <TextView
+        android:id="@+id/phimMeta"
+        style="@style/KL.Text.Meta"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="1dp"
+        android:layout_marginLeft="4dp"
+        android:layout_marginRight="4dp"
+        android:textSize="11sp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:textColor="@color/kl_text_3" />
+
+</LinearLayout>
