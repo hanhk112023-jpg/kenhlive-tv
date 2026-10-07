@@ -21,14 +21,19 @@ import androidx.fragment.app.viewModels
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.kenhlive.tv.phim.EpisodePickerDialog
+import com.kenhlive.tv.phim.NguoncFilm
+import com.kenhlive.tv.phim.WebPlayerActivity
 import com.kenhlive.tv.ui.RoomPickerDialog
 import com.kenhlive.tv.ui.StateBinder
 import com.kenhlive.tv.viewmodel.SearchViewModel
 import kotlinx.coroutines.launch
 
 /**
- * TÌM KIẾM: lọc trận/BLV/giải đang live theo từ khoá không dấu + chip giải hot.
- * TV: chip focusable để remote chọn nhanh không cần bàn phím.
+ * TÌM KIẾM ĐA NGUỒN:
+ * 1. Trực tiếp Thể thao / BLV Socolive
+ * 2. Kho phim Nguồn C (phim.nguonc.com) với hơn 33.400+ đầu phim & fallback 240 phim offline
+ * TV: chip focusable để remote D-pad chọn nhanh không cần gõ bàn phím.
  */
 class SearchFragment : Fragment() {
 
@@ -53,9 +58,10 @@ class SearchFragment : Fragment() {
         chipRow = v.findViewById(R.id.chipRow)
         state = StateBinder(v)
 
-        searchAdapter = SearchResultAdapter { g ->
-            openGroup(g)
-        }
+        searchAdapter = SearchResultAdapter(
+            onMatchClick = { g -> openGroup(g) },
+            onFilmClick = { film -> openFilm(film) }
+        )
         searchAdapter.onItemFocused = { pos ->
             lastFocusedPosition = pos
         }
@@ -123,11 +129,11 @@ class SearchFragment : Fragment() {
         }
         viewLifecycleOwner.lifecycleScope.launch {
             vm.result.collect { r ->
-                searchAdapter.submitList(r.groups)
+                searchAdapter.submitList(r.items)
                 val q = r.query
                 resultCount.text = if (q.isEmpty())
-                    getString(R.string.search_count_all, r.groups.size)
-                else getString(R.string.search_count_result, r.groups.size, q)
+                    getString(R.string.search_count_all, r.items.size)
+                else getString(R.string.search_count_result, r.items.size, q)
                 if (r.chips.isNotEmpty() && chipContainer.childCount == 0) buildChips(r.chips)
             }
         }
@@ -211,6 +217,23 @@ class SearchFragment : Fragment() {
             openRoom(r)
             (activity as? MainActivity)?.hideKeyboard()
         })
+    }
+
+    private fun openFilm(film: NguoncFilm) {
+        dialog?.dismiss()
+        dialog = EpisodePickerDialog.show(
+            context = requireContext(),
+            scope = viewLifecycleOwner.lifecycleScope,
+            film = film,
+            onSelectEpisode = { f, ep ->
+                val intent = Intent(requireContext(), WebPlayerActivity::class.java)
+                    .putExtra("embed_url", ep.embed)
+                    .putExtra("film_title", f.name)
+                    .putExtra("episode_title", if (ep.name.all { it.isDigit() }) "Tập ${ep.name}" else ep.name)
+                startActivity(intent)
+                (activity as? MainActivity)?.hideKeyboard()
+            }
+        )
     }
 
     private fun openRoom(room: LiveRoom) {

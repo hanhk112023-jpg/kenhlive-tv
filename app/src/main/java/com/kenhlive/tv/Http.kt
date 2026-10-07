@@ -32,12 +32,12 @@ object Http {
             .retryOnConnectionFailure(true)
             .cache(Cache(File(cacheDir, "http_cache"), 8L * 1024 * 1024))
             .addInterceptor { chain ->
-                val req = chain.request().newBuilder()
-                    .header("User-Agent", UA)
-                    .header("Referer", "https://vnres.co/")
-                    .header("Accept", "application/json, text/plain, */*")
-                    .build()
-                chain.proceed(req)
+                val orig = chain.request()
+                val req = orig.newBuilder()
+                if (orig.header("User-Agent") == null) req.header("User-Agent", UA)
+                if (orig.header("Referer") == null) req.header("Referer", "https://vnres.co/")
+                if (orig.header("Accept") == null) req.header("Accept", "application/json, text/plain, */*")
+                chain.proceed(req.build())
             }
             .build()
 

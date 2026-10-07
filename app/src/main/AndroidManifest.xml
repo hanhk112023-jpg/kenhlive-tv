@@ -67,6 +67,13 @@
             android:resizeableActivity="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|density" />
 
+        <!-- Web Player activity (Phim NguonC StreamC embed) -->
+        <activity
+            android:name=".phim.WebPlayerActivity"
+            android:exported="true"
+            android:screenOrientation="sensorLandscape"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|density" />
+
         <!-- Multiview (TV 2x2) -->
         <activity
             android:name=".MultiViewActivity"
