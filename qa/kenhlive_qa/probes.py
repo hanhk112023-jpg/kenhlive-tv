@@ -103,9 +103,12 @@ class Probes:
         return int(m.group(1).replace(',', ''))  # KB
 
     # ---------- screen ----------
-    def screencap(self):
-        raw = subprocess.run(f"{self.a} exec-out screencap -p".split(), capture_output=True, timeout=25).stdout
-        return raw if len(raw) > 10000 else None
+    def screencap(self, timeout=35):
+        try:
+            raw = subprocess.run(f"{self.a} exec-out screencap -p".split(), capture_output=True, timeout=timeout).stdout
+            return raw if raw and len(raw) > 10000 else None
+        except Exception:
+            return None
 
     def is_blank(self, png):
         """Màn trắng/đen bất thường: std pixel cực thấp (PIL thuần, không numpy)."""
