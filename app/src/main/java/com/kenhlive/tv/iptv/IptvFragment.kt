@@ -295,7 +295,7 @@ class IptvFragment : Fragment() {
         channelsAdapter?.notifyDataSetChanged()
     }
 
-    inner class GroupsAdapter : RecyclerView.Adapter<GroupViewHolder>() {
+    private inner class GroupsAdapter : RecyclerView.Adapter<GroupViewHolder>() {
         var groups: List<String> = emptyList()
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): GroupViewHolder {
@@ -337,7 +337,7 @@ class IptvFragment : Fragment() {
         override fun getItemCount(): Int = groups.size
     }
 
-    inner class ChannelsAdapter : RecyclerView.Adapter<ChannelViewHolder>() {
+    private inner class ChannelsAdapter : RecyclerView.Adapter<ChannelViewHolder>() {
         var channels: List<IptvChannel> = emptyList()
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ChannelViewHolder {
@@ -502,11 +502,11 @@ class IptvFragment : Fragment() {
         startActivity(intent)
     }
 
-    private class GroupViewHolder(v: View) : RecyclerView.ViewHolder(v) {
+    class GroupViewHolder(v: View) : RecyclerView.ViewHolder(v) {
         val tv: TextView = v.findViewById(R.id.groupTitle)
     }
 
-    private class ChannelViewHolder(v: View) : RecyclerView.ViewHolder(v) {
+    class ChannelViewHolder(v: View) : RecyclerView.ViewHolder(v) {
         val ivLogo: ImageView = v.findViewById(R.id.channelLogo)
         val badge: TextView = v.findViewById(R.id.channelBadge)
         val tvName: TextView = v.findViewById(R.id.channelName)
