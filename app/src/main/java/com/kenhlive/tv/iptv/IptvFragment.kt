@@ -220,8 +220,8 @@ class IptvFragment : Fragment() {
         val sportsCount = channels.size - vnCount
         countText.text = "Tổng: ${channels.size} kênh (${vnCount} VN, ${sportsCount} Thể thao)"
 
-        // Phân nhóm EPG FPT Play: VTV -> HTV / VTC -> Thể Thao -> Giải Trí / Phim -> Tin Tức / Tỉnh -> Tất cả
-        val distinctGroups = mutableListOf("VTV", "HTV / VTC", "Thể Thao", "Giải Trí & Phim", "Tin Tức / Địa Phương", "Tất cả")
+        // Phân nhóm EPG: VTV -> TV360 -> HTV / VTC -> VTVcab / SCTV -> Thể Thao -> Giải Trí / Phim -> Tin Tức / Tỉnh -> Tất cả
+        val distinctGroups = mutableListOf("VTV", "TV360", "HTV / VTC", "VTVcab / SCTV", "Thể Thao", "Giải Trí & Phim", "Tin Tức / Địa Phương", "Tất cả")
         val sportsBrandGroups = listOf("DAZN", "Sky Sports", "beIN Sports", "ESPN")
         distinctGroups.addAll(sportsBrandGroups)
 
@@ -233,18 +233,26 @@ class IptvFragment : Fragment() {
         var list = allChannels
         when (selectedGroup) {
             "VTV" -> list = list.filter { it.isVn && it.name.contains("VTV", ignoreCase = true) }
-            "HTV / VTC" -> list = list.filter { it.isVn && (it.name.contains("HTV", ignoreCase = true) || it.name.contains("VTC", ignoreCase = true) || it.name.contains("THVL", ignoreCase = true)) }
+            "TV360" -> list = list.filter {
+                it.url.contains("tv360", ignoreCase = true) || it.group.contains("TV360", ignoreCase = true) || it.name.contains("360", ignoreCase = true)
+            }
+            "HTV / VTC" -> list = list.filter { it.isVn && (it.name.contains("HTV", ignoreCase = true) || it.name.contains("VTC", ignoreCase = true) || it.name.contains("THVL", ignoreCase = true) || it.group.contains("HTV", ignoreCase = true)) }
+            "VTVcab / SCTV" -> list = list.filter {
+                it.name.contains("VTVcab", ignoreCase = true) || it.name.contains("SCTV", ignoreCase = true) || it.group.contains("VTVcab", ignoreCase = true) || it.group.contains("SCTV", ignoreCase = true)
+            }
             "Thể Thao" -> list = list.filter {
-                !it.isVn || it.name.contains("Sport", ignoreCase = true) || it.name.contains("Thể Thao", ignoreCase = true) || it.name.contains("On Sports", ignoreCase = true)
+                !it.isVn || it.name.contains("Sport", ignoreCase = true) || it.name.contains("Thể Thao", ignoreCase = true) || it.name.contains("On Sports", ignoreCase = true) || it.group.contains("Thể Thao", ignoreCase = true)
             }
             "Giải Trí & Phim" -> list = list.filter {
                 val n = it.name.lowercase(Locale.ROOT)
+                val g = it.group.lowercase(Locale.ROOT)
                 n.contains("movie") || n.contains("cinema") || n.contains("phim") || n.contains("drama") ||
                 n.contains("hbo") || n.contains("axn") || n.contains("music") || n.contains("nhạc") ||
-                n.contains("cartoon") || n.contains("hoạt hình") || n.contains("entertainment") || n.contains("giải trí")
+                n.contains("cartoon") || n.contains("hoạt hình") || n.contains("entertainment") || n.contains("giải trí") ||
+                g.contains("giải trí") || g.contains("phim")
             }
             "Tin Tức / Địa Phương" -> list = list.filter {
-                it.isVn && !it.name.contains("VTV", ignoreCase = true) && !it.name.contains("HTV", ignoreCase = true) && !it.name.contains("VTC", ignoreCase = true)
+                it.isVn && !it.name.contains("VTV", ignoreCase = true) && !it.name.contains("HTV", ignoreCase = true) && !it.name.contains("VTC", ignoreCase = true) && !it.group.contains("TV360", ignoreCase = true)
             }
             "DAZN" -> list = list.filter { it.group.equals("DAZN", ignoreCase = true) || it.name.contains("DAZN", ignoreCase = true) }
             "Sky Sports" -> list = list.filter { it.group.equals("Sky Sports", ignoreCase = true) || it.name.contains("Sky", ignoreCase = true) }
@@ -434,7 +442,12 @@ class IptvFragment : Fragment() {
             }
 
             pv.alpha = 0f
-            heroPlayer?.setMediaItem(Enhancer.buildMediaItem(ch.url))
+            val playableUrl = if (Tv360Resolver.isTv360(ch.url)) {
+                Tv360Resolver.resolve(ch.url) ?: ch.url
+            } else {
+                ch.url
+            }
+            heroPlayer?.setMediaItem(Enhancer.buildMediaItem(playableUrl))
             heroPlayer?.prepare()
         } catch (_: Exception) {
             pv.alpha = 0f

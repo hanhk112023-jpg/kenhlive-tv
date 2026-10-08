@@ -29,10 +29,13 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import coil.load
 import com.kenhlive.tv.iptv.EpgRepository
 import com.kenhlive.tv.iptv.IptvChannel
 import com.kenhlive.tv.iptv.IptvRepository
+import com.kenhlive.tv.iptv.Tv360Resolver
 import com.kenhlive.tv.ui.applyTvDensity
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -732,6 +735,22 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
+    private fun prepareChannelUrl(targetUrl: String) {
+        if (targetUrl.isBlank()) return
+        if (Tv360Resolver.isTv360(targetUrl)) {
+            lifecycleScope.launch {
+                val resolved = Tv360Resolver.resolve(targetUrl) ?: targetUrl
+                player?.setMediaItem(Enhancer.buildMediaItem(resolved))
+                player?.prepare()
+                player?.playWhenReady = true
+            }
+        } else {
+            player?.setMediaItem(Enhancer.buildMediaItem(targetUrl))
+            player?.prepare()
+            player?.playWhenReady = true
+        }
+    }
+
     private fun switchChannel(ch: IptvChannel) {
         url = ch.url
         findViewById<TextView>(R.id.playerTitle).text = ch.name
@@ -740,9 +759,7 @@ class PlayerActivity : AppCompatActivity() {
         showOverlay()
 
         player?.stop()
-        player?.setMediaItem(Enhancer.buildMediaItem(url))
-        player?.prepare()
-        player?.playWhenReady = true
+        prepareChannelUrl(url)
         Toast.makeText(this, "Đang chuyển sang: ${ch.name}", Toast.LENGTH_SHORT).show()
     }
 
@@ -860,9 +877,6 @@ class PlayerActivity : AppCompatActivity() {
             .setTrackSelector(Enhancer.buildTrackSelector(this))
             .setLoadControl(Enhancer.buildLoadControl(this))
             .build().apply {
-                setMediaItem(Enhancer.buildMediaItem(url))
-                prepare()
-                playWhenReady = true
                 addListener(object : Player.Listener {
                     override fun onPlayerError(error: PlaybackException) {
                         val isNet = error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ||
@@ -917,6 +931,7 @@ class PlayerActivity : AppCompatActivity() {
                 }
             })
         }
+        prepareChannelUrl(url)
     }
 
     override fun onStart() {

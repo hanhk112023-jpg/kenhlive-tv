@@ -126,31 +126,53 @@ object IptvRepository {
 
         val result = mutableListOf<IptvChannel>()
 
-        // 1. Kênh Việt Nam tuyển chọn: VTV lên đầu, sau đó đến các kênh TW/HTV, cuối cùng là kênh địa phương
-        if (!cachedVn.isNullOrBlank()) {
-            val vnRaw = parseM3u(cachedVn!!, defaultGroup = "Việt Nam", isVn = true, filterSports = false)
-            val sortedVn = vnRaw.sortedWith(
-                compareBy(
-                    { ch ->
-                        val n = ch.name.lowercase(Locale.ROOT)
-                        when {
-                            n.contains("vtv") -> 0         // VTV ưu tiên số 1 trên đầu
-                            n.contains("htv") || n.contains("vov") || n.contains("thvl") || n.contains("vtc") || n.contains("qpv") || n.contains("truyền hình quốc hội") -> 1 // Đài lớn
-                            else -> 2                      // Kênh tỉnh/địa phương xếp xuống dưới
-                        }
-                    },
-                    { it.name }
-                )
+        // 1. Nạp danh sách kênh Việt Nam & TV360 được tuyển chọn kỹ càng từ assets
+        val localVnText = try {
+            context.assets.open(ASSET_FALLBACK_VN).bufferedReader().use { it.readText() }
+        } catch (_: Exception) { null }
+
+        if (!localVnText.isNullOrBlank()) {
+            val curatedVn = parseM3u(localVnText, defaultGroup = "Việt Nam", isVn = true, filterSports = false)
+            result.addAll(curatedVn)
+        }
+
+        // 2. Bổ sung các kênh mở rộng từ nguồn online (nếu có và không trùng)
+        if (!cachedVn.isNullOrBlank() && cachedVn != localVnText) {
+            val onlineVn = parseM3u(cachedVn!!, defaultGroup = "Việt Nam", isVn = true, filterSports = false)
+            for (ch in onlineVn) {
+                if (result.none { it.name.equals(ch.name, ignoreCase = true) || it.url == ch.url }) {
+                    result.add(ch)
+                }
+            }
+        }
+
+        val sortedVn = result.sortedWith(
+            compareBy(
+                { ch ->
+                    val g = ch.group.lowercase(Locale.ROOT)
+                    val n = ch.name.lowercase(Locale.ROOT)
+                    when {
+                        g.contains("vtv") || n.contains("vtv") -> 0
+                        g.contains("tv360") || n.contains("360") -> 1
+                        g.contains("htv") || g.contains("vĩnh long") || n.contains("htv") || n.contains("thvl") -> 2
+                        g.contains("vtvcab") || g.contains("sctv") -> 3
+                        g.contains("quốc gia") || n.contains("antv") || n.contains("qpv") -> 4
+                        else -> 5
+                    }
+                },
+                { it.name }
             )
-            result.addAll(sortedVn)
-        }
+        )
 
-        // 2. Kênh Thể thao Quốc tế (DAZN, Sky Sports, beIN, ESPN, FIFA+, Fight, Tennis, Golf, F1...)
+        val finalChannels = mutableListOf<IptvChannel>()
+        finalChannels.addAll(sortedVn)
+
+        // 3. Kênh Thể thao Quốc tế (DAZN, Sky Sports, beIN, ESPN, FIFA+, Fight, Tennis, Golf, F1...)
         if (!cachedSports.isNullOrBlank()) {
-            result.addAll(parseM3u(cachedSports!!, defaultGroup = "Thể Thao", isVn = false, filterSports = true))
+            finalChannels.addAll(parseM3u(cachedSports!!, defaultGroup = "Thể Thao", isVn = false, filterSports = true))
         }
 
-        val distinctList = result.distinctBy { it.url }
+        val distinctList = finalChannels.distinctBy { it.url }
         currentChannels = distinctList
         saveParsedChannelsDisk(context, distinctList)
         distinctList
@@ -218,7 +240,7 @@ object IptvRepository {
                 curName = cleanName
 
                 curGroup = when {
-                    isVn -> "Việt Nam"
+                    isVn -> if (foundGroup.isNotBlank() && foundGroup != "Undefined" && foundGroup != "General") foundGroup else "Việt Nam"
                     curCountry in EU_COUNTRIES -> "Châu Âu (${curCountry})"
                     else -> defaultGroup
                 }
