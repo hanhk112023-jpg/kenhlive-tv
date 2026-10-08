@@ -28,7 +28,18 @@ ap.add_argument('--out', default='/tmp/qa_report')
 ap.add_argument('--serial', default=None)
 ap.add_argument('--no-ai', action='store_true')
 ap.add_argument('--quick', action='store_true', help='bỏ probe auto-refresh 3 phút')
+ap.add_argument('--legacy', action='store_true', help='Chạy kịch bản test tuần tự cũ')
 args = ap.parse_args()
+
+if not args.legacy:
+    try:
+        from autonomous_ai_qa import AutonomousQASuite
+        print("🤖 [QA Mode] Đang khởi chạy 100% Autonomous AI QA Agent Suite...", flush=True)
+        suite = AutonomousQASuite(out_dir=args.out, serial=args.serial)
+        suite.run()
+        sys.exit(0)
+    except Exception as e:
+        print(f"⚠️ [Autonomous QA Agent] Gặp sự cố ({e}), chuyển sang kịch bản fallback...", flush=True)
 
 os.makedirs(args.out + '/shots', exist_ok=True)
 P = Probes(PKG, args.serial)

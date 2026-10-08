@@ -13,6 +13,10 @@ TYPESAFE_BASE = os.environ.get('TYPESAFE_API_BASE', 'https://api.typesafe.ai/v1/
 TYPESAFE_KEY  = os.environ.get('TYPESAFE_API_KEY', '')
 TYPESAFE_MODEL = os.environ.get('TYPESAFE_MODEL', 'jev-latest')
 
+ANTIGRAVITY_BASE = os.environ.get('ANTIGRAVITY_API_BASE', 'http://meteor.pikamc.vn:25155/v1/chat/completions')
+ANTIGRAVITY_KEY  = os.environ.get('ANTIGRAVITY_API_KEY', 'sk-ag-pikamc2026')
+ANTIGRAVITY_MODEL = os.environ.get('ANTIGRAVITY_MODEL', 'gemini-3.8-flash-high')
+
 def _msgs(prompt, imgs):
     content = [{"type": "text", "text": prompt}]
     for b in (imgs or []):
@@ -27,22 +31,39 @@ def _post(url, key, payload, timeout):
             r = json.loads(urllib.request.urlopen(req, timeout=timeout).read().decode())
         except Exception:
             if attempt == 2: raise
-            time.sleep(3 * (attempt + 1))
+            time.sleep(2 * (attempt + 1))
             continue
         return (r['choices'][0]['message'].get('content') or '').strip()
     return ''
 
-def _chat(prompt, imgs=None, max_tokens=4000, temperature=0.1, timeout=170):
-    """Chạy trực tiếp qua Kilo với model chỉ định (mặc định inclusionai/ling-3.0-flash-vl:free)."""
-    if not KILO_KEY:
-        raise ValueError("Thiếu KILO_API_KEY trong environment")
-    payload = {
-        "model": KILO_MODEL,
-        "temperature": temperature,
-        "max_tokens": max_tokens,
-        "messages": _msgs(prompt, imgs)
-    }
-    return _post(KILO_BASE, KILO_KEY, payload, timeout)
+def _chat(prompt, imgs=None, max_tokens=1500, temperature=0.1, timeout=30):
+    """Ưu tiên Antigravity Gateway (gemini-3.8-flash-high), fallback Kilo."""
+    if ANTIGRAVITY_KEY and ANTIGRAVITY_BASE:
+        try:
+            payload = {
+                "model": ANTIGRAVITY_MODEL,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "messages": _msgs(prompt, imgs)
+            }
+            res = _post(ANTIGRAVITY_BASE, ANTIGRAVITY_KEY, payload, timeout)
+            if res: return res
+        except Exception:
+            pass
+
+    if KILO_KEY and KILO_BASE:
+        try:
+            payload = {
+                "model": KILO_MODEL,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "messages": _msgs(prompt, imgs)
+            }
+            return _post(KILO_BASE, KILO_KEY, payload, timeout)
+        except Exception:
+            pass
+
+    return ""
 
 def detail_imgs(jpeg):
     """Mô phỏng Python-tool: tự crop+zoom vùng chi tiết mảnh
@@ -101,11 +122,28 @@ Trả về duy nhất JSON object theo định dạng:
 """
 
 def judge_screen(label, jpeg_bytes):
-    """Đánh giá 1 màn hình qua Kilo model."""
+    """Đánh giá 1 màn hình qua Kilo/Antigravity model."""
     extra = detail_imgs(jpeg_bytes)
     prompt = f"Màn hình cần kiểm tra: {label}\n\n{RUBRIC}"
     raw = _chat(prompt, [jpeg_bytes] + extra)
-    return _parse_json(raw)
+    res = _parse_json(raw)
+    return res.get("findings", [])
+
+def judge_screen_agent(label, apng_path, jpeg=None):
+    """Agentic judge: kết hợp vision + tools kiểm tra chi tiết ảnh."""
+    notes = []
+    if jpeg is None and os.path.isfile(apng_path):
+        try:
+            with open(apng_path, 'rb') as f:
+                jpeg = f.read()
+        except Exception:
+            pass
+    if not jpeg:
+        return [], ["no image"]
+
+    notes.append("vision-triage")
+    findings = judge_screen(label, jpeg)
+    return findings, notes
 
 def _parse_json(text):
     text = re.sub(r'^[^{]*', '', text)

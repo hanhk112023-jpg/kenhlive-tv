@@ -75,6 +75,8 @@ jobs:
           KILO_MODEL: kilo-auto/free
           TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
           TYPESAFE_MODEL: jev-latest
+          ANTIGRAVITY_API_BASE: ${{ secrets.ANTIGRAVITY_API_BASE }}
+          ANTIGRAVITY_API_KEY: ${{ secrets.ANTIGRAVITY_API_KEY }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30

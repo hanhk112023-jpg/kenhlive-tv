@@ -1,37 +1,31 @@
-# KenhLive Grand AI QA Suite (Unified v4.0)
+# KenhLive 100% Autonomous AI QA Suite (Unified Brain v5.0)
 
-Hệ thống kiểm thử tự trị toàn diện dành cho Android TV (10-foot UI), tích hợp các kỹ thuật SOTA mới nhất:
+Hệ thống kiểm thử tự trị 100% điều khiển bởi AI Agent dành riêng cho Android TV (10-foot UI):
 
 ---
 
-## 🌟 Kiến trúc cốt lõi
+## 🌟 Kiến trúc 100% Autonomous AI QA Agent
 
-1. **State Transition Graph & TV D-Pad Focus Oracle (`qa/kenhlive_qa/grand_engine.py`):**
-   - Đọc trực tiếp cấu trúc cây Accessibility / UI Hierarchy XML trong thời gian thực.
-   - Giám sát vị trí Focus D-pad, phát hiện:
-     - `FOCUS TRAP`: Kẹt nút điều hướng không thể thoát hoặc không di chuyển.
-     - `FOCUS LOSS`: Mất dấu focus sau khi tương tác hoặc đóng Dialog / Player.
-     - `DEAD SCREEN`: Màn hình đen xì hoặc không hiển thị nội dung do lỗi mạng hoặc treo tiến trình.
+1. **Bộ não AI đa nguồn (Multi-Brain Cognitive Engine):**
+   - **Antigravity Gateway:** Sử dụng model `gemini-3.8-flash-high` với năng lực Vision + Reasoning sâu để trực tiếp nhìn nhận màn hình và ra quyết định.
+   - **Kilo Gateway:** Hỗ trợ model `inclusionai/ling-3.0-flash-vl:free` / `kilo-auto/free`.
+   - **Local Autonomous Reflex Brain:** Fallback tự động khi offline, sử dụng cây quyết định phản xạ thông minh để CI không bao giờ treo.
 
-2. **AI Autonomous Exploration & Stress Hunter:**
-   - Điều khiển ngẫu nhiên có phản xạ (Weighted Reflex + Jev System One / Ling-VL):
-   - Tự động khám phá các ngóc ngách, menu, danh sách kênh/lịch thi đấu để tìm kiếm lỗi biên và rò rỉ bộ nhớ (Memory Leak).
+2. **Cơ chế Tri Giác Toàn Diện (Multimodal Perception):**
+   - **Vision Probes:** Chụp ảnh màn hình 1080p, phát hiện viền sáng Focus D-pad (`#FF6500` Cam hoặc Trắng/Cyan) với độ dày và độ tương phản cao.
+   - **Video Frame Motion Detector:** Lấy mẫu 3 khung hình liên tiếp để đo đạc toán học xem ExoPlayer có đang render luồng video trực tiếp hay bị đứng hình / màn hình đen.
+   - **UI Hierarchy Stream:** Bóc tách cây UI XML, định vị thẻ đang focus và các view lân cận.
+   - **Logcat Realtime Triage:** Bắt ngay lập tức các sự kiện Crash FATAL, ANR, hoặc lỗi đứt mạng ExoPlayer.
 
-3. **Bộ Probes chuyên sâu cho KenhLive TV (`qa/kenhlive_qa/run_qa.py`):**
-   - **Cold Start:** Đo lường thời gian khởi động, kiểm tra blank screen và crash baseline.
-   - **MultiView Verification:** Kiểm tra cơ chế chống tràn ô, viền trắng focus giữa 2 luồng phát (`--es open mv`).
-   - **Player & PIP:** Kiểm tra luồng phát ExoPlayer và Picture-in-Picture (`--es open player`, `--es open pip`).
-   - **IPTV Leanback Grid:** Kiểm tra lưới 5 cột, Hero Preview EPG và chuyển kênh trực tiếp.
-   - **Auto-Refresh:** Chờ 3.5 phút đo độ lệch pixel kiểm tra tự động cập nhật danh sách trận.
-   - **D-Pad Mash & Mép hàng:** Mash 32 lần 4 hướng và test trượt mép trái mở rail panel.
+3. **Hệ thống Nhiệm vụ Tự Động (AI Mission System):**
+   - **Mission 1 (Cold Start):** Đo tốc độ mở app, splash screen và nạp trang chủ.
+   - **Mission 2 (Thể Thao Đa Nguồn):** Duyệt bộ lọc theo đài thể thao (ColaTV, Gà Vàng, Khán Đài, Socolive), kiểm tra badge thương hiệu.
+   - **Mission 3 (Video Player & Server Picker):** Kiểm tra chuyển động video, mở menu đổi nguồn phát (Server Picker dialog), xác thực failover.
+   - **Mission 4 (IPTV TV360 & Lưới 5 Cột):** Điều hướng lưới Leanback 5 cột, Hero Preview EPG, giải mã HLS TV360.
+   - **Mission 5 (Kho Phim NguonC):** Duyệt Phim Lẻ, Phim Bộ, Hoạt Hình Anime, mở phát player StreamC.
+   - **Mission 6 (Lịch & Tìm Kiếm):** Tìm kiếm không dấu, kiểm tra chuỗi focus từ ô tìm kiếm sang danh sách kết quả.
+   - **Mission 7 (D-pad Chaos Stress):** Nhồi phím liên tục 4 hướng, kiểm tra mép viền và chống mất focus.
 
-4. **Báo cáo trực quan:**
+4. **Báo cáo AI & Khắc phục lỗi:**
    - Xuất file HTML Dashboard `qa_report.html` và JSON `qa_report.json` kèm ảnh hiện trường.
-   - Tự động hiển thị tóm tắt và danh sách lỗi lên GitHub Actions Step Summary qua `ci_report.py`.
-
----
-
-## 🚀 Kích hoạt trên GitHub Actions
-
-Vào **Actions** -> Chọn workflow **QA-Suite** -> Bấm **Run workflow**.
-Sau khi hoàn tất, tải artifact `qa-report` để xem báo cáo HTML và toàn bộ ảnh chụp hiện trường.
+   - Ghi lại toàn bộ dòng suy nghĩ (Thought Stream), hành động và đề xuất code Kotlin tương ứng.
