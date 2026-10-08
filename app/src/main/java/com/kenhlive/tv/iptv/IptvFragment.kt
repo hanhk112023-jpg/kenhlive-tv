@@ -407,7 +407,7 @@ class IptvFragment : Fragment() {
         }
     }
 
-    private fun startHeroPreview(ch: IptvChannel) {
+    private suspend fun startHeroPreview(ch: IptvChannel) {
         val pv = heroPlayerView ?: return
         val ctx = context ?: return
         currentPreviewUrl = ch.url
