@@ -22,12 +22,11 @@ class SettingsFragment : Fragment() {
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, s: Bundle?): View {
         val v = inflater.inflate(R.layout.fragment_settings, container, false)
         adapter = SettingsAdapter()
-        v.findViewById<RecyclerView>(R.id.settingsList).apply {
-            layoutManager = LinearLayoutManager(requireContext())
-            adapter = this@SettingsFragment.adapter
-            clipToPadding = false
-        }
-        rebuild()
+        val rv = v.findViewById<RecyclerView>(R.id.settingsList)
+        rv.layoutManager = LinearLayoutManager(requireContext())
+        rv.adapter = adapter
+        rv.clipToPadding = false
+        rebuild(focusRow = if (DeviceMode.isTv) 1 else -1)
         return v
     }
 
@@ -99,14 +98,18 @@ class SettingsFragment : Fragment() {
             val list = view?.findViewById<RecyclerView>(R.id.settingsList)
             list?.post {
                 val vh = list.findViewHolderForAdapterPosition(focusRow)
-                if (vh != null) {
-                    vh.itemView.requestFocus()
-                } else {
-                    list.scrollToPosition(focusRow)
-                    list.postDelayed({
-                        list.findViewHolderForAdapterPosition(focusRow)?.itemView?.requestFocus()
-                    }, 80)
-                }
+                if (vh?.itemView?.requestFocus() == true) return@post
+                list.scrollToPosition(focusRow)
+                list.postDelayed({
+                    val v = list.findViewHolderForAdapterPosition(focusRow)?.itemView
+                        ?: list.layoutManager?.findViewByPosition(focusRow)
+                    if (v?.requestFocus() != true) {
+                        for (i in 0 until adapter.itemCount) {
+                            val r = list.findViewHolderForAdapterPosition(i)?.itemView
+                            if (r != null && r.isFocusable && r.requestFocus()) break
+                        }
+                    }
+                }, 80)
             }
         }
     }

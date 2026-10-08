@@ -71,6 +71,44 @@ class SettingsAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
                     v.elevation = if (has) 8f else 0f
                 }
                 vh.itemView.setOnClickListener { item.action() }
+                vh.itemView.setOnKeyListener { _, keyCode, event ->
+                    if (event.action == android.view.KeyEvent.ACTION_DOWN) {
+                        if (keyCode == android.view.KeyEvent.KEYCODE_DPAD_DOWN) {
+                            val rv = vh.itemView.parent as? RecyclerView ?: return@setOnKeyListener false
+                            for (nextPos in pos + 1 until items.size) {
+                                if (items[nextPos] is Item.Row) {
+                                    val nextView = rv.layoutManager?.findViewByPosition(nextPos)
+                                        ?: rv.findViewHolderForAdapterPosition(nextPos)?.itemView
+                                    if (nextView != null && nextView.requestFocus()) return@setOnKeyListener true
+                                    rv.scrollToPosition(nextPos)
+                                    rv.post {
+                                        (rv.layoutManager?.findViewByPosition(nextPos)
+                                            ?: rv.findViewHolderForAdapterPosition(nextPos)?.itemView)?.requestFocus()
+                                    }
+                                    return@setOnKeyListener true
+                                }
+                            }
+                            return@setOnKeyListener true
+                        } else if (keyCode == android.view.KeyEvent.KEYCODE_DPAD_UP) {
+                            val rv = vh.itemView.parent as? RecyclerView ?: return@setOnKeyListener false
+                            for (prevPos in pos - 1 downTo 0) {
+                                if (items[prevPos] is Item.Row) {
+                                    val prevView = rv.layoutManager?.findViewByPosition(prevPos)
+                                        ?: rv.findViewHolderForAdapterPosition(prevPos)?.itemView
+                                    if (prevView != null && prevView.requestFocus()) return@setOnKeyListener true
+                                    rv.scrollToPosition(prevPos)
+                                    rv.post {
+                                        (rv.layoutManager?.findViewByPosition(prevPos)
+                                            ?: rv.findViewHolderForAdapterPosition(prevPos)?.itemView)?.requestFocus()
+                                    }
+                                    return@setOnKeyListener true
+                                }
+                            }
+                            return@setOnKeyListener true
+                        }
+                    }
+                    false
+                }
             }
         }
     }

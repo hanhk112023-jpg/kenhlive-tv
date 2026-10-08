@@ -44,7 +44,8 @@
         android:paddingRight="@dimen/sp_screen_margin"
         android:paddingBottom="10dp"
         android:clipToPadding="false"
-        android:scrollbars="none">
+        android:scrollbars="none"
+        android:descendantFocusability="afterDescendants">
 
         <LinearLayout
             android:id="@+id/chipContainer"
@@ -74,7 +75,8 @@
             android:paddingLeft="@dimen/sp_screen_margin"
             android:paddingRight="@dimen/sp_screen_margin"
             android:paddingBottom="@dimen/sp_row_gap"
-            android:scrollbars="vertical" />
+            android:scrollbars="vertical"
+            android:descendantFocusability="afterDescendants" />
 
         <include layout="@layout/view_state" />
     </FrameLayout>

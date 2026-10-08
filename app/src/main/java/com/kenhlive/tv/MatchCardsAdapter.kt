@@ -160,7 +160,9 @@ class MatchCardsAdapter(
         }
 
         h.viewers.text = "👁 " + SocoliveRepository.fmtViewers(g.totalViewers)
-        h.blv.text = "Đang trực tiếp • BLV ${g.top.blvName}" + if (g.count > 1) " +${g.count - 1}" else ""
+        val rawBlv = g.top.blvName.trim()
+        val formattedBlv = if (rawBlv.startsWith("BLV ", ignoreCase = true)) rawBlv else "BLV $rawBlv"
+        h.blv.text = "Đang trực tiếp • $formattedBlv" + if (g.count > 1) " +${g.count - 1}" else ""
         if (g.count > 1) {
             h.rooms.text = ctx.getString(R.string.live_rooms_badge, g.count)
             h.rooms.visibility = View.VISIBLE

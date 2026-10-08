@@ -162,16 +162,21 @@ class MainActivity : AppCompatActivity() {
                 if (rv != null) {
                     val ad = rv.adapter as? SportAdapter
                     if (ad != null && ad.focusRailFirst()) return
-                    val vh = rv.findViewHolderForAdapterPosition(0)
-                    if (vh != null) {
-                        val inner = firstFocusableIn(vh.itemView) ?: vh.itemView
-                        if (inner.requestFocus()) return
+                    for (pos in 0..4) {
+                        val vh = rv.findViewHolderForAdapterPosition(pos) ?: continue
+                        val inner = firstFocusableIn(vh.itemView) ?: (if (vh.itemView.isFocusable) vh.itemView else null)
+                        if (inner?.requestFocus() == true) return
                     }
                     val firstF = firstFocusableIn(rv) ?: firstFocusableIn(child)
                     if (firstF != null && firstF.requestFocus()) return
                     rv.post {
                         val ad2 = rv.adapter as? SportAdapter
                         if (ad2 != null && ad2.focusRailFirst()) return@post
+                        for (pos in 0..4) {
+                            val vh = rv.findViewHolderForAdapterPosition(pos) ?: continue
+                            val inner = firstFocusableIn(vh.itemView) ?: (if (vh.itemView.isFocusable) vh.itemView else null)
+                            if (inner?.requestFocus() == true) return@post
+                        }
                         val fallback = firstFocusableIn(rv) ?: firstFocusableIn(child)
                         fallback?.requestFocus()
                     }

@@ -123,7 +123,9 @@ class HeroPagerAdapter(
         val desc = buildString {
             append("Trực tiếp ")
             if (g.league.isNotBlank()) append("${g.league} • ")
-            append("BLV ${top.blvName}")
+            val rawBlv = top.blvName.trim()
+            val formattedBlv = if (rawBlv.startsWith("BLV ", ignoreCase = true)) rawBlv else "BLV $rawBlv"
+            append(formattedBlv)
             if (top.blvLevel.isNotBlank()) append(" (${top.blvLevel})")
             if (g.count > 1) append(" • ${g.count} phòng live")
             if (top.notice.isNotBlank()) append(" • ${top.notice}")

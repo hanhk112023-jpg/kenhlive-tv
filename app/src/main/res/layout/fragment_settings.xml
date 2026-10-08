@@ -11,5 +11,6 @@
         android:paddingLeft="@dimen/sp_screen_margin"
         android:paddingRight="@dimen/sp_screen_margin"
         android:paddingBottom="@dimen/sp_row_gap"
-        android:scrollbars="vertical" />
+        android:scrollbars="vertical"
+        android:descendantFocusability="afterDescendants" />
 </FrameLayout>

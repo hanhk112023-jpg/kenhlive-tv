@@ -66,6 +66,10 @@ class SearchFragment : Fragment() {
             lastFocusedPosition = pos
         }
         searchAdapter.onUpFromFirst = {
+            if (chipRow.visibility == View.VISIBLE && chipContainer.childCount > 0) {
+                val chip0 = chipContainer.getChildAt(0)
+                if (chip0?.requestFocus() == true) return@onUpFromFirst
+            }
             input.requestFocus()
         }
 
@@ -90,29 +94,11 @@ class SearchFragment : Fragment() {
         input.setOnKeyListener { _, keyCode, event ->
             if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
                 (activity as? MainActivity)?.hideKeyboard()
-                if (searchAdapter.itemCount > 0) {
-                    val target = resultList.layoutManager?.findViewByPosition(0)
-                        ?: resultList.findViewHolderForAdapterPosition(0)?.itemView
-                        ?: resultList.getChildAt(0)
-                    if (target != null && target.requestFocus()) return@setOnKeyListener true
-                    resultList.scrollToPosition(0)
-                    resultList.post {
-                        val t = resultList.layoutManager?.findViewByPosition(0)
-                            ?: resultList.findViewHolderForAdapterPosition(0)?.itemView
-                            ?: resultList.getChildAt(0)
-                        if (t?.requestFocus() != true) {
-                            resultList.postDelayed({
-                                (resultList.layoutManager?.findViewByPosition(0)
-                                    ?: resultList.findViewHolderForAdapterPosition(0)?.itemView
-                                    ?: resultList.getChildAt(0))?.requestFocus()
-                            }, 50)
-                        }
-                    }
-                    return@setOnKeyListener true
-                } else if (chipRow.visibility == View.VISIBLE && chipContainer.childCount > 0) {
-                    chipContainer.getChildAt(0)?.requestFocus()
-                    return@setOnKeyListener true
+                if (chipRow.visibility == View.VISIBLE && chipContainer.childCount > 0) {
+                    val chip0 = chipContainer.getChildAt(0)
+                    if (chip0 != null && chip0.requestFocus()) return@setOnKeyListener true
                 }
+                if (focusFirstResult()) return@setOnKeyListener true
             }
             false
         }
@@ -171,6 +157,30 @@ class SearchFragment : Fragment() {
         }
     }
 
+    private fun focusFirstResult(): Boolean {
+        if (searchAdapter.itemCount <= 0) return false
+        val vh = resultList.findViewHolderForAdapterPosition(0)
+        if (vh?.itemView?.requestFocus() == true) return true
+        val lm = resultList.layoutManager as? LinearLayoutManager
+        val v = lm?.findViewByPosition(0) ?: resultList.getChildAt(0)
+        if (v?.requestFocus() == true) return true
+        resultList.scrollToPosition(0)
+        resultList.post {
+            val t = resultList.findViewHolderForAdapterPosition(0)?.itemView
+                ?: resultList.layoutManager?.findViewByPosition(0)
+                ?: resultList.getChildAt(0)
+            if (t?.requestFocus() != true) {
+                resultList.postDelayed({
+                    val t2 = resultList.findViewHolderForAdapterPosition(0)?.itemView
+                        ?: resultList.layoutManager?.findViewByPosition(0)
+                        ?: resultList.getChildAt(0)
+                    t2?.requestFocus()
+                }, 50)
+            }
+        }
+        return true
+    }
+
     private fun buildChips(leagues: List<String>) {
         chipContainer.removeAllViews()
         if (leagues.isEmpty()) { chipRow.visibility = View.GONE; return }
@@ -188,17 +198,7 @@ class SearchFragment : Fragment() {
             chip.setOnKeyListener { _, keyCode, ev ->
                 if (ev.action == KeyEvent.ACTION_DOWN) {
                     if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-                        if (searchAdapter.itemCount > 0) {
-                            resultList.post {
-                                val vh = resultList.findViewHolderForAdapterPosition(0)
-                                if (vh?.itemView?.requestFocus() == true) return@post
-                                resultList.scrollToPosition(0)
-                                resultList.postDelayed({
-                                    resultList.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
-                                }, 50)
-                            }
-                            return@setOnKeyListener true
-                        }
+                        if (focusFirstResult()) return@setOnKeyListener true
                     } else if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
                         input.requestFocus()
                         return@setOnKeyListener true
