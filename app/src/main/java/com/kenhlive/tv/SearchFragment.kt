@@ -66,11 +66,12 @@ class SearchFragment : Fragment() {
             lastFocusedPosition = pos
         }
         searchAdapter.onUpFromFirst = {
-            if (chipRow.visibility == View.VISIBLE && chipContainer.childCount > 0) {
-                val chip0 = chipContainer.getChildAt(0)
-                if (chip0?.requestFocus() == true) return@onUpFromFirst
+            val chip0 = if (chipRow.visibility == View.VISIBLE && chipContainer.childCount > 0) {
+                chipContainer.getChildAt(0)
+            } else null
+            if (chip0?.requestFocus() != true) {
+                input.requestFocus()
             }
-            input.requestFocus()
         }
 
         resultList.layoutManager = LinearLayoutManager(requireContext())
