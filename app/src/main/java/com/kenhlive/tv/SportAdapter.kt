@@ -31,7 +31,11 @@ class SportAdapter(
 
     data class ChipsItem(val labels: List<String>, val sel: Int)
     data class HeroItem(val groups: List<LiveMatchGroup>)
-    data class RailItem(val groups: List<LiveMatchGroup>, val upcoming: List<ScheduleMatch>)
+    data class RailItem(
+        val groups: List<LiveMatchGroup>,
+        val upcoming: List<ScheduleMatch> = emptyList(),
+        val title: String = ""
+    )
     data class BlvRowItem(val rooms: List<LiveRoom>)
 
     companion object {
@@ -46,7 +50,7 @@ class SportAdapter(
             override fun areItemsTheSame(a: Any, b: Any) = when {
                 a is ChipsItem && b is ChipsItem -> true
                 a is HeroItem && b is HeroItem -> true
-                a is RailItem && b is RailItem -> true
+                a is RailItem && b is RailItem -> a.title == b.title
                 a is BlvRowItem && b is BlvRowItem -> true
                 a is String && b is String -> a == b
                 a is ScheduleMatch && b is ScheduleMatch -> a.scheduleId == b.scheduleId
@@ -56,7 +60,8 @@ class SportAdapter(
                 a is ChipsItem && b is ChipsItem -> a.labels == b.labels && a.sel == b.sel
                 a is HeroItem && b is HeroItem -> a.groups.map { it.matchTitle } == b.groups.map { it.matchTitle }
                 a is RailItem && b is RailItem ->
-                    a.groups.map { it.matchTitle to it.totalViewers } == b.groups.map { it.matchTitle to it.totalViewers } &&
+                    a.title == b.title &&
+                        a.groups.map { it.matchTitle to it.totalViewers } == b.groups.map { it.matchTitle to it.totalViewers } &&
                         a.upcoming.map { it.scheduleId } == b.upcoming.map { it.scheduleId }
                 a is BlvRowItem && b is BlvRowItem ->
                     a.rooms.map { it.roomNum to it.viewers } == b.rooms.map { it.roomNum to it.viewers }
@@ -342,8 +347,13 @@ class SportAdapter(
                 val vh = h as RailVH
                 val empty = item.groups.isEmpty() && item.upcoming.isEmpty()
                 vh.itemView.visibility = if (empty) View.GONE else View.VISIBLE
-                vh.title.setText(R.string.sport_rail_title)
-                vh.count.visibility = View.GONE
+                if (item.title.isNotBlank()) {
+                    vh.title.text = item.title
+                } else {
+                    vh.title.setText(R.string.sport_rail_title)
+                }
+                vh.count.text = if (item.groups.isNotEmpty()) "${item.groups.size} trận" else ""
+                vh.count.visibility = if (item.groups.isNotEmpty()) View.VISIBLE else View.GONE
                 vh.cards.rowPos = pos
                 vh.cards.submitList((item.groups as List<Any>) + item.upcoming)
             }

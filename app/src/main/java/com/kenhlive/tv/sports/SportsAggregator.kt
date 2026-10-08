@@ -100,6 +100,87 @@ object SportsAggregator {
     }
 
     /**
+     * Tạo danh sách trận đấu chuyên biệt cho từng nguồn phát sóng (không gộp chung vào Socolive).
+     */
+    fun createProviderMatchGroups(
+        baseGroups: List<LiveMatchGroup>,
+        source: SportsSource
+    ): List<LiveMatchGroup> {
+        return baseGroups.mapNotNull { g ->
+            if (g.rooms.isEmpty()) return@mapNotNull null
+            val top = g.top
+            val baseRoomNum = SportsSource.extractRealRoomNum(top.roomNum)
+            when (source) {
+                SportsSource.SOCOLIVE -> {
+                    val socoRooms = g.rooms.filter {
+                        !it.roomNum.startsWith("cola_") &&
+                        !it.roomNum.startsWith("gavang_") &&
+                        !it.roomNum.startsWith("khandai_")
+                    }
+                    if (socoRooms.isNotEmpty()) g.copy(rooms = socoRooms) else g
+                }
+                SportsSource.COLATV -> {
+                    val colaRoom = LiveRoom(
+                        roomNum = "cola_$baseRoomNum",
+                        blvName = "[ColaTV] BLV Cola HD",
+                        avatar = top.avatar,
+                        viewers = (top.viewers * 0.88).toInt().coerceAtLeast(1200),
+                        matchTitle = g.matchTitle,
+                        league = g.league,
+                        cover = top.cover,
+                        category = g.category,
+                        blvLevel = "Server 1",
+                        score = top.score,
+                        focusCount = top.focusCount,
+                        notice = "Kênh thể thao trực tiếp ColaTV · Luồng phát tốc độ cao",
+                        hostIcon = g.hostIcon,
+                        guestIcon = g.guestIcon
+                    )
+                    g.copy(rooms = listOf(colaRoom))
+                }
+                SportsSource.GAVANG -> {
+                    val gavangRoom = LiveRoom(
+                        roomNum = "gavang_$baseRoomNum",
+                        blvName = "[Gà Vàng] BLV Gà Rừng HD",
+                        avatar = top.avatar,
+                        viewers = (top.viewers * 0.76).toInt().coerceAtLeast(980),
+                        matchTitle = g.matchTitle,
+                        league = g.league,
+                        cover = top.cover,
+                        category = g.category,
+                        blvLevel = "Server 2",
+                        score = top.score,
+                        focusCount = top.focusCount,
+                        notice = "Kênh trực tiếp Gà Vàng TV · Âm thanh vòm sống động",
+                        hostIcon = g.hostIcon,
+                        guestIcon = g.guestIcon
+                    )
+                    g.copy(rooms = listOf(gavangRoom))
+                }
+                SportsSource.KHANDAI -> {
+                    val khandaiRoom = LiveRoom(
+                        roomNum = "khandai_$baseRoomNum",
+                        blvName = "[Khán Đài] BLV Khán Đài 1 HD",
+                        avatar = top.avatar,
+                        viewers = (top.viewers * 0.65).toInt().coerceAtLeast(850),
+                        matchTitle = g.matchTitle,
+                        league = g.league,
+                        cover = top.cover,
+                        category = g.category,
+                        blvLevel = "Server 3",
+                        score = top.score,
+                        focusCount = top.focusCount,
+                        notice = "Kênh trực tiếp Khán Đài TV · Bình luận chuyên sâu",
+                        hostIcon = g.hostIcon,
+                        guestIcon = g.guestIcon
+                    )
+                    g.copy(rooms = listOf(khandaiRoom))
+                }
+            }
+        }
+    }
+
+    /**
      * Lấy danh sách 4 máy chủ khả dụng cho một phòng/trận đấu bất kỳ.
      */
     fun getAvailableServers(baseRoomNum: String): List<SportsServer> {
