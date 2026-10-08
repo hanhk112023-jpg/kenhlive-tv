@@ -13,8 +13,8 @@ TYPESAFE_BASE = os.environ.get('TYPESAFE_API_BASE', 'https://api.typesafe.ai/v1/
 TYPESAFE_KEY  = os.environ.get('TYPESAFE_API_KEY', '')
 TYPESAFE_MODEL = os.environ.get('TYPESAFE_MODEL', 'jev-latest')
 
-ANTIGRAVITY_BASE = os.environ.get('ANTIGRAVITY_API_BASE', 'http://meteor.pikamc.vn:25155/v1/chat/completions')
-ANTIGRAVITY_KEY  = os.environ.get('ANTIGRAVITY_API_KEY', 'sk-ag-pikamc2026')
+ANTIGRAVITY_BASE = os.environ.get('ANTIGRAVITY_API_BASE', '')
+ANTIGRAVITY_KEY  = os.environ.get('ANTIGRAVITY_API_KEY', '')
 ANTIGRAVITY_MODEL = os.environ.get('ANTIGRAVITY_MODEL', 'gemini-3.8-flash-high')
 
 def _msgs(prompt, imgs):

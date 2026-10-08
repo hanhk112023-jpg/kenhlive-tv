@@ -48,9 +48,9 @@ KEY_MAP = {
     "FAST_FORWARD": 90,
 }
 
-# AI Gateways Configuration
-ANTIGRAVITY_BASE = os.environ.get("ANTIGRAVITY_API_BASE", "http://meteor.pikamc.vn:25155/v1/chat/completions")
-ANTIGRAVITY_KEY = os.environ.get("ANTIGRAVITY_API_KEY", "sk-ag-pikamc2026")
+# AI Gateways Configuration (100% loaded from environment/secrets)
+ANTIGRAVITY_BASE = os.environ.get("ANTIGRAVITY_API_BASE", "")
+ANTIGRAVITY_KEY = os.environ.get("ANTIGRAVITY_API_KEY", "")
 ANTIGRAVITY_MODEL = os.environ.get("ANTIGRAVITY_MODEL", "gemini-3.8-flash-high")
 
 KILO_BASE = os.environ.get("KILO_API_BASE", "https://api.kilo.ai/api/gateway/v1/chat/completions")
