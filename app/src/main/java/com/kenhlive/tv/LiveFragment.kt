@@ -210,7 +210,7 @@ class LiveFragment : Fragment() {
 
         // 3. Section 2: "Bình Luận Viên Tâm Điểm" (Chỉ hiện khi ở tab Tất cả / không lọc riêng)
         // Không render ở hàng thứ 2 nếu đang test hoặc để tránh làm trượt focus khi refresh
-        val allRooms = lg.flatMap { it.rooms }.sortedByDescending { it.viewers }
+        val allRooms = enrichedLiveGroups.flatMap { it.rooms }.sortedByDescending { it.viewers }
         if (allRooms.isNotEmpty() && !DeviceMode.isTv) {
             items.add(SportAdapter.BlvRowItem(allRooms))
         }
