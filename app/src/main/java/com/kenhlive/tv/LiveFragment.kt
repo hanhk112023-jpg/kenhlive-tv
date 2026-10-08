@@ -190,10 +190,14 @@ class LiveFragment : Fragment() {
         adapter.submitList(items)
         if (hadFocus) {
             list.post { list.post { FocusKit.restore(adapter) } }
-        } else if (wasEmpty && items.isNotEmpty() && DeviceMode.isTv) {
-            // Lần đầu nạp xong dữ liệu trên TV: chủ động focus ngay nút Xem Ngay trên Hero banner
+        } else if (items.isNotEmpty() && DeviceMode.isTv) {
+            // Đảm bảo luôn có 1 view nhận focus trên màn hình TV (tránh mất focus)
             list.post {
-                adapter.focusHero()
+                if (list.findFocus() == null) {
+                    if (!adapter.focusHero()) {
+                        FocusKit.focusNow(list, 1, 0)
+                    }
+                }
             }
         }
         if (items.size > 2) state.hide()
@@ -206,7 +210,18 @@ class LiveFragment : Fragment() {
         super.onResume()
         vm.startAutoRefresh()
         svm.startAutoRefresh()
-        if (::adapter.isInitialized) adapter.restoreFocus()
+        if (::adapter.isInitialized) {
+            adapter.restoreFocus()
+            if (DeviceMode.isTv) {
+                list.postDelayed({
+                    if (list.findFocus() == null) {
+                        if (!adapter.focusHero()) {
+                            FocusKit.focusNow(list, 1, 0)
+                        }
+                    }
+                }, 120)
+            }
+        }
     }
 
     override fun onPause() {

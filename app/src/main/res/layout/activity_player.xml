@@ -41,6 +41,85 @@
             android:text="@string/player_buffering" />
     </LinearLayout>
 
+    <!-- ERROR HUD / RETRY BOX (XỬ LÝ LỖI STREAM / FAILOVER) -->
+    <LinearLayout
+        android:id="@+id/playerErrorBox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:background="@drawable/bg_player_hud_card"
+        android:paddingLeft="32dp"
+        android:paddingRight="32dp"
+        android:paddingTop="24dp"
+        android:paddingBottom="24dp"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:src="@drawable/ic_signal_off"
+            app:tint="#FFFF6500" />
+
+        <TextView
+            android:id="@+id/tvPlayerErrorTitle"
+            style="@style/KL.Text.Title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="Lỗi Phát Luồng Video"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvPlayerErrorDetail"
+            style="@style/KL.Text.Body"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Không thể tải luồng phát này. Vui lòng thử lại hoặc đổi kênh."
+            android:textColor="#94A3B8"
+            android:textSize="13sp" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnPlayerRetry"
+                android:layout_width="wrap_content"
+                android:layout_height="42dp"
+                android:background="@drawable/bg_button_orange"
+                android:text="Thử Lại"
+                android:textColor="#FFFFFF"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:paddingLeft="24dp"
+                android:paddingRight="24dp"
+                android:focusable="true"
+                android:nextFocusRight="@+id/btnPlayerBack" />
+
+            <Button
+                android:id="@+id/btnPlayerBack"
+                android:layout_width="wrap_content"
+                android:layout_height="42dp"
+                android:layout_marginLeft="14dp"
+                android:background="@drawable/bg_button_ghost"
+                android:text="Quay Lại"
+                android:textColor="#CBD5E1"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:paddingLeft="24dp"
+                android:paddingRight="24dp"
+                android:focusable="true"
+                android:nextFocusLeft="@+id/btnPlayerRetry" />
+        </LinearLayout>
+    </LinearLayout>
+
     <!-- TOP OVERLAY HUD -->
     <LinearLayout
         android:id="@+id/topOverlay"

@@ -155,6 +155,13 @@ class WebPlayerActivity : AppCompatActivity() {
                 view?.evaluateJavascript(autoPlayJs, null)
             }
 
+            override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: android.webkit.WebResourceError?) {
+                super.onReceivedError(view, request, error)
+                if (request?.isForMainFrame == true) {
+                    loadingBar.visibility = View.GONE
+                }
+            }
+
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val nextUrl = request?.url?.toString() ?: return false
                 if (nextUrl.startsWith("http://") || nextUrl.startsWith("https://")) {

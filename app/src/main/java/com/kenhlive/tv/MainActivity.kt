@@ -167,10 +167,13 @@ class MainActivity : AppCompatActivity() {
                         val inner = firstFocusableIn(vh.itemView) ?: vh.itemView
                         if (inner.requestFocus()) return
                     }
+                    val firstF = firstFocusableIn(rv) ?: firstFocusableIn(child)
+                    if (firstF != null && firstF.requestFocus()) return
                     rv.post {
                         val ad2 = rv.adapter as? SportAdapter
                         if (ad2 != null && ad2.focusRailFirst()) return@post
-                        firstFocusableIn(child)?.requestFocus()
+                        val fallback = firstFocusableIn(rv) ?: firstFocusableIn(child)
+                        fallback?.requestFocus()
                     }
                     return
                 }
@@ -259,6 +262,11 @@ class MainActivity : AppCompatActivity() {
             if (f == null) {
                 focusContentFirst()
                 f = currentFocus
+                if (f == null) {
+                    val decorFirst = firstFocusableIn(window.decorView)
+                    decorFirst?.requestFocus()
+                    f = currentFocus
+                }
                 if (f != null) return super.dispatchKeyEvent(event)
             }
             val insideRail = railPanel?.let { isDescendant(it, f) } == true
@@ -323,12 +331,23 @@ class MainActivity : AppCompatActivity() {
                 } else tx.show(f)
             } else if (f != null) tx.hide(f)
         }
-        tx.commit()
+        tx.commitAllowingStateLoss()
         if (DeviceMode.isTv) {
-            findViewById<View>(R.id.fragmentContainer)?.post {
+            val fc = findViewById<View>(R.id.fragmentContainer)
+            fc?.post {
                 hideRail()
                 focusContentFirst()
             }
+            fc?.postDelayed({
+                if (currentFocus == null) {
+                    focusContentFirst()
+                }
+            }, 120)
+            fc?.postDelayed({
+                if (currentFocus == null) {
+                    focusContentFirst()
+                }
+            }, 300)
         }
     }
 

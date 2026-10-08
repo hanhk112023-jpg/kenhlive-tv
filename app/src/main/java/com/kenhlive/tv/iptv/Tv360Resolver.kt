@@ -36,13 +36,13 @@ object Tv360Resolver {
     // Fallback stream URLs cho các kênh yêu cầu đăng nhập trên TV360
     private val FALLBACK_STREAMS = mapOf(
         "2" to "https://dethich.pw/vtv1/index.m3u8",
-        "3" to "https://vips-livecdn.fptplay.net/live/media/vtv2/live247-hls-avc/index.m3u8",
-        "4" to "https://vips-livecdn.fptplay.net/live/media/vtv3/live247-hls-avc/index.m3u8",
+        "3" to "https://dethich.pw/vtv2/index.m3u8",
+        "4" to "https://dethich.pw/vtv3/index.m3u8",
         "108" to "https://dethich.pw/vtv4/index.m3u8",
-        "110" to "https://vips-livecdn.fptplay.net/live/media/vtv5/live247-hls-avc/index.m3u8",
-        "6" to "https://vips-livecdn.fptplay.net/live/media/vtv7/live247-hls-avc/index.m3u8",
+        "110" to "https://dethich.pw/vtv5/index.m3u8",
+        "6" to "https://dethich.pw/vtv7/index.m3u8",
         "115" to "https://dethich.pw/vtv8/index.m3u8",
-        "8" to "https://vips-livecdn.fptplay.net/live/media/vtv9/live247-hls-avc/index.m3u8",
+        "8" to "https://dethich.pw/vtv9/index.m3u8",
         "10043" to "https://dethich.pw/vtv10/index.m3u8",
         "98" to "https://dethich.pw/vtv10/index.m3u8",
         "20" to "https://liveh12.vtvprime.vn/hls/ANNINHTV/index.m3u8",

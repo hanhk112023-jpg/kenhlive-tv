@@ -221,7 +221,7 @@ class IptvFragment : Fragment() {
         countText.text = "Tổng: ${channels.size} kênh (${vnCount} VN, ${sportsCount} Thể thao)"
 
         // Phân nhóm EPG: VTV -> TV360 -> HTV / VTC -> VTVcab / SCTV -> Thể Thao -> Giải Trí / Phim -> Tin Tức / Tỉnh -> Tất cả
-        val distinctGroups = mutableListOf("VTV", "TV360", "HTV / VTC", "VTVcab / SCTV", "Thể Thao", "Giải Trí & Phim", "Tin Tức / Địa Phương", "Tất cả")
+        val distinctGroups = mutableListOf("VTV", "TV360", "HTV / VTC", "VTVcab / SCTV", "Thể Thao", "Giải Trí & Phim", "Tin Tức & Tỉnh", "Tất cả")
         val sportsBrandGroups = listOf("DAZN", "Sky Sports", "beIN Sports", "ESPN")
         distinctGroups.addAll(sportsBrandGroups)
 
@@ -232,11 +232,11 @@ class IptvFragment : Fragment() {
     private fun applyFilter(focusFirst: Boolean = false) {
         var list = allChannels
         when (selectedGroup) {
-            "VTV" -> list = list.filter { it.isVn && it.name.contains("VTV", ignoreCase = true) }
-            "TV360" -> list = list.filter {
-                it.url.contains("tv360", ignoreCase = true) || it.group.contains("TV360", ignoreCase = true) || it.name.contains("360", ignoreCase = true)
+            "VTV" -> list = list.filter { it.name.contains("VTV", ignoreCase = true) }
+            "TV360" -> list = list.filter { it.group.contains("TV360", ignoreCase = true) || it.url.contains("tv360://", ignoreCase = true) }
+            "HTV / VTC" -> list = list.filter {
+                it.name.contains("HTV", ignoreCase = true) || it.name.contains("VTC", ignoreCase = true) || it.name.contains("THVL", ignoreCase = true) || it.group.contains("HTV", ignoreCase = true)
             }
-            "HTV / VTC" -> list = list.filter { it.isVn && (it.name.contains("HTV", ignoreCase = true) || it.name.contains("VTC", ignoreCase = true) || it.name.contains("THVL", ignoreCase = true) || it.group.contains("HTV", ignoreCase = true)) }
             "VTVcab / SCTV" -> list = list.filter {
                 it.name.contains("VTVcab", ignoreCase = true) || it.name.contains("SCTV", ignoreCase = true) || it.group.contains("VTVcab", ignoreCase = true) || it.group.contains("SCTV", ignoreCase = true)
             }
@@ -251,7 +251,7 @@ class IptvFragment : Fragment() {
                 n.contains("cartoon") || n.contains("hoạt hình") || n.contains("entertainment") || n.contains("giải trí") ||
                 g.contains("giải trí") || g.contains("phim")
             }
-            "Tin Tức / Địa Phương" -> list = list.filter {
+            "Tin Tức & Tỉnh", "Tin Tức / Địa Phương" -> list = list.filter {
                 it.isVn && !it.name.contains("VTV", ignoreCase = true) && !it.name.contains("HTV", ignoreCase = true) && !it.name.contains("VTC", ignoreCase = true) && !it.group.contains("TV360", ignoreCase = true)
             }
             "DAZN" -> list = list.filter { it.group.equals("DAZN", ignoreCase = true) || it.name.contains("DAZN", ignoreCase = true) }
@@ -328,6 +328,18 @@ class IptvFragment : Fragment() {
                 selectedGroup = g
                 applyFilter(focusFirst = true)
                 notifyDataSetChanged()
+            }
+
+            holder.itemView.setOnFocusChangeListener { _, hasFocus ->
+                if (hasFocus) {
+                    val p = holder.bindingAdapterPosition
+                    if (p != RecyclerView.NO_POSITION) {
+                        iptvGroupList.smoothScrollToPosition(p)
+                    }
+                    holder.tv.setTextColor(Color.parseColor("#FFFF6500"))
+                } else if (!isSel) {
+                    holder.tv.setTextColor(Color.parseColor("#FFCBD5E1"))
+                }
             }
 
             holder.itemView.setOnKeyListener { _, keyCode, event ->

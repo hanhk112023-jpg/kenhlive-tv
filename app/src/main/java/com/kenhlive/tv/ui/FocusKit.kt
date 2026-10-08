@@ -93,11 +93,17 @@ object FocusKit {
     }
 
     private fun retry(host: RowHost, pos: Int, idx: Int, left: Int) {
-        if (left <= 0) return
         val rv = host.outerRecyclerView ?: return
+        if (left <= 0) {
+            // Khi hết retry mà vẫn chưa bắt được focus: phục hồi vào view đầu tiên có thể focus
+            if (rv.findFocus() == null) {
+                firstFocusableIn(rv)?.requestFocus()
+            }
+            return
+        }
         rv.postDelayed({
             if (!focusNow(rv, pos, idx)) retry(host, pos, idx, left - 1)
-        }, 80)
+        }, 60)
     }
 
     /** Focus ô idx của hàng adapter `pos` (hàng = RecyclerView ngang bên trong RowVH hoặc hàng dọc độc lập). */
@@ -108,10 +114,12 @@ object FocusKit {
             val lm = inner.layoutManager as? LinearLayoutManager
             val target = inner.findViewHolderForAdapterPosition(idx)?.itemView
                 ?: lm?.findViewByPosition(idx)
+                ?: firstFocusableIn(inner)
             if (target?.requestFocus() == true) return true
             inner.post {
                 val t2 = inner.findViewHolderForAdapterPosition(idx)?.itemView
                     ?: inner.layoutManager?.findViewByPosition(idx)
+                    ?: firstFocusableIn(inner)
                 t2?.requestFocus()
             }
             return false
@@ -137,7 +145,12 @@ object FocusKit {
     /** Khôi phục focus về ô đã nhớ (gọi từ onResume) — ưu tiên KHOÁ nội dung vì position drift sau refresh. */
     fun restore(host: RowHost) {
         val rv = host.outerRecyclerView ?: return
-        if (lastSlot == null && lastKey == null) return
+        if (lastSlot == null && lastKey == null) {
+            if (!host.focusHero()) {
+                focusNow(rv, 1, 0)
+            }
+            return
+        }
         var left = 8
         val tryOnce = object : Runnable {
             override fun run() {

@@ -275,6 +275,15 @@ class PlayerActivity : AppCompatActivity() {
         val pv = findViewById<PlayerView>(R.id.playerView)
 
         findViewById<ImageButton>(R.id.backBtn).setOnClickListener { finish() }
+        findViewById<Button>(R.id.btnPlayerRetry)?.setOnClickListener {
+            findViewById<View>(R.id.playerErrorBox)?.visibility = View.GONE
+            findViewById<View>(R.id.bufferBox)?.visibility = View.VISIBLE
+            streamRetries = 0
+            player?.prepare()
+        }
+        findViewById<Button>(R.id.btnPlayerBack)?.setOnClickListener {
+            finish()
+        }
         qualityBtn.setOnClickListener { showSettingsDialog(video = true) }
         audioBtn.setOnClickListener { showSettingsDialog(video = false) }
         aspectBtn?.setOnClickListener { cycleAspectRatio() }
@@ -965,6 +974,14 @@ class PlayerActivity : AppCompatActivity() {
                             val msg = if (isNet) getString(R.string.player_net_error)
                             else getString(R.string.player_stream_error, error.errorCodeName)
                             Toast.makeText(this@PlayerActivity, msg, Toast.LENGTH_LONG).show()
+
+                            // Hiển thị khung báo lỗi và nút Thử Lại/Quay Lại trên TV
+                            findViewById<View>(R.id.bufferBox)?.visibility = View.GONE
+                            findViewById<View>(R.id.playerErrorBox)?.apply {
+                                visibility = View.VISIBLE
+                                findViewById<TextView>(R.id.tvPlayerErrorDetail)?.text = msg
+                                findViewById<Button>(R.id.btnPlayerRetry)?.requestFocus()
+                            }
                         }
                     }
 
@@ -973,13 +990,19 @@ class PlayerActivity : AppCompatActivity() {
                             streamRetries = 0
                             sportsFailoverCount = 0
                             handler.removeCallbacks(autoRecoveryRunnable)
-                        }
-                        if (state == Player.STATE_BUFFERING) {
+                            findViewById<View>(R.id.playerErrorBox)?.visibility = View.GONE
+                            findViewById<View>(R.id.bufferBox)?.visibility = View.GONE
+                        } else if (state == Player.STATE_BUFFERING) {
                             handler.removeCallbacks(autoRecoveryRunnable)
                             handler.postDelayed(autoRecoveryRunnable, 4000L)
+                            if (findViewById<View>(R.id.playerErrorBox)?.visibility != View.VISIBLE) {
+                                findViewById<View>(R.id.bufferBox)?.visibility = View.VISIBLE
+                            }
+                        } else if (state == Player.STATE_ENDED || state == Player.STATE_IDLE) {
+                            if (findViewById<View>(R.id.playerErrorBox)?.visibility != View.VISIBLE) {
+                                findViewById<View>(R.id.bufferBox)?.visibility = View.GONE
+                            }
                         }
-                        findViewById<View>(R.id.bufferBox)?.visibility =
-                            if (state == Player.STATE_READY) View.GONE else View.VISIBLE
                     }
                 })
             }
@@ -1190,6 +1213,23 @@ class PlayerActivity : AppCompatActivity() {
         val isOkKey = e.keyCode == KeyEvent.KEYCODE_DPAD_CENTER ||
                 e.keyCode == KeyEvent.KEYCODE_ENTER ||
                 e.keyCode == KeyEvent.KEYCODE_NUMPAD_ENTER
+
+        // 0. Khi màn hình báo lỗi đang hiển thị
+        val errBox = findViewById<View>(R.id.playerErrorBox)
+        if (errBox != null && errBox.visibility == View.VISIBLE) {
+            if (isDown) {
+                if (e.keyCode == KeyEvent.KEYCODE_BACK) {
+                    finish()
+                    return true
+                }
+                val btnRetry = findViewById<Button>(R.id.btnPlayerRetry)
+                val btnBack = findViewById<Button>(R.id.btnPlayerBack)
+                if (btnRetry?.hasFocus() != true && btnBack?.hasFocus() != true) {
+                    btnRetry?.requestFocus()
+                }
+            }
+            return super.dispatchKeyEvent(e)
+        }
 
         // 1. Phím số (0-9): Nhảy kênh trực tiếp bằng số
         if (isDown && isIptvMode && ((e.keyCode in KeyEvent.KEYCODE_0..KeyEvent.KEYCODE_9) || (e.keyCode in KeyEvent.KEYCODE_NUMPAD_0..KeyEvent.KEYCODE_NUMPAD_9))) {

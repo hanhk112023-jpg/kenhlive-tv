@@ -146,6 +146,7 @@ class SportAdapter(
                     vh.list.scrollToPosition(0)
                     val card0 = vh.list.findViewHolderForAdapterPosition(0)?.itemView
                         ?: vh.list.layoutManager?.findViewByPosition(0)
+                        ?: FocusKit.firstFocusableIn(vh.list)
                     if (card0 != null && card0.requestFocus()) {
                         FocusKit.remember(i, 0)
                         return true
@@ -159,6 +160,7 @@ class SportAdapter(
                             vh2.list.scrollToPosition(0)
                             val c = vh2.list.findViewHolderForAdapterPosition(0)?.itemView
                                 ?: vh2.list.layoutManager?.findViewByPosition(0)
+                                ?: FocusKit.firstFocusableIn(vh2.list)
                             if (c != null && c.requestFocus()) {
                                 FocusKit.remember(i, 0)
                                 return
@@ -166,6 +168,11 @@ class SportAdapter(
                         }
                         if (--left > 0) {
                             rv.postDelayed(this, 50)
+                        } else {
+                            // Cứu cánh nếu không bắt được card: đưa về nút Hero hoặc phần tử đầu tiên
+                            if (rv.findFocus() == null) {
+                                if (!focusHero()) FocusKit.firstFocusableIn(rv)?.requestFocus()
+                            }
                         }
                     }
                 }
@@ -370,7 +377,10 @@ class SportAdapter(
                         for (prevPos in pos - 1 downTo 0) {
                             val prevItem = getItem(prevPos)
                             if (prevItem is RailItem) {
-                                focusRailFirst()
+                                if (focusRailFirst()) return@setOnKeyListener true
+                                outerRecyclerView?.let { rv ->
+                                    if (FocusKit.focusNow(rv, prevPos, 0)) return@setOnKeyListener true
+                                }
                                 return@setOnKeyListener true
                             } else if (prevItem is ScheduleMatch) {
                                 break

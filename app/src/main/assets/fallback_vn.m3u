@@ -2,9 +2,9 @@
 #EXTINF:-1 tvg-id="VTV1.vn@HD" tvg-name="VTV1 HD" tvg-logo="https://img-zlr1.tv360.vn/image1/2026/09/10/15/1789027955396/02dce36fc3ff_480_270.png" group-title="VTV & Quốc Gia",VTV1 HD
 tv360://2
 #EXTINF:-1 tvg-id="VTV2.vn@HD" tvg-name="VTV2 HD" tvg-logo="https://img-zlr1.tv360.vn/image1/2026/09/10/15/1789028014588/c5fa3a5951d4_480_270.png" group-title="VTV & Quốc Gia",VTV2 HD
-https://vips-livecdn.fptplay.net/live/media/vtv2/live247-hls-avc/index.m3u8
+tv360://3
 #EXTINF:-1 tvg-id="VTV3.vn@HD" tvg-name="VTV3 HD" tvg-logo="https://img-zlr1.tv360.vn/image1/2026/09/10/15/1789028080611/d8ae92cf32e3_480_270.png" group-title="VTV & Quốc Gia",VTV3 HD
-https://vips-livecdn.fptplay.net/live/media/vtv3/live247-hls-avc/index.m3u8
+tv360://4
 #EXTINF:-1 tvg-id="VTV4.vn@HD" tvg-name="VTV4 HD" tvg-logo="https://img-zlr1.tv360.vn/image1/2026/09/10/15/1789028135882/1fbaef2690ff_480_270.png" group-title="VTV & Quốc Gia",VTV4 HD
 https://dethich.pw/vtv4/index.m3u8
 #EXTINF:-1 tvg-id="VTV5.vn@HD" tvg-name="VTV5 HD" tvg-logo="https://img-zlr1.tv360.vn/image1/2026/09/10/15/1789028197435/9250c116a95a_480_270.png" group-title="VTV & Quốc Gia",VTV5 HD

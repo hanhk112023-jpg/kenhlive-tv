@@ -9,6 +9,7 @@
         android:layout_height="match_parent"
         android:clipToPadding="false"
         android:clipChildren="false"
+        android:descendantFocusability="afterDescendants"
         android:paddingBottom="@dimen/sp_row_gap"
         android:scrollbars="vertical" />
 
