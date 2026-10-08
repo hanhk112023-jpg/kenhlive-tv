@@ -6,7 +6,7 @@ tv360://3
 #EXTINF:-1 tvg-id="VTV3.vn@HD" tvg-name="VTV3 HD" tvg-logo="https://img-zlr1.tv360.vn/image1/2026/09/10/15/1789028080611/d8ae92cf32e3_480_270.png" group-title="VTV & Quốc Gia",VTV3 HD
 tv360://4
 #EXTINF:-1 tvg-id="VTV4.vn@HD" tvg-name="VTV4 HD" tvg-logo="https://img-zlr1.tv360.vn/image1/2026/09/10/15/1789028135882/1fbaef2690ff_480_270.png" group-title="VTV & Quốc Gia",VTV4 HD
-https://dethich.pw/vtv4/index.m3u8
+tv360://108
 #EXTINF:-1 tvg-id="VTV5.vn@HD" tvg-name="VTV5 HD" tvg-logo="https://img-zlr1.tv360.vn/image1/2026/09/10/15/1789028197435/9250c116a95a_480_270.png" group-title="VTV & Quốc Gia",VTV5 HD
 tv360://110
 #EXTINF:-1 tvg-id="VTV5TayNamBo.vn@HD" tvg-name="VTV5 Tây Nam Bộ" tvg-logo="https://img-zlr1.tv360.vn/image1/2020_09_23/1600823616641/fa274ae87a2d_480_270.png" group-title="VTV & Quốc Gia",VTV5 Tây Nam Bộ
@@ -16,11 +16,11 @@ tv360://207
 #EXTINF:-1 tvg-id="VTV7.vn@HD" tvg-name="VTV7 HD" tvg-logo="https://img-zlr1.tv360.vn/image1/2026/09/10/15/1789028243685/2916b9cb8b9b_480_270.png" group-title="VTV & Quốc Gia",VTV7 HD
 https://vips-livecdn.fptplay.net/live/media/vtv7/live247-hls-avc/index.m3u8
 #EXTINF:-1 tvg-id="VTV8.vn@HD" tvg-name="VTV8 HD" tvg-logo="https://img-zlr1.tv360.vn/image1/2026/09/10/15/1789028292815/9b4526d833a6_480_270.png" group-title="VTV & Quốc Gia",VTV8 HD
-https://dethich.pw/vtv8/index.m3u8
+tv360://115
 #EXTINF:-1 tvg-id="VTV9.vn@HD" tvg-name="VTV9 HD" tvg-logo="https://img-zlr1.tv360.vn/image1/2026/09/10/15/1789028343714/06e6fc70cb07_480_270.png" group-title="VTV & Quốc Gia",VTV9 HD
 https://vips-livecdn.fptplay.net/live/media/vtv9/live247-hls-avc/index.m3u8
 #EXTINF:-1 tvg-id="VTVCanTho.vn@HD" tvg-name="VTV Cần Thơ" tvg-logo="https://img-zlr1.tv360.vn/image1/2022/10/12/17/1665570020164/e33d062831f5.png" group-title="VTV & Quốc Gia",VTV Cần Thơ
-https://dethich.pw/vtv10/index.m3u8
+https://live.canthotv.vn/live/tv/chunklist.m3u8
 #EXTINF:-1 tvg-id="AnNinhTV.vn@HD" tvg-name="ANTV HD" tvg-logo="https://img-zlr1.tv360.vn/image1/2020_09_23/1600822516608/b33963dc0df8_480_270.png" group-title="VTV & Quốc Gia",ANTV HD
 tv360://20
 #EXTINF:-1 tvg-id="QPVN.vn@HD" tvg-name="QPVN HD (Quốc Phòng)" tvg-logo="https://img-zlr1.tv360.vn/image1/2020_09_23/1600822254297/3c150355b7f8_480_270.png" group-title="VTV & Quốc Gia",QPVN HD (Quốc Phòng)

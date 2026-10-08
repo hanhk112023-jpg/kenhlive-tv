@@ -254,7 +254,8 @@ CÁC HÀNH ĐỘNG KHẢ DỤNG:
 
 HƯỚNG DẪN TỰ TÌM LỖI (Bug Hunting Guide):
 - Hãy chủ động khám phá mọi ngóc ngách, chuyển qua các tab còn lại bằng lệnh SWITCH_TAB hoặc DPAD_LEFT mở thanh điều hướng rail.
-- Phát hiện và báo ngay các lỗi: Mất dấu focus (Focus Loss), kẹt nút (Focus Trap), text tràn viền/cắt cụt, màn hình rỗng đen (Dead Screen), video đứng hình (Stalled).
+- Phát hiện và báo ngay các lỗi thực sự: Mất dấu focus (Focus Loss), kẹt nút (Focus Trap), text tràn viền/cắt cụt, màn hình rỗng đen chết kẹt (Dead Screen), app crash (FATAL).
+- LƯU Ý VỀ TÍNH NĂNG TỰ PHỤC HỒI (Failover & Self-Healing): Nếu phát hiện log lỗi mạng hoặc luồng video nhưng app đã tự động failover/chuyển sang server dự phòng thành công (hoặc toast thông báo chuyển luồng đang chạy), coi đây là tính năng bảo vệ hoạt động đúng thiết kế, KHÔNG đánh dấu là lỗi. Chỉ báo lỗi khi video đứng hình chết kẹt hoàn toàn không có lối thoát.
 
 HÃY SUY LUẬN VÀ TRẢ VỀ DUY NHẤT JSON THEO ĐỊNH DẠNG SAU:
 {{

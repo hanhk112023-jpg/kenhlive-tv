@@ -233,6 +233,10 @@ object IptvRepository {
 
                 var cleanName = (if (dispName.isNotEmpty()) dispName else tvgName).ifEmpty { "Kênh TV" }
                 val isGeoBlocked = cleanName.contains("[Geo-blocked]", ignoreCase = true)
+                if (isGeoBlocked) {
+                    curName = ""
+                    continue
+                }
                 cleanName = cleanName.replace(Regex("""\[Geo-blocked\]""", RegexOption.IGNORE_CASE), "")
                     .replace(Regex("""\[Not 24/7\]""", RegexOption.IGNORE_CASE), "")
                     .trim()
@@ -275,7 +279,8 @@ object IptvRepository {
                     }
                 }
             } else if (!trimmed.startsWith("#")) {
-                if (curName.isNotEmpty() && (trimmed.startsWith("http://", true) || trimmed.startsWith("https://", true))) {
+                if (curName.isNotEmpty() && !trimmed.contains("dethich.pw", ignoreCase = true) &&
+                    (trimmed.startsWith("http://", true) || trimmed.startsWith("https://", true) || trimmed.startsWith("tv360://", true))) {
                     list.add(
                         IptvChannel(
                             id = curId.ifEmpty { curName },

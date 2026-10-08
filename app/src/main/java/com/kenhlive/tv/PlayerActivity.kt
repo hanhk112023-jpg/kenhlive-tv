@@ -85,6 +85,7 @@ class PlayerActivity : AppCompatActivity() {
     private var currentRoomNum: String = ""
     private var currentSportsSource: com.kenhlive.tv.sports.SportsSource = com.kenhlive.tv.sports.SportsSource.SOCOLIVE
     private var sportsFailoverCount: Int = 0
+    private var iptvFailoverCount: Int = 0
 
     // Danh sách kênh nhanh (Sidebar & Chuyển kênh D-pad)
     private var channelSidebar: View? = null
@@ -946,15 +947,9 @@ class PlayerActivity : AppCompatActivity() {
                         val isNet = error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_FAILED ||
                                 error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ||
                                 error.errorCodeName.startsWith("ERROR_CODE_IO")
-                        if (isNet && streamRetries < 3) {
-                            streamRetries++
-                            Toast.makeText(
-                                this@PlayerActivity,
-                                getString(R.string.player_retry, streamRetries),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            handler.postDelayed({ player?.prepare() }, 2000L * streamRetries)
-                        } else if (!isIptvMode && sportsFailoverCount < 3) {
+
+                        // 1. Thể thao tự động failover sang nguồn đài tiếp theo
+                        if (!isIptvMode && sportsFailoverCount < 3) {
                             sportsFailoverCount++
                             val nextSource = when (currentSportsSource) {
                                 com.kenhlive.tv.sports.SportsSource.SOCOLIVE -> com.kenhlive.tv.sports.SportsSource.COLATV
@@ -971,6 +966,40 @@ class PlayerActivity : AppCompatActivity() {
                             }
                             Toast.makeText(this@PlayerActivity, "Tự động đổi sang máy chủ ${nextSource.displayName}...", Toast.LENGTH_SHORT).show()
                             switchSportsServer(com.kenhlive.tv.sports.SportsServer(nextSource, nextSource.displayName, targetRoom))
+                            return
+                        }
+
+                        // 2. IPTV tự động failover sang luồng backup hoặc kênh tiếp theo
+                        if (isIptvMode && iptvFailoverCount < 3) {
+                            iptvFailoverCount++
+                            val backup = Tv360Resolver.getBackupForChannel(url)
+                            if (backup != null && backup != url) {
+                                Toast.makeText(this@PlayerActivity, "Nguồn phát gián đoạn — Tự chuyển luồng dự phòng...", Toast.LENGTH_SHORT).show()
+                                url = backup
+                                prepareChannelUrl(backup)
+                                return
+                            }
+                            if (IptvRepository.currentChannels.isNotEmpty()) {
+                                val nextIdx = (currentChannelIndex + 1) % IptvRepository.currentChannels.size
+                                val nextCh = IptvRepository.currentChannels.getOrNull(nextIdx)
+                                if (nextCh != null) {
+                                    currentChannelIndex = nextIdx
+                                    Toast.makeText(this@PlayerActivity, "Tự chuyển sang kênh ${nextCh.name}...", Toast.LENGTH_SHORT).show()
+                                    switchChannel(nextCh)
+                                    return
+                                }
+                            }
+                        }
+
+                        // 3. Retry luồng thông thường nếu mạng chập chờn
+                        if (isNet && streamRetries < 2) {
+                            streamRetries++
+                            Toast.makeText(
+                                this@PlayerActivity,
+                                getString(R.string.player_retry, streamRetries),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                            handler.postDelayed({ player?.prepare() }, 1500L * streamRetries)
                         } else {
                             val msg = if (isNet) getString(R.string.player_net_error)
                             else getString(R.string.player_stream_error, error.errorCodeName)
@@ -990,6 +1019,7 @@ class PlayerActivity : AppCompatActivity() {
                         if (state == Player.STATE_READY) {
                             streamRetries = 0
                             sportsFailoverCount = 0
+                            iptvFailoverCount = 0
                             handler.removeCallbacks(autoRecoveryRunnable)
                             findViewById<View>(R.id.playerErrorBox)?.visibility = View.GONE
                             findViewById<View>(R.id.bufferBox)?.visibility = View.GONE

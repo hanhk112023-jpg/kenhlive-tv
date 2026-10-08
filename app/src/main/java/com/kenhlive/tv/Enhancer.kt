@@ -116,10 +116,10 @@ object Enhancer {
 
     fun buildMediaSourceFactory(ctx: Context): DefaultMediaSourceFactory {
         val httpSource = DefaultHttpDataSource.Factory()
-            .setConnectTimeoutMs(8000)
-            .setReadTimeoutMs(8000)
+            .setConnectTimeoutMs(10000)
+            .setReadTimeoutMs(10000)
             .setAllowCrossProtocolRedirects(true)
-            .setUserAgent("Mozilla/5.0 (Linux; Android 12) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/110.0.0.0 Mobile Safari/537.36")
+            .setUserAgent("Mozilla/5.0 (Linux; Android 12; BRAVIA 4K Build/MMB29M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
         return DefaultMediaSourceFactory(ctx).setDataSourceFactory(httpSource)
     }
 

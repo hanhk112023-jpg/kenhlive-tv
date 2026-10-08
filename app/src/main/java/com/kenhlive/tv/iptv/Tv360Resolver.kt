@@ -35,31 +35,29 @@ object Tv360Resolver {
 
     // Fallback stream URLs cho các kênh yêu cầu đăng nhập trên TV360
     private val FALLBACK_STREAMS = mapOf(
-        "2" to "https://dethich.pw/vtv1/index.m3u8",
-        "3" to "https://dethich.pw/vtv2/index.m3u8",
-        "4" to "https://dethich.pw/vtv3/index.m3u8",
-        "108" to "https://dethich.pw/vtv4/index.m3u8",
-        "110" to "https://dethich.pw/vtv5/index.m3u8",
-        "6" to "https://dethich.pw/vtv7/index.m3u8",
-        "115" to "https://dethich.pw/vtv8/index.m3u8",
-        "8" to "https://dethich.pw/vtv9/index.m3u8",
-        "10043" to "https://dethich.pw/vtv10/index.m3u8",
-        "98" to "https://dethich.pw/vtv10/index.m3u8",
         "20" to "https://liveh12.vtvprime.vn/hls/ANNINHTV/index.m3u8",
-        "19" to "https://qpvn.vn/live/qpvn/master.m3u8",
-        "190" to "https://dethich.pw/htv1/index.m3u8",
-        "191" to "https://dethich.pw/htv2/index.m3u8",
-        "192" to "https://dethich.pw/htv3/index.m3u8",
-        "9" to "https://dethich.pw/htv4/index.m3u8",
-        "193" to "https://dethich.pw/htv7/index.m3u8",
-        "194" to "https://dethich.pw/htv9/index.m3u8",
-        "195" to "https://dethich.pw/htvthethao/index.m3u8",
-        "25" to "https://dethich.pw/thvl1/index.m3u8",
-        "26" to "https://dethich.pw/thvl2/index.m3u8",
-        "219" to "https://dethich.pw/thvl3/index.m3u8",
-        "220" to "https://dethich.pw/thvl4/index.m3u8",
-        "33" to "https://liveh34.vtvprime.vn/hls/HANOI1TV/index.m3u8"
+        "19" to "https://liveh12.vtvprime.vn/hls/QPTV/index.m3u8",
+        "10043" to "https://live.canthotv.vn/live/tv/chunklist.m3u8",
+        "98" to "https://live.canthotv.vn/live/tv/chunklist.m3u8",
+        "33" to "https://liveh34.vtvprime.vn/hls/HANOI1TV/index.m3u8",
+        "9" to "https://freem3u.xyz/api/live/play.m3u8?vid=9",
+        "26" to "https://1011154949.vnns.net/CDN-FPT02/THVL2-HD-1080p/playlist.m3u8"
     )
+
+    /** Cung cấp luồng dự phòng nếu luồng hiện tại gặp sự cố (Playback error) */
+    fun getBackupForChannel(url: String): String? {
+        val chId = extractChannelId(url)
+        FALLBACK_STREAMS[chId]?.let { if (it != url) return it }
+        if (url.contains("cantho", ignoreCase = true) || url.contains("vtv10", ignoreCase = true) || chId == "98" || chId == "10043") {
+            val target = "https://live.canthotv.vn/live/tv/chunklist.m3u8"
+            if (target != url) return target
+        }
+        if (url.contains("anninh", ignoreCase = true) || chId == "20") {
+            val target = "https://liveh12.vtvprime.vn/hls/ANNINHTV/index.m3u8"
+            if (target != url) return target
+        }
+        return null
+    }
 
     /** Kiểm tra xem URL có phải kênh TV360 cần resolve hay không */
     fun isTv360(url: String): Boolean {
