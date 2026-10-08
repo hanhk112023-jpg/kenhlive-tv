@@ -334,7 +334,7 @@ class IptvFragment : Fragment() {
                 if (hasFocus) {
                     val p = holder.bindingAdapterPosition
                     if (p != RecyclerView.NO_POSITION) {
-                        iptvGroupList.smoothScrollToPosition(p)
+                        groupList.smoothScrollToPosition(p)
                     }
                     holder.tv.setTextColor(Color.parseColor("#FFFF6500"))
                 } else if (!isSel) {
