@@ -213,6 +213,20 @@ class AIBrain:
         prompt = f"""Bạn là Senior AI QA Engineer chuyên nghiệp kiểm thử ứng dụng Android TV 10-foot 'KênhLive'.
 Bạn đang trực tiếp cầm remote điều khiển app trên TV để kiểm thử tính năng và săn lỗi (bug hunting).
 
+BẢN ĐỒ TOÀN BỘ 6 TAB VÀ CÁC MÀN HÌNH CỦA APP KENHLIVE TV:
+- [Tab 0 - Trực tiếp (Live)]: Trận đấu bóng đá live. Hàng lọc giải đấu & đài phát: "Tất cả", "ColaTV", "Gà Vàng", "Khán Đài", "Socolive". Chọn trận để xem.
+- [Tab 1 - Lịch đấu (Schedule)]: Lịch thi đấu theo ngày (Hôm nay, Ngày mai, Giải đấu). Chọn trận mở server picker.
+- [Tab 2 - Truyền hình (IPTV)]: Danh mục TV360, VTV, HTV, VTC, VTVcab, SCTV, Thể Thao. Hero Preview phát thử góc trên. Lưới 5 cột.
+- [Tab 3 - Tìm kiếm (Search)]: Ô nhập tìm kiếm (searchInput), gõ từ khóa không dấu, chuyển D-pad xuống danh sách kết quả.
+- [Tab 4 - Cài đặt (Settings)]: Thông tin phiên bản, kiểm tra cập nhật, cài đặt server.
+- [Tab 5 - Kho Phim (NguonC & Anime)]: Phim Mới, Phim Bộ, Phim Lẻ, Hoạt Hình & Anime, phát player StreamC.
+- [PlayerActivity]: Trình phát video, phím MENU mở Server Picker đổi nguồn phát (ColaTV, Gà Vàng, Khán Đài, Socolive), tự động failover khi lỗi stream.
+- [MultiViewActivity]: Xem đồng thời 2 trận bóng đá side-by-side (--es open mv), phím UP/DOWN đổi focus viền trắng.
+
+TIẾN ĐỘ KHÁM PHÁ CỦA BẠN (Tabs Coverage):
+- Các Tab ĐÃ kiểm tra: {state.get('tabs_tested', 'Chưa có')}
+- Các Tab CÒN LẠI cần bạn tự tìm lỗi: {state.get('tabs_remaining', 'Toàn bộ')}
+
 NHIỆM VỤ HIỆN TẠI:
 - Tên: {mission.name} ({mission.title})
 - Mục tiêu: {mission.description}
@@ -231,17 +245,22 @@ DANH SÁCH VIEW CÓ THỂ FOCUS TRÊN MÀN HÌNH:
 {state['ui_summary']}
 
 CÁC HÀNH ĐỘNG KHẢ DỤNG:
-- KEY: DPAD_UP, DPAD_DOWN, DPAD_LEFT, DPAD_RIGHT, DPAD_CENTER (hoặc ENTER), BACK, MENU
+- KEY: DPAD_UP, DPAD_DOWN, DPAD_LEFT, DPAD_RIGHT, DPAD_CENTER (hoặc ENTER), BACK, MENU, PLAY_PAUSE
+- SWITCH_TAB: Chuyển thẳng sang Tab bất kỳ (0: Trực tiếp, 1: Lịch, 2: IPTV, 3: Tìm kiếm, 4: Cài đặt, 5: Kho Phim)
 - TEXT: Nhập chuỗi tìm kiếm (vd: "uefa", "ngoai hang")
 - WAIT: Chờ X giây (vd: 2.0 giây để tải stream)
 - VERIFY_STREAM: Kiểm tra xem video stream có đang phát mượt không
 - COMPLETE_MISSION: Kết thúc nhiệm vụ này khi đã thỏa mãn mục tiêu
 
+HƯỚNG DẪN TỰ TÌM LỖI (Bug Hunting Guide):
+- Hãy chủ động khám phá mọi ngóc ngách, chuyển qua các tab còn lại bằng lệnh SWITCH_TAB hoặc DPAD_LEFT mở thanh điều hướng rail.
+- Phát hiện và báo ngay các lỗi: Mất dấu focus (Focus Loss), kẹt nút (Focus Trap), text tràn viền/cắt cụt, màn hình rỗng đen (Dead Screen), video đứng hình (Stalled).
+
 HÃY SUY LUẬN VÀ TRẢ VỀ DUY NHẤT JSON THEO ĐỊNH DẠNG SAU:
 {{
   "thought": "Quan sát thấy gì trên màn hình và tại sao chọn hành động này?",
-  "action_type": "KEY" | "TEXT" | "WAIT" | "VERIFY_STREAM" | "COMPLETE_MISSION",
-  "action_param": "DPAD_DOWN" | "ENTER" | "BACK" | "uefa" | "2.0" | "",
+  "action_type": "KEY" | "SWITCH_TAB" | "TEXT" | "WAIT" | "VERIFY_STREAM" | "COMPLETE_MISSION",
+  "action_param": "DPAD_DOWN" | "2" | "ENTER" | "BACK" | "uefa" | "2.0" | "",
   "expected_result": "Kỳ vọng gì sau khi thực hiện hành động này?",
   "defect_detected": null hoặc {{
      "area": "Tên màn hình/tính năng",
@@ -473,6 +492,11 @@ class AndroidTVDevice:
         sh(f"{self.adb} shell input text \"{safe_text}\"")
         self.action_history.append(f"TEXT({text})")
 
+    def switch_tab(self, tab_index):
+        """Chuyển đổi trực tiếp giữa 6 tab: 0:Live, 1:Lịch, 2:IPTV, 3:Tìm kiếm, 4:Cài đặt, 5:Kho Phim."""
+        sh(f"{self.adb} shell am start -n {self.pkg}/.MainActivity --ei tab {int(tab_index)}")
+        self.action_history.append(f"SWITCH_TAB({tab_index})")
+
     def screencap_bytes(self):
         try:
             raw = subprocess.run(f"{self.adb} exec-out screencap -p".split(), capture_output=True, timeout=20).stdout
@@ -653,6 +677,16 @@ class AutonomousQASuite:
         self.brain = AIBrain()
         self.device = AndroidTVDevice(serial=serial, pkg=PKG)
 
+        self.ALL_TABS = {
+            0: "Tab 0: Trực tiếp (Live - ColaTV/Gà Vàng/Khán Đài/Socolive)",
+            1: "Tab 1: Lịch đấu (Schedule - Lịch phát sóng các ngày)",
+            2: "Tab 2: Truyền hình (IPTV - TV360 HLS, VTV, HTV, Hero Preview, Lưới 5 cột)",
+            3: "Tab 3: Tìm kiếm (Search - Ô nhập từ khóa & Danh sách kết quả)",
+            4: "Tab 4: Cài đặt (Settings - Cập nhật & cấu hình server)",
+            5: "Tab 5: Kho Phim (NguonC - Phim mới, Phim bộ, Phim lẻ, Anime)"
+        }
+        self.tested_tabs = set()
+
         self.missions = [
             QAMission(
                 "MISSION_COLD_START",
@@ -675,20 +709,26 @@ class AutonomousQASuite:
             QAMission(
                 "MISSION_IPTV_TV360",
                 "Truyền Hình IPTV (TV360 HLS, VTV, HTV & Lưới 5 Cột)",
-                "Chuyển sang Tab Truyền hình, kiểm tra EPG Hero Preview, duyệt lưới 5 cột và mở phát kênh.",
+                "Chuyển sang Tab Truyền hình (Tab 2), kiểm tra EPG Hero Preview, duyệt lưới 5 cột và mở phát kênh.",
                 "Giải mã TV360 thành công, chuyển kênh trơn tru."
             ),
             QAMission(
                 "MISSION_PHIM_NGUONC",
                 "Kho Phim NguonC & Anime",
-                "Chuyển sang Tab Kho Phim, duyệt Phim Lẻ, Phim Bộ, Hoạt Hình Anime, mở xem thử.",
+                "Chuyển sang Tab Kho Phim (Tab 5), duyệt Phim Lẻ, Phim Bộ, Hoạt Hình Anime, mở xem thử.",
                 "Danh sách phim tải đủ thông tin, player StreamC sẵn sàng."
             ),
             QAMission(
                 "MISSION_SCHEDULE_SEARCH",
                 "Lịch Thi Đấu & Trải Nghiệm Tìm Kiếm",
-                "Kiểm tra Tab Lịch thi đấu và chức năng Tìm kiếm với từ khóa không dấu.",
+                "Kiểm tra Tab Lịch thi đấu (Tab 1) và chức năng Tìm kiếm (Tab 3) với từ khóa không dấu.",
                 "Focus di chuyển chuẩn từ ô nhập liệu xuống danh sách kết quả (không mất focus)."
+            ),
+            QAMission(
+                "MISSION_SETTINGS_AND_AUTONOMOUS_HUNT",
+                "Cài Đặt & AI Tự Do Săn Lỗi Đa Tab",
+                "Chuyển sang Tab Cài đặt (Tab 4) kiểm tra update, sau đó AI tự do nhảy qua các tab còn lại để lùng sục lỗi tiềm ẩn.",
+                "Tab Cài đặt ổn định, phát hiện đầy đủ các bất thường ở các tab còn lại."
             ),
             QAMission(
                 "MISSION_DPAD_CHAOS_STRESS",
@@ -738,6 +778,11 @@ class AutonomousQASuite:
                 is_playing, motion_delta = self.device.detect_video_motion(duration_sec=0.8, samples=2)
                 logcat_alerts = self.device.get_new_logcat_alerts()
 
+                # Tự động cập nhật tab đang hiển thị
+                for t_idx, kw in [(0, "tab_live"), (1, "tab_schedule"), (2, "tab_iptv"), (3, "tab_search"), (4, "tab_settings"), (5, "tab_phim")]:
+                    if kw in ui_state["ui_summary"] or kw in ui_state.get("focused_sig", ""):
+                        self.tested_tabs.add(t_idx)
+
                 state_bundle = {
                     "activity": self.device.current_activity(),
                     "focused_sig": ui_state["focused_sig"],
@@ -749,7 +794,9 @@ class AutonomousQASuite:
                     "recent_keys": self.device.action_history[-5:],
                     "logcat_alerts": "; ".join(logcat_alerts) or "Không có",
                     "ui_summary": ui_state["ui_summary"],
-                    "screenshot_bytes": raw_png
+                    "screenshot_bytes": raw_png,
+                    "tabs_tested": ", ".join(self.ALL_TABS[i] for i in sorted(self.tested_tabs)) if self.tested_tabs else "Chưa có",
+                    "tabs_remaining": ", ".join(self.ALL_TABS[i] for i in sorted(set(self.ALL_TABS.keys()) - self.tested_tabs)) or "Đã bao phủ toàn bộ 6 tabs!"
                 }
 
                 # 2. COGNITION: AI quyết định hành động
@@ -781,6 +828,15 @@ class AutonomousQASuite:
                 if act_type == "KEY":
                     self.device.send_key(act_param or "DPAD_DOWN")
                     time.sleep(0.7)
+                elif act_type == "SWITCH_TAB":
+                    try:
+                        t_idx = int(act_param)
+                        self.device.switch_tab(t_idx)
+                        self.tested_tabs.add(t_idx)
+                        time.sleep(1.2)
+                        print(f"      🔀 AI chủ động chuyển sang {self.ALL_TABS.get(t_idx, f'Tab {t_idx}')} để săn lỗi!", flush=True)
+                    except Exception as e:
+                        print(f"      ⚠️ Lỗi chuyển tab: {e}", flush=True)
                 elif act_type == "TEXT":
                     self.device.input_text(act_param or "uefa")
                     time.sleep(0.8)
