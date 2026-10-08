@@ -19,9 +19,13 @@ import os
 import random
 import re
 import subprocess
+import sys
 import time
 import urllib.request
 import xml.etree.ElementTree as ET
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from qa_session import QASession, KENHLIVE_TABS, REMOTE_KEY_ICONS
 
 try:
     from PIL import Image, ImageChops, ImageStat
@@ -677,6 +681,8 @@ class AutonomousQASuite:
 
         self.brain = AIBrain()
         self.device = AndroidTVDevice(serial=serial, pkg=PKG)
+        self.session = QASession(out_dir=out_dir, serial=serial, pkg=PKG)
+        self.session.set_ai_provider(self.brain.provider_active)
 
         self.ALL_TABS = {
             0: "Tab 0: Trực tiếp (Live - ColaTV/Gà Vàng/Khán Đài/Socolive)",
@@ -780,9 +786,11 @@ class AutonomousQASuite:
                 logcat_alerts = self.device.get_new_logcat_alerts()
 
                 # Tự động cập nhật tab đang hiển thị
+                current_tab_idx = None
                 for t_idx, kw in [(0, "tab_live"), (1, "tab_schedule"), (2, "tab_iptv"), (3, "tab_search"), (4, "tab_settings"), (5, "tab_phim")]:
                     if kw in ui_state["ui_summary"] or kw in ui_state.get("focused_sig", ""):
                         self.tested_tabs.add(t_idx)
+                        current_tab_idx = t_idx
 
                 state_bundle = {
                     "activity": self.device.current_activity(),
@@ -808,8 +816,26 @@ class AutonomousQASuite:
                 act_param = decision.get("action_param", "")
                 defect = decision.get("defect_detected")
 
-                print(f"   🤖 [Step {step_num}] ({provider}) Thought: {thought[:90]}", flush=True)
+                print(f"   🤖 [Session #{self.session.global_step_counter + 1} · {mission.name}] ({provider}) Thought: {thought[:90]}", flush=True)
                 print(f"      -> Action: {act_type} {act_param}", flush=True)
+
+                # Chụp screenshot tiêu biểu cho bước
+                step_shot = None
+                if step_num == 1 or act_type in ("SWITCH_TAB", "VERIFY_STREAM") or defect:
+                    step_shot = self._record_screen(f"step_{self.session.global_step_counter + 1:02d}_{mission.name.lower()[:10]}")
+
+                # Ghi nhận vào Session Manager
+                self.session.record_step(
+                    mission_name=mission.name,
+                    mission_title=mission.title,
+                    step_in_mission=step_num,
+                    activity=state_bundle["activity"],
+                    active_tab_idx=current_tab_idx,
+                    ui_state=ui_state,
+                    state_bundle=state_bundle,
+                    decision=decision,
+                    screenshot_rel=step_shot
+                )
 
                 self.ai_decisions_log.append({
                     "mission": mission.name,
@@ -848,6 +874,7 @@ class AutonomousQASuite:
                         time.sleep(1.0)
                 elif act_type == "VERIFY_STREAM":
                     stream_ok, delta = self.device.detect_video_motion(duration_sec=1.2, samples=3)
+                    self.session.record_video_verification(stream_ok, delta, self.device.current_activity())
                     print(f"      📹 Kết quả kiểm tra luồng video: {'PHÁT MƯỢT' if stream_ok else 'ĐỨNG HÌNH'} (delta: {delta:.2f}%)", flush=True)
                     if not stream_ok and "player" in self.device.current_activity().lower():
                         self.all_findings.append({
@@ -890,7 +917,9 @@ class AutonomousQASuite:
             with open(path.replace(".jpg", ".png"), "wb") as f:
                 f.write(png)
             filename = filename.replace(".jpg", ".png")
-        self.all_screenshots.append((label, f"shots/{filename}"))
+        rel_path = f"shots/{filename}"
+        self.all_screenshots.append((label, rel_path))
+        return rel_path
 
     def generate_reports(self, duration_sec):
         passed_missions = sum(1 for m in self.missions if m.passed)
@@ -901,6 +930,9 @@ class AutonomousQASuite:
         score = 100 - sum(penalty.get(f.get("severity", "LOW"), 2) for f in self.all_findings)
         score -= round((total_missions - passed_missions) / total_missions * 20)
         final_score = max(0, min(100, score))
+
+        # Hoàn tất Session và xuất qa_session.json + qa_session_summary.md
+        session_manifest = self.session.finish_session(final_score=final_score)
 
         checks_data = []
         for m in self.missions:
@@ -913,6 +945,8 @@ class AutonomousQASuite:
         report_json = {
             "score": final_score,
             "duration_sec": duration_sec,
+            "session_id": self.session.session_id,
+            "session": session_manifest,
             "engine": "KenhLive 100% Autonomous AI QA Suite",
             "brain_provider": self.brain.provider_active,
             "checks_passed": passed_missions,
@@ -974,6 +1008,8 @@ class AutonomousQASuite:
               <div style='font-size:12px;color:#94a3b8;margin-top:6px;text-align:center;'>{esc(lbl)}</div>
             </div>"""
 
+        session_html = self.session.render_session_html_section()
+
         html_content = f"""<!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -1003,6 +1039,8 @@ class AutonomousQASuite:
         <div style="font-size:12px;color:#94a3b8;">Hoàn thành: {r['missions_passed']} nhiệm vụ</div>
       </div>
     </div>
+
+    {session_html}
 
     <div class="card">
       <h2 style="font-size:16px;margin:0 0 10px;">📋 Kết Quả Nhiệm Vụ (Mission Checklist)</h2>
