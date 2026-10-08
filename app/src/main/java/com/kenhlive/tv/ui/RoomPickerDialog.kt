@@ -86,10 +86,21 @@ object RoomPickerDialog {
             FocusKit.decorateCard(h.itemView, scale = 1.02f, elevation = 8f)
             when (model) {
                 is LiveRoom -> {
+                    val source = com.kenhlive.tv.sports.SportsSource.detectSource(model.roomNum, model.blvName)
                     h.name.text = model.blvName + if (model.blvLevel.isNotBlank()) " (${model.blvLevel})" else ""
                     val vText = ctx.getString(R.string.picker_viewers_live, SocoliveRepository.fmtViewers(model.viewers))
-                    h.meta.text = if (model.score > 0) "$vText • ⭐ ${SocoliveRepository.fmtViewers(model.score)} điểm" else vText
+                    h.meta.text = when {
+                        model.notice.isNotBlank() && model.roomNum.startsWith("cola_") -> model.notice
+                        model.notice.isNotBlank() && model.roomNum.startsWith("gavang_") -> model.notice
+                        model.notice.isNotBlank() && model.roomNum.startsWith("khandai_") -> model.notice
+                        model.score > 0 -> "$vText • ⭐ ${SocoliveRepository.fmtViewers(model.score)} điểm"
+                        else -> vText
+                    }
                     h.live.visibility = View.VISIBLE
+                    h.live.text = source.shortTag
+                    try {
+                        h.live.background?.mutate()?.setTint(source.badgeColor)
+                    } catch (_: Exception) { }
                     h.avatar.load(model.avatar) {
                         crossfade(if (KenhLiveApp.lowRam) 0 else 80)
                         transformations(CircleCropTransformation())

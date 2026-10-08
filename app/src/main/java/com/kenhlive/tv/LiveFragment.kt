@@ -101,7 +101,7 @@ class LiveFragment : Fragment() {
             }
         }
 
-        val enrichedLiveGroups = liveGroups.map { g ->
+        val enrichedLiveGroups = com.kenhlive.tv.sports.SportsAggregator.enrichMatchGroups(liveGroups.map { g ->
             if (g.hostIcon.isNotBlank() && g.guestIcon.isNotBlank()) g
             else {
                 val key = g.matchTitle.lowercase().trim()
@@ -112,9 +112,9 @@ class LiveFragment : Fragment() {
                     g.copy(hostIcon = found.first, guestIcon = found.second)
                 } else g
             }
-        }
+        })
 
-        val baseCategories = listOf("Tất cả", "Bóng đá", "Bóng rổ")
+        val baseCategories = listOf("Tất cả", "Bóng đá", "Bóng rổ", "ColaTV", "Gà Vàng", "Khán Đài")
         val activeLeagues = enrichedLiveGroups.map { it.league }
             .filter { it.isNotBlank() && it !in baseCategories }
             .distinct()
@@ -122,10 +122,13 @@ class LiveFragment : Fragment() {
         leagueLabels = baseCategories + activeLeagues
         if (selLeague >= leagueLabels.size) selLeague = 0
 
-        val lg = when (selLeague) {
-            0 -> enrichedLiveGroups
-            1 -> enrichedLiveGroups.filter { it.category == "Bóng đá" || it.league.contains("bóng đá", ignoreCase = true) }
-            2 -> enrichedLiveGroups.filter { it.category == "Bóng rổ" || it.league.contains("bóng rổ", ignoreCase = true) || it.league.contains("nba", ignoreCase = true) }
+        val lg = when {
+            selLeague == 0 -> enrichedLiveGroups
+            selLeague == 1 -> enrichedLiveGroups.filter { it.category == "Bóng đá" || it.league.contains("bóng đá", ignoreCase = true) }
+            selLeague == 2 -> enrichedLiveGroups.filter { it.category == "Bóng rổ" || it.league.contains("bóng rổ", ignoreCase = true) || it.league.contains("nba", ignoreCase = true) }
+            leagueLabels[selLeague] == "ColaTV" -> enrichedLiveGroups.map { g -> g.copy(rooms = g.rooms.filter { it.roomNum.startsWith("cola_") }) }.filter { it.rooms.isNotEmpty() }
+            leagueLabels[selLeague] == "Gà Vàng" -> enrichedLiveGroups.map { g -> g.copy(rooms = g.rooms.filter { it.roomNum.startsWith("gavang_") }) }.filter { it.rooms.isNotEmpty() }
+            leagueLabels[selLeague] == "Khán Đài" -> enrichedLiveGroups.map { g -> g.copy(rooms = g.rooms.filter { it.roomNum.startsWith("khandai_") }) }.filter { it.rooms.isNotEmpty() }
             else -> {
                 val target = leagueLabels[selLeague]
                 enrichedLiveGroups.filter { it.league.equals(target, ignoreCase = true) || it.category.equals(target, ignoreCase = true) }
@@ -221,9 +224,9 @@ class LiveFragment : Fragment() {
     }
 
     private fun openGroupPicker(g: LiveMatchGroup) {
-        if (g.count == 1) { openRoom(g.top); return }
+        val enriched = com.kenhlive.tv.sports.SportsAggregator.enrichMatchGroup(g)
         dialog?.dismiss()
-        dialog = RoomPickerDialog.show(requireContext(), g, onPickRoom = { r -> openRoom(r) })
+        dialog = RoomPickerDialog.show(requireContext(), enriched, onPickRoom = { r -> openRoom(r) })
     }
 
     private fun onFixtureTap(m: ScheduleMatch) {
@@ -232,19 +235,19 @@ class LiveFragment : Fragment() {
             android.widget.Toast.makeText(requireContext(), R.string.sched_no_room, android.widget.Toast.LENGTH_SHORT).show()
             return
         }
-        val a = live.first()
-        viewLifecycleOwner.lifecycleScope.launch {
-            val url = SocoliveRepository.fetchStream(a.roomNum)
-            if (url == null) {
-                android.widget.Toast.makeText(requireContext(), R.string.stream_not_ready, android.widget.Toast.LENGTH_SHORT).show()
-                return@launch
-            }
-            startActivity(
-                Intent(requireContext(), PlayerActivity::class.java)
-                    .putExtra("url", url)
-                    .putExtra("name", "${m.host} vs ${m.guest} · ${a.nickName}")
+        val matchTitle = "${m.host} vs ${m.guest}"
+        val rooms = live.map { a ->
+            LiveRoom(
+                roomNum = a.roomNum, blvName = a.nickName, avatar = a.icon,
+                viewers = 0, matchTitle = matchTitle, league = m.league,
+                category = m.category, hostIcon = m.hostIcon, guestIcon = m.guestIcon
             )
         }
+        val group = com.kenhlive.tv.sports.SportsAggregator.enrichMatchGroup(
+            LiveMatchGroup(league = m.league, matchTitle = matchTitle, rooms = rooms, category = m.category, hostIcon = m.hostIcon, guestIcon = m.guestIcon)
+        )
+        dialog?.dismiss()
+        dialog = RoomPickerDialog.show(requireContext(), group, onPickRoom = { r -> openRoom(r) })
     }
 
     private fun openRoom(room: LiveRoom) {
@@ -258,6 +261,9 @@ class LiveFragment : Fragment() {
                 Intent(requireContext(), PlayerActivity::class.java)
                     .putExtra("url", url)
                     .putExtra("name", "${room.matchTitle} · ${room.blvName}")
+                    .putExtra("roomNum", room.roomNum)
+                    .putExtra("matchTitle", room.matchTitle)
+                    .putExtra("league", room.league)
             )
         }
     }

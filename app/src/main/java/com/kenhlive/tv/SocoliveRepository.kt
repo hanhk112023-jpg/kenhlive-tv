@@ -292,12 +292,10 @@ object SocoliveRepository {
         return result
     }
 
-    /** Stream URL từ roomNum. */
+    /** Stream URL từ roomNum (tự động phân giải qua Socolive / ColaTV / Gà Vàng / Khán Đài). */
     suspend fun fetchStream(roomNum: String): String? = withContext(Dispatchers.IO) {
         try {
-            val now = stamp()
-            val body = Http.getWithRetry("$API/room/$roomNum/detail.json?callback=detail&v=$now&_=$now")
-            SocoliveParser.parseStream(body)
+            com.kenhlive.tv.sports.SportsStreamResolver.resolveStream(roomNum)
         } catch (_: Exception) { null }
     }
 

@@ -90,41 +90,32 @@ class ScheduleFragment : Fragment() {
 
     private fun onMatchTap(match: ScheduleMatch) {
         val live = match.anchors.filter { it.roomNum.isNotBlank() }
-        when {
-            live.isEmpty() ->
-                Toast.makeText(requireContext(), R.string.sched_no_room, Toast.LENGTH_SHORT).show()
-            live.size == 1 -> openAnchor(live.first(), match)
-            else -> {
-                // picker: dựng group ảo từ các anchor có phòng
-                val groups = live.map { a ->
-                    LiveMatchGroup(
-                        league = match.league,
-                        matchTitle = "${match.host} vs ${match.guest}",
-                        rooms = listOf(
-                            LiveRoom(
-                                roomNum = a.roomNum, blvName = a.nickName, avatar = a.icon,
-                                viewers = 0, matchTitle = "${match.host} vs ${match.guest}", league = match.league
-                            )
-                        )
-                    )
-                }
-                val pseudo = groups.first()
-                dialog?.dismiss()
-                dialog = RoomPickerDialog.show(
-                    requireContext(),
-                    pseudo.copy(rooms = groups.map { it.top }),
-                    onPickRoom = { r ->
-                        val a = live.firstOrNull { it.roomNum == r.roomNum } ?: live.first()
-                        openAnchor(a, match)
-                    }
-                )
-            }
+        if (live.isEmpty()) {
+            Toast.makeText(requireContext(), R.string.sched_no_room, Toast.LENGTH_SHORT).show()
+            return
         }
+        val matchTitle = "${match.host} vs ${match.guest}"
+        val rooms = live.map { a ->
+            LiveRoom(
+                roomNum = a.roomNum, blvName = a.nickName, avatar = a.icon,
+                viewers = 0, matchTitle = matchTitle, league = match.league,
+                category = match.category, hostIcon = match.hostIcon, guestIcon = match.guestIcon
+            )
+        }
+        val group = com.kenhlive.tv.sports.SportsAggregator.enrichMatchGroup(
+            LiveMatchGroup(league = match.league, matchTitle = matchTitle, rooms = rooms, category = match.category, hostIcon = match.hostIcon, guestIcon = match.guestIcon)
+        )
+        dialog?.dismiss()
+        dialog = RoomPickerDialog.show(
+            requireContext(),
+            group,
+            onPickRoom = { r -> openRoom(r, match) }
+        )
     }
 
-    private fun openAnchor(anchor: AnchorInfo, match: ScheduleMatch) {
+    private fun openRoom(room: LiveRoom, match: ScheduleMatch) {
         viewLifecycleOwner.lifecycleScope.launch {
-            val url = SocoliveRepository.fetchStream(anchor.roomNum)
+            val url = SocoliveRepository.fetchStream(room.roomNum)
             if (url == null) {
                 Toast.makeText(requireContext(), R.string.stream_not_ready, Toast.LENGTH_SHORT).show()
                 return@launch
@@ -132,7 +123,10 @@ class ScheduleFragment : Fragment() {
             startActivity(
                 Intent(requireContext(), PlayerActivity::class.java)
                     .putExtra("url", url)
-                    .putExtra("name", "${match.host} vs ${match.guest} · ${anchor.nickName}")
+                    .putExtra("name", "${match.host} vs ${match.guest} · ${room.blvName}")
+                    .putExtra("roomNum", room.roomNum)
+                    .putExtra("matchTitle", "${match.host} vs ${match.guest}")
+                    .putExtra("league", match.league)
             )
         }
     }

@@ -80,6 +80,11 @@ class PlayerActivity : AppCompatActivity() {
     private var streamRetries = 0
     private var dialog: AlertDialog? = null
 
+    // Sports Multi-Source State (Socolive / ColaTV / Gà Vàng / Khán Đài)
+    private var currentRoomNum: String = ""
+    private var currentSportsSource: com.kenhlive.tv.sports.SportsSource = com.kenhlive.tv.sports.SportsSource.SOCOLIVE
+    private var sportsFailoverCount: Int = 0
+
     // Danh sách kênh nhanh (Sidebar & Chuyển kênh D-pad)
     private var channelSidebar: View? = null
     private var sidebarList: RecyclerView? = null
@@ -175,6 +180,8 @@ class PlayerActivity : AppCompatActivity() {
         val name = intent.getStringExtra("name") ?: getString(R.string.player_default_name)
         isIptvMode = intent.getBooleanExtra("is_iptv", false)
         currentChannelIndex = intent.getIntExtra("current_index", 0)
+        currentRoomNum = intent.getStringExtra("roomNum") ?: ""
+        currentSportsSource = com.kenhlive.tv.sports.SportsSource.detectSource(currentRoomNum)
 
         topOverlay = findViewById(R.id.topOverlay)
         hint = findViewById(R.id.playerHint)
@@ -438,6 +445,12 @@ class PlayerActivity : AppCompatActivity() {
         options.add("Âm thanh: ${aqNames[curAq]}")
         actions.add { showSettingsDialog(video = false) }
 
+        // Đổi server cho chế độ thể thao
+        if (!isIptvMode) {
+            options.add("🔄 Đổi nguồn phát (${currentSportsSource.displayName})")
+            actions.add { showServerPickerDialog() }
+        }
+
         // 3. Khuếch đại âm lượng (Audio Boost)
         val boostLabels = arrayOf("Tắt", "+3dB", "+6dB", "+9dB")
         options.add("Khuếch đại âm lượng: ${boostLabels[audioBoostLevel]}")
@@ -486,6 +499,47 @@ class PlayerActivity : AppCompatActivity() {
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
         hideOnce()
+    }
+
+    // ================= ĐỔI MÁY CHỦ / NGUỒN PHÁT THỂ THAO =================
+    private fun showServerPickerDialog() {
+        val baseRoom = if (currentRoomNum.isNotBlank()) currentRoomNum else "live"
+        val servers = com.kenhlive.tv.sports.SportsAggregator.getAvailableServers(baseRoom)
+        val serverNames = servers.map { s ->
+            val isCurrent = s.source == currentSportsSource
+            "${s.name}" + (if (isCurrent) "  ✓ (Đang phát)" else "")
+        }.toTypedArray()
+
+        AlertDialog.Builder(this, R.style.Theme_KenhLive_Dialog)
+            .setTitle("📡 Chọn Máy Chủ / Nguồn Phát")
+            .setItems(serverNames) { d, which ->
+                d.dismiss()
+                val selected = servers[which]
+                switchSportsServer(selected)
+            }
+            .setNegativeButton(R.string.dialog_close, null)
+            .show()
+    }
+
+    private fun switchSportsServer(server: com.kenhlive.tv.sports.SportsServer) {
+        if (server.source == currentSportsSource && player?.isPlaying == true) {
+            Toast.makeText(this, "Đang phát từ ${server.source.displayName}", Toast.LENGTH_SHORT).show()
+            return
+        }
+        currentSportsSource = server.source
+        Toast.makeText(this, "Đang kết nối ${server.name}...", Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            val newUrl = com.kenhlive.tv.sports.SportsStreamResolver.resolveStream(server.roomNum)
+            if (!newUrl.isNullOrBlank()) {
+                url = newUrl
+                prepareChannelUrl(newUrl)
+                osdTechTag?.text = "${server.source.shortTag} · HD"
+                osdTechTag?.visibility = View.VISIBLE
+                Toast.makeText(this@PlayerActivity, "Đã chuyển sang ${server.name}", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this@PlayerActivity, "Nguồn ${server.source.displayName} chưa sẵn sàng, đang giữ nguồn hiện tại", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     // ================= CHUYỂN TỈ LỆ MÀN HÌNH =================
@@ -890,6 +944,23 @@ class PlayerActivity : AppCompatActivity() {
                                 Toast.LENGTH_SHORT
                             ).show()
                             handler.postDelayed({ player?.prepare() }, 2000L * streamRetries)
+                        } else if (!isIptvMode && sportsFailoverCount < 3) {
+                            sportsFailoverCount++
+                            val nextSource = when (currentSportsSource) {
+                                com.kenhlive.tv.sports.SportsSource.SOCOLIVE -> com.kenhlive.tv.sports.SportsSource.COLATV
+                                com.kenhlive.tv.sports.SportsSource.COLATV -> com.kenhlive.tv.sports.SportsSource.GAVANG
+                                com.kenhlive.tv.sports.SportsSource.GAVANG -> com.kenhlive.tv.sports.SportsSource.KHANDAI
+                                com.kenhlive.tv.sports.SportsSource.KHANDAI -> com.kenhlive.tv.sports.SportsSource.SOCOLIVE
+                            }
+                            val cleanRoom = com.kenhlive.tv.sports.SportsSource.extractRealRoomNum(currentRoomNum)
+                            val targetRoom = when (nextSource) {
+                                com.kenhlive.tv.sports.SportsSource.COLATV -> "cola_$cleanRoom"
+                                com.kenhlive.tv.sports.SportsSource.GAVANG -> "gavang_$cleanRoom"
+                                com.kenhlive.tv.sports.SportsSource.KHANDAI -> "khandai_$cleanRoom"
+                                com.kenhlive.tv.sports.SportsSource.SOCOLIVE -> cleanRoom
+                            }
+                            Toast.makeText(this@PlayerActivity, "Tự động đổi sang máy chủ ${nextSource.displayName}...", Toast.LENGTH_SHORT).show()
+                            switchSportsServer(com.kenhlive.tv.sports.SportsServer(nextSource, nextSource.displayName, targetRoom))
                         } else {
                             val msg = if (isNet) getString(R.string.player_net_error)
                             else getString(R.string.player_stream_error, error.errorCodeName)
@@ -900,6 +971,7 @@ class PlayerActivity : AppCompatActivity() {
                     override fun onPlaybackStateChanged(state: Int) {
                         if (state == Player.STATE_READY) {
                             streamRetries = 0
+                            sportsFailoverCount = 0
                             handler.removeCallbacks(autoRecoveryRunnable)
                         }
                         if (state == Player.STATE_BUFFERING) {
