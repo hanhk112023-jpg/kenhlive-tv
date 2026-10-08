@@ -92,7 +92,7 @@ class AIBrain:
             self.provider_active = "LOCAL_REFLEX"
         print(f"🧠 [AI Brain] Khởi tạo thành công với engine: {self.provider_active}", flush=True)
 
-    def chat_vision(self, prompt, image_bytes=None, system_prompt=None, max_tokens=1500, timeout=35):
+    def chat_vision(self, prompt, image_bytes=None, system_prompt=None, max_tokens=3000, timeout=45):
         """Gửi prompt kèm hình ảnh đến model AI và nhận câu trả lời."""
         # 1. Thử Antigravity Gateway
         if self.provider_active == "ANTIGRAVITY":
@@ -187,9 +187,14 @@ class AIBrain:
 
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             data = json.loads(resp.read().decode("utf-8"))
-            choice = data["choices"][0]
-            content = choice["message"].get("content", "").strip()
-            return content
+            choices = data.get("choices") or []
+            if not choices:
+                return ""
+            msg = choices[0].get("message") or {}
+            raw = msg.get("content") or msg.get("reasoning_content") or ""
+            if not isinstance(raw, str):
+                raw = str(raw) if raw is not None else ""
+            return raw.strip()
 
     def _compress_and_b64(self, png_bytes):
         if not png_bytes or not Image:

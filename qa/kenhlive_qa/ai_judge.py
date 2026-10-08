@@ -33,7 +33,10 @@ def _post(url, key, payload, timeout):
             if attempt == 2: raise
             time.sleep(2 * (attempt + 1))
             continue
-        return (r['choices'][0]['message'].get('content') or '').strip()
+        choice = (r.get("choices") or [{}])[0]
+        msg = choice.get("message") or {}
+        raw = msg.get("content") or msg.get("reasoning_content") or ""
+        return str(raw).strip()
     return ''
 
 def _chat(prompt, imgs=None, max_tokens=1500, temperature=0.1, timeout=30):
