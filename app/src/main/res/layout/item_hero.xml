@@ -70,177 +70,294 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- CONTENT ANCHOR (Đáy Hero: Badge, Title lớn, BLV, CTA Buttons) -->
+    <!-- CONTENT ANCHOR (2-Column Balanced Layout on TV - Apple TV / Stitch Spec) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:orientation="vertical"
+        android:orientation="horizontal"
         android:gravity="bottom"
         android:paddingLeft="@dimen/sp_screen_margin"
         android:paddingRight="@dimen/sp_screen_margin"
         android:paddingBottom="@dimen/hero_pad_b">
 
-        <!-- Header Row: LIVE badge RED + Tournament/League Cyan + Viewers -->
+        <!-- CỘT TRÁI: Trận đấu tâm điểm, tỷ số & Nút hành động -->
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
+            android:layout_weight="1.3"
+            android:orientation="vertical"
+            android:layout_marginRight="24dp">
 
-            <TextView
-                android:id="@+id/heroLiveBadge"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="● LIVE"
-                android:textColor="#FFFFFF"
-                android:textStyle="bold"
-                android:textSize="11sp"
-                android:letterSpacing="0.06"
-                android:background="@drawable/bg_badge_live_red"
-                android:paddingLeft="8dp"
-                android:paddingRight="8dp"
-                android:paddingTop="3dp"
-                android:paddingBottom="3dp" />
-
-            <TextView
-                android:id="@+id/heroLeague"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="8dp"
-                android:background="@drawable/bg_badge_league_cyan"
-                android:textColor="@color/kl_brand"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.04"
-                android:paddingLeft="9dp"
-                android:paddingRight="9dp"
-                android:paddingTop="3dp"
-                android:paddingBottom="3dp"
-                android:maxWidth="320dp"
-                android:ellipsize="end" />
-
-            <TextView
-                android:id="@+id/heroViewers"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="8dp"
-                android:background="@drawable/bg_score_pill"
-                android:drawableLeft="@drawable/ic_eye"
-                android:drawablePadding="6dp"
-                android:paddingLeft="10dp"
-                android:paddingRight="10dp"
-                android:paddingTop="3dp"
-                android:paddingBottom="3dp"
-                android:textColor="@color/kl_amber"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:fontFamily="@font/oswald" />
-        </LinearLayout>
-
-        <!-- Match Title: Đậm, to rõ phong cách Netflix Showcase -->
-        <TextView
-            android:id="@+id/heroTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:layout_marginRight="40dp"
-            android:includeFontPadding="false"
-            android:maxLines="2"
-            android:breakStrategy="simple"
-            android:hyphenationFrequency="none"
-            android:ellipsize="end"
-            android:textColor="#FFFFFF"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:shadowColor="#FF000000"
-            android:shadowDy="3"
-            android:shadowRadius="12" />
-
-        <!-- Commentator / Description Subtitle -->
-        <TextView
-            android:id="@+id/heroBlv"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:layout_marginRight="40dp"
-            android:maxLines="1"
-            android:ellipsize="end"
-            android:textColor="@color/kl_text_2"
-            android:textSize="14sp"
-            android:shadowColor="#E6000000"
-            android:shadowDy="2"
-            android:shadowRadius="8" />
-
-        <!-- CTA Buttons: Apple TV Minimalist Focusable Pills -->
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            android:orientation="horizontal"
-            android:gravity="center_vertical">
-
-            <!-- Primary CTA: Xem ngay (Apple TV Primary Pill) -->
+            <!-- Header Row: LIVE badge RED + Tournament/League Cyan + Viewers -->
             <LinearLayout
-                android:id="@+id/heroPlay"
-                android:tag="kl_focus_first"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:background="@drawable/bg_hero_btn_watch"
-                android:paddingLeft="22dp"
-                android:paddingRight="22dp"
-                android:paddingTop="9dp"
-                android:paddingBottom="9dp"
-                android:clickable="true"
-                android:focusable="true">
-
-                <ImageView
-                    android:layout_width="14dp"
-                    android:layout_height="14dp"
-                    android:src="@drawable/ic_play"
-                    android:contentDescription="@string/cd_play" />
+                android:gravity="center_vertical">
 
                 <TextView
+                    android:id="@+id/heroLiveBadge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="● TRỰC TIẾP"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold"
+                    android:textSize="11sp"
+                    android:letterSpacing="0.06"
+                    android:background="@drawable/bg_badge_live_red"
+                    android:paddingLeft="9dp"
+                    android:paddingRight="9dp"
+                    android:paddingTop="3dp"
+                    android:paddingBottom="3dp" />
+
+                <TextView
+                    android:id="@+id/heroLeague"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginLeft="8dp"
-                    android:text="Xem ngay"
+                    android:background="@drawable/bg_badge_league_cyan"
+                    android:textColor="@color/kl_brand"
+                    android:textSize="11sp"
                     android:textStyle="bold"
-                    android:textSize="13sp"
-                    android:textColor="#FFFFFF" />
+                    android:letterSpacing="0.04"
+                    android:paddingLeft="9dp"
+                    android:paddingRight="9dp"
+                    android:paddingTop="3dp"
+                    android:paddingBottom="3dp"
+                    android:maxWidth="320dp"
+                    android:ellipsize="end" />
+
+                <TextView
+                    android:id="@+id/heroViewers"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="8dp"
+                    android:background="@drawable/bg_score_pill"
+                    android:drawableLeft="@drawable/ic_eye"
+                    android:drawablePadding="6dp"
+                    android:paddingLeft="10dp"
+                    android:paddingRight="10dp"
+                    android:paddingTop="3dp"
+                    android:paddingBottom="3dp"
+                    android:textColor="@color/kl_amber"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/oswald" />
             </LinearLayout>
 
-            <!-- Secondary CTA: Chi tiết (Apple TV Secondary Dark Pill) -->
+            <!-- Match Title: Đậm, to rõ phong cách Netflix Showcase -->
+            <TextView
+                android:id="@+id/heroTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:includeFontPadding="false"
+                android:maxLines="2"
+                android:breakStrategy="simple"
+                android:hyphenationFrequency="none"
+                android:ellipsize="end"
+                android:textColor="#FFFFFF"
+                android:textSize="23sp"
+                android:textStyle="bold"
+                android:shadowColor="#FF000000"
+                android:shadowDy="3"
+                android:shadowRadius="12" />
+
+            <!-- Commentator / Description Subtitle -->
+            <TextView
+                android:id="@+id/heroBlv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:maxLines="1"
+                android:ellipsize="end"
+                android:textColor="@color/kl_text_2"
+                android:textSize="14sp"
+                android:shadowColor="#E6000000"
+                android:shadowDy="2"
+                android:shadowRadius="8" />
+
+            <!-- CTA Buttons: Apple TV Minimalist Focusable Pills -->
             <LinearLayout
-                android:id="@+id/heroDetails"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="12dp"
+                android:layout_marginTop="14dp"
                 android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:background="@drawable/bg_hero_btn_details"
-                android:paddingLeft="20dp"
-                android:paddingRight="20dp"
-                android:paddingTop="9dp"
-                android:paddingBottom="9dp"
-                android:clickable="true"
-                android:focusable="true">
+                android:gravity="center_vertical">
 
-                <ImageView
-                    android:layout_width="14dp"
-                    android:layout_height="14dp"
-                    android:src="@drawable/ic_info"
-                    android:contentDescription="Chi tiết" />
+                <!-- Primary CTA: [OK] Xem ngay -->
+                <LinearLayout
+                    android:id="@+id/heroPlay"
+                    android:tag="kl_focus_first"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_hero_btn_watch"
+                    android:paddingLeft="20dp"
+                    android:paddingRight="20dp"
+                    android:paddingTop="9dp"
+                    android:paddingBottom="9dp"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/ic_play"
+                        android:contentDescription="@string/cd_play" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="8dp"
+                        android:text="[OK] Xem ngay"
+                        android:textStyle="bold"
+                        android:textSize="13sp"
+                        android:textColor="#FFFFFF" />
+                </LinearLayout>
+
+                <!-- Secondary CTA: [MENU] Chi tiết / Đổi luồng -->
+                <LinearLayout
+                    android:id="@+id/heroDetails"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="12dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_hero_btn_details"
+                    android:paddingLeft="18dp"
+                    android:paddingRight="18dp"
+                    android:paddingTop="9dp"
+                    android:paddingBottom="9dp"
+                    android:clickable="true"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:src="@drawable/ic_info"
+                        android:contentDescription="Chi tiết" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="7dp"
+                        android:text="[MENU] Đổi Luồng"
+                        android:textSize="13sp"
+                        android:textColor="#FFFFFF" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- CỘT PHẢI: Thẻ Thống Kê Kính Mờ Live Match Stats (Apple TV / Stitch Glassmorphism) -->
+        <LinearLayout
+            android:id="@+id/heroStatsCard"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="0.7"
+            android:orientation="vertical"
+            android:background="@drawable/bg_hero_stats_card"
+            android:padding="14dp"
+            android:layout_marginBottom="4dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="📊 THỐNG KÊ TRẬN ĐẤU"
+                    android:textColor="#FFFFFF"
+                    android:textStyle="bold"
+                    android:textSize="12sp"
+                    android:letterSpacing="0.04" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="7dp"
-                    android:text="Chi tiết"
-                    android:textSize="13sp"
-                    android:textColor="#FFFFFF" />
+                    android:text="● Live Stats"
+                    android:textColor="#4EDEA3"
+                    android:textStyle="bold"
+                    android:textSize="10sp" />
             </LinearLayout>
+
+            <TextView
+                android:id="@+id/heroPossessionLabel"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Kiểm soát bóng (Dự kiến)"
+                android:textColor="#9CA3AF"
+                android:textSize="11sp" />
+
+            <!-- Thanh tỉ lệ kiểm soát bóng 52% - 48% -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="3dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="52%"
+                    android:textColor="#FF6500"
+                    android:textStyle="bold"
+                    android:textSize="11sp" />
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="6dp"
+                    android:layout_weight="1"
+                    android:layout_marginLeft="6dp"
+                    android:layout_marginRight="6dp"
+                    android:orientation="horizontal">
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="52"
+                        android:background="#FF6500" />
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="48"
+                        android:background="#3B82F6" />
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="48%"
+                    android:textColor="#3B82F6"
+                    android:textStyle="bold"
+                    android:textSize="11sp" />
+            </LinearLayout>
+
+            <!-- Tín hiệu & Độ trễ -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="⚡ Luồng phát tốc độ cao · Độ trễ siêu thấp 0.8s"
+                android:textColor="#4EDEA3"
+                android:textSize="11sp" />
+
+            <TextView
+                android:id="@+id/heroStatsFooter"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="🏟️ Sân vận động quốc tế • 4K HDR 60FPS"
+                android:textColor="#9CA3AF"
+                android:textSize="10sp" />
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>

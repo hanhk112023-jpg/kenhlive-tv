@@ -108,6 +108,9 @@ class HeroPagerAdapter(
         val clockText: TextView? = v.findViewById(R.id.heroClockText)
         val solarDate: TextView? = v.findViewById(R.id.heroSolarDate)
         val lunarDate: TextView? = v.findViewById(R.id.heroLunarDate)
+        val statsCard: View? = v.findViewById(R.id.heroStatsCard)
+        val possessionLabel: TextView? = v.findViewById(R.id.heroPossessionLabel)
+        val statsFooter: TextView? = v.findViewById(R.id.heroStatsFooter)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HV =
@@ -137,6 +140,22 @@ class HeroPagerAdapter(
         h.clockText?.text = LunarCalendar.formatTime()
         h.solarDate?.text = LunarCalendar.formatSolarDate()
         h.lunarDate?.text = LunarCalendar.formatLunarDate()
+
+        // Thẻ Thống Kê Trận Đấu Kính Mờ (Chuẩn Leanback Android TV)
+        if (DeviceMode.isTv) {
+            h.statsCard?.visibility = View.VISIBLE
+            if (g.matchTitle.contains(" vs ", ignoreCase = true)) {
+                val parts = g.matchTitle.split(" vs ", ignoreCase = true)
+                h.possessionLabel?.text = "Kiểm soát: ${parts.getOrNull(0)?.trim()} vs ${parts.getOrNull(1)?.trim()}"
+            } else {
+                h.possessionLabel?.text = "Kiểm soát bóng (Dự kiến)"
+            }
+            if (top.notice.isNotBlank()) {
+                h.statsFooter?.text = "🏟️ ${top.notice}"
+            }
+        } else {
+            h.statsCard?.visibility = View.GONE
+        }
 
         val imgSrc = top.cover.ifBlank { top.avatar }
         h.cover.load(imgSrc) {
