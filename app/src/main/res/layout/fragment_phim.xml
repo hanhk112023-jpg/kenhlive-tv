@@ -1,63 +1,81 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:background="@color/kl_bg_deep">
 
-    <!-- Phim Content Nested Scroll or Vertical RecyclerView -->
+    <!-- Apple Filter Pills Bar (Horizontal) -->
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/phimMainList"
+        android:id="@+id/phimFilterList"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="46dp"
+        android:paddingLeft="16dp"
+        android:paddingRight="16dp"
+        android:paddingTop="6dp"
+        android:paddingBottom="6dp"
         android:clipToPadding="false"
-        android:paddingBottom="40dp"
         android:scrollbars="none" />
 
-    <!-- Loading Bar -->
-    <ProgressBar
-        android:id="@+id/phimLoading"
-        style="?android:attr/progressBarStyleLarge"
-        android:layout_width="48dp"
-        android:layout_height="48dp"
-        android:layout_gravity="center"
-        android:indeterminate="true"
-        android:visibility="gone" />
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
 
-    <!-- Error State Container -->
-    <LinearLayout
-        android:id="@+id/phimErrorLayout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:orientation="vertical"
-        android:gravity="center"
-        android:visibility="gone">
+        <!-- Phim Content Nested Scroll or Vertical RecyclerView -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/phimMainList"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="40dp"
+            android:scrollbars="none" />
 
-        <TextView
-            style="@style/KL.Text.Section"
+        <!-- Loading Bar -->
+        <ProgressBar
+            android:id="@+id/phimLoading"
+            style="?android:attr/progressBarStyleLarge"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
+            android:layout_gravity="center"
+            android:indeterminate="true"
+            android:visibility="gone" />
+
+        <!-- Error State Container -->
+        <LinearLayout
+            android:id="@+id/phimErrorLayout"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Không thể tải kho phim"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp" />
+            android:layout_gravity="center"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:visibility="gone">
 
-        <TextView
-            style="@style/KL.Text.Meta"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:text="Kiểm tra kết nối mạng hoặc thử lại sau"
-            android:textColor="@color/kl_text_3"
-            android:textSize="12sp" />
+            <TextView
+                style="@style/KL.Text.Section"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Không thể tải kho phim"
+                android:textColor="#FFFFFF"
+                android:textSize="16sp" />
 
-        <Button
-            android:id="@+id/btnPhimRetry"
-            style="@style/KL.Button.Primary"
-            android:layout_width="wrap_content"
-            android:layout_height="38dp"
-            android:layout_marginTop="12dp"
-            android:text="Thử lại"
-            android:focusable="true" />
-    </LinearLayout>
+            <TextView
+                style="@style/KL.Text.Meta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="Kiểm tra kết nối mạng hoặc thử lại sau"
+                android:textColor="@color/kl_text_3"
+                android:textSize="12sp" />
 
-</FrameLayout>
+            <Button
+                android:id="@+id/btnPhimRetry"
+                style="@style/KL.Button.Primary"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:layout_marginTop="12dp"
+                android:text="Thử lại"
+                android:focusable="true" />
+        </LinearLayout>
+    </FrameLayout>
+</LinearLayout>

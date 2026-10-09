@@ -79,4 +79,21 @@
     <color name="black">#000000</color>
     <color name="white">#FFFFFF</color>
     <color name="cyan">#00E5FF</color>
+
+    <!-- Apple TV & iOS Glassmorphism Design Tokens -->
+    <color name="apple_dark_bg">#080B11</color>
+    <color name="apple_card_dark">#0E131E</color>
+    <color name="apple_card_frosted">#161D2B</color>
+    <color name="apple_glass_surface">#14FFFFFF</color>
+    <color name="apple_glass_border">#24FFFFFF</color>
+    <color name="apple_glass_border_focused">#B3FFFFFF</color>
+    <color name="apple_pill_bg">#181F2E</color>
+    <color name="apple_pill_border">#2C364A</color>
+    <color name="apple_accent_blue">#0A84FF</color>
+    <color name="apple_accent_orange">#FF9F0A</color>
+    <color name="apple_accent_cyan">#64D2FF</color>
+    <color name="apple_accent_purple">#BF5AF2</color>
+    <color name="apple_text_primary">#F8FAFC</color>
+    <color name="apple_text_secondary">#94A3B8</color>
+    <color name="apple_text_tertiary">#64748B</color>
 </resources>

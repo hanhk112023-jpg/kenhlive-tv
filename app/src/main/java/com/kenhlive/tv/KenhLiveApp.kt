@@ -33,6 +33,7 @@ class KenhLiveApp : Application(), ImageLoaderFactory {
         app = this
         DeviceMode.init(this)
         Http.init(this)
+        com.kenhlive.tv.phim.WatchHistoryManager.init(this)
     }
 
     override fun newImageLoader(): ImageLoader =
@@ -51,4 +52,16 @@ class KenhLiveApp : Application(), ImageLoaderFactory {
                     .build()
             }
             .build()
+
+    override fun onTrimMemory(level: Int) {
+        super.onTrimMemory(level)
+        if (level >= TRIM_MEMORY_MODERATE) {
+            coil.Coil.imageLoader(this).memoryCache?.clear()
+        }
+    }
+
+    override fun onLowMemory() {
+        super.onLowMemory()
+        coil.Coil.imageLoader(this).memoryCache?.clear()
+    }
 }

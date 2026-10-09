@@ -44,6 +44,40 @@ object FocusKit {
         }
     }
 
+    /** Áp dụng tương tác chuẩn Apple (TV: Focus scale 1.06x + elevation; Mobile: Touch spring 0.96x). */
+    fun applyAppleInteraction(view: View, tvScale: Float = 1.06f, phoneScale: Float = 0.96f) {
+        if (com.kenhlive.tv.DeviceMode.isTv) {
+            view.isFocusable = true
+            view.isClickable = true
+            view.setOnFocusChangeListener { v, hasFocus ->
+                v.animate().cancel()
+                v.animate()
+                    .scaleX(if (hasFocus) tvScale else 1f)
+                    .scaleY(if (hasFocus) tvScale else 1f)
+                    .setDuration(140)
+                    .setInterpolator(DecelerateInterpolator())
+                    .start()
+                v.elevation = if (hasFocus) 12f else 0f
+            }
+        } else {
+            view.isFocusable = false
+            view.setOnTouchListener { v, event ->
+                when (event.action) {
+                    android.view.MotionEvent.ACTION_DOWN -> {
+                        v.animate().cancel()
+                        v.animate().scaleX(phoneScale).scaleY(phoneScale).setDuration(80).start()
+                    }
+                    android.view.MotionEvent.ACTION_UP,
+                    android.view.MotionEvent.ACTION_CANCEL -> {
+                        v.animate().cancel()
+                        v.animate().scaleX(1f).scaleY(1f).setDuration(140).start()
+                    }
+                }
+                false
+            }
+        }
+    }
+
     /** OnKeyListener cho card trong row ngang.
      * Khi idx == 0 và bấm LEFT: nuốt để giữ focus luôn ở mép trái của hàng, tránh văng focus.
      */

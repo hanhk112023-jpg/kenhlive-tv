@@ -21,15 +21,20 @@ import android.widget.ImageButton
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.lifecycleScope
 import com.kenhlive.tv.R
 import com.kenhlive.tv.ui.applyTvDensity
+import kotlinx.coroutines.launch
+import org.json.JSONObject
 
 /**
  * WebPlayerActivity — Trình phát phim web chuyên nghiệp cho Phim Nguồn C (StreamC embed):
- * - Hỗ trợ WebView tăng tốc phần cứng, giải mã JWPlayer & HTML5 video
- * - Tự động thiết lập Referer https://phim.nguonc.com/ và Chrome User-Agent
- * - Điều khiển thân thiện chuẩn Android TV (D-pad Center = Play/Pause, OSD tự ẩn sau 3.5s)
- * - Toàn màn hình Immersive Mode, chống tắt màn hình khi xem phim
+ * - Hỗ trợ WebView tăng tốc phần cứng, giải mã JWPlayer & HTML5 video.
+ * - Tự động thiết lập Referer https://phim.nguonc.com/ và Chrome User-Agent chuẩn.
+ * - TỰ ĐỘNG LƯU TIẾN ĐỘ XEM: Theo dõi vị trí mili-giây và lưu vào WatchHistoryManager.
+ * - TỰ ĐỘNG TIẾP TỤC XEM: Tua ngay đến giây đã xem dở lần trước khi mở lại.
+ * - Điều khiển thân thiện chuẩn Android TV & Mobile (D-pad Center = Play/Pause, OSD tự ẩn sau 3.5s).
+ * - Toàn màn hình Immersive Mode, chống tắt màn hình khi xem phim.
  */
 class WebPlayerActivity : AppCompatActivity() {
 
@@ -51,8 +56,24 @@ class WebPlayerActivity : AppCompatActivity() {
     }
 
     private var embedUrl: String = ""
+    private var filmSlug: String = ""
     private var filmTitle: String = ""
+    private var episodeSlug: String = ""
     private var episodeTitle: String = ""
+    private var posterUrl: String = ""
+    private var startPositionMs: Long = 0L
+
+    private var currentPositionMs: Long = 0L
+    private var currentDurationMs: Long = 0L
+    private var hasSeekedToStart: Boolean = false
+
+    // Vòng lặp định kỳ thăm dò tiến độ xem phim mỗi 3 giây
+    private val progressTrackerRunnable = object : Runnable {
+        override fun run() {
+            queryPlaybackPosition()
+            handler.postDelayed(this, 3000L)
+        }
+    }
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,8 +86,12 @@ class WebPlayerActivity : AppCompatActivity() {
         setContentView(R.layout.activity_web_player)
 
         embedUrl = intent.getStringExtra("embed_url").orEmpty()
+        filmSlug = intent.getStringExtra("film_slug").orEmpty()
         filmTitle = intent.getStringExtra("film_title") ?: "Phim Nguồn C"
+        episodeSlug = intent.getStringExtra("episode_slug").orEmpty()
         episodeTitle = intent.getStringExtra("episode_title") ?: "Tập 1"
+        posterUrl = intent.getStringExtra("poster_url").orEmpty()
+        startPositionMs = intent.getLongExtra("start_position_ms", 0L)
 
         webView = findViewById(R.id.webViewPlayer)
         loadingBar = findViewById(R.id.playerLoading)
@@ -79,6 +104,7 @@ class WebPlayerActivity : AppCompatActivity() {
         tvEpisodeTitle.text = episodeTitle
 
         findViewById<ImageButton>(R.id.btnBack).setOnClickListener {
+            saveCurrentProgress()
             finish()
         }
 
@@ -91,6 +117,7 @@ class WebPlayerActivity : AppCompatActivity() {
                 "Origin" to "https://phim.nguonc.com"
             )
             webView.loadUrl(embedUrl, extraHeaders)
+            handler.postDelayed(progressTrackerRunnable, 4000L)
         } else {
             finish()
         }
@@ -140,7 +167,8 @@ class WebPlayerActivity : AppCompatActivity() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 loadingBar.visibility = View.GONE
-                // Tự động kích hoạt play và enter fullscreen trên video HTML5 nếu có
+
+                // 1. Kích hoạt Autoplay
                 val autoPlayJs = """
                     (function() {
                         var v = document.querySelector('video');
@@ -153,6 +181,34 @@ class WebPlayerActivity : AppCompatActivity() {
                     })();
                 """.trimIndent()
                 view?.evaluateJavascript(autoPlayJs, null)
+
+                // 2. Tự động tua đến giây đã lưu nếu có tiến độ trước đó
+                if (startPositionMs > 1000L && !hasSeekedToStart) {
+                    val targetSec = startPositionMs / 1000.0
+                    val seekJs = """
+                        (function() {
+                            var v = document.querySelector('video');
+                            if (v && v.duration > 0) {
+                                v.currentTime = $targetSec;
+                                return 'SEEKED_VIDEO';
+                            }
+                            if (window.jwplayer && typeof window.jwplayer === 'function') {
+                                try {
+                                    window.jwplayer().seek($targetSec);
+                                    return 'SEEKED_JW';
+                                } catch(e){}
+                            }
+                            return 'WAITING';
+                        })();
+                    """.trimIndent()
+                    handler.postDelayed({
+                        view?.evaluateJavascript(seekJs) { res ->
+                            if (res != null && res.contains("SEEKED")) {
+                                hasSeekedToStart = true
+                            }
+                        }
+                    }, 2500L)
+                }
             }
 
             override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: android.webkit.WebResourceError?) {
@@ -200,6 +256,78 @@ class WebPlayerActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * Truy vấn vị trí phát hiện tại từ player trong web.
+     */
+    private fun queryPlaybackPosition() {
+        val queryJs = """
+            (function() {
+                var v = document.querySelector('video');
+                if (v && v.duration > 0) {
+                    return JSON.stringify({
+                        pos: Math.floor(v.currentTime * 1000),
+                        dur: Math.floor(v.duration * 1000),
+                        paused: v.paused
+                    });
+                }
+                if (window.jwplayer && typeof window.jwplayer === 'function') {
+                    try {
+                        var p = window.jwplayer();
+                        var pos = Math.floor(p.getPosition() * 1000);
+                        var dur = Math.floor(p.getDuration() * 1000);
+                        if (dur > 0) {
+                            return JSON.stringify({
+                                pos: pos,
+                                dur: dur,
+                                paused: p.getState() === 'paused'
+                            });
+                        }
+                    } catch(e){}
+                }
+                return '';
+            })();
+        """.trimIndent()
+
+        webView.evaluateJavascript(queryJs) { rawJson ->
+            if (rawJson != null && rawJson != "null" && rawJson.length > 4) {
+                try {
+                    // Loại bỏ escape ký tự nếu có
+                    val cleanJson = if (rawJson.startsWith("\"") && rawJson.endsWith("\"")) {
+                        rawJson.substring(1, rawJson.length - 1).replace("\\\"", "\"")
+                    } else rawJson
+
+                    val obj = JSONObject(cleanJson)
+                    val pos = obj.optLong("pos", 0L)
+                    val dur = obj.optLong("dur", 0L)
+
+                    if (pos > 0) currentPositionMs = pos
+                    if (dur > 0) currentDurationMs = dur
+
+                    // Tự động lưu tiến độ vào cơ sở dữ liệu
+                    if (filmSlug.isNotBlank() && currentPositionMs > 5000L) {
+                        saveCurrentProgress()
+                    }
+                } catch (_: Exception) {}
+            }
+        }
+    }
+
+    private fun saveCurrentProgress() {
+        if (filmSlug.isBlank() || currentPositionMs <= 0L) return
+        lifecycleScope.launch {
+            WatchHistoryManager.saveProgress(
+                slug = filmSlug,
+                filmName = filmTitle,
+                posterUrl = posterUrl,
+                episodeName = episodeTitle,
+                episodeSlug = episodeSlug,
+                embedUrl = embedUrl,
+                positionMs = currentPositionMs,
+                durationMs = currentDurationMs
+            )
+        }
+    }
+
     private fun showOsd() {
         handler.removeCallbacks(hideOsdRunnable)
         topOsd.visibility = View.VISIBLE
@@ -239,6 +367,7 @@ class WebPlayerActivity : AppCompatActivity() {
                     """.trimIndent()
                     webView.evaluateJavascript(togglePlayJs, null)
                     showOsd()
+                    queryPlaybackPosition()
                     return true
                 }
                 KeyEvent.KEYCODE_BACK -> {
@@ -248,9 +377,11 @@ class WebPlayerActivity : AppCompatActivity() {
                     }
                     if (topOsd.visibility == View.VISIBLE) {
                         topOsd.visibility = View.GONE
+                        saveCurrentProgress()
                         finish()
                         return true
                     }
+                    saveCurrentProgress()
                 }
             }
         }
@@ -265,11 +396,14 @@ class WebPlayerActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
+        saveCurrentProgress()
         webView.onPause()
     }
 
     override fun onDestroy() {
         handler.removeCallbacks(hideOsdRunnable)
+        handler.removeCallbacks(progressTrackerRunnable)
+        saveCurrentProgress()
         webView.destroy()
         super.onDestroy()
     }

@@ -23,6 +23,7 @@ import kotlinx.coroutines.withContext
  * EpisodePickerDialog — Hộp thoại chọn tập phim Nguồn C chuẩn Android TV & Mobile:
  * - Hiển thị poster, thông tin phim, năm phát hành, chất lượng
  * - Tự động tải danh sách tập phim từ API hoặc Fallback cache
+ * - Tích hợp xem tiếp: Nhận diện tập đang xem dở và đánh dấu các tập đã xem
  * - Lưới tập phim trực quan, điều hướng D-pad remote TV mượt mà
  */
 object EpisodePickerDialog {
@@ -31,7 +32,7 @@ object EpisodePickerDialog {
         context: Context,
         scope: CoroutineScope,
         film: NguoncFilm,
-        onSelectEpisode: (film: NguoncFilm, episode: NguoncEpisodeItem) -> Unit
+        onSelectEpisode: (film: NguoncFilm, episode: NguoncEpisodeItem, startPosMs: Long) -> Unit
     ): AlertDialog {
         val view = LayoutInflater.from(context).inflate(R.layout.dialog_film_episodes, null)
         val ivPoster = view.findViewById<ImageView>(R.id.dialogFilmPoster)
@@ -83,16 +84,31 @@ object EpisodePickerDialog {
             val detail = withContext(Dispatchers.IO) {
                 NguoncRepository.fetchFilmDetail(film.slug, context)
             }
+            val progress = withContext(Dispatchers.IO) {
+                WatchHistoryManager.getProgressForFilm(film.slug)
+            }
 
             loading.visibility = View.GONE
             val allEpisodes = detail?.episodes?.flatMap { it.items } ?: emptyList()
 
             if (allEpisodes.isNotEmpty()) {
-                rvEpisodes.visibility = View.VISIBLE
-                rvEpisodes.adapter = EpisodeAdapter(allEpisodes) { item ->
-                    dialog.dismiss()
-                    onSelectEpisode(film, item)
+                val watchedSlugs = withContext(Dispatchers.IO) {
+                    allEpisodes.filter { ep ->
+                        WatchHistoryManager.isEpisodeWatched(film.slug, ep.slug)
+                    }.map { it.slug }.toSet()
                 }
+
+                rvEpisodes.visibility = View.VISIBLE
+                rvEpisodes.adapter = EpisodeAdapter(
+                    items = allEpisodes,
+                    currentEpSlug = progress?.episodeSlug,
+                    watchedEpSlugs = watchedSlugs,
+                    onClick = { item ->
+                        dialog.dismiss()
+                        val startPos = if (item.slug == progress?.episodeSlug) progress.positionMs else 0L
+                        onSelectEpisode(film, item, startPos)
+                    }
+                )
                 if (DeviceMode.isTv) {
                     rvEpisodes.post {
                         rvEpisodes.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
@@ -109,6 +125,8 @@ object EpisodePickerDialog {
 
     private class EpisodeAdapter(
         private val items: List<NguoncEpisodeItem>,
+        private val currentEpSlug: String?,
+        private val watchedEpSlugs: Set<String>,
         private val onClick: (NguoncEpisodeItem) -> Unit
     ) : RecyclerView.Adapter<EpisodeAdapter.VH>() {
 
@@ -123,8 +141,26 @@ object EpisodePickerDialog {
 
         override fun onBindViewHolder(holder: VH, position: Int) {
             val item = items[position]
-            val displayName = if (item.name.all { it.isDigit() }) "Tập ${item.name}" else item.name
-            holder.tv.text = displayName
+            val baseName = if (item.name.all { it.isDigit() }) "Tập ${item.name}" else item.name
+
+            val isCurrent = item.slug == currentEpSlug
+            val isWatched = watchedEpSlugs.contains(item.slug)
+
+            val displayLabel = when {
+                isCurrent -> "▶ $baseName"
+                isWatched -> "✓ $baseName"
+                else -> baseName
+            }
+
+            holder.tv.text = displayLabel
+            if (isCurrent) {
+                holder.tv.setTextColor(0xFFFF9F0A.toInt()) // Apple Orange highlight
+            } else if (isWatched) {
+                holder.tv.setTextColor(0xFF3DDC97.toInt()) // Green checked
+            } else {
+                holder.tv.setTextColor(0xFFE2E8F0.toInt())
+            }
+
             holder.tv.setOnClickListener {
                 onClick(item)
             }

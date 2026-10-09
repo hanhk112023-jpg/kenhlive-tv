@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="134dp"
-    android:layout_height="224dp"
+    android:layout_height="228dp"
     android:layout_marginRight="12dp"
     android:layout_marginBottom="8dp"
     android:orientation="vertical"
-    android:background="@drawable/bg_phim_card"
-    android:foreground="@drawable/fg_iptv_focus"
+    android:background="@drawable/sl_apple_card"
     android:focusable="true"
     android:clickable="true"
     android:clipToPadding="false"
-    android:padding="3dp">
+    android:padding="4dp">
 
     <!-- Poster with rounded corners & top badges -->
     <FrameLayout
@@ -25,7 +24,7 @@
             android:background="@drawable/thumb_round_bg"
             android:contentDescription="Poster phim" />
 
-        <!-- Top Right Quality Badge -->
+        <!-- Top Right Quality Badge (Apple frosted glass) -->
         <TextView
             android:id="@+id/phimQualityBadge"
             style="@style/KL.Text.Meta"
@@ -42,7 +41,7 @@
             android:textSize="9.5sp"
             android:textColor="#FFFFFF" />
 
-        <!-- Bottom Left Episode Badge (Gradient Scrim) -->
+        <!-- Bottom Left Episode Badge -->
         <TextView
             android:id="@+id/phimEpisodeBadge"
             style="@style/KL.Text.Meta"
@@ -57,7 +56,19 @@
             android:paddingBottom="3dp"
             android:text="Tập 1"
             android:textSize="10sp"
-            android:textColor="@color/kl_brand" />
+            android:textColor="@color/apple_accent_orange" />
+
+        <!-- Watch Progress Bar at Bottom of Poster (Apple style) -->
+        <ProgressBar
+            android:id="@+id/phimProgressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="3dp"
+            android:layout_gravity="bottom"
+            android:max="100"
+            android:progress="0"
+            android:progressDrawable="@drawable/bg_apple_progress"
+            android:visibility="gone" />
     </FrameLayout>
 
     <!-- Movie Title & Year / Language -->
@@ -73,7 +84,7 @@
         android:textStyle="bold"
         android:maxLines="1"
         android:ellipsize="end"
-        android:textColor="#FFFFFF" />
+        android:textColor="@color/apple_text_primary" />
 
     <TextView
         android:id="@+id/phimMeta"
@@ -86,6 +97,6 @@
         android:textSize="11sp"
         android:maxLines="1"
         android:ellipsize="end"
-        android:textColor="@color/kl_text_3" />
+        android:textColor="@color/apple_text_secondary" />
 
 </LinearLayout>
