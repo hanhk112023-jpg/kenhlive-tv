@@ -54,6 +54,7 @@ class PhimFragment : Fragment() {
     // Danh sách bộ lọc Apple Pills
     private val filterCategories = listOf(
         "tat-ca" to "🔥 Tất Cả",
+        "da-luu" to "⭐ Đã Lưu",
         "phim-moi" to "✨ Mới Nhất",
         "phim-bo" to "🎬 Phim Bộ",
         "phim-le" to "🍿 Phim Lẻ",
@@ -139,8 +140,23 @@ class PhimFragment : Fragment() {
                         openFilmDialog(film)
                     }
                 },
-                onHeroPlay = { film -> openHeroPlay(film) }
+                onHeroPlay = { film -> openHeroPlay(film) },
+                onFavoriteToggle = { film -> toggleFilmFavorite(film) }
             )
+        }
+    }
+
+    private fun toggleFilmFavorite(film: NguoncFilm) {
+        viewLifecycleOwner.lifecycleScope.launch {
+            val nowFav = withContext(Dispatchers.IO) { WatchHistoryManager.toggleFavorite(film) }
+            android.widget.Toast.makeText(
+                requireContext(),
+                if (nowFav) "Đã lưu \"${film.name}\" vào danh sách yêu thích" else "Đã bỏ lưu \"${film.name}\"",
+                android.widget.Toast.LENGTH_SHORT
+            ).show()
+            if (selectedCategorySlug == "da-luu" || selectedCategorySlug == "tat-ca") {
+                loadFilmsByCategory(selectedCategorySlug)
+            }
         }
     }
 
@@ -149,9 +165,12 @@ class PhimFragment : Fragment() {
         errorLayout.visibility = View.GONE
 
         viewLifecycleOwner.lifecycleScope.launch {
-            // Lấy danh sách lịch sử tiếp tục xem
+            // Lấy danh sách lịch sử tiếp tục xem và danh sách phim đã lưu
             val history = withContext(Dispatchers.IO) {
                 WatchHistoryManager.getContinueWatchingList(15)
+            }
+            val favorites = withContext(Dispatchers.IO) {
+                WatchHistoryManager.getFavoriteFilms()
             }
 
             val builtSections = mutableListOf<PhimSection>()
@@ -171,7 +190,18 @@ class PhimFragment : Fragment() {
                 builtSections.add(PhimSection("⏱️  TIẾP TỤC XEM", historyFilms, isContinueWatching = true))
             }
 
-            if (categorySlug == "tat-ca") {
+            // 2. Section "Phim Đã Lưu" nếu người dùng đang ở tab Tất Cả
+            if (favorites.isNotEmpty() && categorySlug == "tat-ca") {
+                builtSections.add(PhimSection("⭐  PHIM ĐÃ LƯU (${favorites.size})", favorites))
+            }
+
+            if (categorySlug == "da-luu") {
+                // Người dùng bấm vào tab ⭐ Đã Lưu
+                if (favorites.isNotEmpty()) {
+                    heroFilm = favorites.firstOrNull { it.posterUrl.isNotBlank() } ?: favorites.firstOrNull()
+                    builtSections.add(PhimSection("⭐  DANH SÁCH PHIM ĐÃ LƯU (${favorites.size})", favorites))
+                }
+            } else if (categorySlug == "tat-ca") {
                 // NẠP ĐỒNG THỜI TOÀN BỘ CÁC DANH MỤC CÙNG LÚC (Full Parallel Loading)
                 val sectionsData = withContext(Dispatchers.IO) {
                     coroutineScope {
@@ -248,7 +278,8 @@ class PhimFragment : Fragment() {
                             openFilmDialog(film)
                         }
                     },
-                    onHeroPlay = { film -> openHeroPlay(film) }
+                    onHeroPlay = { film -> openHeroPlay(film) },
+                    onFavoriteToggle = { film -> toggleFilmFavorite(film) }
                 )
             } else {
                 mainList.visibility = View.GONE
@@ -371,7 +402,8 @@ class PhimFragment : Fragment() {
         private val hero: NguoncFilm?,
         private val sections: List<PhimSection>,
         private val onFilmClick: (NguoncFilm) -> Unit,
-        private val onHeroPlay: (NguoncFilm) -> Unit
+        private val onHeroPlay: (NguoncFilm) -> Unit,
+        private val onFavoriteToggle: (NguoncFilm) -> Unit
     ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         companion object {
@@ -395,11 +427,11 @@ class PhimFragment : Fragment() {
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             if (holder is HeroVH && hero != null) {
-                holder.bind(hero, onFilmClick, onHeroPlay)
+                holder.bind(hero, onFilmClick, onHeroPlay, onFavoriteToggle)
             } else if (holder is RowVH) {
                 val sectionIdx = if (hero != null) position - 1 else position
                 if (sectionIdx in sections.indices) {
-                    holder.bind(sections[sectionIdx], onFilmClick)
+                    holder.bind(sections[sectionIdx], onFilmClick, onFavoriteToggle)
                 }
             }
         }
@@ -415,8 +447,14 @@ class PhimFragment : Fragment() {
         val desc: TextView = v.findViewById(R.id.heroDesc)
         val btnPlay: Button = v.findViewById(R.id.btnHeroPlay)
         val btnEpisodes: Button = v.findViewById(R.id.btnHeroEpisodes)
+        val btnFavorite: Button = v.findViewById(R.id.btnHeroFavorite)
 
-        fun bind(film: NguoncFilm, onFilmClick: (NguoncFilm) -> Unit, onHeroPlay: (NguoncFilm) -> Unit) {
+        fun bind(
+            film: NguoncFilm,
+            onFilmClick: (NguoncFilm) -> Unit,
+            onHeroPlay: (NguoncFilm) -> Unit,
+            onFavoriteToggle: (NguoncFilm) -> Unit
+        ) {
             title.text = film.name
             year.text = film.year.ifBlank { "2026" }
             quality.text = "${film.quality} · ${film.language}"
@@ -433,11 +471,18 @@ class PhimFragment : Fragment() {
                 }
             }
 
+            (itemView.context as? androidx.appcompat.app.AppCompatActivity)?.lifecycleScope?.launch {
+                val isFav = withContext(Dispatchers.IO) { WatchHistoryManager.isFavorite(film.slug) }
+                btnFavorite.text = if (isFav) "⭐  ĐÃ LƯU" else "☆  LƯU PHIM"
+            }
+
             btnPlay.setOnClickListener { onHeroPlay(film) }
             btnEpisodes.setOnClickListener { onFilmClick(film) }
+            btnFavorite.setOnClickListener { onFavoriteToggle(film) }
 
             setupFocusAnimation(btnPlay)
             setupFocusAnimation(btnEpisodes)
+            setupFocusAnimation(btnFavorite)
         }
 
         private fun setupFocusAnimation(view: View) {
@@ -454,18 +499,23 @@ class PhimFragment : Fragment() {
         val count: TextView = v.findViewById(R.id.rowCount)
         val carousel: RecyclerView = v.findViewById(R.id.rowCarousel)
 
-        fun bind(section: PhimSection, onFilmClick: (NguoncFilm) -> Unit) {
+        fun bind(
+            section: PhimSection,
+            onFilmClick: (NguoncFilm) -> Unit,
+            onFavoriteToggle: (NguoncFilm) -> Unit
+        ) {
             title.text = section.title
             count.text = "${section.films.size} phim"
 
             carousel.layoutManager = LinearLayoutManager(itemView.context, LinearLayoutManager.HORIZONTAL, false)
-            carousel.adapter = PhimCardAdapter(section.films, onFilmClick)
+            carousel.adapter = PhimCardAdapter(section.films, onFilmClick, onFavoriteToggle)
         }
     }
 
     private class PhimCardAdapter(
         private val films: List<NguoncFilm>,
-        private val onFilmClick: (NguoncFilm) -> Unit
+        private val onFilmClick: (NguoncFilm) -> Unit,
+        private val onFavoriteToggle: (NguoncFilm) -> Unit
     ) : RecyclerView.Adapter<PhimCardAdapter.CardVH>() {
 
         class CardVH(v: View) : RecyclerView.ViewHolder(v) {
@@ -513,6 +563,11 @@ class PhimFragment : Fragment() {
 
             holder.itemView.setOnClickListener {
                 onFilmClick(film)
+            }
+
+            holder.itemView.setOnLongClickListener {
+                onFavoriteToggle(film)
+                true
             }
 
             // TV focus dynamics

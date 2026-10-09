@@ -134,6 +134,17 @@
                 android:text="DANH SÁCH TẬP"
                 android:textSize="12sp"
                 android:focusable="true" />
+
+            <Button
+                android:id="@+id/btnHeroFavorite"
+                style="@style/KL.Button.Ghost"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:layout_marginLeft="10dp"
+                android:text="☆  LƯU PHIM"
+                android:textColor="#FFD700"
+                android:textSize="12sp"
+                android:focusable="true" />
         </LinearLayout>
     </LinearLayout>
 

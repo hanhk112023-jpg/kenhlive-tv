@@ -51,6 +51,7 @@ object WatchHistoryManager {
 
     private const val TABLE_HISTORY = "watch_history"
     private const val TABLE_EPISODES = "watched_episodes"
+    private const val TABLE_FAVORITES = "favorite_films"
 
     private const val COL_SLUG = "slug"
     private const val COL_FILM_NAME = "film_name"
@@ -67,6 +68,10 @@ object WatchHistoryManager {
     private const val COL_EP_FILM_SLUG = "film_slug"
     private const val COL_EP_SLUG = "episode_slug"
     private const val COL_EP_WATCHED_AT = "watched_at"
+
+    private const val COL_FAV_YEAR = "year"
+    private const val COL_FAV_QUALITY = "quality"
+    private const val COL_FAV_ADDED_AT = "added_at"
 
     @Volatile
     private var dbHelper: DbHelper? = null
@@ -112,7 +117,21 @@ object WatchHistoryManager {
                 """.trimIndent()
             )
 
+            db.execSQL(
+                """
+                CREATE TABLE IF NOT EXISTS $TABLE_FAVORITES (
+                    $COL_SLUG TEXT PRIMARY KEY,
+                    $COL_FILM_NAME TEXT NOT NULL,
+                    $COL_POSTER_URL TEXT,
+                    $COL_FAV_YEAR TEXT,
+                    $COL_FAV_QUALITY TEXT,
+                    $COL_FAV_ADDED_AT INTEGER NOT NULL
+                )
+                """.trimIndent()
+            )
+
             db.execSQL("CREATE INDEX IF NOT EXISTS idx_history_time ON $TABLE_HISTORY ($COL_LAST_WATCHED_AT DESC)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_fav_time ON $TABLE_FAVORITES ($COL_FAV_ADDED_AT DESC)")
         }
 
         override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
@@ -305,6 +324,82 @@ object WatchHistoryManager {
             val db = helper.writableDatabase
             db.delete(TABLE_HISTORY, "$COL_SLUG = ?", arrayOf(slug))
         } catch (_: Exception) {}
+    }
+
+    // ================= PHIM YÊU THÍCH / ĐÃ LƯU (FAVORITES) =================
+
+    /**
+     * Kiểm tra phim đã được lưu vào danh sách yêu thích chưa.
+     */
+    suspend fun isFavorite(slug: String): Boolean = withContext(Dispatchers.IO) {
+        val helper = dbHelper ?: return@withContext false
+        try {
+            val db = helper.readableDatabase
+            val cursor = db.query(TABLE_FAVORITES, arrayOf(COL_SLUG), "$COL_SLUG = ?", arrayOf(slug), null, null, null, "1")
+            cursor.use { it.count > 0 }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /**
+     * Lưu hoặc bỏ lưu phim yêu thích. Trả về true nếu vừa thêm vào yêu thích, false nếu vừa xóa bỏ.
+     */
+    suspend fun toggleFavorite(film: NguoncFilm): Boolean = withContext(Dispatchers.IO) {
+        val helper = dbHelper ?: return@withContext false
+        try {
+            val db = helper.writableDatabase
+            if (isFavorite(film.slug)) {
+                db.delete(TABLE_FAVORITES, "$COL_SLUG = ?", arrayOf(film.slug))
+                false
+            } else {
+                val cv = ContentValues().apply {
+                    put(COL_SLUG, film.slug)
+                    put(COL_FILM_NAME, film.name)
+                    put(COL_POSTER_URL, film.posterUrl.ifBlank { film.thumbUrl })
+                    put(COL_FAV_YEAR, film.year)
+                    put(COL_FAV_QUALITY, film.quality)
+                    put(COL_FAV_ADDED_AT, System.currentTimeMillis())
+                }
+                db.insertWithOnConflict(TABLE_FAVORITES, null, cv, SQLiteDatabase.CONFLICT_REPLACE)
+                true
+            }
+        } catch (_: Exception) {
+            false
+        }
+    }
+
+    /**
+     * Lấy danh sách toàn bộ phim đã lưu (mới lưu nhất lên đầu).
+     */
+    suspend fun getFavoriteFilms(): List<NguoncFilm> = withContext(Dispatchers.IO) {
+        val helper = dbHelper ?: return@withContext emptyList()
+        val list = mutableListOf<NguoncFilm>()
+        try {
+            val db = helper.readableDatabase
+            val cursor = db.query(TABLE_FAVORITES, null, null, null, null, null, "$COL_FAV_ADDED_AT DESC")
+            cursor.use { c ->
+                val idxSlug = c.getColumnIndex(COL_SLUG)
+                val idxName = c.getColumnIndex(COL_FILM_NAME)
+                val idxPoster = c.getColumnIndex(COL_POSTER_URL)
+                val idxYear = c.getColumnIndex(COL_FAV_YEAR)
+                val idxQuality = c.getColumnIndex(COL_FAV_QUALITY)
+                while (c.moveToNext()) {
+                    val poster = c.getString(idxPoster).orEmpty()
+                    list.add(
+                        NguoncFilm(
+                            slug = c.getString(idxSlug),
+                            name = c.getString(idxName),
+                            posterUrl = poster,
+                            thumbUrl = poster,
+                            year = c.getString(idxYear).orEmpty(),
+                            quality = c.getString(idxQuality).orEmpty()
+                        )
+                    )
+                }
+            }
+        } catch (_: Exception) {}
+        list
     }
 
     /**

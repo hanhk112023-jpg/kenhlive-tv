@@ -57,6 +57,24 @@ object EpisodePickerDialog {
         val rvEpisodes = view.findViewById<RecyclerView>(R.id.dialogEpisodesGrid)
         val tvNoEpisodes = view.findViewById<TextView>(R.id.dialogNoEpisodes)
         val btnClose = view.findViewById<Button>(R.id.dialogBtnClose)
+        val btnFavorite = view.findViewById<Button>(R.id.dialogBtnFavorite)
+
+        scope.launch {
+            val isFav = withContext(Dispatchers.IO) { WatchHistoryManager.isFavorite(film.slug) }
+            btnFavorite.text = if (isFav) "⭐ Đã Lưu" else "☆ Lưu Phim"
+        }
+
+        btnFavorite.setOnClickListener {
+            scope.launch {
+                val nowFav = withContext(Dispatchers.IO) { WatchHistoryManager.toggleFavorite(film) }
+                btnFavorite.text = if (nowFav) "⭐ Đã Lưu" else "☆ Lưu Phim"
+                android.widget.Toast.makeText(
+                    context,
+                    if (nowFav) "Đã lưu \"${film.name}\" vào danh sách yêu thích" else "Đã bỏ lưu \"${film.name}\"",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
 
         tvTitle.text = film.name
         tvOrigTitle.text = film.originalName.ifBlank { film.categories.joinToString(" · ") }

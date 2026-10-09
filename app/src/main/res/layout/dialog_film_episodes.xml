@@ -155,6 +155,16 @@
         android:gravity="right">
 
         <Button
+            android:id="@+id/dialogBtnFavorite"
+            style="@style/KL.Button.Ghost"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginRight="10dp"
+            android:text="☆ Lưu Phim"
+            android:textColor="#FFD700"
+            android:focusable="true" />
+
+        <Button
             android:id="@+id/dialogBtnClose"
             style="@style/KL.Button.Ghost"
             android:layout_width="wrap_content"
