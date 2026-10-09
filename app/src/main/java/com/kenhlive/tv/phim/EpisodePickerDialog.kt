@@ -32,6 +32,17 @@ object EpisodePickerDialog {
         context: Context,
         scope: CoroutineScope,
         film: NguoncFilm,
+        onSelectEpisode: (film: NguoncFilm, episode: NguoncEpisodeItem) -> Unit
+    ): AlertDialog {
+        return show(context, scope, film) { f, ep, _ ->
+            onSelectEpisode(f, ep)
+        }
+    }
+
+    fun show(
+        context: Context,
+        scope: CoroutineScope,
+        film: NguoncFilm,
         onSelectEpisode: (film: NguoncFilm, episode: NguoncEpisodeItem, startPosMs: Long) -> Unit
     ): AlertDialog {
         val view = LayoutInflater.from(context).inflate(R.layout.dialog_film_episodes, null)

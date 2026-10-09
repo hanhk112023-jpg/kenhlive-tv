@@ -226,11 +226,15 @@ class SearchFragment : Fragment() {
             context = requireContext(),
             scope = viewLifecycleOwner.lifecycleScope,
             film = film,
-            onSelectEpisode = { f, ep ->
+            onSelectEpisode = { f, ep, startPos ->
                 val intent = Intent(requireContext(), WebPlayerActivity::class.java)
                     .putExtra("embed_url", ep.embed)
+                    .putExtra("film_slug", f.slug)
                     .putExtra("film_title", f.name)
+                    .putExtra("episode_slug", ep.slug)
                     .putExtra("episode_title", if (ep.name.all { it.isDigit() }) "Tập ${ep.name}" else ep.name)
+                    .putExtra("poster_url", f.posterUrl.ifBlank { f.thumbUrl })
+                    .putExtra("start_position_ms", startPos)
                 startActivity(intent)
                 (activity as? MainActivity)?.hideKeyboard()
             }
