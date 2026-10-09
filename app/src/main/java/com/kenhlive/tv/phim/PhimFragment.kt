@@ -44,6 +44,8 @@ class PhimFragment : Fragment() {
     private lateinit var mainList: RecyclerView
     private lateinit var loadingView: ProgressBar
     private lateinit var errorLayout: View
+    private lateinit var tvErrorTitle: TextView
+    private lateinit var tvErrorSub: TextView
     private lateinit var btnRetry: Button
 
     private var dialog: AlertDialog? = null
@@ -54,7 +56,7 @@ class PhimFragment : Fragment() {
     // Danh sách bộ lọc Apple Pills
     private val filterCategories = listOf(
         "tat-ca" to "🔥 Tất Cả",
-        "da-luu" to "⭐ Đã Lưu",
+        "da-luu" to "⭐ Tủ Phim & Tập",
         "phim-moi" to "✨ Mới Nhất",
         "phim-bo" to "🎬 Phim Bộ",
         "phim-le" to "🍿 Phim Lẻ",
@@ -74,6 +76,8 @@ class PhimFragment : Fragment() {
         mainList = v.findViewById(R.id.phimMainList)
         loadingView = v.findViewById(R.id.phimLoading)
         errorLayout = v.findViewById(R.id.phimErrorLayout)
+        tvErrorTitle = v.findViewById(R.id.tvPhimErrorTitle)
+        tvErrorSub = v.findViewById(R.id.tvPhimErrorSub)
         btnRetry = v.findViewById(R.id.btnPhimRetry)
 
         filterList.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
@@ -196,10 +200,52 @@ class PhimFragment : Fragment() {
             }
 
             if (categorySlug == "da-luu") {
-                // Người dùng bấm vào tab ⭐ Đã Lưu
+                // Người dùng bấm vào tab ⭐ Tủ Phim & Tập (Hiển thị cả Bộ phim đã lưu & Tập xem)
+                val completed = withContext(Dispatchers.IO) {
+                    WatchHistoryManager.getCompletedFilms(20)
+                }
+
+                heroFilm = favorites.firstOrNull { it.posterUrl.isNotBlank() }
+                    ?: (if (history.isNotEmpty()) {
+                        val h = history.first()
+                        NguoncFilm(
+                            name = h.filmName,
+                            slug = h.slug,
+                            posterUrl = h.posterUrl,
+                            thumbUrl = h.posterUrl,
+                            currentEpisode = h.episodeName,
+                            watchProgress = h
+                        )
+                    } else null)
+
                 if (favorites.isNotEmpty()) {
-                    heroFilm = favorites.firstOrNull { it.posterUrl.isNotBlank() } ?: favorites.firstOrNull()
-                    builtSections.add(PhimSection("⭐  DANH SÁCH PHIM ĐÃ LƯU (${favorites.size})", favorites))
+                    builtSections.add(PhimSection("⭐  BỘ PHIM ĐÃ LƯU (${favorites.size})", favorites))
+                }
+                if (history.isNotEmpty()) {
+                    val historyFilms = history.map { h ->
+                        NguoncFilm(
+                            name = h.filmName,
+                            slug = h.slug,
+                            posterUrl = h.posterUrl,
+                            thumbUrl = h.posterUrl,
+                            currentEpisode = h.episodeName,
+                            watchProgress = h
+                        )
+                    }
+                    builtSections.add(PhimSection("⏱️  TẬP PHIM ĐANG XEM DỞ (${historyFilms.size})", historyFilms, isContinueWatching = true))
+                }
+                if (completed.isNotEmpty()) {
+                    val completedFilms = completed.map { c ->
+                        NguoncFilm(
+                            name = c.filmName,
+                            slug = c.slug,
+                            posterUrl = c.posterUrl,
+                            thumbUrl = c.posterUrl,
+                            currentEpisode = c.episodeName,
+                            watchProgress = c
+                        )
+                    }
+                    builtSections.add(PhimSection("✅  TẬP PHIM ĐÃ XEM XONG (${completedFilms.size})", completedFilms))
                 }
             } else if (categorySlug == "tat-ca") {
                 // NẠP ĐỒNG THỜI TOÀN BỘ CÁC DANH MỤC CÙNG LÚC (Full Parallel Loading)
@@ -284,6 +330,26 @@ class PhimFragment : Fragment() {
             } else {
                 mainList.visibility = View.GONE
                 errorLayout.visibility = View.VISIBLE
+                if (categorySlug == "da-luu") {
+                    tvErrorTitle.text = "Tủ Phim & Tập Đang Trống"
+                    tvErrorSub.text = "Chưa có bộ phim hoặc tập phim nào được lưu.\nHãy nhấn '☆ Lưu Phim' hoặc xem bất kỳ phim nào để lưu vào đây!"
+                    btnRetry.text = "Khám phá kho phim"
+                    btnRetry.setOnClickListener {
+                        selectedCategorySlug = "tat-ca"
+                        filterList.adapter = FilterAdapter(filterCategories, selectedCategorySlug) { catSlug ->
+                            selectedCategorySlug = catSlug
+                            loadFilmsByCategory(catSlug)
+                        }
+                        loadFilmsByCategory("tat-ca")
+                    }
+                } else {
+                    tvErrorTitle.text = "Không thể tải kho phim"
+                    tvErrorSub.text = "Kiểm tra kết nối mạng hoặc thử lại sau"
+                    btnRetry.text = "Thử lại"
+                    btnRetry.setOnClickListener {
+                        loadFilmsByCategory(selectedCategorySlug)
+                    }
+                }
             }
         }
     }

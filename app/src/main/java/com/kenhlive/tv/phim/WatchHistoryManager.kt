@@ -343,9 +343,68 @@ object WatchHistoryManager {
     }
 
     /**
+     * Lấy danh sách các phim/tập đã xem xong (tiến độ >= 90%).
+     */
+    suspend fun getCompletedFilms(limit: Int = 15): List<WatchHistoryItem> =
+        withContext(Dispatchers.IO) {
+            val helper = dbHelper ?: return@withContext emptyList()
+            val list = mutableListOf<WatchHistoryItem>()
+            try {
+                val db = helper.readableDatabase
+                val cursor = db.query(
+                    TABLE_HISTORY,
+                    null,
+                    "$COL_IS_COMPLETED = 1",
+                    null,
+                    null,
+                    null,
+                    "$COL_LAST_WATCHED_AT DESC",
+                    limit.toString()
+                )
+                cursor.use { c ->
+                    val idxSlug = c.getColumnIndex(COL_SLUG)
+                    val idxName = c.getColumnIndex(COL_FILM_NAME)
+                    val idxPoster = c.getColumnIndex(COL_POSTER_URL)
+                    val idxEpName = c.getColumnIndex(COL_EPISODE_NAME)
+                    val idxEpSlug = c.getColumnIndex(COL_EPISODE_SLUG)
+                    val idxEmbed = c.getColumnIndex(COL_EMBED_URL)
+                    val idxPos = c.getColumnIndex(COL_POSITION_MS)
+                    val idxDur = c.getColumnIndex(COL_DURATION_MS)
+                    val idxPct = c.getColumnIndex(COL_PROGRESS_PCT)
+                    val idxTime = c.getColumnIndex(COL_LAST_WATCHED_AT)
+                    val idxComp = c.getColumnIndex(COL_IS_COMPLETED)
+
+                    while (c.moveToNext()) {
+                        list.add(
+                            WatchHistoryItem(
+                                slug = c.getString(idxSlug),
+                                filmName = c.getString(idxName),
+                                posterUrl = c.getString(idxPoster).orEmpty(),
+                                episodeName = c.getString(idxEpName),
+                                episodeSlug = c.getString(idxEpSlug),
+                                embedUrl = c.getString(idxEmbed),
+                                positionMs = c.getLong(idxPos),
+                                durationMs = c.getLong(idxDur),
+                                progressPct = c.getInt(idxPct),
+                                lastWatchedAt = c.getLong(idxTime),
+                                isCompleted = c.getInt(idxComp) == 1
+                            )
+                        )
+                    }
+                }
+            } catch (_: Exception) {}
+            list
+        }
+
+    /**
      * Lưu hoặc bỏ lưu phim yêu thích. Trả về true nếu vừa thêm vào yêu thích, false nếu vừa xóa bỏ.
      */
-    suspend fun toggleFavorite(film: NguoncFilm): Boolean = withContext(Dispatchers.IO) {
+    suspend fun toggleFavorite(
+        film: NguoncFilm,
+        episodeName: String? = null,
+        episodeSlug: String? = null,
+        embedUrl: String? = null
+    ): Boolean = withContext(Dispatchers.IO) {
         val helper = dbHelper ?: return@withContext false
         try {
             val db = helper.writableDatabase
@@ -362,6 +421,20 @@ object WatchHistoryManager {
                     put(COL_FAV_ADDED_AT, System.currentTimeMillis())
                 }
                 db.insertWithOnConflict(TABLE_FAVORITES, null, cv, SQLiteDatabase.CONFLICT_REPLACE)
+
+                // Nếu có tập được chỉ định thì lưu luôn tập đó vào điểm nhớ
+                if (!episodeName.isNullOrBlank() && !episodeSlug.isNullOrBlank()) {
+                    saveProgress(
+                        slug = film.slug,
+                        filmName = film.name,
+                        posterUrl = film.posterUrl.ifBlank { film.thumbUrl },
+                        episodeName = episodeName,
+                        episodeSlug = episodeSlug,
+                        embedUrl = embedUrl.orEmpty(),
+                        positionMs = 1000L,
+                        durationMs = 0L
+                    )
+                }
                 true
             }
         } catch (_: Exception) {
@@ -370,7 +443,7 @@ object WatchHistoryManager {
     }
 
     /**
-     * Lấy danh sách toàn bộ phim đã lưu (mới lưu nhất lên đầu).
+     * Lấy danh sách toàn bộ phim đã lưu (mới lưu nhất lên đầu), kèm tiến độ tập xem hiện tại.
      */
     suspend fun getFavoriteFilms(): List<NguoncFilm> = withContext(Dispatchers.IO) {
         val helper = dbHelper ?: return@withContext emptyList()
@@ -385,15 +458,19 @@ object WatchHistoryManager {
                 val idxYear = c.getColumnIndex(COL_FAV_YEAR)
                 val idxQuality = c.getColumnIndex(COL_FAV_QUALITY)
                 while (c.moveToNext()) {
+                    val slug = c.getString(idxSlug)
                     val poster = c.getString(idxPoster).orEmpty()
+                    val progress = getProgressForFilm(slug)
                     list.add(
                         NguoncFilm(
-                            slug = c.getString(idxSlug),
+                            slug = slug,
                             name = c.getString(idxName),
                             posterUrl = poster,
                             thumbUrl = poster,
                             year = c.getString(idxYear).orEmpty(),
-                            quality = c.getString(idxQuality).orEmpty()
+                            quality = c.getString(idxQuality).orEmpty(),
+                            currentEpisode = progress?.episodeName ?: "",
+                            watchProgress = progress
                         )
                     )
                 }

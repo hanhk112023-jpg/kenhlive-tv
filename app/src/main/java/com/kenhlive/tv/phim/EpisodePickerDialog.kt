@@ -61,16 +61,27 @@ object EpisodePickerDialog {
 
         scope.launch {
             val isFav = withContext(Dispatchers.IO) { WatchHistoryManager.isFavorite(film.slug) }
-            btnFavorite.text = if (isFav) "⭐ Đã Lưu" else "☆ Lưu Phim"
+            val progress = withContext(Dispatchers.IO) { WatchHistoryManager.getProgressForFilm(film.slug) }
+            val epSuffix = if (progress != null) " (${progress.episodeName})" else ""
+            btnFavorite.text = if (isFav) "⭐ Đã Lưu$epSuffix" else "☆ Lưu Phim"
         }
 
         btnFavorite.setOnClickListener {
             scope.launch {
-                val nowFav = withContext(Dispatchers.IO) { WatchHistoryManager.toggleFavorite(film) }
-                btnFavorite.text = if (nowFav) "⭐ Đã Lưu" else "☆ Lưu Phim"
+                val progress = withContext(Dispatchers.IO) { WatchHistoryManager.getProgressForFilm(film.slug) }
+                val nowFav = withContext(Dispatchers.IO) {
+                    WatchHistoryManager.toggleFavorite(
+                        film = film,
+                        episodeName = progress?.episodeName,
+                        episodeSlug = progress?.episodeSlug,
+                        embedUrl = progress?.embedUrl
+                    )
+                }
+                val epSuffix = if (progress != null) " (${progress.episodeName})" else ""
+                btnFavorite.text = if (nowFav) "⭐ Đã Lưu$epSuffix" else "☆ Lưu Phim"
                 android.widget.Toast.makeText(
                     context,
-                    if (nowFav) "Đã lưu \"${film.name}\" vào danh sách yêu thích" else "Đã bỏ lưu \"${film.name}\"",
+                    if (nowFav) "Đã lưu bộ phim \"${film.name}\"$epSuffix vào Tủ Phim" else "Đã bỏ lưu \"${film.name}\"",
                     android.widget.Toast.LENGTH_SHORT
                 ).show()
             }
@@ -128,7 +139,7 @@ object EpisodePickerDialog {
                 }
 
                 rvEpisodes.visibility = View.VISIBLE
-                rvEpisodes.adapter = EpisodeAdapter(
+                val adapter = EpisodeAdapter(
                     items = allEpisodes,
                     currentEpSlug = progress?.episodeSlug,
                     watchedEpSlugs = watchedSlugs,
@@ -136,8 +147,36 @@ object EpisodePickerDialog {
                         dialog.dismiss()
                         val startPos = if (item.slug == progress?.episodeSlug) progress.positionMs else 0L
                         onSelectEpisode(film, item, startPos)
+                    },
+                    onBookmark = { item ->
+                        scope.launch {
+                            withContext(Dispatchers.IO) {
+                                WatchHistoryManager.saveProgress(
+                                    slug = film.slug,
+                                    filmName = film.name,
+                                    posterUrl = film.posterUrl.ifBlank { film.thumbUrl },
+                                    episodeName = item.name,
+                                    episodeSlug = item.slug,
+                                    embedUrl = item.embed,
+                                    positionMs = 1000L,
+                                    durationMs = 0L
+                                )
+                                if (!WatchHistoryManager.isFavorite(film.slug)) {
+                                    WatchHistoryManager.toggleFavorite(film, item.name, item.slug, item.embed)
+                                }
+                            }
+                            withContext(Dispatchers.Main) {
+                                btnFavorite.text = "⭐ Đã Lưu (${item.name})"
+                                android.widget.Toast.makeText(
+                                    context,
+                                    "⭐ Đã lưu \"${film.name}\" tại ${item.name}!",
+                                    android.widget.Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
                     }
                 )
+                rvEpisodes.adapter = adapter
                 if (DeviceMode.isTv) {
                     rvEpisodes.post {
                         rvEpisodes.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
@@ -154,10 +193,16 @@ object EpisodePickerDialog {
 
     private class EpisodeAdapter(
         private val items: List<NguoncEpisodeItem>,
-        private val currentEpSlug: String?,
+        private var currentEpSlug: String?,
         private val watchedEpSlugs: Set<String>,
-        private val onClick: (NguoncEpisodeItem) -> Unit
+        private val onClick: (NguoncEpisodeItem) -> Unit,
+        private val onBookmark: (NguoncEpisodeItem) -> Unit
     ) : RecyclerView.Adapter<EpisodeAdapter.VH>() {
+
+        fun updateCurrent(slug: String) {
+            currentEpSlug = slug
+            notifyDataSetChanged()
+        }
 
         class VH(v: View) : RecyclerView.ViewHolder(v) {
             val tv: TextView = v.findViewById(R.id.tvEpisodeName)
@@ -192,6 +237,12 @@ object EpisodePickerDialog {
 
             holder.tv.setOnClickListener {
                 onClick(item)
+            }
+
+            holder.tv.setOnLongClickListener {
+                updateCurrent(item.slug)
+                onBookmark(item)
+                true
             }
         }
 
