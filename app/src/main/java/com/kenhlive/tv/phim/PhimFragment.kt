@@ -19,6 +19,8 @@ import com.kenhlive.tv.DeviceMode
 import com.kenhlive.tv.MainActivity
 import com.kenhlive.tv.R
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -147,87 +149,85 @@ class PhimFragment : Fragment() {
         errorLayout.visibility = View.GONE
 
         viewLifecycleOwner.lifecycleScope.launch {
-            val films = withContext(Dispatchers.IO) {
-                try {
-                    when (categorySlug) {
-                        "tat-ca", "phim-moi" -> {
-                            val p1 = NguoncRepository.fetchNewFilms(requireContext(), page = 1)
-                            val p2 = if (p1.isNotEmpty()) {
-                                NguoncRepository.fetchNewFilms(requireContext(), page = 2)
-                            } else emptyList()
-                            val combined = (p1 + p2).distinctBy { it.slug }
-                            if (combined.isNotEmpty()) combined
-                            else NguoncRepository.loadFallbackFilms(requireContext()).map { it.film }
-                        }
-                        "phim-bo", "phim-le", "hoat-hinh" -> {
-                            val res = NguoncRepository.fetchFilmsByType(categorySlug, 1, requireContext())
-                            if (res.isNotEmpty()) res
-                            else NguoncRepository.loadFallbackFilms(requireContext()).map { it.film }
-                        }
-                        else -> {
-                            val res = NguoncRepository.fetchFilmsByCategory(categorySlug, 1, requireContext())
-                            if (res.isNotEmpty()) res
-                            else NguoncRepository.loadFallbackFilms(requireContext()).map { it.film }
-                        }
-                    }
-                } catch (_: Exception) {
-                    NguoncRepository.loadFallbackFilms(requireContext()).map { it.film }
-                }
-            }
-
             // Lấy danh sách lịch sử tiếp tục xem
             val history = withContext(Dispatchers.IO) {
                 WatchHistoryManager.getContinueWatchingList(15)
             }
 
-            loadingView.visibility = View.GONE
+            val builtSections = mutableListOf<PhimSection>()
 
-            if (films.isNotEmpty()) {
-                heroFilm = films.firstOrNull { it.posterUrl.isNotBlank() || it.thumbUrl.isNotBlank() } ?: films.firstOrNull()
+            // 1. Section "Tiếp tục xem" nếu có
+            if (history.isNotEmpty()) {
+                val historyFilms = history.map { h ->
+                    NguoncFilm(
+                        name = h.filmName,
+                        slug = h.slug,
+                        posterUrl = h.posterUrl,
+                        thumbUrl = h.posterUrl,
+                        currentEpisode = h.episodeName,
+                        watchProgress = h
+                    )
+                }
+                builtSections.add(PhimSection("⏱️  TIẾP TỤC XEM", historyFilms, isContinueWatching = true))
+            }
 
-                val builtSections = mutableListOf<PhimSection>()
+            if (categorySlug == "tat-ca") {
+                // NẠP ĐỒNG THỜI TOÀN BỘ CÁC DANH MỤC CÙNG LÚC (Full Parallel Loading)
+                val sectionsData = withContext(Dispatchers.IO) {
+                    coroutineScope {
+                        val defNew = async { NguoncRepository.fetchFilmsBatch("phim-moi", pages = 1..8, context = requireContext()) }
+                        val defBo = async { NguoncRepository.fetchFilmsBatch("phim-bo", pages = 1..8, context = requireContext()) }
+                        val defLe = async { NguoncRepository.fetchFilmsBatch("phim-le", pages = 1..8, context = requireContext()) }
+                        val defAnime = async { NguoncRepository.fetchFilmsBatch("hoat-hinh", pages = 1..8, context = requireContext()) }
+                        val defAction = async { NguoncRepository.fetchFilmsBatch("hanh-dong", pages = 1..6, isCategory = true, context = requireContext()) }
+                        val defRomance = async { NguoncRepository.fetchFilmsBatch("tinh-cam", pages = 1..6, isCategory = true, context = requireContext()) }
+                        val defHistorical = async { NguoncRepository.fetchFilmsBatch("co-trang", pages = 1..6, isCategory = true, context = requireContext()) }
+                        val defHorror = async { NguoncRepository.fetchFilmsBatch("kinh-di", pages = 1..6, isCategory = true, context = requireContext()) }
 
-                // 1. Section "Tiếp tục xem" nếu có
-                if (history.isNotEmpty()) {
-                    val historyFilms = history.map { h ->
-                        NguoncFilm(
-                            name = h.filmName,
-                            slug = h.slug,
-                            posterUrl = h.posterUrl,
-                            thumbUrl = h.posterUrl,
-                            currentEpisode = h.episodeName,
-                            watchProgress = h
+                        listOf(
+                            "🔥  PHIM MỚI CẬP NHẬT" to defNew.await(),
+                            "🎬  PHIM BỘ CHỌN LỌC" to defBo.await(),
+                            "🍿  PHIM LẺ ĐẶC SẮC" to defLe.await(),
+                            "⚡  HOẠT HÌNH & ANIME" to defAnime.await(),
+                            "💥  HÀNH ĐỘNG KỊCH TÍNH" to defAction.await(),
+                            "❤️  TÌNH CẢM LÃNG MẠN" to defRomance.await(),
+                            "👑  CỔ TRANG ĐẶC SẮC" to defHistorical.await(),
+                            "👻  KINH DỊ & GIẬT GÂN" to defHorror.await()
                         )
                     }
-                    builtSections.add(PhimSection("⏱️  TIẾP TỤC XEM", historyFilms, isContinueWatching = true))
                 }
 
-                // 2. Sections nội dung theo danh mục
-                if (categorySlug == "tat-ca" || categorySlug == "phim-moi") {
-                    val sMoi = films.take(24)
-                    val sBo = films.filter { f ->
-                        f.totalEpisodes.isNotBlank() && f.totalEpisodes != "1" ||
-                                f.categories.any { c -> c.contains("bộ", ignoreCase = true) }
-                    }.take(24)
-                    val sLe = films.filter { f ->
-                        f.totalEpisodes == "1" || f.currentEpisode.contains("Full", ignoreCase = true) ||
-                                f.categories.any { c -> c.contains("lẻ", ignoreCase = true) }
-                    }.take(24)
-                    val sAnime = films.filter { f ->
-                        f.categories.any { c ->
-                            c.contains("hoạt hình", ignoreCase = true) || c.contains("anime", ignoreCase = true)
-                        }
-                    }.take(24)
+                // Chọn Hero film từ phim mới cập nhật
+                val firstList = sectionsData.firstOrNull { it.second.isNotEmpty() }?.second ?: emptyList()
+                heroFilm = firstList.firstOrNull { it.posterUrl.isNotBlank() || it.thumbUrl.isNotBlank() } ?: firstList.firstOrNull()
 
-                    if (sMoi.isNotEmpty()) builtSections.add(PhimSection("🔥  PHIM MỚI CẬP NHẬT", sMoi))
-                    if (sBo.isNotEmpty()) builtSections.add(PhimSection("🎬  PHIM BỘ CHỌN LỌC", sBo))
-                    if (sLe.isNotEmpty()) builtSections.add(PhimSection("🍿  PHIM LẺ ĐẶC SẮC", sLe))
-                    if (sAnime.isNotEmpty()) builtSections.add(PhimSection("⚡  HOẠT HÌNH & ANIME", sAnime))
-                } else {
-                    val catTitle = filterCategories.firstOrNull { it.first == categorySlug }?.second ?: "DANH SÁCH PHIM"
+                for ((title, list) in sectionsData) {
+                    if (list.isNotEmpty()) {
+                        builtSections.add(PhimSection(title, list))
+                    }
+                }
+            } else {
+                // NẠP HÀNG LOẠT 10-15 TRANG CÙNG LÚC CHO DANH MỤC ĐƯỢC CHỌN (100-150 phim)
+                val isCat = categorySlug !in listOf("phim-moi", "phim-bo", "phim-le", "hoat-hinh", "tv-shows")
+                val films = withContext(Dispatchers.IO) {
+                    NguoncRepository.fetchFilmsBatch(
+                        typeOrCatSlug = categorySlug,
+                        pages = 1..15,
+                        isCategory = isCat,
+                        context = requireContext()
+                    )
+                }
+
+                heroFilm = films.firstOrNull { it.posterUrl.isNotBlank() || it.thumbUrl.isNotBlank() } ?: films.firstOrNull()
+                val catTitle = filterCategories.firstOrNull { it.first == categorySlug }?.second ?: "DANH SÁCH PHIM"
+                if (films.isNotEmpty()) {
                     builtSections.add(PhimSection("🎥  $catTitle", films))
                 }
+            }
 
+            loadingView.visibility = View.GONE
+
+            if (builtSections.isNotEmpty()) {
                 sections = builtSections
                 mainList.visibility = View.VISIBLE
                 mainList.adapter = PhimMainAdapter(
