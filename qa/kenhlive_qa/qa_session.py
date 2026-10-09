@@ -245,11 +245,13 @@ class QASession:
         self.failover_events.append(rec)
         return rec
 
-    def finish_session(self, final_score=100):
+    def finish_session(self, final_score=100, video_tour=None, timelapse=None):
         """Kết thúc phiên kiểm thử và tính toán các chỉ số tổng hợp."""
         self.end_epoch = time.time()
         self.duration_sec = round(self.end_epoch - self.start_epoch, 1)
         self.final_score = final_score
+        self.video_tour = video_tour
+        self.timelapse = timelapse
 
         # Tính toán độ bao phủ 6 tabs
         explored_tabs = [t for t, count in self.tab_visits.items() if count > 0]
@@ -260,6 +262,8 @@ class QASession:
             "created_at": self.start_time_iso,
             "duration_sec": self.duration_sec,
             "final_score": self.final_score,
+            "video_tour": video_tour,
+            "timelapse": timelapse,
             "app": {
                 "package": self.pkg,
                 "version_name": self.version_name,
@@ -332,11 +336,18 @@ class QASession:
             f"- **Thời gian chạy:** `{m['duration_sec']}s` | **Điểm QA:** **{m['final_score']}/100**",
             f"- **Độ bao phủ Tab:** **{st['tabs_explored']}/6 Tabs ({st['tab_coverage_pct']}%)**",
             f"- **Tổng số bước AI:** `{st['total_steps']}` | **Lượt bấm D-pad:** `{st['dpad_keypresses_total']}` | **Kiểm tra Video:** `{st['video_motion_checks']}`",
+        ]
+        if m.get("video_tour"):
+            vt = m["video_tour"]
+            tl = m.get("timelapse")
+            lines.append(f"- **🎬 Video Toàn Bộ Quá Trình:** `{vt}`" + (f" | **⚡ Timelapse 10x:** `{tl}`" if tl else ""))
+
+        lines.extend([
             "",
             "#### 🗺️ Bản Đồ Bao Phủ 6 Tab Đa Năng",
             "| Tab | Biểu Tượng | Tên Phân Hệ | Thao Tác | Trạng Thái |",
             "|:---:|:---:|:---|:---:|:---:|"
-        ]
+        ])
 
         for tc in m["tabs_coverage"]:
             status = "✅ ĐÃ DUYỆT" if tc["tested"] else "⚪ CHƯA DUYỆT"
@@ -447,6 +458,10 @@ class QASession:
               </td>
             </tr>"""
 
+        video_download_btn = ""
+        if getattr(self, "video_tour", None):
+            video_download_btn = f'<a href="{esc(str(self.video_tour or ""))}" download style="background:#1e293b;color:#38bdf8;border:1px solid #38bdf844;padding:6px 14px;border-radius:8px;font-size:12px;text-decoration:none;font-weight:600;">🎬 Tải Video Tour</a>'
+
         section_html = f"""
     <!-- PHÂN HỆ AI QA SESSION JOURNAL & REPLAY -->
     <div class="card" style="border:1px solid #ff650044;box-shadow:0 8px 30px rgba(255,101,0,0.06);">
@@ -460,7 +475,8 @@ class QASession:
             KênhLive TV <b>v{esc(self.version_name)}</b> (code {esc(self.version_code)}) · Git: <code>{esc(self.git_commit)}</code> ({esc(self.git_branch)}) · Thời lượng: <b>{self.duration_sec}s</b>
           </div>
         </div>
-        <div style="display:flex;gap:10px;">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          {video_download_btn}
           <a href="qa_session.json" download style="background:#1e293b;color:#38bdf8;border:1px solid #38bdf844;padding:6px 14px;border-radius:8px;font-size:12px;text-decoration:none;font-weight:600;">📥 Tải qa_session.json</a>
           <a href="qa_session_summary.md" download style="background:#1e293b;color:#a3e635;border:1px solid #a3e63544;padding:6px 14px;border-radius:8px;font-size:12px;text-decoration:none;font-weight:600;">📝 Tóm Tắt Markdown</a>
         </div>

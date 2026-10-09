@@ -26,6 +26,7 @@ import xml.etree.ElementTree as ET
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from qa_session import QASession, KENHLIVE_TABS, REMOTE_KEY_ICONS
+from video_recorder import VideoRecorder
 
 try:
     from PIL import Image, ImageChops, ImageStat
@@ -684,6 +685,13 @@ class AutonomousQASuite:
         self.session = QASession(out_dir=out_dir, serial=serial, pkg=PKG)
         self.session.set_ai_provider(self.brain.provider_active)
 
+        # Trình quay video toàn bộ quá trình kiểm thử Android TV
+        self.recorder = None
+        try:
+            self.recorder = VideoRecorder(serial=serial, out_dir=out_dir)
+        except Exception as e:
+            print(f"⚠️ [VideoRecorder] Không thể nạp module video recorder: {e}", flush=True)
+
         self.ALL_TABS = {
             0: "Tab 0: Trực tiếp (Live - ColaTV/Gà Vàng/Khán Đài/Socolive)",
             1: "Tab 1: Lịch đấu (Schedule - Lịch phát sóng các ngày)",
@@ -754,6 +762,13 @@ class AutonomousQASuite:
         print("\n" + "=" * 65)
         print("🚀 [KenhLive AI QA] KHỞI ĐỘNG HỆ THỐNG KIỂM THỬ 100% AI AUTONOMOUS")
         print("=" * 65 + "\n", flush=True)
+
+        # 0. VIDEO RECORDER: Bắt đầu quay toàn bộ quá trình từ trước khi mở app
+        if self.recorder:
+            try:
+                self.recorder.start()
+            except Exception as e:
+                print(f"⚠️ [VideoRecorder] Không thể khởi động quay: {e}", flush=True)
 
         self.start_time = time.time()
         self.device.checkpoint_logcat()
@@ -893,10 +908,18 @@ class AutonomousQASuite:
             safe_name = f"{m_idx + 2:02d}_{mission.name.lower()}"
             self._record_screen(safe_name)
 
+        # Dừng và lưu video toàn bộ quá trình kiểm thử
+        video_info = None
+        if self.recorder:
+            try:
+                video_info = self.recorder.stop_and_save()
+            except Exception as e:
+                print(f"⚠️ [VideoRecorder] Lỗi khi dừng và lưu video: {e}", flush=True)
+
         # Hoàn tất phiên QA
         duration_total = round(time.time() - self.start_time)
         print(f"\n🏁 Phiên QA hoàn tất trong {duration_total}s!", flush=True)
-        self.generate_reports(duration_total)
+        self.generate_reports(duration_total, video_info=video_info)
 
     def _record_screen(self, label):
         png = self.device.screencap_bytes()
@@ -921,7 +944,7 @@ class AutonomousQASuite:
         self.all_screenshots.append((label, rel_path))
         return rel_path
 
-    def generate_reports(self, duration_sec):
+    def generate_reports(self, duration_sec, video_info=None):
         passed_missions = sum(1 for m in self.missions if m.passed)
         total_missions = len(self.missions)
 
@@ -931,8 +954,25 @@ class AutonomousQASuite:
         score -= round((total_missions - passed_missions) / total_missions * 20)
         final_score = max(0, min(100, score))
 
+        # Phân tích thông tin video tour
+        video_file = None
+        timelapse_file = None
+        if isinstance(video_info, dict):
+            v_full = video_info.get("full_tour")
+            if v_full and os.path.exists(v_full):
+                video_file = os.path.basename(v_full)
+            v_tl = video_info.get("timelapse")
+            if v_tl and os.path.exists(v_tl):
+                timelapse_file = os.path.basename(v_tl)
+        elif isinstance(video_info, str) and os.path.exists(video_info):
+            video_file = os.path.basename(video_info)
+
         # Hoàn tất Session và xuất qa_session.json + qa_session_summary.md
-        session_manifest = self.session.finish_session(final_score=final_score)
+        session_manifest = self.session.finish_session(
+            final_score=final_score,
+            video_tour=video_file,
+            timelapse=timelapse_file
+        )
 
         checks_data = []
         for m in self.missions:
@@ -947,6 +987,8 @@ class AutonomousQASuite:
             "duration_sec": duration_sec,
             "session_id": self.session.session_id,
             "session": session_manifest,
+            "video": video_file,
+            "timelapse": timelapse_file,
             "engine": "KenhLive 100% Autonomous AI QA Suite",
             "brain_provider": self.brain.provider_active,
             "checks_passed": passed_missions,
@@ -1010,6 +1052,37 @@ class AutonomousQASuite:
 
         session_html = self.session.render_session_html_section()
 
+        video_card_html = ""
+        if r.get("video"):
+            first_shot = r.get("screenshots", [("", "")])[0][1] if r.get("screenshots") else ""
+            tl_link = ""
+            if r.get("timelapse"):
+                tl_link = f"""<a href="{esc(r['timelapse'])}" download style="background:#1e293b;color:#a3e635;border:1px solid #a3e63544;padding:6px 14px;border-radius:8px;font-size:12px;text-decoration:none;font-weight:600;">⚡ Tải Timelapse 10x ({esc(r['timelapse'])})</a>"""
+
+            video_card_html = f"""
+    <div class="card" style="border: 1px solid rgba(56, 189, 248, 0.3); background: #0c101d;">
+      <h2 style="font-size:17px; margin:0 0 12px; color:#38bdf8; display:flex; align-items:center; gap:8px;">
+        <span>🎬</span> Video Toàn Bộ Quá Trình Kiểm Thử Android TV (Full Tour Replay)
+      </h2>
+      <div style="position:relative; width:100%; border-radius:12px; overflow:hidden; background:#000; box-shadow:0 8px 32px rgba(0,0,0,0.7);">
+        <video controls style="width:100%; max-height:520px; display:block; margin:0 auto;" preload="metadata" poster="{esc(first_shot)}">
+          <source src="{esc(r['video'])}" type="video/mp4">
+          Trình duyệt không hỗ trợ xem video trực tiếp. Hãy tải video từ thư mục báo cáo.
+        </video>
+      </div>
+      <div style="margin-top:12px; font-size:12px; color:#94a3b8; display:flex; flex-wrap:wrap; gap:16px; align-items:center; justify-content:space-between;">
+        <div style="display:flex; gap:14px; align-items:center;">
+          <span>📺 <b>1920x1080 (1080p Leanback)</b></span>
+          <span>⚡ <b>H.264 FastStart Streamable</b></span>
+          <span style="color:#3ddc97;">● Ghi hình xuyên suốt 8 nhiệm vụ</span>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <a href="{esc(r['video'])}" download style="background:#1e293b; color:#38bdf8; border:1px solid #38bdf844; padding:6px 14px; border-radius:8px; font-size:12px; text-decoration:none; font-weight:600;">📥 Tải Video Đầy Đủ ({esc(r['video'])})</a>
+          {tl_link}
+        </div>
+      </div>
+    </div>"""
+
         html_content = f"""<!DOCTYPE html>
 <html lang="vi">
 <head>
@@ -1040,6 +1113,7 @@ class AutonomousQASuite:
       </div>
     </div>
 
+    {video_card_html}
     {session_html}
 
     <div class="card">

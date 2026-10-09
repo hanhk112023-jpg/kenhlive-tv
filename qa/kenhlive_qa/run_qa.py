@@ -707,7 +707,11 @@ except Exception as e:
 video_path = None
 if recorder:
     try:
-        video_path = recorder.stop_and_save()
+        video_res = recorder.stop_and_save()
+        if isinstance(video_res, dict):
+            video_path = video_res.get("full_tour")
+        else:
+            video_path = video_res
         if video_path and os.path.exists(video_path):
             add_check('Quay toàn bộ video quá trình test (MP4)', True, f'{os.path.basename(video_path)} ({os.path.getsize(video_path)//1024} KB)')
             shots.append(('Video toàn bộ quá trình kiểm thử', os.path.basename(video_path)))
