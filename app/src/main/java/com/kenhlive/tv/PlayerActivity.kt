@@ -1198,7 +1198,7 @@ class PlayerActivity : AppCompatActivity() {
 
     override fun onUserLeaveHint() {
         super.onUserLeaveHint()
-        if (Build.VERSION.SDK_INT >= 26 && !isInPictureInPictureMode && (player?.isPlaying == true)) {
+        if (Build.VERSION.SDK_INT >= 26 && !isInPictureInPictureMode && (player?.isPlaying == true) && !DeviceMode.isTv) {
             enterPip(manual = false)
         }
     }
@@ -1410,7 +1410,7 @@ class PlayerActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-        val inPip = Build.VERSION.SDK_INT >= 26 && isInPictureInPictureMode
+        val inPip = Build.VERSION.SDK_INT >= 26 && isInPictureInPictureMode && !DeviceMode.isTv
         if (inPip && !isFinishing) return
         handler.removeCallbacks(hideOverlay)
         handler.removeCallbacks(statsUpdateRunnable)

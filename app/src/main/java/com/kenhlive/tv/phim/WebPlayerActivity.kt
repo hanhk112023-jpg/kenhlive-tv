@@ -156,7 +156,12 @@ class WebPlayerActivity : AppCompatActivity() {
         s.useWideViewPort = true
         s.loadWithOverviewMode = true
         s.cacheMode = WebSettings.LOAD_DEFAULT
-        s.userAgentString = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+        val defaultUa = try { WebSettings.getDefaultUserAgent(this) } catch (_: Exception) { "" }
+        s.userAgentString = if (defaultUa.isNotBlank()) {
+            defaultUa.replace("; wv", "")
+        } else {
+            "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+        }
 
         webView.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {

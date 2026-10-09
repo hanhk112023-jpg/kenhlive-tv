@@ -500,7 +500,7 @@ class AndroidTVDevice:
 
     def switch_tab(self, tab_index):
         """Chuyển đổi trực tiếp giữa 6 tab: 0:Live, 1:Lịch, 2:IPTV, 3:Tìm kiếm, 4:Cài đặt, 5:Kho Phim."""
-        sh(f"{self.adb} shell am start -n {self.pkg}/.MainActivity --ei tab {int(tab_index)}")
+        sh(f"{self.adb} shell am start -n {self.pkg}/.MainActivity --ei tab {int(tab_index)} -f 0x04000000")
         self.action_history.append(f"SWITCH_TAB({tab_index})")
 
     def screencap_bytes(self):
