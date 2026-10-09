@@ -120,7 +120,10 @@
                 style="@style/KL.Button.Primary"
                 android:layout_width="wrap_content"
                 android:layout_height="38dp"
-                android:text="▶  XEM NGAY"
+                android:text="XEM NGAY"
+                android:drawableStart="@drawable/ic_play"
+                android:drawablePadding="6dp"
+                android:drawableTint="#FFFFFF"
                 android:textSize="12sp"
                 android:textStyle="bold"
                 android:focusable="true" />
@@ -141,7 +144,10 @@
                 android:layout_width="wrap_content"
                 android:layout_height="38dp"
                 android:layout_marginLeft="10dp"
-                android:text="☆  LƯU PHIM"
+                android:text="LƯU PHIM"
+                android:drawableStart="@drawable/ic_bookmark"
+                android:drawablePadding="6dp"
+                android:drawableTint="#FFD700"
                 android:textColor="#FFD700"
                 android:textSize="12sp"
                 android:focusable="true" />

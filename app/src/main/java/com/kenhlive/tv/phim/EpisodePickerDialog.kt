@@ -63,7 +63,10 @@ object EpisodePickerDialog {
             val isFav = withContext(Dispatchers.IO) { WatchHistoryManager.isFavorite(film.slug) }
             val progress = withContext(Dispatchers.IO) { WatchHistoryManager.getProgressForFilm(film.slug) }
             val epSuffix = if (progress != null) " (${progress.episodeName})" else ""
-            btnFavorite.text = if (isFav) "⭐ Đã Lưu$epSuffix" else "☆ Lưu Phim"
+            btnFavorite.text = if (isFav) "Đã Lưu$epSuffix" else "Lưu Phim"
+            btnFavorite.setCompoundDrawablesWithIntrinsicBounds(
+                if (isFav) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark, 0, 0, 0
+            )
         }
 
         btnFavorite.setOnClickListener {
@@ -78,7 +81,10 @@ object EpisodePickerDialog {
                     )
                 }
                 val epSuffix = if (progress != null) " (${progress.episodeName})" else ""
-                btnFavorite.text = if (nowFav) "⭐ Đã Lưu$epSuffix" else "☆ Lưu Phim"
+                btnFavorite.text = if (nowFav) "Đã Lưu$epSuffix" else "Lưu Phim"
+                btnFavorite.setCompoundDrawablesWithIntrinsicBounds(
+                    if (nowFav) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark, 0, 0, 0
+                )
                 android.widget.Toast.makeText(
                     context,
                     if (nowFav) "Đã lưu bộ phim \"${film.name}\"$epSuffix vào Tủ Phim" else "Đã bỏ lưu \"${film.name}\"",
@@ -166,10 +172,13 @@ object EpisodePickerDialog {
                                 }
                             }
                             withContext(Dispatchers.Main) {
-                                btnFavorite.text = "⭐ Đã Lưu (${item.name})"
+                                btnFavorite.text = "Đã Lưu (${item.name})"
+                                btnFavorite.setCompoundDrawablesWithIntrinsicBounds(
+                                    R.drawable.ic_bookmark_filled, 0, 0, 0
+                                )
                                 android.widget.Toast.makeText(
                                     context,
-                                    "⭐ Đã lưu \"${film.name}\" tại ${item.name}!",
+                                    "Đã lưu \"${film.name}\" tại ${item.name}!",
                                     android.widget.Toast.LENGTH_SHORT
                                 ).show()
                             }
@@ -220,13 +229,20 @@ object EpisodePickerDialog {
             val isCurrent = item.slug == currentEpSlug
             val isWatched = watchedEpSlugs.contains(item.slug)
 
-            val displayLabel = when {
-                isCurrent -> "▶ $baseName"
-                isWatched -> "✓ $baseName"
-                else -> baseName
+            holder.tv.text = baseName
+
+            val iconRes = when {
+                isCurrent -> R.drawable.ic_play_arrow
+                isWatched -> R.drawable.ic_check
+                else -> 0
+            }
+            if (iconRes != 0) {
+                holder.tv.setCompoundDrawablesWithIntrinsicBounds(iconRes, 0, 0, 0)
+                holder.tv.compoundDrawablePadding = 6
+            } else {
+                holder.tv.setCompoundDrawablesWithIntrinsicBounds(0, 0, 0, 0)
             }
 
-            holder.tv.text = displayLabel
             if (isCurrent) {
                 holder.tv.setTextColor(0xFFFF9F0A.toInt()) // Apple Orange highlight
             } else if (isWatched) {

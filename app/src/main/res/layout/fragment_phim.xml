@@ -41,7 +41,7 @@
             android:indeterminate="true"
             android:visibility="gone" />
 
-        <!-- Error State Container -->
+        <!-- Error / Empty State Container -->
         <LinearLayout
             android:id="@+id/phimErrorLayout"
             android:layout_width="wrap_content"
@@ -50,6 +50,15 @@
             android:orientation="vertical"
             android:gravity="center"
             android:visibility="gone">
+
+            <ImageView
+                android:id="@+id/ivPhimEmptyIll"
+                android:layout_width="160dp"
+                android:layout_height="160dp"
+                android:layout_marginBottom="12dp"
+                android:src="@drawable/ill_empty_cinema"
+                android:scaleType="fitCenter"
+                android:contentDescription="Minh họa tủ phim" />
 
             <TextView
                 android:id="@+id/tvPhimErrorTitle"

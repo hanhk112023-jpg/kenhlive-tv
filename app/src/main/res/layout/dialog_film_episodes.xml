@@ -160,7 +160,10 @@
             android:layout_width="wrap_content"
             android:layout_height="40dp"
             android:layout_marginRight="10dp"
-            android:text="☆ Lưu Phim"
+            android:text="Lưu Phim"
+            android:drawableStart="@drawable/ic_bookmark"
+            android:drawablePadding="6dp"
+            android:drawableTint="#FFD700"
             android:textColor="#FFD700"
             android:focusable="true" />
 
