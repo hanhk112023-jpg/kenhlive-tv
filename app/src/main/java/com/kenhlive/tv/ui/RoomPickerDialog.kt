@@ -93,7 +93,7 @@ object RoomPickerDialog {
                         model.notice.isNotBlank() && model.roomNum.startsWith("cola_") -> model.notice
                         model.notice.isNotBlank() && model.roomNum.startsWith("gavang_") -> model.notice
                         model.notice.isNotBlank() && model.roomNum.startsWith("khandai_") -> model.notice
-                        model.score > 0 -> "$vText • ⭐ ${SocoliveRepository.fmtViewers(model.score)} điểm"
+                        model.score > 0 -> "$vText • Điểm: ${SocoliveRepository.fmtViewers(model.score)}"
                         else -> vText
                     }
                     h.live.visibility = View.VISIBLE

@@ -14,6 +14,7 @@ import android.widget.EditText
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import java.util.Locale
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -133,6 +134,31 @@ class IptvFragment : Fragment() {
         loadData()
     }
 
+    private fun getFavoriteChannelIds(): Set<String> {
+        val sp = context?.getSharedPreferences("iptv_favorites", Context.MODE_PRIVATE) ?: return emptySet()
+        return sp.getStringSet("fav_ids", emptySet()) ?: emptySet()
+    }
+
+    private fun toggleFavoriteChannel(ch: IptvChannel) {
+        val ctx = context ?: return
+        val sp = ctx.getSharedPreferences("iptv_favorites", Context.MODE_PRIVATE)
+        val cur = (sp.getStringSet("fav_ids", emptySet()) ?: emptySet()).toMutableSet()
+        val isFav = cur.contains(ch.id)
+        if (isFav) {
+            cur.remove(ch.id)
+            Toast.makeText(ctx, "Đã bỏ ${ch.name} khỏi Yêu Thích", Toast.LENGTH_SHORT).show()
+        } else {
+            cur.add(ch.id)
+            Toast.makeText(ctx, "Đã thêm ${ch.name} vào Yêu Thích", Toast.LENGTH_SHORT).show()
+        }
+        sp.edit().putStringSet("fav_ids", cur).apply()
+        if (selectedGroup == "Yêu Thích") {
+            applyFilter()
+        } else {
+            channelsAdapter?.notifyDataSetChanged()
+        }
+    }
+
     private fun updateHeroPreview(ch: IptvChannel) {
         heroChannelTitle?.text = ch.name
         heroChannelGroup?.text = when {
@@ -156,7 +182,7 @@ class IptvFragment : Fragment() {
         val epg = EpgRepository.getCurrentAndNext(ch.id, ch.name)
         if (epg != null && epg.first != null) {
             val cur = epg.first!!
-            heroEpgNow?.text = "▶ Đang phát: [${cur.timeRange()}] ${cur.title}"
+            heroEpgNow?.text = "Đang phát: [${cur.timeRange()}] ${cur.title}"
             val pct = cur.progressPercent()
             heroEpgProgress?.visibility = View.VISIBLE
             heroEpgProgress?.progress = pct
@@ -164,12 +190,12 @@ class IptvFragment : Fragment() {
             if (epg.second != null) {
                 val nxt = epg.second!!
                 heroEpgNext?.visibility = View.VISIBLE
-                heroEpgNext?.text = "⏭ Tiếp theo: [${nxt.startFormatted()}] ${nxt.title}"
+                heroEpgNext?.text = "Tiếp theo: [${nxt.startFormatted()}] ${nxt.title}"
             } else {
                 heroEpgNext?.visibility = View.GONE
             }
         } else {
-            heroEpgNow?.text = if (ch.isVn) "▶ Đang phát trực tiếp từ Đài Truyền hình Quốc gia" else "▶ Đang phát trực tiếp từ ${ch.group}"
+            heroEpgNow?.text = if (ch.isVn) "Đang phát trực tiếp từ Đài Truyền hình Quốc gia" else "Đang phát trực tiếp từ ${ch.group}"
             heroEpgProgress?.visibility = View.GONE
             heroEpgNext?.visibility = View.GONE
         }
@@ -220,8 +246,8 @@ class IptvFragment : Fragment() {
         val sportsCount = channels.size - vnCount
         countText.text = "Tổng: ${channels.size} kênh (${vnCount} VN, ${sportsCount} Thể thao)"
 
-        // Phân nhóm EPG: VTV -> TV360 -> HTV / VTC -> VTVcab / SCTV -> Thể Thao -> Giải Trí / Phim -> Tin Tức / Tỉnh -> Tất cả
-        val distinctGroups = mutableListOf("VTV", "TV360", "HTV / VTC", "VTVcab / SCTV", "Thể Thao", "Giải Trí & Phim", "Tin Tức & Tỉnh", "Tất cả")
+        // Phân nhóm EPG: Yêu Thích -> VTV -> TV360 -> HTV / VTC -> VTVcab / SCTV -> Thể Thao -> Giải Trí / Phim -> Tin Tức / Tỉnh -> Tất cả
+        val distinctGroups = mutableListOf("Yêu Thích", "VTV", "TV360", "HTV / VTC", "VTVcab / SCTV", "Thể Thao", "Giải Trí & Phim", "Tin Tức & Tỉnh", "Tất cả")
         val sportsBrandGroups = listOf("DAZN", "Sky Sports", "beIN Sports", "ESPN")
         distinctGroups.addAll(sportsBrandGroups)
 
@@ -232,6 +258,10 @@ class IptvFragment : Fragment() {
     private fun applyFilter(focusFirst: Boolean = false) {
         var list = allChannels
         when (selectedGroup) {
+            "Yêu Thích" -> {
+                val favIds = getFavoriteChannelIds()
+                list = list.filter { favIds.contains(it.id) }
+            }
             "VTV" -> list = list.filter { it.name.contains("VTV", ignoreCase = true) }
             "TV360" -> list = list.filter { it.group.contains("TV360", ignoreCase = true) || it.url.contains("tv360://", ignoreCase = true) }
             "HTV / VTC" -> list = list.filter {
@@ -271,7 +301,16 @@ class IptvFragment : Fragment() {
         }
 
         displayedChannels = list
-        emptyText.visibility = if (displayedChannels.isEmpty()) View.VISIBLE else View.GONE
+        if (displayedChannels.isEmpty()) {
+            emptyText.text = if (selectedGroup == "Yêu Thích") {
+                "Chưa có kênh yêu thích nào.\nNhấn giữ một kênh bất kỳ để thêm vào Yêu Thích."
+            } else {
+                "Không tìm thấy kênh phù hợp"
+            }
+            emptyText.visibility = View.VISIBLE
+        } else {
+            emptyText.visibility = View.GONE
+        }
         setupGrid(displayedChannels)
 
         if (displayedChannels.isNotEmpty()) {
@@ -381,8 +420,16 @@ class IptvFragment : Fragment() {
                 holder.ivLogo.setImageResource(R.drawable.ic_nav_tv)
             }
 
+            val favIds = getFavoriteChannelIds()
+            holder.favIcon?.visibility = if (favIds.contains(ch.id)) View.VISIBLE else View.GONE
+
             holder.itemView.setOnClickListener {
                 openChannel(ch, position)
+            }
+
+            holder.itemView.setOnLongClickListener {
+                toggleFavoriteChannel(ch)
+                true
             }
 
             holder.itemView.setOnFocusChangeListener { v, hasFocus ->
@@ -533,6 +580,7 @@ class IptvFragment : Fragment() {
 
     class ChannelViewHolder(v: View) : RecyclerView.ViewHolder(v) {
         val ivLogo: ImageView = v.findViewById(R.id.channelLogo)
+        val favIcon: ImageView? = v.findViewById(R.id.channelFavIcon)
         val badge: TextView = v.findViewById(R.id.channelBadge)
         val tvName: TextView = v.findViewById(R.id.channelName)
         val tvSub: TextView = v.findViewById(R.id.channelSub)

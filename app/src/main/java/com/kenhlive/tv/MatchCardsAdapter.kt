@@ -54,8 +54,8 @@ class MatchCardsAdapter(
 
         fun countdownLabel(at: Long): String {
             val mins = ((at - System.currentTimeMillis()) / 60_000L).coerceAtLeast(0)
-            return if (mins < 60) "⏳ còn ${mins}p"
-            else "⏳ còn ${mins / 60}h ${mins % 60}p"
+            return if (mins < 60) "Còn ${mins}p"
+            else "Còn ${mins / 60}h ${mins % 60}p"
         }
     }
 
@@ -159,7 +159,7 @@ class MatchCardsAdapter(
             h.guestIcon?.visibility = View.GONE
         }
 
-        h.viewers.text = "👁 " + SocoliveRepository.fmtViewers(g.totalViewers)
+        h.viewers.text = SocoliveRepository.fmtViewers(g.totalViewers) + " xem"
         val rawBlv = g.top.blvName.trim()
         val formattedBlv = if (rawBlv.startsWith("BLV ", ignoreCase = true)) rawBlv else "BLV $rawBlv"
         h.blv.text = "Đang trực tiếp • $formattedBlv" + if (g.count > 1) " +${g.count - 1}" else ""

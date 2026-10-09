@@ -733,7 +733,7 @@ class PlayerActivity : AppCompatActivity() {
         if (epg != null && epg.first != null) {
             val cur = epg.first!!
             osdEpgNow?.visibility = View.VISIBLE
-            osdEpgNow?.text = "▶ [${cur.timeRange()}] ${cur.title}"
+            osdEpgNow?.text = "[${cur.timeRange()}] ${cur.title}"
             val pct = cur.progressPercent()
             osdEpgProgress?.visibility = View.VISIBLE
             osdEpgProgress?.progress = pct
@@ -741,13 +741,13 @@ class PlayerActivity : AppCompatActivity() {
             if (epg.second != null) {
                 val nxt = epg.second!!
                 osdEpgNext?.visibility = View.VISIBLE
-                osdEpgNext?.text = "⏭ [${nxt.startFormatted()}] ${nxt.title}"
+                osdEpgNext?.text = "Tiếp theo: [${nxt.startFormatted()}] ${nxt.title}"
             } else {
                 osdEpgNext?.visibility = View.GONE
             }
         } else {
             osdEpgNow?.visibility = View.VISIBLE
-            osdEpgNow?.text = if (ch.isVn) "▶ Truyền hình Việt Nam trực tiếp" else "▶ ${ch.group} trực tiếp"
+            osdEpgNow?.text = if (ch.isVn) "Truyền hình Việt Nam trực tiếp" else "${ch.group} trực tiếp"
             osdEpgProgress?.visibility = View.GONE
             osdEpgNext?.visibility = View.GONE
         }
@@ -894,9 +894,9 @@ class PlayerActivity : AppCompatActivity() {
                     if (hasFocus) {
                         val epg = EpgRepository.getCurrentAndNext(ch.id, ch.name)
                         if (epg != null && epg.first != null) {
-                            tvCarouselEpgPreview?.text = "▶ [${epg.first!!.timeRange()}] ${epg.first!!.title}"
+                            tvCarouselEpgPreview?.text = "[${epg.first!!.timeRange()}] ${epg.first!!.title}"
                         } else {
-                            tvCarouselEpgPreview?.text = if (ch.isVn) "▶ Truyền hình trực tiếp chất lượng cao" else "▶ ${ch.group} trực tiếp"
+                            tvCarouselEpgPreview?.text = if (ch.isVn) "Truyền hình trực tiếp chất lượng cao" else "${ch.group} trực tiếp"
                         }
                         handler.removeCallbacks(hideCarouselRunnable)
                         handler.postDelayed(hideCarouselRunnable, 6000L)

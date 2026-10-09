@@ -30,6 +30,17 @@
             android:scaleType="fitCenter"
             android:src="@drawable/ic_nav_tv" />
 
+        <!-- Icon Kênh Yêu Thích ở góc trên bên trái -->
+        <ImageView
+            android:id="@+id/channelFavIcon"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentLeft="true"
+            android:src="@drawable/ic_bookmark_filled"
+            android:visibility="gone"
+            android:contentDescription="Yêu thích" />
+
         <!-- Huy hiệu LIVE & HD ở góc trên bên phải -->
         <LinearLayout
             android:layout_width="wrap_content"

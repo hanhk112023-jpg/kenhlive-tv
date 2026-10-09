@@ -71,8 +71,8 @@ class BlvCardsAdapter(
         }
         h.league.text = r.league.ifBlank { "Socolive" }
         h.matchTitle.text = r.matchTitle
-        val viewersText = "👁 " + SocoliveRepository.fmtViewers(r.viewers) + " lượt xem"
-        h.viewers.text = if (r.score > 0) "$viewersText • ⭐ ${SocoliveRepository.fmtViewers(r.score)}" else viewersText
+        val viewersText = SocoliveRepository.fmtViewers(r.viewers) + " lượt xem"
+        h.viewers.text = if (r.score > 0) "$viewersText • Điểm: ${SocoliveRepository.fmtViewers(r.score)}" else viewersText
 
         h.avatar.load(r.avatar) {
             crossfade(if (DeviceMode.lowRam) 0 else 80)

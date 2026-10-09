@@ -567,7 +567,7 @@
                 android:textStyle="bold"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:text="▶ Thời sự 19h" />
+                android:text="Thời sự 19h" />
 
             <!-- Progress bar tiến độ chương trình OSD -->
             <ProgressBar
@@ -590,7 +590,7 @@
                 android:textSize="11sp"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:text="⏭ 19:45: Phim truyện" />
+                android:text="Tiếp theo: 19:45 Phim truyện" />
         </LinearLayout>
 
         <TextView

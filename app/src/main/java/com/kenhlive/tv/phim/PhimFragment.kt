@@ -1,11 +1,14 @@
 package com.kenhlive.tv.phim
 
 import android.content.Intent
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.EditText
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -58,6 +61,7 @@ class PhimFragment : Fragment() {
     private val filterCategories = listOf(
         "tat-ca" to "Tất Cả",
         "da-luu" to "Tủ Phim & Tập",
+        "tim-kiem" to "Tìm Kiếm",
         "phim-moi" to "Mới Cập Nhật",
         "phim-bo" to "Phim Bộ",
         "phim-le" to "Phim Lẻ",
@@ -166,7 +170,76 @@ class PhimFragment : Fragment() {
         }
     }
 
+    private fun showSearchDialog() {
+        val ctx = context ?: return
+        val et = EditText(ctx).apply {
+            hint = "Nhập tên phim (VD: One Piece, Lật Mặt...)"
+            setSingleLine(true)
+            setTextColor(Color.WHITE)
+            setHintTextColor(Color.parseColor("#94A3B8"))
+            setBackgroundColor(Color.parseColor("#1E293B"))
+            setPadding(36, 24, 36, 24)
+            textSize = 15f
+        }
+        val container = FrameLayout(ctx).apply {
+            setPadding(32, 20, 32, 20)
+            addView(et)
+        }
+        AlertDialog.Builder(ctx, R.style.Theme_KenhLive_Dialog)
+            .setTitle("Tìm Kiếm Phim Nguồn C")
+            .setView(container)
+            .setPositiveButton("Tìm kiếm") { _, _ ->
+                val kw = et.text.toString().trim()
+                if (kw.isNotBlank()) {
+                    performSearch(kw)
+                }
+            }
+            .setNegativeButton("Hủy", null)
+            .show()
+        et.requestFocus()
+    }
+
+    private fun performSearch(keyword: String) {
+        loadingView.visibility = View.VISIBLE
+        mainList.visibility = View.GONE
+        errorLayout.visibility = View.GONE
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val results = withContext(Dispatchers.IO) {
+                NguoncRepository.searchFilms(keyword)
+            }
+            loadingView.visibility = View.GONE
+
+            if (results.isNotEmpty()) {
+                heroFilm = results.firstOrNull()
+                val searchSection = PhimSection("KẾT QUẢ TÌM KIẾM: \"${keyword.uppercase()}\" (${results.size})", results)
+                sections = listOf(searchSection)
+                mainList.visibility = View.VISIBLE
+                mainList.adapter = PhimMainAdapter(
+                    hero = heroFilm,
+                    sections = sections,
+                    onFilmClick = { film -> openFilmDialog(film) },
+                    onHeroPlay = { film -> openHeroPlay(film) },
+                    onFavoriteToggle = { film -> toggleFilmFavorite(film) }
+                )
+            } else {
+                mainList.visibility = View.GONE
+                errorLayout.visibility = View.VISIBLE
+                ivEmptyIll.visibility = View.VISIBLE
+                tvErrorTitle.text = "Không tìm thấy phim"
+                tvErrorSub.text = "Không có kết quả nào cho từ khóa: \"$keyword\".\nVui lòng thử lại với từ khóa khác."
+                btnRetry.text = "Tìm từ khóa khác"
+                btnRetry.setOnClickListener { showSearchDialog() }
+            }
+        }
+    }
+
     private fun loadFilmsByCategory(categorySlug: String) {
+        if (categorySlug == "tim-kiem") {
+            showSearchDialog()
+            return
+        }
+
         loadingView.visibility = View.VISIBLE
         errorLayout.visibility = View.GONE
 
