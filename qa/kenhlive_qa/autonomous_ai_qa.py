@@ -586,6 +586,36 @@ Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn b�
                 action_type = "COMPLETE_MISSION"
                 action_param = ""
 
+        elif m_id == "MISSION_SEARCH_AND_SETTINGS_FEEDBACK":
+            if step == 0:
+                action_type = "SWITCH_TAB"
+                action_param = "3"
+                thought = "Chuyển sang Tab Tìm kiếm (Tab 3) để kiểm tra ô nhập search"
+            elif step == 1:
+                action_type = "TEXT"
+                action_param = "ngoai hang"
+                thought = "Nhập từ khóa tìm kiếm trận đấu"
+            elif step == 2:
+                action_type = "SWITCH_TAB"
+                action_param = "4"
+                thought = "Chuyển sang Tab Cài đặt (Tab 4) để kiểm tra thông tin phiên bản và mục Liên hệ & Báo lỗi"
+            elif step == 3:
+                action_type = "KEY"
+                action_param = "DPAD_DOWN"
+                thought = "Di chuyển xuống mục 'Liên hệ & Báo lỗi' Telegram @T990512S"
+            elif step == 4:
+                action_type = "KEY"
+                action_param = "ENTER"
+                thought = "Bấm OK mở hộp thoại FeedbackDialog kiểm tra mã QR và liên kết t.me/T990512S"
+            elif step == 5:
+                action_type = "KEY"
+                action_param = "BACK"
+                thought = "Bấm BACK để đóng FeedbackDialog và quay lại danh sách Cài đặt"
+            else:
+                action_type = "COMPLETE_MISSION"
+                action_param = ""
+                thought = "Đã kiểm tra hoàn tất Tab Tìm kiếm và hộp thoại Báo lỗi Telegram @T990512S"
+
         elif m_id == "MISSION_DPAD_CHAOS_STRESS_AND_RECOVERY":
             # Nhồi phím ngẫu nhiên 4 hướng để stress-test
             stress_keys = ["DPAD_UP", "DPAD_DOWN", "DPAD_LEFT", "DPAD_RIGHT"]
@@ -945,6 +975,13 @@ class AutonomousQASuite:
                 "Lịch Thi Đấu & Sidebar Rail Navigation",
                 "Kiểm tra Tab Lịch thi đấu (Tab 1), mở Sidebar Rail bằng DPAD_LEFT, test phím BACK đóng Sidebar mượt mà trả lại focus nội dung.",
                 "Sidebar đóng mở êm ái, phím BACK không làm thoát app hoặc mất focus."
+            ),
+            QAMission(
+                "MISSION_SEARCH_AND_SETTINGS_FEEDBACK",
+                "Tìm Kiếm & Cài Đặt (Báo Lỗi Telegram @T990512S)",
+                "Duyệt Tab Tìm kiếm (Tab 3), nhập từ khóa; chuyển sang Tab Cài đặt (Tab 4), mở mục 'Liên hệ & Báo lỗi', kiểm tra FeedbackDialog hiển thị mã QR Telegram và thông tin @T990512S.",
+                "Tìm kiếm hiển thị kết quả, FeedbackDialog mở chuẩn xác có mã QR và đóng bằng phím BACK/OK êm ái.",
+                max_steps=8
             ),
             QAMission(
                 "MISSION_DPAD_CHAOS_STRESS_AND_RECOVERY",
