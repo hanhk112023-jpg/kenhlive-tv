@@ -80,13 +80,11 @@
         android:paddingRight="@dimen/sp_screen_margin"
         android:paddingBottom="@dimen/hero_pad_b">
 
-        <!-- CỘT TRÁI: Trận đấu tâm điểm, tỷ số & Nút hành động -->
+        <!-- Trận đấu tâm điểm, tỷ số & Nút hành động -->
         <LinearLayout
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1.3"
-            android:orientation="vertical"
-            android:layout_marginRight="24dp">
+            android:orientation="vertical">
 
             <!-- Header Row: LIVE badge RED + Tournament/League Cyan + Viewers -->
             <LinearLayout
@@ -248,116 +246,6 @@
                         android:textColor="#FFFFFF" />
                 </LinearLayout>
             </LinearLayout>
-        </LinearLayout>
-
-        <!-- CỘT PHẢI: Thẻ Thống Kê Kính Mờ Live Match Stats (Apple TV / Stitch Glassmorphism) -->
-        <LinearLayout
-            android:id="@+id/heroStatsCard"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.7"
-            android:orientation="vertical"
-            android:background="@drawable/bg_hero_stats_card"
-            android:padding="14dp"
-            android:layout_marginBottom="4dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
-
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="📊 THỐNG KÊ TRẬN ĐẤU"
-                    android:textColor="#FFFFFF"
-                    android:textStyle="bold"
-                    android:textSize="12sp"
-                    android:letterSpacing="0.04" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="● Live Stats"
-                    android:textColor="#4EDEA3"
-                    android:textStyle="bold"
-                    android:textSize="10sp" />
-            </LinearLayout>
-
-            <TextView
-                android:id="@+id/heroPossessionLabel"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="Kiểm soát bóng (Dự kiến)"
-                android:textColor="#9CA3AF"
-                android:textSize="11sp" />
-
-            <!-- Thanh tỉ lệ kiểm soát bóng 52% - 48% -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical"
-                android:layout_marginTop="3dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="52%"
-                    android:textColor="#FF6500"
-                    android:textStyle="bold"
-                    android:textSize="11sp" />
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="6dp"
-                    android:layout_weight="1"
-                    android:layout_marginLeft="6dp"
-                    android:layout_marginRight="6dp"
-                    android:orientation="horizontal">
-
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="52"
-                        android:background="#FF6500" />
-
-                    <View
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="48"
-                        android:background="#3B82F6" />
-                </LinearLayout>
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="48%"
-                    android:textColor="#3B82F6"
-                    android:textStyle="bold"
-                    android:textSize="11sp" />
-            </LinearLayout>
-
-            <!-- Tín hiệu & Độ trễ -->
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="⚡ Luồng phát tốc độ cao · Độ trễ siêu thấp 0.8s"
-                android:textColor="#4EDEA3"
-                android:textSize="11sp" />
-
-            <TextView
-                android:id="@+id/heroStatsFooter"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="🏟️ Sân vận động quốc tế • 4K HDR 60FPS"
-                android:textColor="#9CA3AF"
-                android:textSize="10sp" />
         </LinearLayout>
     </LinearLayout>
 </FrameLayout>
