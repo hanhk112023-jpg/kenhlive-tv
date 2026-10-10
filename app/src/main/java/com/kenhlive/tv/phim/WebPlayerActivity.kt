@@ -20,12 +20,14 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ProgressBar
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.kenhlive.tv.R
 import com.kenhlive.tv.ui.applyTvDensity
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import java.util.Locale
 
 /**
  * WebPlayerActivity — Trình phát phim web chuyên nghiệp cho Phim Nguồn C (StreamC embed):
