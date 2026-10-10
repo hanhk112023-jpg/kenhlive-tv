@@ -1408,6 +1408,12 @@ class PlayerActivity : AppCompatActivity() {
         return super.dispatchTouchEvent(ev)
     }
 
+    override fun onPause() {
+        super.onPause()
+        handler.removeCallbacks(commitChannelSwitch)
+        handler.removeCallbacks(autoRecoveryRunnable)
+    }
+
     override fun onStop() {
         super.onStop()
         val inPip = Build.VERSION.SDK_INT >= 26 && isInPictureInPictureMode && !DeviceMode.isTv

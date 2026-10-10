@@ -383,17 +383,22 @@ class SportAdapter(
                 }
                 vh.itemView.setOnClickListener { onFixtureClick(item) }
                 vh.itemView.setOnKeyListener { _, keyCode, event ->
-                    if (event.action == android.view.KeyEvent.ACTION_DOWN && keyCode == android.view.KeyEvent.KEYCODE_DPAD_UP) {
-                        for (prevPos in pos - 1 downTo 0) {
-                            val prevItem = getItem(prevPos)
-                            if (prevItem is RailItem) {
-                                if (focusRailFirst()) return@setOnKeyListener true
-                                outerRecyclerView?.let { rv ->
-                                    if (FocusKit.focusNow(rv, prevPos, 0)) return@setOnKeyListener true
+                    if (event.action == android.view.KeyEvent.ACTION_DOWN) {
+                        if (keyCode == android.view.KeyEvent.KEYCODE_DPAD_DOWN && pos >= itemCount - 1) {
+                            return@setOnKeyListener true // Giữ focus ở mép dưới cùng danh sách, chống rơi focus trên Android TV
+                        }
+                        if (keyCode == android.view.KeyEvent.KEYCODE_DPAD_UP) {
+                            for (prevPos in pos - 1 downTo 0) {
+                                val prevItem = getItem(prevPos)
+                                if (prevItem is RailItem) {
+                                    if (focusRailFirst()) return@setOnKeyListener true
+                                    outerRecyclerView?.let { rv ->
+                                        if (FocusKit.focusNow(rv, prevPos, 0)) return@setOnKeyListener true
+                                    }
+                                    return@setOnKeyListener true
+                                } else if (prevItem is ScheduleMatch) {
+                                    break
                                 }
-                                return@setOnKeyListener true
-                            } else if (prevItem is ScheduleMatch) {
-                                break
                             }
                         }
                     }

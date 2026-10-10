@@ -56,6 +56,18 @@ class LiveFragment : Fragment() {
         list.layoutManager = LinearLayoutManager(requireContext())
         list.adapter = adapter
         if (DeviceMode.lowRam) { list.itemAnimator = null }
+
+        if (DeviceMode.isTv) {
+            list.viewTreeObserver.addOnGlobalFocusChangeListener { _, newFocus ->
+                if (newFocus == null && isResumed) {
+                    list.post {
+                        if (list.findFocus() == null) {
+                            FocusKit.firstFocusableIn(list)?.requestFocus()
+                        }
+                    }
+                }
+            }
+        }
         list.clipChildren = false
         list.clipToPadding = false
 
