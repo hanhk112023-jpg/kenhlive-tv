@@ -74,5 +74,6 @@ jobs:
           name: KenhLive ${{ github.ref_name }} — Apple Glassmorphism & Cinema VOD Hub
           draft: false
           prerelease: false
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
