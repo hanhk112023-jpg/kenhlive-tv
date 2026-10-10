@@ -60,7 +60,7 @@ class PhimFragment : Fragment() {
     // Danh sách bộ lọc Apple Pills (Thiết kế tinh gọn, chuẩn giao diện OTT hiện đại, không dùng emoji ký tự)
     private val filterCategories = listOf(
         "tat-ca" to "Tất Cả",
-        "da-luu" to "Tủ Phim & Tập",
+        "da-luu" to "Lịch Sử Xem",
         "tim-kiem" to "Tìm Kiếm",
         "phim-moi" to "Mới Cập Nhật",
         "phim-bo" to "Phim Bộ",
@@ -455,8 +455,8 @@ class PhimFragment : Fragment() {
                 errorLayout.visibility = View.VISIBLE
                 if (categorySlug == "da-luu") {
                     ivEmptyIll.visibility = View.VISIBLE
-                    tvErrorTitle.text = "Tủ Phim & Tập Đang Trống"
-                    tvErrorSub.text = "Chưa có bộ phim hoặc tập phim nào được lưu.\nHãy nhấn 'Lưu Phim' hoặc xem bất kỳ phim nào để lưu vào đây!"
+                    tvErrorTitle.text = "Lịch Sử Xem Đang Trống"
+                    tvErrorSub.text = "Chưa có bộ phim hoặc tập phim nào trong lịch sử xem.\nHãy xem bất kỳ phim nào để lưu lịch sử vào đây!"
                     btnRetry.text = "Khám phá kho phim"
                     btnRetry.setOnClickListener {
                         selectedCategorySlug = "tat-ca"

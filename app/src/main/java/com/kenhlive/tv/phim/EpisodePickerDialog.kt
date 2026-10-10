@@ -87,7 +87,7 @@ object EpisodePickerDialog {
                 )
                 android.widget.Toast.makeText(
                     context,
-                    if (nowFav) "Đã lưu bộ phim \"${film.name}\"$epSuffix vào Tủ Phim" else "Đã bỏ lưu \"${film.name}\"",
+                    if (nowFav) "Đã lưu bộ phim \"${film.name}\"$epSuffix vào Lịch Sử Xem" else "Đã bỏ lưu \"${film.name}\"",
                     android.widget.Toast.LENGTH_SHORT
                 ).show()
             }

@@ -240,7 +240,7 @@ BẢN ĐỒ TOÀN BỘ 6 TAB VÀ CÁC MÀN HÌNH CỦA APP KENHLIVE TV:
 - [Tab 2 - Truyền hình (IPTV)]: Danh mục Kênh Yêu Thích (bấm giữ OK để lưu), TV360, VTV, HTV. Hero Preview góc trên. Lưới kênh. OSD gõ số trực tiếp từ remote (0-9). Phím tắt đổi kênh CHANNEL_UP/DOWN, PAGE_UP/DOWN. Phím tắt Aspect Ratio (A/Đỏ) & Audio Boost (B/Vàng).
 - [Tab 3 - Tìm kiếm (Search)]: Ô nhập tìm kiếm (searchInput), gõ từ khóa không dấu, chuyển D-pad xuống danh sách kết quả.
 - [Tab 4 - Cài đặt (Settings)]: Thông tin phiên bản, kiểm tra cập nhật, cài đặt server.
-- [Tab 5 - Kho Phim (NguonC & Anime)]: Apple Pills thể loại, Tủ Phim & Tập (lưu phim, tập đang xem dở). Trình phát phim hỗ trợ tua D-pad Trái/Phải (-10s / +10s) và tự động tiếp tục xem (Resume).
+- [Tab 5 - Kho Phim (NguonC & Anime)]: Apple Pills thể loại, Lịch Sử Xem (lưu phim, tập đang xem dở). Trình phát phim hỗ trợ tua D-pad Trái/Phải (-10s / +10s) và tự động tiếp tục xem (Resume).
 - [PlayerActivity]: Trình phát video, phím MENU mở Server Picker, phím A/Đỏ xoay vòng tỉ lệ khung hình (Fit/Fill/Zoom/Fixed), phím B/Vàng tăng âm lượng, gõ số kênh hiện OSD nhảy kênh ngay khi bấm OK.
 - [MultiViewActivity]: Xem đồng thời 2 trận bóng đá side-by-side (--es open mv), phím UP/DOWN đổi focus viền trắng.
 
@@ -478,7 +478,7 @@ HÃY SUY LUẬN VÀ TRẢ VỀ DUY NHẤT JSON THEO ĐỊNH DẠNG SAU:
             elif step == 1:
                 action_type = "KEY"
                 action_param = "DPAD_DOWN"
-                thought = "Khám phá Apple Pills bộ lọc thể loại & danh mục Tủ Phim & Tập"
+                thought = "Khám phá Apple Pills bộ lọc thể loại & danh mục Lịch Sử Xem"
             elif step == 2:
                 action_type = "KEY"
                 action_param = "DPAD_RIGHT"
@@ -880,8 +880,8 @@ class AutonomousQASuite:
             ),
             QAMission(
                 "MISSION_PHIM_NGUONC_AND_SEARCH",
-                "Kho Phim NguonC, Apple Pills & Tủ Phim",
-                "Chuyển sang Tab Kho Phim (Tab 5), duyệt Apple Pills bộ lọc, tìm kiếm phim NguonC, kiểm tra Tủ Phim & Tập.",
+                "Kho Phim NguonC, Apple Pills & Lịch Sử Xem",
+                "Chuyển sang Tab Kho Phim (Tab 5), duyệt Apple Pills bộ lọc, tìm kiếm phim NguonC, kiểm tra Lịch Sử Xem.",
                 "Danh sách phim tải đủ thông tin, tìm kiếm trả kết quả nhanh."
             ),
             QAMission(
