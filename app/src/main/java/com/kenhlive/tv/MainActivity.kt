@@ -277,6 +277,11 @@ class MainActivity : AppCompatActivity() {
                     decorFirst?.requestFocus()
                     f = currentFocus
                 }
+                if (f == null) {
+                    val activeNav = navViews.firstOrNull { navIdToTab[it.id] == current } ?: navViews.firstOrNull()
+                    activeNav?.requestFocus()
+                    f = currentFocus
+                }
                 if (f != null) return super.dispatchKeyEvent(event)
             }
             val insideRail = railPanel?.let { isDescendant(it, f) } == true

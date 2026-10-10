@@ -50,15 +50,27 @@ class ScheduleFragment : Fragment() {
         return v
     }
 
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
+        if (DeviceMode.isTv) {
+            view.postDelayed({ if (view.findFocus() == null) focusFirstMatch() }, 150)
+            view.postDelayed({ if (view.findFocus() == null) focusFirstMatch() }, 400)
+        }
+    }
+
     override fun onResume() {
         super.onResume()
         vm.startAutoRefresh()
+        if (DeviceMode.isTv) {
+            view?.postDelayed({ if (view?.findFocus() == null) focusFirstMatch() }, 100)
+        }
     }
 
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
         if (!hidden && DeviceMode.isTv) {
             focusFirstMatch()
+            view?.postDelayed({ if (view?.findFocus() == null) focusFirstMatch() }, 200)
         }
     }
 
@@ -70,15 +82,24 @@ class ScheduleFragment : Fragment() {
                     val vh = rv.findViewHolderForAdapterPosition(i)
                     if (vh != null) {
                         vh.itemView.requestFocus()
-                        break
+                        return@post
                     } else {
                         rv.scrollToPosition(i)
                         rv.postDelayed({
                             rv.findViewHolderForAdapterPosition(i)?.itemView?.requestFocus()
                         }, 80)
-                        break
+                        rv.postDelayed({
+                            if (view?.findFocus() == null) {
+                                rv.findViewHolderForAdapterPosition(i)?.itemView?.requestFocus()
+                            }
+                        }, 250)
+                        return@post
                     }
                 }
+            }
+            // Nếu chưa có item nào (đang tải), tự động thử lại
+            if (adapter.itemCount == 0 && isResumed) {
+                rv.postDelayed({ if (view?.findFocus() == null) focusFirstMatch() }, 300)
             }
         }
     }
