@@ -462,7 +462,7 @@ class PhimFragment : Fragment() {
                             name = progress.episodeName,
                             slug = progress.episodeSlug,
                             embed = progress.embedUrl,
-                            m3u8 = progress.m3u8Url
+                            m3u8 = if (progress.embedUrl.contains(".m3u8")) progress.embedUrl else ""
                         ),
                         startPosMs = progress.positionMs
                     )
