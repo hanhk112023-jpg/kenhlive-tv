@@ -95,11 +95,15 @@ def sh(cmd, timeout=30):
 # 1. AI BRAIN (Vision + Reasoning Multi-Gateway Client)
 # ==============================================================================
 class AIBrain:
-    """Bộ não trung tâm điều khiển AI QA: Hỗ trợ đa backend và Fallback tự động."""
+    """Bộ não trung tâm điều khiển AI QA: Hỗ trợ đa backend, Fallback tự động và Session Memory liên tục cho cả phiên test."""
 
     def __init__(self):
         self.provider_active = "UNKNOWN"
         self._detect_provider()
+        self.session_id = None
+        self.session_messages = []
+        self.turn_counter = 0
+        self.last_action_feedback = ""
 
     def _detect_provider(self):
         # Ưu tiên Antigravity Gateway (nội bộ, tốc độ cao, hỗ trợ vision & reasoning)
@@ -113,8 +117,59 @@ class AIBrain:
             self.provider_active = "LOCAL_REFLEX"
         print(f"🧠 [AI Brain] Khởi tạo thành công với engine: {self.provider_active}", flush=True)
 
-    def chat_vision(self, prompt, image_bytes=None, system_prompt=None, max_tokens=3000, timeout=45):
-        """Gửi prompt kèm hình ảnh đến model AI và nhận câu trả lời."""
+    def init_session(self, session_id: str):
+        """Khởi tạo bộ nhớ cho một phiên kiểm thử hoàn chỉnh (Session Memory).
+        Toàn bộ các bước kiểm thử trong cùng 1 phiên sẽ tích lũy ngữ cảnh vào cùng 1 luồng hội thoại.
+        """
+        self.session_id = session_id
+        self.turn_counter = 0
+        self.last_action_feedback = ""
+        self.session_messages = [
+            {"role": "system", "content": self._build_system_prompt()}
+        ]
+        print(f"🧠 [AI Brain] Đã thiết lập Session Memory cho phiên test: {session_id}", flush=True)
+
+    def record_step_feedback(self, feedback: str):
+        """Ghi nhận phản hồi kết quả thực tế sau khi thực hiện hành động vào bộ nhớ phiên."""
+        self.last_action_feedback = feedback
+
+    def _build_system_prompt(self) -> str:
+        return """Bạn là Senior AI QA Engineer chuyên nghiệp kiểm thử ứng dụng Android TV 10-foot 'KênhLive'.
+Bạn đang trực tiếp cầm remote điều khiển app trên TV để kiểm thử tính năng và săn lỗi (bug hunting) trong một phiên kiểm thử liên tục (Continuous Test Session).
+
+BẢN ĐỒ TOÀN BỘ 6 TAB VÀ CÁC MÀN HÌNH CỦA APP KENHLIVE TV:
+- [Tab 0 - Trực tiếp (Live)]: Trận đấu bóng đá live. Hàng lọc đài phát riêng biệt: "Tất cả", "ColaTV", "Gà Vàng", "Khán Đài", "Socolive". Hero Banner gọn gàng. Tên giải đấu chuẩn tiếng Việt, tỷ số X : Y, nhãn XEM và countdown.
+- [Tab 1 - Lịch đấu (Schedule)]: Lịch thi đấu theo ngày (Hôm nay, Ngày mai, Giải đấu). Trận > 180p có badge KẾT THÚC.
+- [Tab 2 - Truyền hình (IPTV)]: Danh mục Kênh Yêu Thích (bấm giữ OK để lưu), TV360, VTV, HTV. Hero Preview góc trên. Lưới kênh. OSD gõ số trực tiếp từ remote (0-9). Phím tắt đổi kênh CHANNEL_UP/DOWN, PAGE_UP/DOWN. Phím tắt Aspect Ratio (A/Đỏ) & Audio Boost (B/Vàng).
+- [Tab 3 - Tìm kiếm (Search)]: Ô nhập tìm kiếm (searchInput), gõ từ khóa không dấu, chuyển D-pad xuống danh sách kết quả.
+- [Tab 4 - Cài đặt (Settings)]: Thông tin phiên bản, kiểm tra cập nhật, liên hệ & báo lỗi Telegram (@T990512S), cài đặt server.
+- [Tab 5 - Kho Phim (NguonC & Anime)]: Apple Pills thể loại, Lịch Sử Xem (lưu phim, tập đang xem dở). Trình phát phim hỗ trợ tua D-pad Trái/Phải (-10s / +10s) và tự động tiếp tục xem (Resume).
+- [PlayerActivity]: Trình phát video, phím MENU mở Server Picker, phím A/Đỏ xoay vòng tỉ lệ khung hình (Fit/Fill/Zoom/Fixed), phím B/Vàng tăng âm lượng, gõ số kênh hiện OSD nhảy kênh ngay khi bấm OK. Khung báo lỗi có nút Báo Lỗi Telegram @T990512S.
+- [MultiViewActivity]: Xem đồng thời 2 trận bóng đá side-by-side (--es open mv), phím UP/DOWN đổi focus viền trắng.
+
+NGUYÊN TẮC BỘ NHỚ PHIÊN & SĂN LỖI (Session Memory & Bug Hunting):
+1. Bạn có TRÍ NHỚ LIÊN TỤC xuyên suốt cả phiên test. Hãy ghi nhớ các màn hình đã đi qua, các thao tác đã thực hiện và các lỗi đã phát hiện để không lặp lại hoặc kiểm tra lại xem lỗi có tái diễn.
+2. Chủ động khám phá toàn bộ các tính năng, di chuyển qua các tab bằng SWITCH_TAB hoặc DPAD_LEFT mở rail navigation.
+3. Khi phát hiện lỗi thực sự (Mất dấu focus, Kẹt nút Focus Trap, Tràn viền text, Màn hình rỗng chết kẹt, App crash), hãy báo ngay vào trường 'defect_detected'.
+4. Tính năng tự phục hồi (Failover & Self-Healing): Nếu app tự đổi sang server dự phòng thành công, đây là tính năng bảo vệ hoạt động đúng, KHÔNG coi là lỗi.
+
+ĐỊNH DẠNG TRẢ VỀ DUY NHẤT: Trả về một khối JSON hợp lệ:
+{
+  "thought": "Quan sát thấy gì trên màn hình hiện tại, liên hệ với các bước trước trong phiên kiểm thử và lý do chọn hành động này",
+  "action_type": "KEY" | "LONG_PRESS" | "KEYPAD" | "SWITCH_TAB" | "TEXT" | "WAIT" | "VERIFY_STREAM" | "COMPLETE_MISSION",
+  "action_param": "DPAD_DOWN" | "OK" | "1" | "2" | "ENTER" | "BACK" | "uefa" | "2.0" | "",
+  "expected_result": "Kỳ vọng gì sau khi thực hiện hành động này?",
+  "defect_detected": null hoặc {
+     "area": "Tên màn hình/tính năng",
+     "severity": "CRITICAL" | "HIGH" | "MEDIUM" | "LOW",
+     "issue": "Mô tả ngắn gọn lỗi",
+     "detail": "Bằng chứng chi tiết",
+     "suggestion": "Gợi ý sửa code Kotlin/Layout"
+  }
+}"""
+
+    def chat_turn(self, messages, max_tokens=3000, timeout=45):
+        """Gửi chuỗi hội thoại của phiên đến model AI và nhận câu trả lời."""
         # 1. Thử Antigravity Gateway
         if self.provider_active == "ANTIGRAVITY":
             try:
@@ -122,9 +177,7 @@ class AIBrain:
                     url=ANTIGRAVITY_BASE,
                     key=ANTIGRAVITY_KEY,
                     model=ANTIGRAVITY_MODEL,
-                    prompt=prompt,
-                    image_bytes=image_bytes,
-                    system_prompt=system_prompt,
+                    messages=messages,
                     max_tokens=max_tokens,
                     timeout=timeout
                 )
@@ -140,9 +193,7 @@ class AIBrain:
                     url=KILO_BASE,
                     key=KILO_KEY,
                     model=KILO_MODEL,
-                    prompt=prompt,
-                    image_bytes=image_bytes,
-                    system_prompt=system_prompt,
+                    messages=messages,
                     max_tokens=max_tokens,
                     timeout=timeout
                 )
@@ -158,37 +209,35 @@ class AIBrain:
                     url=OPENAI_BASE,
                     key=OPENAI_KEY,
                     model=OPENAI_MODEL,
-                    prompt=prompt,
-                    image_bytes=image_bytes,
-                    system_prompt=system_prompt,
+                    messages=messages,
                     max_tokens=max_tokens,
                     timeout=timeout
                 )
                 if res:
                     return res, "OPENAI"
-            except Exception as e:
+            except Exception:
                 pass
 
         # 4. Fallback: Local Reflex Brain (không phụ thuộc mạng ngoại vi)
         return None, "LOCAL_REFLEX"
 
-    def _call_openai_compat(self, url, key, model, prompt, image_bytes, system_prompt, max_tokens, timeout):
-        messages = []
+    def chat_vision(self, prompt, image_bytes=None, system_prompt=None, max_tokens=3000, timeout=45):
+        """Tương thích ngược: Gửi tin nhắn đơn lẻ nếu cần."""
+        msgs = []
         if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
-
+            msgs.append({"role": "system", "content": system_prompt})
         user_content = [{"type": "text", "text": prompt}]
         if image_bytes:
-            # Thu nhỏ ảnh về 960x540 để tối ưu tốc độ truyền tải
             b64 = self._compress_and_b64(image_bytes)
             if b64:
                 user_content.append({
                     "type": "image_url",
                     "image_url": {"url": f"data:image/jpeg;base64,{b64}"}
                 })
+        msgs.append({"role": "user", "content": user_content})
+        return self.chat_turn(msgs, max_tokens=max_tokens, timeout=timeout)
 
-        messages.append({"role": "user", "content": user_content})
-
+    def _call_openai_compat(self, url, key, model, messages, max_tokens, timeout):
         payload = {
             "model": model,
             "messages": messages,
@@ -230,73 +279,70 @@ class AIBrain:
             return base64.b64encode(png_bytes).decode("utf-8")
 
     def decide_mission_action(self, mission, state):
-        """AI phân tích trạng thái và ra quyết định hành động tiếp theo cho mission."""
-        prompt = f"""Bạn là Senior AI QA Engineer chuyên nghiệp kiểm thử ứng dụng Android TV 10-foot 'KênhLive'.
-Bạn đang trực tiếp cầm remote điều khiển app trên TV để kiểm thử tính năng và săn lỗi (bug hunting).
+        """AI phân tích trạng thái và ra quyết định hành động tiếp theo trong mạch hội thoại của cả phiên test."""
+        self.turn_counter += 1
 
-BẢN ĐỒ TOÀN BỘ 6 TAB VÀ CÁC MÀN HÌNH CỦA APP KENHLIVE TV:
-- [Tab 0 - Trực tiếp (Live)]: Trận đấu bóng đá live. Hàng lọc đài phát riêng biệt: "Tất cả", "ColaTV", "Gà Vàng", "Khán Đài", "Socolive". Hero Banner gọn gàng (đã bỏ khối thống kê rác). Tên giải đấu chuẩn tiếng Việt, tỷ số X : Y, nhãn XEM và countdown.
-- [Tab 1 - Lịch đấu (Schedule)]: Lịch thi đấu theo ngày (Hôm nay, Ngày mai, Giải đấu). Trận > 180p có badge KẾT THÚC.
-- [Tab 2 - Truyền hình (IPTV)]: Danh mục Kênh Yêu Thích (bấm giữ OK để lưu), TV360, VTV, HTV. Hero Preview góc trên. Lưới kênh. OSD gõ số trực tiếp từ remote (0-9). Phím tắt đổi kênh CHANNEL_UP/DOWN, PAGE_UP/DOWN. Phím tắt Aspect Ratio (A/Đỏ) & Audio Boost (B/Vàng).
-- [Tab 3 - Tìm kiếm (Search)]: Ô nhập tìm kiếm (searchInput), gõ từ khóa không dấu, chuyển D-pad xuống danh sách kết quả.
-- [Tab 4 - Cài đặt (Settings)]: Thông tin phiên bản, kiểm tra cập nhật, cài đặt server.
-- [Tab 5 - Kho Phim (NguonC & Anime)]: Apple Pills thể loại, Lịch Sử Xem (lưu phim, tập đang xem dở). Trình phát phim hỗ trợ tua D-pad Trái/Phải (-10s / +10s) và tự động tiếp tục xem (Resume).
-- [PlayerActivity]: Trình phát video, phím MENU mở Server Picker, phím A/Đỏ xoay vòng tỉ lệ khung hình (Fit/Fill/Zoom/Fixed), phím B/Vàng tăng âm lượng, gõ số kênh hiện OSD nhảy kênh ngay khi bấm OK.
-- [MultiViewActivity]: Xem đồng thời 2 trận bóng đá side-by-side (--es open mv), phím UP/DOWN đổi focus viền trắng.
+        # 1. Đảm bảo session_messages đã được khởi tạo
+        if not self.session_messages:
+            self.init_session("QA-SESSION-AUTO")
 
-TIẾN ĐỘ KHÁM PHÁ CỦA BẠN (Tabs Coverage):
-- Các Tab ĐÃ kiểm tra: {state.get('tabs_tested', 'Chưa có')}
-- Các Tab CÒN LẠI cần bạn tự tìm lỗi: {state.get('tabs_remaining', 'Toàn bộ')}
+        # 2. Tối ưu bộ nhớ phiên: gỡ bỏ dữ liệu ảnh base64 lớn của các bước cũ để tránh tràn token / bandwidth
+        for msg in self.session_messages:
+            content = msg.get("content")
+            if msg.get("role") == "user" and isinstance(content, list):
+                compact_parts = []
+                for p in content:
+                    if isinstance(p, dict):
+                        if p.get("type") == "text":
+                            compact_parts.append(p)
+                        elif p.get("type") == "image_url":
+                            compact_parts.append({"type": "text", "text": "[Ảnh màn hình bước trước đã phân tích]"})
+                msg["content"] = compact_parts
 
-NHIỆM VỤ HIỆN TẠI:
-- Tên: {mission.name} ({mission.title})
+        # 3. Xây dựng tin nhắn User cho bước hiện tại
+        feedback_section = f"\nPHẢN HỒI TỪ BƯỚC TRƯỚC:\n{self.last_action_feedback}\n" if self.last_action_feedback else ""
+        step_prompt = f"""[LƯỢT #{self.turn_counter} · NHIỆM VỤ: {mission.name} ({mission.title})]
+- Tiến độ nhiệm vụ: Bước {mission.steps_executed + 1}/{mission.max_steps}
 - Mục tiêu: {mission.description}
-- Tiêu chí hoàn thành: {mission.success_criteria}
-- Bước hiện tại: {mission.steps_executed + 1}/{mission.max_steps}
+- Tiêu chí đạt: {mission.success_criteria}
 
-TRẠNG THÁI MÀN HÌNH & HỆ THỐNG:
-- Activity hiện tại: {state['activity']}
-- Node đang FOCUS: {state['focused_sig']} (Text: '{state['focused_text']}')
-- Có viền focus chuẩn (#FF6500 hoặc Trắng/Cyan): {state['has_focus_ring']}
-- Video đang chạy (Motion): {state['video_motion_playing']} (Motion delta: {state['video_motion_delta']:.2f}%)
-- Lịch sử 5 phím gần nhất: {state['recent_keys']}
-- Logcat cảnh báo/lỗi: {state['logcat_alerts']}
+TIẾN ĐỘ TOÀN PHIÊN KIỂM THỬ:
+- Các Tab đã kiểm tra: {state.get('tabs_tested', 'Chưa có')}
+- Các Tab còn lại: {state.get('tabs_remaining', 'Toàn bộ')}
 
-DANH SÁCH VIEW CÓ THỂ FOCUS TRÊN MÀN HÌNH:
-{state['ui_summary']}
+TRẠNG THÁI MÀN HÌNH & HỆ THỐNG HIỆN TẠI:
+- Activity: {state.get('activity')}
+- Node đang FOCUS: {state.get('focused_sig')} (Text: '{state.get('focused_text')}')
+- Có viền focus chuẩn: {state.get('has_focus_ring')} (Màu viền: {state.get('focus_ring_color')})
+- Video đang chạy (Motion): {state.get('video_motion_playing')} (Motion delta: {state.get('video_motion_delta', 0.0):.2f}%)
+- Lịch sử 5 phím gần nhất: {state.get('recent_keys')}
+- Logcat cảnh báo/lỗi: {state.get('logcat_alerts')}
+{feedback_section}
+DANH SÁCH VIEW FOCUSABLE TRÊN MÀN HÌNH:
+{state.get('ui_summary')}
 
-CÁC HÀNH ĐỘNG KHẢ DỤNG:
-- KEY: DPAD_UP, DPAD_DOWN, DPAD_LEFT, DPAD_RIGHT, DPAD_CENTER (hoặc ENTER/OK), BACK, MENU, INFO, PLAY_PAUSE, REWIND, FAST_FORWARD, CHANNEL_UP, CHANNEL_DOWN, PAGE_UP, PAGE_DOWN, A, B, RED, YELLOW
-- LONG_PRESS: Giữ phím OK (thêm/bớt Kênh Yêu Thích IPTV)
-- KEYPAD: Gõ số kênh trực tiếp trên remote (vd: "1", "15")
-- SWITCH_TAB: Chuyển thẳng sang Tab bất kỳ (0: Trực tiếp, 1: Lịch, 2: IPTV, 3: Tìm kiếm, 4: Cài đặt, 5: Kho Phim)
-- TEXT: Nhập chuỗi tìm kiếm (vd: "uefa", "ngoai hang")
-- WAIT: Chờ X giây (vd: 2.0 giây để tải stream)
-- VERIFY_STREAM: Kiểm tra xem video stream có đang phát mượt không
-- COMPLETE_MISSION: Kết thúc nhiệm vụ này khi đã thỏa mãn mục tiêu
+Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn bộ diễn biến lịch sử của phiên kiểm thử này để chọn hành động tiếp theo. Trả về DUY NHẤT một khối JSON theo định dạng đã quy định."""
 
-HƯỚNG DẪN TỰ TÌM LỖI (Bug Hunting Guide):
-- Hãy chủ động khám phá mọi ngóc ngách, chuyển qua các tab bằng lệnh SWITCH_TAB hoặc DPAD_LEFT mở thanh điều hướng rail.
-- Bấm phím BACK khi mở rail sidebar phải đóng sidebar và trả lại focus cho nội dung.
-- Phát hiện và báo ngay các lỗi thực sự: Mất dấu focus (Focus Loss), kẹt nút (Focus Trap), text tràn viền/cắt cụt, màn hình rỗng đen chết kẹt (Dead Screen), app crash (FATAL).
-- LƯU Ý VỀ TÍNH NĂNG TỰ PHỤC HỒI (Failover & Self-Healing): Nếu phát hiện log lỗi mạng hoặc luồng video nhưng app đã tự động failover/chuyển sang server dự phòng thành công (hoặc toast thông báo chuyển luồng đang chạy), coi đây là tính năng bảo vệ hoạt động đúng thiết kế, KHÔNG đánh dấu là lỗi. Chỉ báo lỗi khi video đứng hình chết kẹt hoàn toàn không có lối thoát.
+        user_content = [{"type": "text", "text": step_prompt}]
+        raw_png = state.get("screenshot_bytes")
+        if raw_png:
+            b64 = self._compress_and_b64(raw_png)
+            if b64:
+                user_content.append({
+                    "type": "image_url",
+                    "image_url": {"url": f"data:image/jpeg;base64,{b64}"}
+                })
 
-HÃY SUY LUẬN VÀ TRẢ VỀ DUY NHẤT JSON THEO ĐỊNH DẠNG SAU:
-{{
-  "thought": "Quan sát thấy gì trên màn hình và tại sao chọn hành động này?",
-  "action_type": "KEY" | "LONG_PRESS" | "KEYPAD" | "SWITCH_TAB" | "TEXT" | "WAIT" | "VERIFY_STREAM" | "COMPLETE_MISSION",
-  "action_param": "DPAD_DOWN" | "OK" | "1" | "2" | "ENTER" | "BACK" | "uefa" | "2.0" | "",
-  "expected_result": "Kỳ vọng gì sau khi thực hiện hành động này?",
-  "defect_detected": null hoặc {{
-     "area": "Tên màn hình/tính năng",
-     "severity": "CRITICAL" | "HIGH" | "MEDIUM" | "LOW",
-     "issue": "Mô tả ngắn gọn lỗi",
-     "detail": "Bằng chứng chi tiết",
-     "suggestion": "Gợi ý sửa code Kotlin/Layout"
-  }}
-}}
-"""
-        response_text, provider = self.chat_vision(prompt, image_bytes=state.get("screenshot_bytes"))
+        new_user_msg = {"role": "user", "content": user_content}
+
+        # Sliding window nếu số lượng tin nhắn quá dài (> 30 tin nhắn ~ 15 lượt)
+        if len(self.session_messages) > 30:
+            sys_msg = self.session_messages[0]
+            # Giữ system message và 16 tin nhắn gần nhất
+            self.session_messages = [sys_msg] + self.session_messages[-16:]
+
+        candidate_messages = list(self.session_messages) + [new_user_msg]
+        response_text, provider = self.chat_turn(candidate_messages)
 
         if response_text and provider != "LOCAL_REFLEX":
             try:
@@ -304,6 +350,9 @@ HÃY SUY LUẬN VÀ TRẢ VỀ DUY NHẤT JSON THEO ĐỊNH DẠNG SAU:
                 if m:
                     parsed = json.loads(m.group(0))
                     parsed["_provider"] = provider
+                    # Ghi nhận lượt hội thoại này vào bộ nhớ phiên
+                    self.session_messages.append(new_user_msg)
+                    self.session_messages.append({"role": "assistant", "content": response_text})
                     return parsed
             except Exception as e:
                 print(f"⚠️ [AI Brain] Không parse được JSON từ {provider}: {e}", flush=True)
@@ -822,6 +871,7 @@ class AutonomousQASuite:
         self.brain = AIBrain()
         self.device = AndroidTVDevice(serial=serial, pkg=PKG)
         self.session = QASession(out_dir=out_dir, serial=serial, pkg=PKG)
+        self.brain.init_session(self.session.session_id)
         self.session.set_ai_provider(self.brain.provider_active)
 
         # Trình quay video toàn bộ quá trình kiểm thử Android TV
@@ -1061,6 +1111,11 @@ class AutonomousQASuite:
                     mission.passed = True
                     break
 
+                # Ghi nhận phản hồi kết quả thao tác vào bộ nhớ phiên cho lượt tiếp theo
+                post_ui = self.device.dump_ui_state()
+                step_feedback = f"Hành động '{act_type} {act_param}' đã chạy xong. Focus hiện tại: '{post_ui.get('focused_text')}' ({post_ui.get('focused_sig')}), Activity: {self.device.current_activity()}"
+                self.brain.record_step_feedback(step_feedback)
+
             # Chụp ảnh sau mỗi nhiệm vụ
             safe_name = f"{m_idx + 2:02d}_{mission.name.lower()}"
             self._record_screen(safe_name)
@@ -1148,6 +1203,8 @@ class AutonomousQASuite:
             "timelapse": timelapse_file,
             "engine": "KenhLive 100% Autonomous AI QA Suite",
             "brain_provider": self.brain.provider_active,
+            "session_turns": self.brain.turn_counter,
+            "session_messages_count": len(self.brain.session_messages),
             "checks_passed": passed_missions,
             "checks_total": total_missions,
             "missions_passed": f"{passed_missions}/{total_missions}",
