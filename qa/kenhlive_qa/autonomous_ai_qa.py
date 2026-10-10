@@ -781,9 +781,11 @@ class AndroidTVDevice:
         self._last_logcat_len = len(cur)
 
         alerts = []
-        for line in new_lines:
+        for i, line in enumerate(new_lines):
             if "FATAL EXCEPTION" in line or "AndroidRuntime: FATAL" in line:
                 alerts.append(f"CRASH: {line[:120]}")
+                stack = "\n".join(new_lines[i:i+20])
+                print(f"💥 [LOGCAT CRASH DETECTED]:\n{stack}", flush=True)
             elif "ANR in " + self.pkg in line:
                 alerts.append(f"ANR: {line[:120]}")
             elif "ExoPlayer" in line and ("error" in line.lower() or "failure" in line.lower()):

@@ -82,7 +82,9 @@ class WebPlayerActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         applyTvDensity()
-        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        try {
+            requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+        } catch (_: Throwable) {}
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         hideSystemUi()
 
@@ -228,7 +230,7 @@ class WebPlayerActivity : AppCompatActivity() {
         s.useWideViewPort = true
         s.loadWithOverviewMode = true
         s.cacheMode = WebSettings.LOAD_DEFAULT
-        val defaultUa = try { WebSettings.getDefaultUserAgent(this) } catch (_: Exception) { "" }
+        val defaultUa = try { WebSettings.getDefaultUserAgent(this) } catch (_: Throwable) { "" }
         s.userAgentString = if (defaultUa.isNotBlank()) {
             defaultUa.replace("; wv", "")
         } else {
@@ -257,7 +259,7 @@ class WebPlayerActivity : AppCompatActivity() {
                         }
                     })();
                 """.trimIndent()
-                view?.evaluateJavascript(autoPlayJs, null)
+                try { view?.evaluateJavascript(autoPlayJs, null) } catch (_: Throwable) {}
 
                 // 2. Tự động tua đến giây đã lưu nếu có tiến độ trước đó
                 if (startPositionMs > 1000L && !hasSeekedToStart) {
@@ -283,11 +285,13 @@ class WebPlayerActivity : AppCompatActivity() {
                         })();
                     """.trimIndent()
                     handler.postDelayed({
-                        view?.evaluateJavascript(seekJs) { res ->
-                            if (res != null && res.contains("SEEKED")) {
-                                hasSeekedToStart = true
+                        try {
+                            view?.evaluateJavascript(seekJs) { res ->
+                                if (res != null && res.contains("SEEKED")) {
+                                    hasSeekedToStart = true
+                                }
                             }
-                        }
+                        } catch (_: Throwable) {}
                     }, 2500L)
                 }
             }
@@ -306,28 +310,48 @@ class WebPlayerActivity : AppCompatActivity() {
                 }
                 return true
             }
+
+            override fun onRenderProcessGone(view: WebView?, detail: android.webkit.RenderProcessGoneDetail?): Boolean {
+                android.util.Log.e("WebPlayerActivity", "WebView render process exited: didCrash=${detail?.didCrash()}")
+                try {
+                    (view?.parent as? ViewGroup)?.removeView(view)
+                    view?.destroy()
+                } catch (_: Throwable) {}
+                webView = null
+                val host = findViewById<FrameLayout>(R.id.webViewHost)
+                showFallbackError(host)
+                return true
+            }
         }
 
         wv.webChromeClient = object : WebChromeClient() {
             override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
+                if (view == null) return
                 if (customView != null) {
                     callback?.onCustomViewHidden()
                     return
                 }
                 customView = view
                 customViewCallback = callback
-                customViewContainer.addView(view, FrameLayout.LayoutParams(
-                    ViewGroup.LayoutParams.MATCH_PARENT,
-                    ViewGroup.LayoutParams.MATCH_PARENT
-                ))
-                customViewContainer.visibility = View.VISIBLE
-                wv.visibility = View.GONE
-                topOsd.visibility = View.GONE
+                (view.parent as? ViewGroup)?.removeView(view)
+                try {
+                    customViewContainer.addView(view, FrameLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.MATCH_PARENT
+                    ))
+                    customViewContainer.visibility = View.VISIBLE
+                    wv.visibility = View.GONE
+                    topOsd.visibility = View.GONE
+                } catch (t: Throwable) {
+                    android.util.Log.e("WebPlayerActivity", "onShowCustomView failed", t)
+                }
             }
 
             override fun onHideCustomView() {
                 if (customView == null) return
-                customViewContainer.removeView(customView)
+                try {
+                    customViewContainer.removeView(customView)
+                } catch (_: Throwable) {}
                 customView = null
                 customViewContainer.visibility = View.GONE
                 wv.visibility = View.VISIBLE
@@ -417,134 +441,149 @@ class WebPlayerActivity : AppCompatActivity() {
     }
 
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
-        if (event.action == KeyEvent.ACTION_DOWN) {
-            when (event.keyCode) {
-                KeyEvent.KEYCODE_DPAD_UP,
-                KeyEvent.KEYCODE_DPAD_DOWN,
-                KeyEvent.KEYCODE_MENU,
-                KeyEvent.KEYCODE_INFO -> {
-                    showOsd()
-                    return true
-                }
-                KeyEvent.KEYCODE_DPAD_LEFT,
-                KeyEvent.KEYCODE_MEDIA_REWIND -> {
-                    val seekBackJs = """
-                        (function() {
-                            if (window.jwplayer && typeof window.jwplayer === 'function') {
-                                try {
-                                    var pos = window.jwplayer().getPosition();
-                                    window.jwplayer().seek(Math.max(0, pos - 10));
-                                    return;
-                                } catch(e){}
-                            }
-                            var v = document.querySelector('video');
-                            if (v) {
-                                v.currentTime = Math.max(0, v.currentTime - 10);
-                            }
-                        })();
-                    """.trimIndent()
-                    webView?.evaluateJavascript(seekBackJs, null)
-                    Toast.makeText(this, "◀◀ Tua lại 10s", Toast.LENGTH_SHORT).show()
-                    showOsd()
-                    queryPlaybackPosition()
-                    return true
-                }
-                KeyEvent.KEYCODE_DPAD_RIGHT,
-                KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> {
-                    val seekForwardJs = """
-                        (function() {
-                            if (window.jwplayer && typeof window.jwplayer === 'function') {
-                                try {
-                                    var pos = window.jwplayer().getPosition();
-                                    window.jwplayer().seek(pos + 10);
-                                    return;
-                                } catch(e){}
-                            }
-                            var v = document.querySelector('video');
-                            if (v) {
-                                v.currentTime = v.currentTime + 10;
-                            }
-                        })();
-                    """.trimIndent()
-                    webView?.evaluateJavascript(seekForwardJs, null)
-                    Toast.makeText(this, "▶▶ Tua tới 10s", Toast.LENGTH_SHORT).show()
-                    showOsd()
-                    queryPlaybackPosition()
-                    return true
-                }
-                KeyEvent.KEYCODE_MEDIA_PLAY -> {
-                    val playJs = "var v = document.querySelector('video'); if (v) v.play(); if (window.jwplayer) try { window.jwplayer().play(); } catch(e){}"
-                    webView?.evaluateJavascript(playJs, null)
-                    showOsd()
-                    return true
-                }
-                KeyEvent.KEYCODE_MEDIA_PAUSE -> {
-                    val pauseJs = "var v = document.querySelector('video'); if (v) v.pause(); if (window.jwplayer) try { window.jwplayer().pause(); } catch(e){}"
-                    webView?.evaluateJavascript(pauseJs, null)
-                    showOsd()
-                    return true
-                }
-                KeyEvent.KEYCODE_DPAD_CENTER,
-                KeyEvent.KEYCODE_ENTER,
-                KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
-                    // Toggle Play / Pause video HTML5 / JWPlayer
-                    val togglePlayJs = """
-                        (function() {
-                            if (window.jwplayer && typeof window.jwplayer === 'function') {
-                                try {
-                                    var state = window.jwplayer().getState();
-                                    if (state === 'playing') window.jwplayer().pause();
-                                    else window.jwplayer().play();
-                                    return;
-                                } catch(e){}
-                            }
-                            var v = document.querySelector('video');
-                            if (v) {
-                                if (v.paused) v.play();
-                                else v.pause();
-                            }
-                        })();
-                    """.trimIndent()
-                    webView?.evaluateJavascript(togglePlayJs, null)
-                    showOsd()
-                    queryPlaybackPosition()
-                    return true
-                }
-                KeyEvent.KEYCODE_BACK -> {
-                    if (customView != null) {
-                        webView?.webChromeClient?.onHideCustomView()
+        try {
+            if (event.action == KeyEvent.ACTION_DOWN) {
+                when (event.keyCode) {
+                    KeyEvent.KEYCODE_DPAD_UP,
+                    KeyEvent.KEYCODE_DPAD_DOWN,
+                    KeyEvent.KEYCODE_MENU,
+                    KeyEvent.KEYCODE_INFO -> {
+                        showOsd()
                         return true
                     }
-                    if (topOsd.visibility == View.VISIBLE) {
-                        topOsd.visibility = View.GONE
+                    KeyEvent.KEYCODE_DPAD_LEFT,
+                    KeyEvent.KEYCODE_MEDIA_REWIND -> {
+                        val seekBackJs = """
+                            (function() {
+                                if (window.jwplayer && typeof window.jwplayer === 'function') {
+                                    try {
+                                        var pos = window.jwplayer().getPosition();
+                                        window.jwplayer().seek(Math.max(0, pos - 10));
+                                        return;
+                                    } catch(e){}
+                                }
+                                var v = document.querySelector('video');
+                                if (v) {
+                                    v.currentTime = Math.max(0, v.currentTime - 10);
+                                }
+                            })();
+                        """.trimIndent()
+                        try { webView?.evaluateJavascript(seekBackJs, null) } catch (_: Throwable) {}
+                        Toast.makeText(this, "◀◀ Tua lại 10s", Toast.LENGTH_SHORT).show()
+                        showOsd()
+                        queryPlaybackPosition()
+                        return true
+                    }
+                    KeyEvent.KEYCODE_DPAD_RIGHT,
+                    KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> {
+                        val seekForwardJs = """
+                            (function() {
+                                if (window.jwplayer && typeof window.jwplayer === 'function') {
+                                    try {
+                                        var pos = window.jwplayer().getPosition();
+                                        var dur = window.jwplayer().getDuration();
+                                        window.jwplayer().seek(Math.min(dur, pos + 10));
+                                        return;
+                                    } catch(e){}
+                                }
+                                var v = document.querySelector('video');
+                                if (v) {
+                                    var maxDur = v.duration || (v.currentTime + 10);
+                                    v.currentTime = Math.min(maxDur, v.currentTime + 10);
+                                }
+                            })();
+                        """.trimIndent()
+                        try { webView?.evaluateJavascript(seekForwardJs, null) } catch (_: Throwable) {}
+                        Toast.makeText(this, "▶▶ Tua tới 10s", Toast.LENGTH_SHORT).show()
+                        showOsd()
+                        queryPlaybackPosition()
+                        return true
+                    }
+                    KeyEvent.KEYCODE_MEDIA_PLAY -> {
+                        val playJs = "var v = document.querySelector('video'); if (v) v.play(); if (window.jwplayer) try { window.jwplayer().play(); } catch(e){}"
+                        try { webView?.evaluateJavascript(playJs, null) } catch (_: Throwable) {}
+                        showOsd()
+                        return true
+                    }
+                    KeyEvent.KEYCODE_MEDIA_PAUSE -> {
+                        val pauseJs = "var v = document.querySelector('video'); if (v) v.pause(); if (window.jwplayer) try { window.jwplayer().pause(); } catch(e){}"
+                        try { webView?.evaluateJavascript(pauseJs, null) } catch (_: Throwable) {}
+                        showOsd()
+                        return true
+                    }
+                    KeyEvent.KEYCODE_DPAD_CENTER,
+                    KeyEvent.KEYCODE_ENTER,
+                    KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
+                        // Toggle Play / Pause video HTML5 / JWPlayer
+                        val togglePlayJs = """
+                            (function() {
+                                if (window.jwplayer && typeof window.jwplayer === 'function') {
+                                    try {
+                                        var state = window.jwplayer().getState();
+                                        if (state === 'playing') window.jwplayer().pause();
+                                        else window.jwplayer().play();
+                                        return;
+                                    } catch(e){}
+                                }
+                                var v = document.querySelector('video');
+                                if (v) {
+                                    if (v.paused) v.play();
+                                    else v.pause();
+                                }
+                            })();
+                        """.trimIndent()
+                        try { webView?.evaluateJavascript(togglePlayJs, null) } catch (_: Throwable) {}
+                        showOsd()
+                        queryPlaybackPosition()
+                        return true
+                    }
+                    KeyEvent.KEYCODE_BACK -> {
+                        if (customView != null) {
+                            try { webView?.webChromeClient?.onHideCustomView() } catch (_: Throwable) {}
+                            return true
+                        }
+                        if (topOsd.visibility == View.VISIBLE) {
+                            topOsd.visibility = View.GONE
+                            saveCurrentProgress()
+                            finish()
+                            return true
+                        }
                         saveCurrentProgress()
-                        finish()
-                        return true
                     }
-                    saveCurrentProgress()
                 }
             }
+        } catch (t: Throwable) {
+            android.util.Log.e("WebPlayerActivity", "dispatchKeyEvent error", t)
         }
-        return super.dispatchKeyEvent(event)
+        return try {
+            super.dispatchKeyEvent(event)
+        } catch (t: Throwable) {
+            true
+        }
     }
 
     override fun onResume() {
         super.onResume()
-        webView?.onResume()
+        try { webView?.onResume() } catch (_: Throwable) {}
         hideSystemUi()
     }
 
     override fun onPause() {
         super.onPause()
         saveCurrentProgress()
-        webView?.onPause()
+        try { webView?.onPause() } catch (_: Throwable) {}
     }
 
     override fun onDestroy() {
         handler.removeCallbacks(hideOsdRunnable)
         handler.removeCallbacks(progressTrackerRunnable)
         saveCurrentProgress()
-        webView?.destroy()
+        try {
+            (webView?.parent as? ViewGroup)?.removeView(webView)
+            webView?.stopLoading()
+            webView?.destroy()
+        } catch (_: Throwable) {}
+        webView = null
         super.onDestroy()
     }
 

@@ -73,7 +73,7 @@
         <activity
             android:name=".phim.WebPlayerActivity"
             android:exported="true"
-            android:screenOrientation="sensorLandscape"
+            android:screenOrientation="landscape"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|density" />
 
         <!-- Multiview (TV 2x2) -->

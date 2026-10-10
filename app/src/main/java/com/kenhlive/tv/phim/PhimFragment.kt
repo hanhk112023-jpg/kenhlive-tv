@@ -432,59 +432,75 @@ class PhimFragment : Fragment() {
     }
 
     private fun openFilmDialog(film: NguoncFilm) {
-        dialog?.dismiss()
-        dialog = EpisodePickerDialog.show(
-            context = requireContext(),
-            scope = viewLifecycleOwner.lifecycleScope,
-            film = film,
-            onSelectEpisode = { f, ep, startPos ->
-                playEpisode(f, ep, startPos)
-            }
-        )
+        val ctx = context ?: return
+        try {
+            dialog?.dismiss()
+            dialog = EpisodePickerDialog.show(
+                context = ctx,
+                scope = viewLifecycleOwner.lifecycleScope,
+                film = film,
+                onSelectEpisode = { f, ep, startPos ->
+                    playEpisode(f, ep, startPos)
+                }
+            )
+        } catch (t: Throwable) {
+            android.util.Log.e("PhimFragment", "openFilmDialog error", t)
+        }
     }
 
     private fun openHeroPlay(film: NguoncFilm) {
+        val ctx = context ?: return
         viewLifecycleOwner.lifecycleScope.launch {
-            val progress = withContext(Dispatchers.IO) {
-                WatchHistoryManager.getProgressForFilm(film.slug)
-            }
-            if (progress != null) {
-                playEpisode(
-                    film = film,
-                    episode = NguoncEpisodeItem(
-                        name = progress.episodeName,
-                        slug = progress.episodeSlug,
-                        embed = progress.embedUrl
-                    ),
-                    startPosMs = progress.positionMs
-                )
-                return@launch
-            }
+            try {
+                val progress = withContext(Dispatchers.IO) {
+                    WatchHistoryManager.getProgressForFilm(film.slug)
+                }
+                if (progress != null) {
+                    playEpisode(
+                        film = film,
+                        episode = NguoncEpisodeItem(
+                            name = progress.episodeName,
+                            slug = progress.episodeSlug,
+                            embed = progress.embedUrl,
+                            m3u8 = progress.m3u8Url
+                        ),
+                        startPosMs = progress.positionMs
+                    )
+                    return@launch
+                }
 
-            val detail = withContext(Dispatchers.IO) {
-                NguoncRepository.fetchFilmDetail(film.slug, requireContext())
-            }
-            val firstEp = detail?.episodes?.firstOrNull()?.items?.firstOrNull()
-            if (firstEp != null) {
-                playEpisode(film, firstEp, 0L)
-            } else {
-                openFilmDialog(film)
+                val detail = withContext(Dispatchers.IO) {
+                    NguoncRepository.fetchFilmDetail(film.slug, ctx)
+                }
+                val firstEp = detail?.episodes?.firstOrNull()?.items?.firstOrNull()
+                if (firstEp != null) {
+                    playEpisode(film, firstEp, 0L)
+                } else {
+                    openFilmDialog(film)
+                }
+            } catch (t: Throwable) {
+                android.util.Log.e("PhimFragment", "openHeroPlay error", t)
             }
         }
     }
 
     private fun playEpisode(film: NguoncFilm, episode: NguoncEpisodeItem, startPosMs: Long = 0L) {
-        val intent = Intent(requireContext(), WebPlayerActivity::class.java)
-            .putExtra("embed_url", episode.embed)
-            .putExtra("m3u8_url", episode.m3u8)
-            .putExtra("film_slug", film.slug)
-            .putExtra("film_title", film.name)
-            .putExtra("episode_slug", episode.slug)
-            .putExtra("episode_title", if (episode.name.all { it.isDigit() }) "Tập ${episode.name}" else episode.name)
-            .putExtra("poster_url", film.posterUrl.ifBlank { film.thumbUrl })
-            .putExtra("start_position_ms", startPosMs)
-        startActivity(intent)
-        (activity as? MainActivity)?.hideKeyboard()
+        val ctx = context ?: return
+        try {
+            val intent = Intent(ctx, WebPlayerActivity::class.java)
+                .putExtra("embed_url", episode.embed)
+                .putExtra("m3u8_url", episode.m3u8)
+                .putExtra("film_slug", film.slug)
+                .putExtra("film_title", film.name)
+                .putExtra("episode_slug", episode.slug)
+                .putExtra("episode_title", if (episode.name.all { it.isDigit() }) "Tập ${episode.name}" else episode.name)
+                .putExtra("poster_url", film.posterUrl.ifBlank { film.thumbUrl })
+                .putExtra("start_position_ms", startPosMs)
+            startActivity(intent)
+            (activity as? MainActivity)?.hideKeyboard()
+        } catch (t: Throwable) {
+            android.util.Log.e("PhimFragment", "playEpisode error", t)
+        }
     }
 
     override fun onDestroyView() {
