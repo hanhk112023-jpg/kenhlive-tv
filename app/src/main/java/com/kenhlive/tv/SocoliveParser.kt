@@ -18,10 +18,8 @@ object SocoliveParser {
 
     /** "Ngoại Hạng Anh: Real vs Barca" → league="Ngoại Hạng Anh", match="Real vs Barca". */
     fun splitTitle(rawTitle: String): Pair<String, String> {
-        val t = rawTitle.trim()
-        val idx = t.indexOf(':')
-        return if (idx > 0) t.substring(0, idx).trim() to t.substring(idx + 1).trim()
-        else "SocoLive" to t.ifBlank { "Live" }
+        val parsed = DataNormalizer.parseMatch(rawTitle)
+        return parsed.league to parsed.cleanTitle
     }
 
     fun parseLiveRooms(body: String): List<LiveRoom> {
@@ -36,7 +34,9 @@ object SocoliveParser {
                 if (num.isBlank() || r.optInt("liveStatus", 0) != 1 || num in seen) continue
                 seen.add(num)
                 val a = r.optJSONObject("anchor") ?: JSONObject()
-                val (league, match) = splitTitle(r.optString("title", "Live"))
+                val parsed = DataNormalizer.parseMatch(r.optString("title", "Live"))
+                val league = parsed.league
+                val match = parsed.cleanTitle
                 val grow = a.optJSONObject("growDto")
                 val level = grow?.optString("name", "") ?: ""
                 val score = a.optInt("score", 0)
@@ -101,12 +101,13 @@ object SocoliveParser {
                 anchors.add(AnchorInfo(a.optString("nickName", "BLV"), icon, room))
             }
             val timeMs = m.optLong("matchTime", 0L)
+            val league = DataNormalizer.normalizeLeague(m.optString("subCateName", ""))
             out.add(
                 ScheduleMatch(
                     scheduleId = sid.ifBlank { "$host-$guest-$timeMs" },
                     host = host,
                     guest = guest,
-                    league = m.optString("subCateName", ""),
+                    league = league,
                     category = m.optString("categoryName", "Bóng đá"),
                     matchTimeMs = timeMs,
                     hostIcon = m.optString("hostIcon", ""),

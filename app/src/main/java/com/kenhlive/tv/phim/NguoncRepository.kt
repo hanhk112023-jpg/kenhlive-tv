@@ -442,24 +442,35 @@ object NguoncRepository {
             country = countryObj
         }
 
+        val rawDesc = obj.optString("description", "")
+        val cleanDesc = rawDesc.replace(Regex("""<[^>]*>"""), "").trim()
+        val rawCurrentEp = obj.optString("current_episode", "")
+        val cleanCurrentEp = com.kenhlive.tv.DataNormalizer.normalizeEpisodeName(rawCurrentEp)
+        val rawQuality = obj.optString("quality", "HD")
+        val cleanQuality = com.kenhlive.tv.DataNormalizer.normalizeQuality(rawQuality)
+        val rawLang = obj.optString("language", "Vietsub")
+        val cleanLang = com.kenhlive.tv.DataNormalizer.normalizeLanguage(rawLang)
+        val thumbUrl = com.kenhlive.tv.DataNormalizer.normalizeImageUrl(obj.optString("thumb_url", ""))
+        val posterUrl = com.kenhlive.tv.DataNormalizer.normalizeImageUrl(obj.optString("poster_url", ""))
+
         return NguoncFilm(
             id = obj.optString("id", ""),
-            name = obj.optString("name", ""),
-            originalName = obj.optString("original_name", ""),
+            name = obj.optString("name", "").trim(),
+            originalName = obj.optString("original_name", "").trim(),
             slug = obj.optString("slug", ""),
             year = obj.optString("year", ""),
-            description = obj.optString("description", ""),
+            description = cleanDesc,
             totalEpisodes = obj.opt("total_episodes")?.toString().orEmpty(),
-            currentEpisode = obj.optString("current_episode", ""),
+            currentEpisode = cleanCurrentEp,
             time = obj.optString("time", ""),
-            quality = obj.optString("quality", "HD"),
-            language = obj.optString("language", "Vietsub"),
+            quality = cleanQuality,
+            language = cleanLang,
             director = obj.optString("director", ""),
             casts = obj.optString("casts", ""),
             categories = catList,
             country = country,
-            thumbUrl = obj.optString("thumb_url", ""),
-            posterUrl = obj.optString("poster_url", "")
+            thumbUrl = thumbUrl,
+            posterUrl = posterUrl
         )
     }
 

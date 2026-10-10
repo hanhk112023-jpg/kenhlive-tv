@@ -86,6 +86,11 @@ class ScheduleAdapter(
                     vh.badge.setTextColor(0xFFFFFFFF.toInt())
                     vh.badge.setBackgroundResource(R.drawable.bg_badge_live)
                     vh.time.setTextColor(ctx.getColorCompat(R.color.kl_live))
+                } else if (item.isFinished) {
+                    vh.badge.text = "KẾT THÚC"
+                    vh.badge.setTextColor(ctx.getColorCompat(R.color.kl_text_3))
+                    vh.badge.setBackgroundResource(R.drawable.bg_badge_glass)
+                    vh.time.setTextColor(ctx.getColorCompat(R.color.kl_text_3))
                 } else if (item.hasRoom) {
                     vh.badge.setText(R.string.badge_has_room)
                     vh.badge.setTextColor(ctx.getColorCompat(R.color.kl_text_2))

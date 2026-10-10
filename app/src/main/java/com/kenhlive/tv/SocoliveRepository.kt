@@ -60,7 +60,9 @@ data class ScheduleMatch(
     val anchors: List<AnchorInfo>,
     val leagueCrest: String = ""
 ) {
-    val isLive: Boolean get() = matchTimeMs > 0 && System.currentTimeMillis() >= matchTimeMs
+    val isLive: Boolean get() = DataNormalizer.isMatchLive(matchTimeMs, hasRoom)
+    val isFinished: Boolean get() = DataNormalizer.isMatchFinished(matchTimeMs)
+    val isUpcoming: Boolean get() = DataNormalizer.isMatchUpcoming(matchTimeMs)
     val hasRoom: Boolean get() = anchors.any { it.roomNum.isNotBlank() }
 }
 
@@ -231,10 +233,11 @@ object SocoliveRepository {
                 if (timeMs > 0) {
                     val dayKey = SimpleDateFormat("yyyyMMdd", Locale.US).apply { timeZone = TZ }
                         .format(Date(timeMs))
+                    val leagueNorm = DataNormalizer.normalizeLeague(m.optString("subCateName", ""))
                     byDay.getOrPut(dayKey) { mutableListOf() }.add(
                         ScheduleMatch(
                             scheduleId = key, host = host, guest = guest,
-                            league = m.optString("subCateName", ""),
+                            league = leagueNorm,
                             category = m.optString("categoryName", ""),
                             matchTimeMs = timeMs,
                             hostIcon = m.optString("hostIcon", ""),
@@ -319,18 +322,7 @@ object SocoliveRepository {
         return f.format(Date(epochMs))
     }
 
-    fun dayLabel(d: Date): String {
-        val cal = Calendar.getInstance(TZ)
-        cal.time = d
-        val today = Calendar.getInstance(TZ)
-        val fmt = SimpleDateFormat("yyyyMMdd", Locale.US).apply { timeZone = TZ }
-        return when {
-            fmt.format(d) == fmt.format(today.time) -> "Hôm nay"
-            cal.timeInMillis - today.timeInMillis in 1..86400000L -> "Ngày mai"
-            else -> SimpleDateFormat("EEEE, dd/MM", Locale("vi")).apply { timeZone = TZ }.format(d)
-                .replaceFirstChar { it.uppercase() }
-        }
-    }
+    fun dayLabel(d: Date): String = DataNormalizer.formatScheduleDay(d)
 
     fun fmtViewers(n: Int): String =
         if (n >= 1000) String.format(Locale.US, "%.1fK", n / 1000.0).replace('.', ',') else n.toString()

@@ -48,8 +48,8 @@ class MatchCardsAdapter(
         }
 
         fun splitTeams(t: String): Pair<String, String> {
-            val i = t.indexOf(" vs ", ignoreCase = true)
-            return if (i > 0) t.substring(0, i).trim() to t.substring(i + 4).trim() else t to ""
+            val parsed = DataNormalizer.parseMatch(t)
+            return parsed.host to parsed.guest
         }
 
         fun countdownLabel(at: Long): String {
@@ -130,12 +130,16 @@ class MatchCardsAdapter(
 
     private fun bindLive(h: LiveVH, g: LiveMatchGroup) {
         val ctx = h.itemView.context
-        h.league.text = g.league
-        val (host, guest) = splitTeams(g.matchTitle)
-        h.host.text = host
-        h.guest.text = guest
-        h.matchTitle?.text = g.matchTitle
-        h.score?.text = "VS"
+        val parsed = DataNormalizer.parseMatch(g.matchTitle, g.league)
+        h.league.text = parsed.league
+        h.host.text = parsed.host
+        h.guest.text = parsed.guest
+        h.matchTitle?.text = parsed.cleanTitle
+        if (parsed.hostScore != null && parsed.guestScore != null) {
+            h.score?.text = "${parsed.hostScore} : ${parsed.guestScore}"
+        } else {
+            h.score?.text = "VS"
+        }
 
         if (g.hostIcon.isNotBlank()) {
             h.hostIcon?.visibility = View.VISIBLE

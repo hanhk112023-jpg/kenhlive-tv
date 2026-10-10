@@ -32,12 +32,12 @@ data class EpgProgram(
     }
 
     fun timeRange(): String {
-        val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
+        val sdf = SimpleDateFormat("HH:mm", Locale.US).apply { timeZone = com.kenhlive.tv.DataNormalizer.TZ_VN }
         return "${sdf.format(Date(startTime))} - ${sdf.format(Date(stopTime))}"
     }
 
     fun startFormatted(): String {
-        val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
+        val sdf = SimpleDateFormat("HH:mm", Locale.US).apply { timeZone = com.kenhlive.tv.DataNormalizer.TZ_VN }
         return sdf.format(Date(startTime))
     }
 }
@@ -215,19 +215,5 @@ object EpgRepository {
     /**
      * Chuẩn hóa tên kênh để so khớp (bỏ dấu, bỏ khoảng trắng, bỏ hậu tố HD/SD/VN)
      */
-    fun normalizeKey(raw: String): String {
-        return raw.lowercase(Locale.ROOT)
-            .replace(".vn", "")
-            .replace("@sd", "")
-            .replace("@hd", "")
-            .replace("1080p", "")
-            .replace("720p", "")
-            .replace("hd", "")
-            .replace("sd", "")
-            .replace("fhd", "")
-            .replace("vietnam", "")
-            .replace("truyền hình", "")
-            .replace(Regex("[^a-z0-9]"), "")
-            .trim()
-    }
+    fun normalizeKey(raw: String): String = com.kenhlive.tv.DataNormalizer.normalizeChannelKey(raw)
 }

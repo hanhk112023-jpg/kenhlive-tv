@@ -118,11 +118,12 @@ class HeroPagerAdapter(
     override fun onBindViewHolder(h: HV, pos: Int) {
         val g = groups[pos]
         val top = g.top
-        h.title.text = g.matchTitle
-        h.league.text = "• ${g.league}"
+        val parsed = DataNormalizer.parseMatch(g.matchTitle, g.league)
+        h.title.text = parsed.cleanTitle
+        h.league.text = "• ${parsed.league}"
         val desc = buildString {
             append("Trực tiếp ")
-            if (g.league.isNotBlank()) append("${g.league} • ")
+            if (parsed.league.isNotBlank()) append("${parsed.league} • ")
             val rawBlv = top.blvName.trim()
             val formattedBlv = if (rawBlv.startsWith("BLV ", ignoreCase = true)) rawBlv else "BLV $rawBlv"
             append(formattedBlv)
