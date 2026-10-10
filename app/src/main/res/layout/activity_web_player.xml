@@ -5,9 +5,9 @@
     android:background="#000000"
     android:keepScreenOn="true">
 
-    <!-- WebView Player Core -->
-    <WebView
-        android:id="@+id/webViewPlayer"
+    <!-- WebView Host Container (An toàn chống crash khi thiết bị thiếu WebView) -->
+    <FrameLayout
+        android:id="@+id/webViewHost"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:focusable="true"

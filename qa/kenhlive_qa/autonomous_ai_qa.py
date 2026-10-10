@@ -771,16 +771,17 @@ class AndroidTVDevice:
             return False, "ERR", 0.0
 
     def checkpoint_logcat(self):
-        self._logcat_checkpoint = sh(f"{self.adb} logcat -d -v brief", timeout=20)
+        lines = sh(f"{self.adb} logcat -d -v threadtime", timeout=20).splitlines()
+        self._last_logcat_len = len(lines)
 
     def get_new_logcat_alerts(self):
-        cur = sh(f"{self.adb} logcat -d -v threadtime", timeout=25)
-        new_lines = cur
-        if self._logcat_checkpoint and self._logcat_checkpoint in cur:
-            new_lines = cur.split(self._logcat_checkpoint, 1)[1]
+        cur = sh(f"{self.adb} logcat -d -v threadtime", timeout=25).splitlines()
+        last_len = getattr(self, "_last_logcat_len", 0)
+        new_lines = cur[last_len:] if len(cur) >= last_len else cur
+        self._last_logcat_len = len(cur)
 
         alerts = []
-        for line in new_lines.splitlines():
+        for line in new_lines:
             if "FATAL EXCEPTION" in line or "AndroidRuntime: FATAL" in line:
                 alerts.append(f"CRASH: {line[:120]}")
             elif "ANR in " + self.pkg in line:

@@ -229,6 +229,7 @@ class SearchFragment : Fragment() {
             onSelectEpisode = { f, ep, startPos ->
                 val intent = Intent(requireContext(), WebPlayerActivity::class.java)
                     .putExtra("embed_url", ep.embed)
+                    .putExtra("m3u8_url", ep.m3u8)
                     .putExtra("film_slug", f.slug)
                     .putExtra("film_title", f.name)
                     .putExtra("episode_slug", ep.slug)

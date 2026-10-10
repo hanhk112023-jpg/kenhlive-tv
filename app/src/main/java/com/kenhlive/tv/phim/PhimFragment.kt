@@ -476,6 +476,7 @@ class PhimFragment : Fragment() {
     private fun playEpisode(film: NguoncFilm, episode: NguoncEpisodeItem, startPosMs: Long = 0L) {
         val intent = Intent(requireContext(), WebPlayerActivity::class.java)
             .putExtra("embed_url", episode.embed)
+            .putExtra("m3u8_url", episode.m3u8)
             .putExtra("film_slug", film.slug)
             .putExtra("film_title", film.name)
             .putExtra("episode_slug", episode.slug)

@@ -1,6 +1,7 @@
 package com.kenhlive.tv.phim
 
 import android.annotation.SuppressLint
+import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.graphics.Bitmap
 import android.os.Build
@@ -40,7 +41,7 @@ import java.util.Locale
  */
 class WebPlayerActivity : AppCompatActivity() {
 
-    private lateinit var webView: WebView
+    private var webView: WebView? = null
     private lateinit var loadingBar: ProgressBar
     private lateinit var topOsd: View
     private lateinit var tvFilmTitle: TextView
@@ -88,6 +89,7 @@ class WebPlayerActivity : AppCompatActivity() {
         setContentView(R.layout.activity_web_player)
 
         embedUrl = intent.getStringExtra("embed_url").orEmpty()
+        val m3u8Url = intent.getStringExtra("m3u8_url").orEmpty()
         filmSlug = intent.getStringExtra("film_slug").orEmpty()
         filmTitle = intent.getStringExtra("film_title") ?: "Phim Nguồn C"
         episodeSlug = intent.getStringExtra("episode_slug").orEmpty()
@@ -95,7 +97,6 @@ class WebPlayerActivity : AppCompatActivity() {
         posterUrl = intent.getStringExtra("poster_url").orEmpty()
         startPositionMs = intent.getLongExtra("start_position_ms", 0L)
 
-        webView = findViewById(R.id.webViewPlayer)
         loadingBar = findViewById(R.id.playerLoading)
         topOsd = findViewById(R.id.playerTopOsd)
         tvFilmTitle = findViewById(R.id.tvFilmTitle)
@@ -110,19 +111,88 @@ class WebPlayerActivity : AppCompatActivity() {
             finish()
         }
 
-        setupWebView()
-        showOsd()
-
-        if (embedUrl.isNotBlank()) {
-            val extraHeaders = mapOf(
-                "Referer" to NguonC_REFERER,
-                "Origin" to "https://phim.nguonc.com"
-            )
-            webView.loadUrl(embedUrl, extraHeaders)
-            handler.postDelayed(progressTrackerRunnable, 4000L)
-        } else {
-            finish()
+        val host = findViewById<FrameLayout>(R.id.webViewHost)
+        val wv = try {
+            WebView(this).also {
+                it.isFocusable = true
+                it.isFocusableInTouchMode = true
+                host.addView(it, FrameLayout.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    ViewGroup.LayoutParams.MATCH_PARENT
+                ))
+            }
+        } catch (t: Throwable) {
+            android.util.Log.e("WebPlayerActivity", "WebView is not available on this device", t)
+            null
         }
+        webView = wv
+
+        if (wv != null) {
+            try {
+                setupWebView(wv)
+                showOsd()
+
+                if (embedUrl.isNotBlank()) {
+                    val extraHeaders = mapOf(
+                        "Referer" to NguonC_REFERER,
+                        "Origin" to "https://phim.nguonc.com"
+                    )
+                    wv.loadUrl(embedUrl, extraHeaders)
+                    handler.postDelayed(progressTrackerRunnable, 4000L)
+                } else if (m3u8Url.isNotBlank()) {
+                    val pIntent = Intent(this, com.kenhlive.tv.PlayerActivity::class.java).apply {
+                        putExtra("url", m3u8Url)
+                        putExtra("name", "$filmTitle · $episodeTitle")
+                    }
+                    startActivity(pIntent)
+                    finish()
+                } else {
+                    finish()
+                }
+            } catch (t: Throwable) {
+                android.util.Log.e("WebPlayerActivity", "WebView setup/load failed", t)
+                if (m3u8Url.isNotBlank()) {
+                    val pIntent = Intent(this, com.kenhlive.tv.PlayerActivity::class.java).apply {
+                        putExtra("url", m3u8Url)
+                        putExtra("name", "$filmTitle · $episodeTitle")
+                    }
+                    startActivity(pIntent)
+                    finish()
+                } else {
+                    showFallbackError(host)
+                }
+            }
+        } else {
+            if (m3u8Url.isNotBlank()) {
+                val pIntent = Intent(this, com.kenhlive.tv.PlayerActivity::class.java).apply {
+                    putExtra("url", m3u8Url)
+                    putExtra("name", "$filmTitle · $episodeTitle")
+                }
+                startActivity(pIntent)
+                finish()
+            } else {
+                showFallbackError(host)
+            }
+        }
+    }
+
+    private fun showFallbackError(host: FrameLayout) {
+        loadingBar.visibility = View.GONE
+        val errorTv = TextView(this).apply {
+            text = "Trình phát Web không được hỗ trợ trên thiết bị này.\nBấm phím BACK để quay lại."
+            setTextColor(0xFFFFFFFF.toInt())
+            textSize = 18f
+            gravity = android.view.Gravity.CENTER
+            isFocusable = true
+            isClickable = true
+        }
+        host.removeAllViews()
+        host.addView(errorTv, FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+        ))
+        errorTv.requestFocus()
+        showOsd()
     }
 
     private fun hideSystemUi() {
@@ -146,8 +216,8 @@ class WebPlayerActivity : AppCompatActivity() {
     }
 
     @SuppressLint("SetJavaScriptEnabled")
-    private fun setupWebView() {
-        val s = webView.settings
+    private fun setupWebView(wv: WebView) {
+        val s = wv.settings
         s.javaScriptEnabled = true
         s.domStorageEnabled = true
         s.databaseEnabled = true
@@ -165,7 +235,7 @@ class WebPlayerActivity : AppCompatActivity() {
             "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
         }
 
-        webView.webViewClient = object : WebViewClient() {
+        wv.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 super.onPageStarted(view, url, favicon)
                 loadingBar.visibility = View.VISIBLE
@@ -238,7 +308,7 @@ class WebPlayerActivity : AppCompatActivity() {
             }
         }
 
-        webView.webChromeClient = object : WebChromeClient() {
+        wv.webChromeClient = object : WebChromeClient() {
             override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
                 if (customView != null) {
                     callback?.onCustomViewHidden()
@@ -251,7 +321,7 @@ class WebPlayerActivity : AppCompatActivity() {
                     ViewGroup.LayoutParams.MATCH_PARENT
                 ))
                 customViewContainer.visibility = View.VISIBLE
-                webView.visibility = View.GONE
+                wv.visibility = View.GONE
                 topOsd.visibility = View.GONE
             }
 
@@ -260,7 +330,7 @@ class WebPlayerActivity : AppCompatActivity() {
                 customViewContainer.removeView(customView)
                 customView = null
                 customViewContainer.visibility = View.GONE
-                webView.visibility = View.VISIBLE
+                wv.visibility = View.VISIBLE
                 customViewCallback?.onCustomViewHidden()
                 showOsd()
             }
@@ -299,7 +369,7 @@ class WebPlayerActivity : AppCompatActivity() {
             })();
         """.trimIndent()
 
-        webView.evaluateJavascript(queryJs) { rawJson ->
+        webView?.evaluateJavascript(queryJs) { rawJson ->
             if (rawJson != null && rawJson != "null" && rawJson.length > 4) {
                 try {
                     // Loại bỏ escape ký tự nếu có
@@ -373,7 +443,7 @@ class WebPlayerActivity : AppCompatActivity() {
                             }
                         })();
                     """.trimIndent()
-                    webView.evaluateJavascript(seekBackJs, null)
+                    webView?.evaluateJavascript(seekBackJs, null)
                     Toast.makeText(this, "◀◀ Tua lại 10s", Toast.LENGTH_SHORT).show()
                     showOsd()
                     queryPlaybackPosition()
@@ -396,7 +466,7 @@ class WebPlayerActivity : AppCompatActivity() {
                             }
                         })();
                     """.trimIndent()
-                    webView.evaluateJavascript(seekForwardJs, null)
+                    webView?.evaluateJavascript(seekForwardJs, null)
                     Toast.makeText(this, "▶▶ Tua tới 10s", Toast.LENGTH_SHORT).show()
                     showOsd()
                     queryPlaybackPosition()
@@ -404,13 +474,13 @@ class WebPlayerActivity : AppCompatActivity() {
                 }
                 KeyEvent.KEYCODE_MEDIA_PLAY -> {
                     val playJs = "var v = document.querySelector('video'); if (v) v.play(); if (window.jwplayer) try { window.jwplayer().play(); } catch(e){}"
-                    webView.evaluateJavascript(playJs, null)
+                    webView?.evaluateJavascript(playJs, null)
                     showOsd()
                     return true
                 }
                 KeyEvent.KEYCODE_MEDIA_PAUSE -> {
                     val pauseJs = "var v = document.querySelector('video'); if (v) v.pause(); if (window.jwplayer) try { window.jwplayer().pause(); } catch(e){}"
-                    webView.evaluateJavascript(pauseJs, null)
+                    webView?.evaluateJavascript(pauseJs, null)
                     showOsd()
                     return true
                 }
@@ -435,14 +505,14 @@ class WebPlayerActivity : AppCompatActivity() {
                             }
                         })();
                     """.trimIndent()
-                    webView.evaluateJavascript(togglePlayJs, null)
+                    webView?.evaluateJavascript(togglePlayJs, null)
                     showOsd()
                     queryPlaybackPosition()
                     return true
                 }
                 KeyEvent.KEYCODE_BACK -> {
                     if (customView != null) {
-                        webView.webChromeClient?.onHideCustomView()
+                        webView?.webChromeClient?.onHideCustomView()
                         return true
                     }
                     if (topOsd.visibility == View.VISIBLE) {
@@ -460,21 +530,21 @@ class WebPlayerActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        webView.onResume()
+        webView?.onResume()
         hideSystemUi()
     }
 
     override fun onPause() {
         super.onPause()
         saveCurrentProgress()
-        webView.onPause()
+        webView?.onPause()
     }
 
     override fun onDestroy() {
         handler.removeCallbacks(hideOsdRunnable)
         handler.removeCallbacks(progressTrackerRunnable)
         saveCurrentProgress()
-        webView.destroy()
+        webView?.destroy()
         super.onDestroy()
     }
 
