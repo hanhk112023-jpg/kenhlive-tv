@@ -38,8 +38,8 @@ android {
         applicationId "com.kenhlive.tv"
         minSdk 21
         targetSdk 34
-        versionCode 112
-        versionName "7.1.0"
+        versionCode 113
+        versionName "7.2.0"
         // Bản APK Universal: Gộp chung cả 32-bit (armeabi-v7a) và 64-bit (arm64-v8a) vào 1 file APK duy nhất
         // tương thích mọi dòng Android TV Box từ chip 32-bit cũ đến 64-bit đời mới, cài đè không mất dữ liệu.
         ndk {

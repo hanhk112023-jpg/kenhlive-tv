@@ -155,9 +155,22 @@ class PlayerActivity : AppCompatActivity() {
     private var keypadAccumulator: Int = 0
     private val keypadCommitRunnable = Runnable {
         if (keypadAccumulator > 0) {
-            showQuickOsd(keypadAccumulator - 1)
+            val list = IptvRepository.currentChannels
+            val targetIdx = (keypadAccumulator - 1).coerceIn(0, (list.size - 1).coerceAtLeast(0))
+            showQuickOsd(targetIdx)
             keypadAccumulator = 0
         }
+    }
+
+    private fun showKeypadFeedback(num: Int) {
+        topOverlay?.visibility = View.GONE
+        hint?.visibility = View.GONE
+        quickChannelOsd?.visibility = View.VISIBLE
+        osdChannelNumber?.text = String.format(Locale.US, "%02d", num)
+        osdChannelTitle?.text = "Kênh số $num • Bấm OK để chuyển ngay"
+        osdEpgNow?.visibility = View.GONE
+        osdEpgProgress?.visibility = View.GONE
+        osdEpgNext?.visibility = View.GONE
     }
 
     // Tự động phục hồi luồng khi bị kẹt buffering hoặc drop kết nối (Auto Stream Failover)
@@ -1270,8 +1283,26 @@ class PlayerActivity : AppCompatActivity() {
                 e.keyCode - KeyEvent.KEYCODE_NUMPAD_0
             }
             keypadAccumulator = keypadAccumulator * 10 + digit
+            showKeypadFeedback(keypadAccumulator)
             handler.removeCallbacks(keypadCommitRunnable)
-            handler.postDelayed(keypadCommitRunnable, 800L)
+            handler.postDelayed(keypadCommitRunnable, 1000L)
+            return true
+        }
+
+        // Bấm OK ngay khi đang gõ số kênh -> Chuyển kênh tức thì không cần chờ
+        if (isDown && keypadAccumulator > 0 && isOkKey) {
+            handler.removeCallbacks(keypadCommitRunnable)
+            keypadCommitRunnable.run()
+            return true
+        }
+
+        // Phím tắt đổi tỉ lệ màn hình (A / Red key) & Tăng âm lượng Audio Boost (B / Yellow key)
+        if (isDown && (e.keyCode == KeyEvent.KEYCODE_A || e.keyCode == KeyEvent.KEYCODE_PROG_RED)) {
+            cycleAspectRatio()
+            return true
+        }
+        if (isDown && (e.keyCode == KeyEvent.KEYCODE_B || e.keyCode == KeyEvent.KEYCODE_PROG_YELLOW)) {
+            cycleAudioBoost()
             return true
         }
 
@@ -1317,11 +1348,11 @@ class PlayerActivity : AppCompatActivity() {
                     commitChannelSwitch.run()
                     return true
                 }
-                if (e.keyCode == KeyEvent.KEYCODE_DPAD_UP || e.keyCode == KeyEvent.KEYCODE_CHANNEL_UP) {
+                if (e.keyCode == KeyEvent.KEYCODE_DPAD_UP || e.keyCode == KeyEvent.KEYCODE_CHANNEL_UP || e.keyCode == KeyEvent.KEYCODE_PAGE_UP) {
                     showQuickOsd(pendingChannelIndex - 1)
                     return true
                 }
-                if (e.keyCode == KeyEvent.KEYCODE_DPAD_DOWN || e.keyCode == KeyEvent.KEYCODE_CHANNEL_DOWN) {
+                if (e.keyCode == KeyEvent.KEYCODE_DPAD_DOWN || e.keyCode == KeyEvent.KEYCODE_CHANNEL_DOWN || e.keyCode == KeyEvent.KEYCODE_PAGE_DOWN) {
                     showQuickOsd(pendingChannelIndex + 1)
                     return true
                 }
@@ -1340,11 +1371,11 @@ class PlayerActivity : AppCompatActivity() {
                 showCarousel()
                 return true
             }
-            if (isIptvMode && (e.keyCode == KeyEvent.KEYCODE_CHANNEL_UP)) {
+            if (isIptvMode && (e.keyCode == KeyEvent.KEYCODE_CHANNEL_UP || e.keyCode == KeyEvent.KEYCODE_PAGE_UP)) {
                 showQuickOsd(currentChannelIndex - 1)
                 return true
             }
-            if (isIptvMode && (e.keyCode == KeyEvent.KEYCODE_CHANNEL_DOWN)) {
+            if (isIptvMode && (e.keyCode == KeyEvent.KEYCODE_CHANNEL_DOWN || e.keyCode == KeyEvent.KEYCODE_PAGE_DOWN)) {
                 showQuickOsd(currentChannelIndex + 1)
                 return true
             }

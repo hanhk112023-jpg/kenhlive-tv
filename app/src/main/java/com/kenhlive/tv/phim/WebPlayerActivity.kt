@@ -190,6 +190,10 @@ class WebPlayerActivity : AppCompatActivity() {
                 // 2. Tự động tua đến giây đã lưu nếu có tiến độ trước đó
                 if (startPositionMs > 1000L && !hasSeekedToStart) {
                     val targetSec = startPositionMs / 1000.0
+                    val totalSec = targetSec.toInt()
+                    val mm = totalSec / 60
+                    val ss = totalSec % 60
+                    Toast.makeText(this@WebPlayerActivity, String.format(Locale.US, "Tiếp tục xem từ %02d:%02d", mm, ss), Toast.LENGTH_SHORT).show()
                     val seekJs = """
                         (function() {
                             var v = document.querySelector('video');
@@ -345,7 +349,66 @@ class WebPlayerActivity : AppCompatActivity() {
             when (event.keyCode) {
                 KeyEvent.KEYCODE_DPAD_UP,
                 KeyEvent.KEYCODE_DPAD_DOWN,
-                KeyEvent.KEYCODE_MENU -> {
+                KeyEvent.KEYCODE_MENU,
+                KeyEvent.KEYCODE_INFO -> {
+                    showOsd()
+                    return true
+                }
+                KeyEvent.KEYCODE_DPAD_LEFT,
+                KeyEvent.KEYCODE_MEDIA_REWIND -> {
+                    val seekBackJs = """
+                        (function() {
+                            if (window.jwplayer && typeof window.jwplayer === 'function') {
+                                try {
+                                    var pos = window.jwplayer().getPosition();
+                                    window.jwplayer().seek(Math.max(0, pos - 10));
+                                    return;
+                                } catch(e){}
+                            }
+                            var v = document.querySelector('video');
+                            if (v) {
+                                v.currentTime = Math.max(0, v.currentTime - 10);
+                            }
+                        })();
+                    """.trimIndent()
+                    webView.evaluateJavascript(seekBackJs, null)
+                    Toast.makeText(this, "◀◀ Tua lại 10s", Toast.LENGTH_SHORT).show()
+                    showOsd()
+                    queryPlaybackPosition()
+                    return true
+                }
+                KeyEvent.KEYCODE_DPAD_RIGHT,
+                KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> {
+                    val seekForwardJs = """
+                        (function() {
+                            if (window.jwplayer && typeof window.jwplayer === 'function') {
+                                try {
+                                    var pos = window.jwplayer().getPosition();
+                                    window.jwplayer().seek(pos + 10);
+                                    return;
+                                } catch(e){}
+                            }
+                            var v = document.querySelector('video');
+                            if (v) {
+                                v.currentTime = v.currentTime + 10;
+                            }
+                        })();
+                    """.trimIndent()
+                    webView.evaluateJavascript(seekForwardJs, null)
+                    Toast.makeText(this, "▶▶ Tua tới 10s", Toast.LENGTH_SHORT).show()
+                    showOsd()
+                    queryPlaybackPosition()
+                    return true
+                }
+                KeyEvent.KEYCODE_MEDIA_PLAY -> {
+                    val playJs = "var v = document.querySelector('video'); if (v) v.play(); if (window.jwplayer) try { window.jwplayer().play(); } catch(e){}"
+                    webView.evaluateJavascript(playJs, null)
+                    showOsd()
+                    return true
+                }
+                KeyEvent.KEYCODE_MEDIA_PAUSE -> {
+                    val pauseJs = "var v = document.querySelector('video'); if (v) v.pause(); if (window.jwplayer) try { window.jwplayer().pause(); } catch(e){}"
+                    webView.evaluateJavascript(pauseJs, null)
                     showOsd()
                     return true
                 }

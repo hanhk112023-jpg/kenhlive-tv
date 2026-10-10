@@ -53,8 +53,13 @@ class MainActivity : AppCompatActivity() {
         val tabX = intent?.getIntExtra("tab", -1) ?: -1
         showTab(if (tabX in 0..5) tabX else 0, animate = false)
 
-        // BACK: tab khác → về Live trước; tab Live → dialog xác nhận thoát (UX TV)
+        // BACK: Nếu sidebar đang mở → đóng sidebar; tab khác → về Live trước; tab Live → dialog xác nhận thoát
         onBackPressedDispatcher.addCallback(this) {
+            if (DeviceMode.isTv && railPanel != null && railPanel?.translationX == 0f) {
+                hideRail()
+                focusContentFirst()
+                return@addCallback
+            }
             if (current != 0) { showTab(0); return@addCallback }
             val d = AlertDialog.Builder(this@MainActivity, R.style.Theme_KenhLive_Dialog)
                 .setTitle(R.string.dialog_exit_title)
