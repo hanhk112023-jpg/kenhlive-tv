@@ -158,7 +158,13 @@ class MainActivity : AppCompatActivity() {
         val cur = c.findFocus()
         if (cur != null && (c === cur.rootView || isDescendant(c, cur))) return
 
-        // Tìm view con của fragmentContainer đang hiển thị (VISIBLE & isShown)
+        // 1. Nếu fragment hiện tại là ScheduleFragment, ưu tiên gọi hàm khôi phục chuyên biệt
+        val activeFragment = supportFragmentManager.findFragmentByTag(tabTags.getOrNull(current))
+        if (activeFragment is ScheduleFragment) {
+            if (activeFragment.focusFirstMatch()) return
+        }
+
+        // 2. Tìm view con của fragmentContainer đang hiển thị (VISIBLE & isShown)
         for (i in 0 until c.childCount) {
             val child = c.getChildAt(i)
             if (child.visibility == View.VISIBLE) {
@@ -167,7 +173,16 @@ class MainActivity : AppCompatActivity() {
                 if (rv != null) {
                     val ad = rv.adapter as? SportAdapter
                     if (ad != null && ad.focusRailFirst()) return
-                    for (pos in 0..4) {
+
+                    // Ưu tiên duyệt các child view đang gắn kết trên màn hình
+                    for (ci in 0 until rv.childCount) {
+                        val cv = rv.getChildAt(ci)
+                        if (cv.isFocusable && cv.requestFocus()) return
+                        val inner = firstFocusableIn(cv)
+                        if (inner != null && inner.requestFocus()) return
+                    }
+
+                    for (pos in 0..10) {
                         val vh = rv.findViewHolderForAdapterPosition(pos) ?: continue
                         val inner = firstFocusableIn(vh.itemView) ?: (if (vh.itemView.isFocusable) vh.itemView else null)
                         if (inner?.requestFocus() == true) return
@@ -177,7 +192,13 @@ class MainActivity : AppCompatActivity() {
                     rv.post {
                         val ad2 = rv.adapter as? SportAdapter
                         if (ad2 != null && ad2.focusRailFirst()) return@post
-                        for (pos in 0..4) {
+                        for (ci in 0 until rv.childCount) {
+                            val cv = rv.getChildAt(ci)
+                            if (cv.isFocusable && cv.requestFocus()) return@post
+                            val inner = firstFocusableIn(cv)
+                            if (inner != null && inner.requestFocus()) return@post
+                        }
+                        for (pos in 0..10) {
                             val vh = rv.findViewHolderForAdapterPosition(pos) ?: continue
                             val inner = firstFocusableIn(vh.itemView) ?: (if (vh.itemView.isFocusable) vh.itemView else null)
                             if (inner?.requestFocus() == true) return@post
@@ -282,7 +303,6 @@ class MainActivity : AppCompatActivity() {
                     activeNav?.requestFocus()
                     f = currentFocus
                 }
-                if (f != null) return super.dispatchKeyEvent(event)
             }
             val insideRail = railPanel?.let { isDescendant(it, f) } == true
             when (event.keyCode) {

@@ -11,6 +11,7 @@
     android:layout_marginLeft="@dimen/sp_screen_margin"
     android:layout_marginRight="@dimen/sp_screen_margin"
     android:layout_marginBottom="@dimen/sched_row_gap"
+    android:descendantFocusability="blocksDescendants"
     android:focusable="true"
     android:clickable="true">
 

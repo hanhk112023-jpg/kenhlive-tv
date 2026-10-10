@@ -35,6 +35,23 @@ class ScheduleFragment : Fragment() {
             clipChildren = false
             clipToPadding = false
             adapter = this@ScheduleFragment.adapter
+            if (DeviceMode.isTv) {
+                addOnChildAttachStateChangeListener(object : RecyclerView.OnChildAttachStateChangeListener {
+                    override fun onChildViewAttachedToWindow(view: View) {
+                        if (this@ScheduleFragment.view?.findFocus() == null && isResumed) {
+                            if (view.isFocusable) {
+                                view.requestFocus()
+                            } else if (view is ViewGroup) {
+                                for (i in 0 until view.childCount) {
+                                    val c = view.getChildAt(i)
+                                    if (c.isFocusable && c.requestFocus()) break
+                                }
+                            }
+                        }
+                    }
+                    override fun onChildViewDetachedFromWindow(view: View) {}
+                })
+            }
         }
         viewLifecycleOwner.lifecycleScope.launch {
             vm.state.collect { st ->
@@ -53,8 +70,9 @@ class ScheduleFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         if (DeviceMode.isTv) {
-            view.postDelayed({ if (view.findFocus() == null) focusFirstMatch() }, 150)
-            view.postDelayed({ if (view.findFocus() == null) focusFirstMatch() }, 400)
+            focusFirstMatch()
+            view.postDelayed({ if (view.findFocus() == null) focusFirstMatch() }, 120)
+            view.postDelayed({ if (view.findFocus() == null) focusFirstMatch() }, 350)
         }
     }
 
@@ -62,6 +80,7 @@ class ScheduleFragment : Fragment() {
         super.onResume()
         vm.startAutoRefresh()
         if (DeviceMode.isTv) {
+            focusFirstMatch()
             view?.postDelayed({ if (view?.findFocus() == null) focusFirstMatch() }, 100)
         }
     }
@@ -70,38 +89,67 @@ class ScheduleFragment : Fragment() {
         super.onHiddenChanged(hidden)
         if (!hidden && DeviceMode.isTv) {
             focusFirstMatch()
-            view?.postDelayed({ if (view?.findFocus() == null) focusFirstMatch() }, 200)
+            view?.postDelayed({ if (view?.findFocus() == null) focusFirstMatch() }, 150)
         }
     }
 
-    private fun focusFirstMatch() {
-        val rv = view?.findViewById<RecyclerView>(R.id.schedList) ?: return
-        rv.post {
-            for (i in 0 until adapter.itemCount) {
-                if (adapter.getItemViewType(i) == 1) { // TYPE_MATCH
-                    val vh = rv.findViewHolderForAdapterPosition(i)
-                    if (vh != null) {
-                        vh.itemView.requestFocus()
-                        return@post
-                    } else {
-                        rv.scrollToPosition(i)
-                        rv.postDelayed({
-                            rv.findViewHolderForAdapterPosition(i)?.itemView?.requestFocus()
-                        }, 80)
-                        rv.postDelayed({
-                            if (view?.findFocus() == null) {
-                                rv.findViewHolderForAdapterPosition(i)?.itemView?.requestFocus()
-                            }
-                        }, 250)
-                        return@post
-                    }
+    fun focusFirstMatch(): Boolean {
+        val rv = view?.findViewById<RecyclerView>(R.id.schedList) ?: return false
+        val curFocus = view?.findFocus()
+        if (curFocus != null && curFocus !== view) return true
+
+        // 1. Thử trực tiếp các child view đang hiển thị trong RecyclerView
+        for (ci in 0 until rv.childCount) {
+            val child = rv.getChildAt(ci)
+            if (child.isFocusable && child.requestFocus()) return true
+            if (child is ViewGroup) {
+                for (j in 0 until child.childCount) {
+                    val sub = child.getChildAt(j)
+                    if (sub.isFocusable && sub.requestFocus()) return true
                 }
             }
-            // Nếu chưa có item nào (đang tải), tự động thử lại
-            if (adapter.itemCount == 0 && isResumed) {
-                rv.postDelayed({ if (view?.findFocus() == null) focusFirstMatch() }, 300)
+        }
+
+        // 2. Tìm vị trí match đầu tiên trong adapter
+        var targetPos = -1
+        for (i in 0 until adapter.itemCount) {
+            if (adapter.getItemViewType(i) == 1) { // TYPE_MATCH
+                targetPos = i
+                break
             }
         }
+        if (targetPos < 0) return false
+
+        // 3. Thử qua LayoutManager hoặc ViewHolder
+        val lmView = rv.layoutManager?.findViewByPosition(targetPos)
+        if (lmView != null && (lmView.requestFocus() || lmView.findFocus() != null)) {
+            return true
+        }
+        val vh = rv.findViewHolderForAdapterPosition(targetPos)
+        if (vh != null && (vh.itemView.requestFocus() || vh.itemView.findFocus() != null)) {
+            return true
+        }
+
+        // 4. Cuộn tới vị trí và kích hoạt retry loop
+        rv.scrollToPosition(targetPos)
+        var retries = 8
+        val retryRunnable = object : Runnable {
+            override fun run() {
+                if (view?.findFocus() != null) return
+                for (ci in 0 until rv.childCount) {
+                    val c = rv.getChildAt(ci)
+                    if (c.isFocusable && c.requestFocus()) return
+                }
+                val v = rv.layoutManager?.findViewByPosition(targetPos)
+                    ?: rv.findViewHolderForAdapterPosition(targetPos)?.itemView
+                if (v != null && v.requestFocus()) return
+                if (--retries > 0 && isResumed) {
+                    rv.postDelayed(this, 50)
+                }
+            }
+        }
+        rv.postDelayed(retryRunnable, 50)
+        return false
     }
 
     override fun onPause() {

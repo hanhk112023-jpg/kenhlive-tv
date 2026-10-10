@@ -518,14 +518,18 @@ HÃY SUY LUẬN VÀ TRẢ VỀ DUY NHẤT JSON THEO ĐỊNH DẠNG SAU:
                 action_param = "1"
                 thought = "Chuyển sang Tab Lịch đấu (Tab 1)"
             elif step == 1:
+                action_type = "WAIT"
+                action_param = "1.0"
+                thought = "Chờ danh sách lịch nạp xong dữ liệu"
+            elif step == 2:
                 action_type = "KEY"
                 action_param = "DPAD_DOWN"
                 thought = "Duyệt lịch thi đấu bóng đá theo ngày"
-            elif step == 2:
+            elif step == 3:
                 action_type = "KEY"
                 action_param = "DPAD_LEFT"
                 thought = "Bấm Trái để mở thanh điều hướng Sidebar Rail bên trái"
-            elif step == 3:
+            elif step == 4:
                 action_type = "KEY"
                 action_param = "BACK"
                 thought = "Bấm BACK để đóng Sidebar Rail và trả lại focus cho nội dung màn hình chính"
