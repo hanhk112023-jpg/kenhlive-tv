@@ -107,6 +107,51 @@ class PhimFragment : Fragment() {
         super.onResume()
         // Cập nhật lại hàng tiếp tục xem khi quay lại từ player
         refreshContinueWatchingOnly()
+        view?.postDelayed({
+            ensurePhimFocus()
+        }, 150L)
+    }
+
+    fun ensurePhimFocus(): Boolean {
+        if (!isAdded || view == null) return false
+        val act = activity ?: return false
+        if (act.currentFocus != null) return true
+
+        if (::mainList.isInitialized && mainList.visibility == View.VISIBLE) {
+            val heroPlay = mainList.findViewById<View>(R.id.btnHeroPlay)
+            if (heroPlay != null && heroPlay.isFocusable && heroPlay.requestFocus()) {
+                return true
+            }
+            for (i in 0 until mainList.childCount) {
+                val child = mainList.getChildAt(i)
+                val btn = child.findViewById<View>(R.id.btnHeroPlay)
+                if (btn != null && btn.isFocusable && btn.requestFocus()) return true
+                val inner = firstFocusableIn(child)
+                if (inner != null && inner.requestFocus()) return true
+            }
+        }
+
+        if (::filterList.isInitialized && filterList.visibility == View.VISIBLE) {
+            for (i in 0 until filterList.childCount) {
+                val cv = filterList.getChildAt(i)
+                if (cv.isFocusable && cv.requestFocus()) return true
+                val inner = firstFocusableIn(cv)
+                if (inner != null && inner.requestFocus()) return true
+            }
+        }
+        return false
+    }
+
+    private fun firstFocusableIn(v: View): View? {
+        if (!v.isShown || v.visibility != View.VISIBLE) return null
+        if (v.isFocusable) return v
+        if (v is ViewGroup) {
+            for (i in 0 until v.childCount) {
+                val f = firstFocusableIn(v.getChildAt(i))
+                if (f != null) return f
+            }
+        }
+        return null
     }
 
     private fun refreshContinueWatchingOnly() {
@@ -153,6 +198,9 @@ class PhimFragment : Fragment() {
                 onHeroPlay = { film -> openHeroPlay(film) },
                 onFavoriteToggle = { film -> toggleFilmFavorite(film) }
             )
+            mainList.postDelayed({
+                ensurePhimFocus()
+            }, 100L)
         }
     }
 

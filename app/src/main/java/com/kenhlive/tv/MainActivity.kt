@@ -158,10 +158,13 @@ class MainActivity : AppCompatActivity() {
         val cur = c.findFocus()
         if (cur != null && (c === cur.rootView || isDescendant(c, cur))) return
 
-        // 1. Nếu fragment hiện tại là ScheduleFragment, ưu tiên gọi hàm khôi phục chuyên biệt
+        // 1. Nếu fragment hiện tại là ScheduleFragment hoặc PhimFragment, ưu tiên gọi hàm khôi phục chuyên biệt
         val activeFragment = supportFragmentManager.findFragmentByTag(tabTags.getOrNull(current))
         if (activeFragment is ScheduleFragment) {
             if (activeFragment.focusFirstMatch()) return
+        }
+        if (activeFragment is com.kenhlive.tv.phim.PhimFragment) {
+            if (activeFragment.ensurePhimFocus()) return
         }
 
         // 2. Tìm view con của fragmentContainer đang hiển thị (VISIBLE & isShown)
@@ -259,11 +262,11 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         DeviceMode.updateMode(this)
         if (DeviceMode.isTv) {
-            window.decorView.post {
+            window.decorView.postDelayed({
                 if (currentFocus == null) {
                     focusContentFirst()
                 }
-            }
+            }, 150L)
         }
     }
 
