@@ -102,6 +102,13 @@
     <string name="settings_version">Phiên bản</string>
     <string name="settings_about">Giới thiệu</string>
     <string name="settings_about_body">KênhLive tổng hợp các phòng phát trực tiếp bóng đá tiếng Việt. Chất lượng phụ thuộc nguồn phát của từng BLV.</string>
+    <string name="settings_feedback">Liên hệ &amp; Báo lỗi</string>
+    <string name="settings_feedback_sub">Telegram: @T990512S</string>
+    <string name="feedback_dialog_title">Liên Hệ &amp; Báo Lỗi</string>
+    <string name="feedback_dialog_guide">Quét mã QR bằng điện thoại hoặc liên hệ trực tiếp qua Telegram để gửi phản hồi, yêu cầu kênh hoặc báo lỗi luồng phát:</string>
+    <string name="feedback_btn_open">Mở Telegram</string>
+    <string name="player_btn_report">Báo Lỗi</string>
+    <string name="player_report_hint">Báo lỗi kênh qua Telegram: @T990512S</string>
     <string name="vq_auto">Tự động</string>
     <string name="vq_high">Cao nhất (nét)</string>
     <string name="vq_stable">Ổn định (mượt)</string>

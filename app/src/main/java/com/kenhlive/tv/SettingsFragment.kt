@@ -80,6 +80,12 @@ class SettingsFragment : Fragment() {
 
                 SettingsAdapter.Item.Section(getString(R.string.settings_section_app)),
                 SettingsAdapter.Item.Row(
+                    R.drawable.ic_telegram, getString(R.string.settings_feedback),
+                    value = getString(R.string.settings_feedback_sub)
+                ) {
+                    com.kenhlive.tv.ui.FeedbackDialog.show(requireContext())
+                },
+                SettingsAdapter.Item.Row(
                     R.drawable.ic_trash, getString(R.string.settings_clear_cache), chevron = false
                 ) { clearCache() },
                 SettingsAdapter.Item.Row(

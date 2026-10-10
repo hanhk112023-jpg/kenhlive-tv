@@ -299,6 +299,9 @@ class PlayerActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnPlayerBack)?.setOnClickListener {
             finish()
         }
+        findViewById<Button>(R.id.btnPlayerReport)?.setOnClickListener {
+            com.kenhlive.tv.ui.FeedbackDialog.show(this@PlayerActivity)
+        }
         qualityBtn.setOnClickListener { showSettingsDialog(video = true) }
         audioBtn.setOnClickListener { showSettingsDialog(video = false) }
         aspectBtn?.setOnClickListener { cycleAspectRatio() }
@@ -1268,7 +1271,8 @@ class PlayerActivity : AppCompatActivity() {
                 }
                 val btnRetry = findViewById<Button>(R.id.btnPlayerRetry)
                 val btnBack = findViewById<Button>(R.id.btnPlayerBack)
-                if (btnRetry?.hasFocus() != true && btnBack?.hasFocus() != true) {
+                val btnReport = findViewById<Button>(R.id.btnPlayerReport)
+                if (btnRetry?.hasFocus() != true && btnBack?.hasFocus() != true && btnReport?.hasFocus() != true) {
                     btnRetry?.requestFocus()
                 }
             }

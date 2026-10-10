@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_dialog"
+    android:gravity="center_horizontal"
+    android:paddingLeft="28dp"
+    android:paddingRight="28dp"
+    android:paddingTop="24dp"
+    android:paddingBottom="24dp">
+
+    <!-- Header: Telegram Icon + Title -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:src="@drawable/ic_telegram"
+            android:contentDescription="Telegram" />
+
+        <TextView
+            style="@style/KL.Text.Section"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="12dp"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:text="@string/feedback_dialog_title" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginBottom="16dp"
+        android:background="#1A1F29" />
+
+    <!-- Subtitle / Guide -->
+    <TextView
+        style="@style/KL.Text.Body"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:text="@string/feedback_dialog_guide"
+        android:textColor="#CBD5E1"
+        android:textSize="13sp"
+        android:lineSpacingExtra="3dp" />
+
+    <!-- QR Code Card Container -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:background="@drawable/bg_qr_container"
+        android:gravity="center"
+        android:elevation="4dp">
+
+        <ImageView
+            android:id="@+id/imgQrTelegram"
+            android:layout_width="160dp"
+            android:layout_height="160dp"
+            android:src="@drawable/qr_telegram_feedback"
+            android:scaleType="fitCenter"
+            android:contentDescription="Mã QR Telegram" />
+    </LinearLayout>
+
+    <!-- Handle & Link Card -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+
+        <TextView
+            android:id="@+id/tvTelegramHandle"
+            style="@style/KL.Text.Title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Telegram: @T990512S"
+            android:textColor="@color/kl_brand"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvTelegramUrl"
+            style="@style/KL.Text.Meta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="https://t.me/T990512S"
+            android:textColor="#94A3B8"
+            android:textSize="12sp" />
+    </LinearLayout>
+
+    <!-- Buttons Row -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/btnOpenTelegram"
+            android:layout_width="wrap_content"
+            android:layout_height="42dp"
+            android:background="@drawable/bg_button_orange"
+            android:text="@string/feedback_btn_open"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:paddingLeft="22dp"
+            android:paddingRight="22dp"
+            android:focusable="true"
+            android:nextFocusRight="@+id/btnCloseFeedback" />
+
+        <Button
+            android:id="@+id/btnCloseFeedback"
+            android:layout_width="wrap_content"
+            android:layout_height="42dp"
+            android:layout_marginLeft="14dp"
+            android:background="@drawable/bg_button_ghost"
+            android:text="@string/dialog_close"
+            android:textColor="#CBD5E1"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:paddingLeft="24dp"
+            android:paddingRight="24dp"
+            android:focusable="true"
+            android:nextFocusLeft="@+id/btnOpenTelegram" />
+    </LinearLayout>
+
+</LinearLayout>

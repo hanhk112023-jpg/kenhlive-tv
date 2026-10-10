@@ -140,11 +140,7 @@ class MainActivity : AppCompatActivity() {
 
         if (DeviceMode.isTv) {
             findViewById<View>(R.id.nav_profile)?.setOnClickListener {
-                AlertDialog.Builder(this)
-                    .setTitle(R.string.app_name)
-                    .setMessage(R.string.settings_about_body)
-                    .setPositiveButton(R.string.dialog_close, null)
-                    .show()
+                com.kenhlive.tv.ui.FeedbackDialog.show(this)
             }
             findViewById<View>(R.id.nav_multiview)?.apply {
                 findViewById<ImageView>(R.id.navIcon)?.setImageResource(R.drawable.ic_multiview)
