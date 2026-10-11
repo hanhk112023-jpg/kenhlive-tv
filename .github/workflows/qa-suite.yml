@@ -80,6 +80,7 @@ jobs:
           TYPESAFE_MODEL: jev-latest
           ANTIGRAVITY_API_BASE: ${{ secrets.ANTIGRAVITY_API_BASE }}
           ANTIGRAVITY_API_KEY: ${{ secrets.ANTIGRAVITY_API_KEY }}
+          ANTIGRAVITY_MODEL: gemini-3.5-flash-lite
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30

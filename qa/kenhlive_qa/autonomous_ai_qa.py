@@ -72,7 +72,7 @@ KEY_MAP = {
 # AI Gateways Configuration (100% loaded from environment/secrets)
 ANTIGRAVITY_BASE = os.environ.get("ANTIGRAVITY_API_BASE", "")
 ANTIGRAVITY_KEY = os.environ.get("ANTIGRAVITY_API_KEY", "")
-ANTIGRAVITY_MODEL = os.environ.get("ANTIGRAVITY_MODEL", "gemini-3.8-flash-high")
+ANTIGRAVITY_MODEL = os.environ.get("ANTIGRAVITY_MODEL", "gemini-3.5-flash-lite")
 
 KILO_BASE = os.environ.get("KILO_API_BASE", "https://api.kilo.ai/api/gateway/v1/chat/completions")
 KILO_KEY = os.environ.get("KILO_API_KEY", "")
@@ -695,10 +695,18 @@ Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn b�
                 action_type = "KEY"
                 action_param = "ENTER"
                 thought = "Bấm OK lưu phim vào danh sách yêu thích"
+            elif step == 6:
+                action_type = "KEY"
+                action_param = "DPAD_RIGHT"
+                thought = "Chuyển focus sang nút ĐỔI PHIM (btnHeroNext) trên Spotlight Hero"
+            elif step == 7:
+                action_type = "KEY"
+                action_param = "ENTER"
+                thought = "Bấm OK đổi sang phim nổi bật kế tiếp trong kho Spotlight"
             else:
                 action_type = "COMPLETE_MISSION"
                 action_param = ""
-                thought = "Đã kiểm tra hoàn tất hộp thoại chọn tập và tính năng lưu phim"
+                thought = "Đã kiểm tra hoàn tất hộp thoại chọn tập, lưu phim và đổi Spotlight"
 
         elif m_id in ("MISSION_PHIM_PLAYER_SEEK_AND_RESUME", "MISSION_VOD_PLAYER_SEEK_AND_RESUME"):
             if step == 0:
@@ -1300,10 +1308,10 @@ class AutonomousQASuite:
             ),
             QAMission(
                 "MISSION_PHIM_EPISODE_PICKER_AND_FAVORITE",
-                "Hộp Thoại Chọn Tập (EpisodePicker) & Lưu Phim Yêu Thích (VOD Favorite)",
-                "Trên Hero Banner hoặc thẻ phim bộ, kiểm tra nút CHỌN TẬP (btnHeroEpisodes) mở EpisodePickerDialog, duyệt danh sách tập, test nút LƯU PHIM (btnHeroFavorite).",
-                "EpisodePickerDialog hiển thị danh sách tập đầy đủ, lưu phim vào danh sách yêu thích thành công.",
-                max_steps=5
+                "Hộp Thoại Chọn Tập (EpisodePicker), Lưu Phim & Đổi Spotlight Hero",
+                "Trên Hero Banner phim, kiểm tra nút CHỌN TẬP (btnHeroEpisodes) mở EpisodePickerDialog, nút LƯU PHIM (btnHeroFavorite) và nút ĐỔI PHIM (btnHeroNext) chuyển Spotlight.",
+                "EpisodePickerDialog hiển thị danh sách tập đầy đủ, lưu phim yêu thích và chuyển Spotlight mượt mà.",
+                max_steps=8
             ),
             QAMission(
                 "MISSION_VOD_PLAYER_SEEK_AND_RESUME",

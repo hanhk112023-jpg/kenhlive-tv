@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="220dp"
-    android:layout_marginBottom="16dp"
+    android:layout_height="280dp"
+    android:layout_marginBottom="18dp"
     android:background="@color/kl_bg_deep">
 
-    <!-- Hero Backdrop Image -->
+    <!-- Hero Backdrop Image (16:9 Cinema Spotlight) -->
     <ImageView
         android:id="@+id/heroBackdrop"
         android:layout_width="match_parent"
@@ -13,17 +13,37 @@
         android:scaleType="centerCrop"
         android:contentDescription="Phim nổi bật" />
 
-    <!-- Dark Gradient Scrim Overlay (Left to Right + Bottom to Top) -->
+    <!-- Multi-directional Cinematic Gradient Scrim (Bottom-to-Top & Left-to-Right) -->
     <View
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/bg_overlay_top"
-        android:rotation="180" />
+        android:background="@drawable/bg_hero_scrim" />
 
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#990B0D17" />
+    <!-- Top Right Cinema Studio Badge -->
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|right"
+        android:layout_marginTop="16dp"
+        android:layout_marginRight="@dimen/sp_screen_margin"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_clock_pill"
+        android:paddingLeft="12dp"
+        android:paddingRight="12dp"
+        android:paddingTop="5dp"
+        android:paddingBottom="5dp">
+
+        <TextView
+            android:id="@+id/heroSpotlightCounter"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="RẠP PHIM TẠI GIA · 4K VIETSUB"
+            android:textColor="#E2E8F0"
+            android:textSize="10.5sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.05" />
+    </LinearLayout>
 
     <!-- Content Details Overlay -->
     <LinearLayout
@@ -31,38 +51,55 @@
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:gravity="bottom"
-        android:paddingLeft="24dp"
-        android:paddingRight="24dp"
-        android:paddingBottom="16dp">
+        android:paddingLeft="@dimen/sp_screen_margin"
+        android:paddingRight="@dimen/sp_screen_margin"
+        android:paddingBottom="18dp">
 
-        <!-- Tags Row -->
+        <!-- Metadata & Badges Row -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:layout_marginBottom="6dp">
+            android:layout_marginBottom="8dp">
 
             <TextView
                 style="@style/KL.Text.Meta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_badge_hd"
+                android:background="@drawable/bg_badge_live_red"
+                android:paddingLeft="9dp"
+                android:paddingRight="9dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"
+                android:text="● TOP THỊNH HÀNH"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.04"
+                android:textColor="#FFFFFF" />
+
+            <TextView
+                android:id="@+id/heroImdb"
+                style="@style/KL.Text.Meta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:background="@drawable/bg_badge_glass"
                 android:paddingLeft="8dp"
                 android:paddingRight="8dp"
                 android:paddingTop="3dp"
                 android:paddingBottom="3dp"
-                android:text="TÂM ĐIỂM ĐIỆN ẢNH"
-                android:textSize="10sp"
+                android:text="★ 8.8 IMDb"
+                android:textSize="10.5sp"
                 android:textStyle="bold"
-                android:textColor="#FFFFFF" />
+                android:textColor="#FBBF24" />
 
             <TextView
                 android:id="@+id/heroYear"
                 style="@style/KL.Text.Meta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="6dp"
+                android:layout_marginLeft="8dp"
                 android:background="@drawable/bg_badge_glass"
                 android:paddingLeft="8dp"
                 android:paddingRight="8dp"
@@ -70,6 +107,7 @@
                 android:paddingBottom="3dp"
                 android:text="2026"
                 android:textSize="10.5sp"
+                android:textStyle="bold"
                 android:textColor="#FFFFFF" />
 
             <TextView
@@ -77,9 +115,31 @@
                 style="@style/KL.Text.Meta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="6dp"
-                android:text="HD · Vietsub"
-                android:textSize="11sp"
+                android:layout_marginLeft="8dp"
+                android:background="@drawable/bg_badge_hd"
+                android:paddingLeft="8dp"
+                android:paddingRight="8dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"
+                android:text="FHD · Vietsub"
+                android:textSize="10.5sp"
+                android:textStyle="bold"
+                android:textColor="#FFFFFF" />
+
+            <TextView
+                android:id="@+id/heroGenre"
+                style="@style/KL.Text.Meta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:background="@drawable/bg_badge_league_cyan"
+                android:paddingLeft="9dp"
+                android:paddingRight="9dp"
+                android:paddingTop="3dp"
+                android:paddingBottom="3dp"
+                android:text="Điện Ảnh Đặc Sắc"
+                android:textSize="10.5sp"
+                android:textStyle="bold"
                 android:textColor="@color/kl_brand" />
         </LinearLayout>
 
@@ -89,42 +149,53 @@
             style="@style/KL.Text.Section"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="20sp"
+            android:maxWidth="760dp"
+            android:textSize="24sp"
             android:textStyle="bold"
             android:maxLines="1"
             android:ellipsize="end"
-            android:textColor="#FFFFFF" />
+            android:textColor="#FFFFFF"
+            android:shadowColor="#FF000000"
+            android:shadowDy="3"
+            android:shadowRadius="12" />
 
-        <!-- Short Description -->
+        <!-- Short Synopsis -->
         <TextView
             android:id="@+id/heroDesc"
             style="@style/KL.Text.Meta"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="3dp"
-            android:maxWidth="540dp"
+            android:layout_marginTop="4dp"
+            android:maxWidth="660dp"
             android:maxLines="2"
+            android:lineSpacingExtra="2dp"
             android:ellipsize="end"
-            android:textSize="12sp"
-            android:textColor="@color/kl_text_2" />
+            android:textSize="12.5sp"
+            android:textColor="#CBD5E1"
+            android:shadowColor="#E6000000"
+            android:shadowDy="2"
+            android:shadowRadius="8" />
 
         <!-- Action CTAs Row -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:orientation="horizontal">
+            android:layout_marginTop="12dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
             <Button
                 android:id="@+id/btnHeroPlay"
                 style="@style/KL.Button.Primary"
                 android:layout_width="wrap_content"
-                android:layout_height="38dp"
+                android:layout_height="40dp"
+                android:paddingLeft="20dp"
+                android:paddingRight="20dp"
                 android:text="XEM NGAY"
                 android:drawableStart="@drawable/ic_play"
-                android:drawablePadding="6dp"
+                android:drawablePadding="8dp"
                 android:drawableTint="#FFFFFF"
-                android:textSize="12sp"
+                android:textSize="12.5sp"
                 android:textStyle="bold"
                 android:focusable="true" />
 
@@ -132,23 +203,42 @@
                 android:id="@+id/btnHeroEpisodes"
                 style="@style/KL.Button.Ghost"
                 android:layout_width="wrap_content"
-                android:layout_height="38dp"
+                android:layout_height="40dp"
                 android:layout_marginLeft="10dp"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
                 android:text="DANH SÁCH TẬP"
                 android:textSize="12sp"
+                android:textStyle="bold"
                 android:focusable="true" />
 
             <Button
                 android:id="@+id/btnHeroFavorite"
                 style="@style/KL.Button.Ghost"
                 android:layout_width="wrap_content"
-                android:layout_height="38dp"
+                android:layout_height="40dp"
                 android:layout_marginLeft="10dp"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
                 android:text="LƯU PHIM"
                 android:drawableStart="@drawable/ic_bookmark"
                 android:drawablePadding="6dp"
                 android:drawableTint="#FFD700"
                 android:textColor="#FFD700"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:focusable="true" />
+
+            <Button
+                android:id="@+id/btnHeroNext"
+                style="@style/KL.Button.Ghost"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginLeft="10dp"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:text="ĐỔI PHIM ↻"
+                android:textColor="#E2E8F0"
                 android:textSize="12sp"
                 android:focusable="true" />
         </LinearLayout>
