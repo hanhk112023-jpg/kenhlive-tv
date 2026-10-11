@@ -485,7 +485,11 @@ class PhimFragment : Fragment() {
                     btnRetry.text = "Khám phá kho phim"
                     btnRetry.setOnClickListener {
                         selectedCategorySlug = "tat-ca"
-                        filterList.adapter = FilterAdapter(filterCategories, selectedCategorySlug) { catSlug ->
+                        filterList.adapter = FilterAdapter(
+                            filterCategories,
+                            selectedCategorySlug,
+                            onDown = { focusMainListFromFilter() }
+                        ) { catSlug ->
                             selectedCategorySlug = catSlug
                             loadFilmsByCategory(catSlug)
                         }
@@ -587,7 +591,7 @@ class PhimFragment : Fragment() {
     private class FilterAdapter(
         private val categories: List<Pair<String, String>>,
         private var selectedSlug: String,
-        private val onDown: () -> Boolean,
+        private val onDown: () -> Boolean = { false },
         private val onSelect: (String) -> Unit
     ) : RecyclerView.Adapter<FilterAdapter.VH>() {
 
