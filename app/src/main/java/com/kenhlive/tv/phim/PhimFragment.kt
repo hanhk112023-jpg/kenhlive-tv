@@ -111,9 +111,12 @@ class PhimFragment : Fragment() {
         super.onResume()
         // Cập nhật lại hàng tiếp tục xem khi quay lại từ player
         refreshContinueWatchingOnly()
-        view?.postDelayed({
-            if (!isHidden) ensurePhimFocus()
-        }, 150L)
+        val main = activity as? MainActivity
+        if (main?.isRailActive() != true) {
+            view?.postDelayed({
+                if (!isHidden && main?.isRailActive() != true) ensurePhimFocus()
+            }, 150L)
+        }
     }
 
     override fun onHiddenChanged(hidden: Boolean) {
@@ -124,10 +127,15 @@ class PhimFragment : Fragment() {
             view?.clearFocus()
             (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
         } else {
-            (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
-            refreshContinueWatchingOnly()
-            if (DeviceMode.isTv) {
-                view?.post { ensurePhimFocus() }
+            val main = activity as? MainActivity
+            if (main?.isRailActive() == true) {
+                (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+            } else {
+                (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+                refreshContinueWatchingOnly()
+                if (DeviceMode.isTv) {
+                    view?.post { if (main?.isRailActive() != true) ensurePhimFocus() }
+                }
             }
         }
     }

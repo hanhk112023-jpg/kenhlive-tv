@@ -277,10 +277,16 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
+    fun isRailActive(): Boolean {
+        val r = railPanel ?: return false
+        return r.visibility == View.VISIBLE && (r.hasFocus() || isDescendant(r, currentFocus))
+    }
+
     private fun showRail() {
         val r = railPanel ?: return
         r.visibility = View.VISIBLE
         (r as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+        findViewById<ViewGroup>(R.id.fragmentContainer)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
         r.animate().translationX(0f).alpha(1f).setDuration(180).start()
     }
 
@@ -288,6 +294,7 @@ class MainActivity : AppCompatActivity() {
         val r = railPanel ?: return
         val offset = -r.width.toFloat().coerceAtLeast(160f)
         (r as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+        findViewById<ViewGroup>(R.id.fragmentContainer)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
         if (immediate) {
             r.translationX = offset
             r.alpha = 0f
@@ -337,6 +344,9 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
                         hideRail()
+                        val activeTag = tabTags.getOrNull(current)
+                        val activeFrag = activeTag?.let { supportFragmentManager.findFragmentByTag(it) }
+                        (activeFrag?.view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
                         focusContentFirst()
                         return true
                     }
@@ -393,7 +403,11 @@ class MainActivity : AppCompatActivity() {
         tabTags.forEachIndexed { i, tag ->
             val f = supportFragmentManager.findFragmentByTag(tag) ?: return@forEachIndexed
             if (i == pos) {
-                (f.view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+                if (keepRailOpen) {
+                    (f.view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+                } else {
+                    (f.view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+                }
             } else {
                 f.view?.clearFocus()
                 (f.view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
@@ -401,8 +415,13 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        if (DeviceMode.isTv && !keepRailOpen) {
-            val fc = findViewById<View>(R.id.fragmentContainer)
+        val fc = findViewById<ViewGroup>(R.id.fragmentContainer)
+        if (DeviceMode.isTv && keepRailOpen) {
+            fc?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+            val activeNav = navViews.firstOrNull { navIdToTab[it.id] == pos }
+            activeNav?.requestFocus()
+        } else if (DeviceMode.isTv && !keepRailOpen) {
+            fc?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
             fc?.post {
                 hideRail()
                 focusContentFirst()

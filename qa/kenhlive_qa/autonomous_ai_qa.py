@@ -955,7 +955,9 @@ class AndroidTVDevice:
         last_key = self.action_history[-1] if self.action_history else ""
 
         # 1. Ghi nhận lịch sử bước focus để phát hiện Focus Trap (Kẹt nút D-pad)
-        self.focus_step_history.append((current_activity, focused_sig, last_key))
+        vis_texts = tuple(t for _, t in ui_state.get("all_visible_texts", [])[:15])
+        state_sig = f"{focused_sig}|{hash(vis_texts)}"
+        self.focus_step_history.append((current_activity, state_sig, last_key))
         if len(self.focus_step_history) > 10:
             self.focus_step_history.pop(0)
 
@@ -972,7 +974,7 @@ class AndroidTVDevice:
                         "area": "Điều hướng Focus TV (Deep Probe)",
                         "severity": "MEDIUM",
                         "issue": f"Nghi vấn kẹt Focus (Focus Trap) tại '{focused_sig}' khi bấm {s3[2]}",
-                        "detail": f"Gửi phím {s3[2]} liên tiếp nhưng tiêu điểm giữ nguyên tại {focused_sig} trên {current_activity}",
+                        "detail": f"Gửi phím {s3[2]} liên tiếp nhưng tiêu điểm và nội dung màn hình giữ nguyên tại {focused_sig} trên {current_activity}",
                         "suggestion": "Kiểm tra cấu hình nextFocus hoặc ranh giới cuộn của RecyclerView"
                     })
 

@@ -32,7 +32,9 @@ class SettingsFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        rebuild(focusRow = if (DeviceMode.isTv) 1 else -1)
+        val main = activity as? MainActivity
+        val isRail = main?.isRailActive() == true
+        rebuild(focusRow = if (DeviceMode.isTv && !isRail) 1 else -1)
     }
 
     override fun onHiddenChanged(hidden: Boolean) {
@@ -43,8 +45,15 @@ class SettingsFragment : Fragment() {
             view?.clearFocus()
             (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
         } else {
-            (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
-            rebuild(focusRow = if (DeviceMode.isTv) 1 else -1)
+            val main = activity as? MainActivity
+            val isRail = main?.isRailActive() == true
+            if (isRail) {
+                (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+                rebuild(focusRow = -1)
+            } else {
+                (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+                rebuild(focusRow = if (DeviceMode.isTv) 1 else -1)
+            }
         }
     }
 

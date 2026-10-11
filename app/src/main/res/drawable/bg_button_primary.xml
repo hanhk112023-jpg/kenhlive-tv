@@ -10,7 +10,7 @@
             </item>
             <item>
                 <shape android:shape="rectangle">
-                    <stroke android:width="@dimen/focus_ring_w" android:color="@color/kl_focus_ring" />
+                    <stroke android:width="3dp" android:color="#FFFFFFFF" />
                     <corners android:radius="@dimen/rd_pill" />
                 </shape>
             </item>
