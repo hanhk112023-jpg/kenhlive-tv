@@ -552,8 +552,13 @@ class IptvFragment : Fragment() {
             view?.clearFocus()
             (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
         } else {
-            (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
-            currentlyFocusedChannel?.let { scheduleHeroPreview(it) }
+            val main = activity as? com.kenhlive.tv.MainActivity
+            if (main?.isRailActive() == true) {
+                (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+            } else {
+                (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+                currentlyFocusedChannel?.let { scheduleHeroPreview(it) }
+            }
         }
     }
 
@@ -572,9 +577,9 @@ class IptvFragment : Fragment() {
                 ?: gridList.layoutManager?.findViewByPosition(0)
             if (card0 != null && card0.requestFocus()) return true
         }
-        if (this::groupTabs.isInitialized) {
-            val grp0 = groupTabs.findViewHolderForAdapterPosition(0)?.itemView
-                ?: groupTabs.layoutManager?.findViewByPosition(0)
+        if (this::groupList.isInitialized) {
+            val grp0 = groupList.findViewHolderForAdapterPosition(0)?.itemView
+                ?: groupList.layoutManager?.findViewByPosition(0)
             if (grp0 != null && grp0.requestFocus()) return true
         }
         if (this::gridList.isInitialized) {
