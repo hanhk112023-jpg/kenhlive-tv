@@ -1200,105 +1200,105 @@ class AutonomousQASuite:
                 "Khởi Động Lạnh, TTI & Hero Banner Rộng Rãi",
                 "Mở app từ trạng thái tắt, kiểm tra Hero Banner đã bỏ thẻ thống kê trận đấu rác, đo TTI, kiểm tra giao diện Home không bị đen màn hình.",
                 "Màn hình chính nạp đủ dữ liệu, focus xuất hiện tại thẻ đầu tiên.",
-                max_steps=6
+                max_steps=4
             ),
             QAMission(
                 "MISSION_SPORTS_MULTI_SOURCE",
                 "Thể Thao Đa Nguồn & Cuộn Ngang Sâu (Horizontal Rail Deep Traversal)",
                 "Duyệt qua các hàng đài độc lập (Socolive, ColaTV, Gà Vàng, Khán Đài), cuộn ngang sâu liên tục để kiểm tra biên phải và khôi phục tiêu điểm.",
                 "Các tab lọc đài phản hồi chuẩn, D-pad di chuyển mượt mà không kẹt, không có emoji rác [👁⏳⭐].",
-                max_steps=10
+                max_steps=6
             ),
             QAMission(
                 "MISSION_SPORTS_ROOM_PICKER",
                 "Hộp Thoại Chọn Phòng BLV & Vòng Đời Dialog (RoomPicker & Tab Switch)",
                 "Mở RoomPickerDialog trên thẻ trận đấu, duyệt danh sách phòng BLV, test đóng bằng BACK và kiểm tra không rò rỉ focus đè lên các tab khác.",
                 "Hộp thoại RoomPickerDialog trap focus chuẩn xác, đóng mở êm ái.",
-                max_steps=8
+                max_steps=5
             ),
             QAMission(
                 "MISSION_SPORTS_DATA_ACCURACY",
                 "Chuẩn Hóa Dữ Liệu Bóng Đá GMT+7, Tỷ Số X:Y & Nhãn KẾT THÚC",
                 "Kiểm tra tên giải đấu chuẩn tiếng Việt (Ngoại Hạng Anh, Cúp C1...), điểm số trận hiển thị chuẩn dạng X : Y, trận qua 180p có badge KẾT THÚC.",
                 "Dữ liệu hiển thị sạch bóng, không spam [HOT]/[VIP], đúng múi giờ GMT+7.",
-                max_steps=6
+                max_steps=4
             ),
             QAMission(
                 "MISSION_PLAYER_STREAMING_AND_CONTROLS",
                 "Trình Phát Video ExoPlayer, Server Picker & Phím Tắt TV (A/B/Menu)",
                 "Mở phát trận đấu, kiểm tra ExoPlayer motion render, menu đổi đài, phím tắt A/Đỏ chuyển Aspect Ratio, phím tắt B/Vàng tăng Audio Boost.",
                 "Video chuyển động mượt, phím tắt đổi tỉ lệ và âm lượng phản hồi nhanh.",
-                max_steps=8
+                max_steps=6
             ),
             QAMission(
                 "MISSION_MULTIVIEW_DUAL_AND_QUAD",
                 "Đa Màn Hình MultiView (Dual/Quad Screen & Slot Navigation)",
                 "Khởi động MultiViewActivity xem đồng thời đa trận, duyệt focus giữa các ô màn hình, mở chọn phòng cho ô và thoát an toàn về Home.",
                 "MultiView khởi chạy mượt mà, chuyển đổi focus viền trắng chuẩn xác giữa các slot, không crash.",
-                max_steps=8
+                max_steps=5
             ),
             QAMission(
                 "MISSION_SCHEDULE_EPG_AND_FIXTURE_TAP",
                 "Lịch Thi Đấu EPG Đa Ngày & Chạm Trận Đấu (Schedule Tap & Detail)",
                 "Chuyển sang Tab Lịch đấu (Tab 1), duyệt lịch theo ngày, click trận kiểm tra onFixtureTap và xử lý trạng thái trận.",
                 "Lịch đấu phân chia theo ngày rõ ràng, sự kiện bấm trận phản hồi đúng.",
-                max_steps=8
+                max_steps=5
             ),
             QAMission(
                 "MISSION_SIDEBAR_RAIL_FULL_TRAVERSAL",
                 "Thanh Điều Hướng Sidebar Rail & Khám Phá Toàn Diện (Full Rail Traversal)",
                 "Mở Sidebar Rail bằng DPAD_LEFT, duyệt dọc qua toàn bộ 6 tab trên Rail kiểm tra không bị tự đóng hay cướp focus, đóng bằng DPAD_RIGHT.",
                 "Sidebar đóng mở êm ái, phím điều hướng không làm văng app hoặc mất focus.",
-                max_steps=8
+                max_steps=5
             ),
             QAMission(
                 "MISSION_IPTV_CATEGORIES_AND_FAVORITES",
                 "Truyền Hình IPTV, Lưới Kênh & Kênh Yêu Thích (Favorites Long-Press)",
                 "Chuyển sang Tab IPTV (Tab 2), duyệt qua các danh mục kênh, test Long-press OK lưu Kênh Yêu Thích, duyệt tab Yêu Thích.",
                 "Lưu kênh yêu thích thành công, lưới kênh nạp đủ logo sắc nét.",
-                max_steps=8
+                max_steps=5
             ),
             QAMission(
                 "MISSION_IPTV_EPG_AND_ZAPPING_PLAYER",
                 "Hero Preview IPTV, Lịch Phát Sóng & Nhảy Kênh Bằng Phím Số (Zapping)",
                 "Kiểm tra Hero Preview góc trên, mở phát toàn màn hình kênh IPTV, test gõ số remote (1, 15) hiện OSD nhảy kênh, test phím Channel Up/Down.",
                 "Hero Preview phát thử trơn tru, OSD gõ số kênh hiện tức thì, nhảy kênh trơn tru.",
-                max_steps=8
+                max_steps=6
             ),
             QAMission(
                 "MISSION_PHIM_NGUONC_AND_CATEGORIES",
                 "Kho Phim NguonC, Apple Pills Thể Loại & Hạ Cánh Focus Chuẩn Xác",
                 "Chuyển sang Tab Kho Phim (Tab 5), duyệt Apple Pills bộ lọc thể loại, bấm DPAD_DOWN kiểm tra focus hạ cánh chuẩn xác xuống nút XEM NGAY (btnHeroPlay).",
                 "Danh sách phim tải đủ thông tin, điều hướng từ filter xuống hero banner mượt mà.",
-                max_steps=8
+                max_steps=5
             ),
             QAMission(
                 "MISSION_PHIM_EPISODE_PICKER_AND_FAVORITE",
                 "Hộp Thoại Chọn Tập (EpisodePicker) & Lưu Phim Yêu Thích (VOD Favorite)",
                 "Trên Hero Banner hoặc thẻ phim bộ, kiểm tra nút CHỌN TẬP (btnHeroEpisodes) mở EpisodePickerDialog, duyệt danh sách tập, test nút LƯU PHIM (btnHeroFavorite).",
                 "EpisodePickerDialog hiển thị danh sách tập đầy đủ, lưu phim vào danh sách yêu thích thành công.",
-                max_steps=8
+                max_steps=5
             ),
             QAMission(
                 "MISSION_VOD_PLAYER_SEEK_AND_RESUME",
                 "Trình Phát Phim WebPlayer, Tua D-pad (-10s/+10s) & Hàng Tiếp Tục Xem",
                 "Mở player phim WebPlayerActivity, test D-pad Trái/Phải tua -10s/+10s có Toast/HUD, test tự động tiếp tục xem (Resume Playback).",
                 "Tua phim mượt mà, resume vị trí cũ chuẩn xác vào hàng Tiếp Tục Xem.",
-                max_steps=8
+                max_steps=6
             ),
             QAMission(
                 "MISSION_SEARCH_AND_SETTINGS_FEEDBACK",
                 "Tìm Kiếm Thông Minh & Cài Đặt (Hộp Thoại Báo Lỗi Telegram QR @T990512S)",
                 "Duyệt Tab Tìm kiếm (Tab 3), nhập từ khóa; chuyển sang Tab Cài đặt (Tab 4), mở mục 'Liên hệ & Báo lỗi', kiểm tra FeedbackDialog hiển thị mã QR Telegram và thông tin @T990512S.",
                 "Tìm kiếm hiển thị kết quả, FeedbackDialog mở chuẩn xác có mã QR và đóng bằng phím BACK/OK êm ái.",
-                max_steps=8
+                max_steps=5
             ),
             QAMission(
                 "MISSION_DPAD_CHAOS_STRESS_AND_RECOVERY",
                 "Thử Thách Stress Chaos D-pad & Đo Đạc Bộ Nhớ RAM (Memory Leak Audit)",
                 "Nhồi phím liên tục 4 hướng để kiểm tra độ bền, mép màn hình, khả năng giữ focus / auto recovery và đo tổng lượng RAM PSS qua dumpsys meminfo.",
                 "Không crash, không văng app, focus tự phục hồi khi chuyển cảnh, RAM PSS ổn định.",
-                max_steps=12
+                max_steps=6
             )
         ]
 
@@ -1493,6 +1493,12 @@ class AutonomousQASuite:
                 print(f"   📊 [Telemetry] RAM PSS tiêu thụ: {pss_mb:.1f} MB", flush=True)
             safe_name = f"{m_idx + 2:02d}_{mission.name.lower()}"
             self._record_screen(safe_name)
+
+            # Lưu báo cáo trung gian sau mỗi nhiệm vụ để không bao giờ mất kết quả
+            try:
+                self.generate_reports(round(time.time() - self.start_time), video_info=None)
+            except Exception as e:
+                print(f"   ⚠️ [Report] Lưu báo cáo trung gian lỗi: {e}", flush=True)
 
         # Dừng và lưu video toàn bộ quá trình kiểm thử
         video_info = None

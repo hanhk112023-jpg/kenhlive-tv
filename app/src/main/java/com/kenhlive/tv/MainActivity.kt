@@ -172,6 +172,7 @@ class MainActivity : AppCompatActivity() {
 
         // 1. Nếu fragment hiện tại hỗ trợ khôi phục focus chuyên biệt:
         if (activeFragment is ScheduleFragment && activeFragment.focusFirstMatch()) return
+        if (activeFragment is com.kenhlive.tv.iptv.IptvFragment && activeFragment.ensureIptvFocus()) return
         if (activeFragment is com.kenhlive.tv.phim.PhimFragment && activeFragment.ensurePhimFocus()) return
         if (activeFragment is SearchFragment && activeFragment.ensureSearchFocus()) return
         if (activeFragment is SettingsFragment && activeFragment.ensureSettingsFocus()) return

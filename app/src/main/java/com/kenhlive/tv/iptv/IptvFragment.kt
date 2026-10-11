@@ -565,6 +565,28 @@ class IptvFragment : Fragment() {
         heroPlayerView = null
     }
 
+    fun ensureIptvFocus(): Boolean {
+        if (!isAdded || isHidden) return false
+        if (this::gridList.isInitialized) {
+            val card0 = gridList.findViewHolderForAdapterPosition(0)?.itemView
+                ?: gridList.layoutManager?.findViewByPosition(0)
+            if (card0 != null && card0.requestFocus()) return true
+        }
+        if (this::groupTabs.isInitialized) {
+            val grp0 = groupTabs.findViewHolderForAdapterPosition(0)?.itemView
+                ?: groupTabs.layoutManager?.findViewByPosition(0)
+            if (grp0 != null && grp0.requestFocus()) return true
+        }
+        if (this::gridList.isInitialized) {
+            gridList.post {
+                val c = gridList.findViewHolderForAdapterPosition(0)?.itemView
+                    ?: gridList.layoutManager?.findViewByPosition(0)
+                c?.requestFocus()
+            }
+        }
+        return false
+    }
+
     private fun openChannel(ch: IptvChannel, index: Int) {
         val intent = Intent(requireContext(), PlayerActivity::class.java).apply {
             putExtra("url", ch.url)

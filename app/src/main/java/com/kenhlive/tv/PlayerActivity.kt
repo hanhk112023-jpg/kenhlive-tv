@@ -1370,7 +1370,8 @@ class PlayerActivity : AppCompatActivity() {
         }
 
         // 5. Khi đang xem (overlay ẩn): Phím D-pad UP/DOWN mở Carousel chuyển kênh mượt mà
-        if (isDown && topOverlay?.visibility != View.VISIBLE && dialog == null) {
+        // LƯU Ý: Phím BACK tuyệt đối KHÔNG gọi showOverlay() để tránh bẫy loop (BACK khi overlay ẩn phải finish activity)
+        if (isDown && topOverlay?.visibility != View.VISIBLE && dialog == null && e.keyCode != KeyEvent.KEYCODE_BACK) {
             if (isIptvMode && (e.keyCode == KeyEvent.KEYCODE_DPAD_DOWN || e.keyCode == KeyEvent.KEYCODE_DPAD_UP)) {
                 showCarousel()
                 return true
