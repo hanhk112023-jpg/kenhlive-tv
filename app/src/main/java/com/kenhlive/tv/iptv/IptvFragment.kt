@@ -172,6 +172,7 @@ class IptvFragment : Fragment() {
 
         val n = ch.name.uppercase(Locale.ROOT)
         val (bgTop, bgBot, badgeText) = when {
+            n.contains("VTV10") -> Triple(0xFFD32F2F.toInt(), 0xFFB71C1C.toInt(), "VTV 10")
             n.contains("VTV1") -> Triple(0xFFD32F2F.toInt(), 0xFFB71C1C.toInt(), "VTV 1")
             n.contains("VTV2") -> Triple(0xFF2E7D32.toInt(), 0xFF1B5E20.toInt(), "VTV 2")
             n.contains("VTV3") -> Triple(0xFF1976D2.toInt(), 0xFF0D47A1.toInt(), "VTV 3")
@@ -308,9 +309,6 @@ class IptvFragment : Fragment() {
 
         // Phân nhóm EPG: Yêu Thích -> VTV -> TV360 -> HTV / VTC -> VTVcab / SCTV -> Thể Thao -> Giải Trí -> Địa Phương -> Tất cả
         val distinctGroups = mutableListOf("Yêu Thích", "VTV", "TV360", "HTV / VTC", "VTVcab / SCTV", "Thể Thao", "Giải Trí", "Địa Phương", "Tất cả")
-        val sportsBrandGroups = listOf("DAZN", "Sky Sports", "beIN Sports", "ESPN")
-        distinctGroups.addAll(sportsBrandGroups)
-
         setupGroups(distinctGroups)
         applyFilter(focusFirst = focusFirst)
     }

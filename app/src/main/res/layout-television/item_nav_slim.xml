@@ -14,6 +14,7 @@
         android:layout_width="22dp"
         android:layout_height="22dp"
         android:layout_gravity="center"
+        android:duplicateParentState="true"
         android:tint="@color/csl_nav_icon"
         android:contentDescription="@null" />
 </FrameLayout>

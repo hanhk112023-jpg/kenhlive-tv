@@ -110,7 +110,7 @@ class MainActivity : AppCompatActivity() {
             Triple(R.id.nav_live, 0, Pair(R.drawable.ic_nav_live, R.string.nav_live)),
             Triple(R.id.nav_iptv, 2, Pair(R.drawable.ic_nav_tv, R.string.nav_iptv)),
             Triple(R.id.nav_phim, 5, Pair(R.drawable.ic_nav_phim, R.string.nav_phim)),
-            Triple(R.id.nav_schedule, 1, Pair(if (DeviceMode.isTv) R.drawable.ic_sports else R.drawable.ic_nav_schedule, R.string.nav_schedule)),
+            Triple(R.id.nav_schedule, 1, Pair(R.drawable.ic_nav_schedule, R.string.nav_schedule)),
             Triple(R.id.nav_search, 3, Pair(R.drawable.ic_nav_search, R.string.nav_search)),
             Triple(R.id.nav_settings, 4, Pair(R.drawable.ic_nav_settings, R.string.nav_settings))
         )
@@ -121,7 +121,8 @@ class MainActivity : AppCompatActivity() {
         defs.forEach { (id, tabIdx, def) ->
             navIdToTab[id] = tabIdx
             val v = findViewById<View>(id) ?: return@forEach
-            v.findViewById<ImageView>(R.id.navIcon)?.setImageResource(def.first)
+            val iv = v.findViewById<ImageView>(R.id.navIcon)
+            iv?.setImageResource(def.first)
             v.findViewById<TextView>(R.id.navLabel)?.setText(def.second)
             v.setOnClickListener {
                 showTab(tabIdx)
@@ -134,11 +135,13 @@ class MainActivity : AppCompatActivity() {
                 v.setOnFocusChangeListener { _, hasFocus ->
                     if (hasFocus) {
                         v.animate().scaleX(1.06f).scaleY(1.06f).setDuration(120).start()
+                        iv?.setColorFilter(android.graphics.Color.WHITE)
                         if (current != tabIdx) {
                             showTab(tabIdx, animate = false, keepRailOpen = true)
                         }
                     } else {
                         v.animate().scaleX(1f).scaleY(1f).setDuration(120).start()
+                        iv?.clearColorFilter()
                     }
                 }
             }
@@ -154,7 +157,12 @@ class MainActivity : AppCompatActivity() {
                 com.kenhlive.tv.ui.FeedbackDialog.show(this)
             }
             findViewById<View>(R.id.nav_multiview)?.apply {
-                findViewById<ImageView>(R.id.navIcon)?.setImageResource(R.drawable.ic_multiview)
+                val iv = findViewById<ImageView>(R.id.navIcon)
+                iv?.setImageResource(R.drawable.ic_multiview)
+                setOnFocusChangeListener { _, hasFocus ->
+                    animate().scaleX(if (hasFocus) 1.06f else 1f).scaleY(if (hasFocus) 1.06f else 1f).setDuration(120).start()
+                    if (hasFocus) iv?.setColorFilter(android.graphics.Color.WHITE) else iv?.clearColorFilter()
+                }
                 setOnClickListener { startActivity(Intent(this@MainActivity, MultiViewActivity::class.java)) }
             }
         }

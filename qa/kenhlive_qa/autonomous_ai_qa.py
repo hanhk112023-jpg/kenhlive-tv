@@ -966,7 +966,9 @@ class AndroidTVDevice:
             dpad_dirs = ("DPAD_UP", "DPAD_DOWN", "DPAD_LEFT", "DPAD_RIGHT", "UP", "DOWN", "LEFT", "RIGHT")
             if (s1[0] == s2[0] == s3[0] and
                     s1[1] == s2[1] == s3[1] and
-                    s2[2] in dpad_dirs and s3[2] in dpad_dirs and s2[2] == s3[2]):
+                    s2[2] in dpad_dirs and s3[2] in dpad_dirs and s2[2] == s3[2] and
+                    "PlayerActivity" not in current_activity and
+                    "WebPlayerActivity" not in current_activity):
                 trap_key = f"TRAP:{current_activity}:{focused_sig}:{s3[2]}"
                 if trap_key not in self._reported_anomaly_keys:
                     self._reported_anomaly_keys.add(trap_key)
