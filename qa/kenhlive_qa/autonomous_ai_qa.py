@@ -135,28 +135,29 @@ class AIBrain:
 
     def _build_system_prompt(self) -> str:
         return """Bạn là Senior AI QA Engineer chuyên nghiệp kiểm thử ứng dụng Android TV 10-foot 'KênhLive'.
-Bạn đang trực tiếp cầm remote điều khiển app trên TV để kiểm thử tính năng và săn lỗi (bug hunting) trong một phiên kiểm thử liên tục (Continuous Test Session).
+Bạn đang trực tiếp cầm remote điều khiển app trên TV để kiểm thử tính năng và đào sâu săn lỗi (Deep Bug Hunting) trong một phiên kiểm thử liên tục (Continuous Test Session).
 
 BẢN ĐỒ TOÀN BỘ 6 TAB VÀ CÁC MÀN HÌNH CỦA APP KENHLIVE TV:
-- [Tab 0 - Trực tiếp (Live)]: Trận đấu bóng đá live. Hàng lọc đài phát riêng biệt: "Tất cả", "ColaTV", "Gà Vàng", "Khán Đài", "Socolive". Hero Banner gọn gàng. Tên giải đấu chuẩn tiếng Việt, tỷ số X : Y, nhãn XEM và countdown.
-- [Tab 1 - Lịch đấu (Schedule)]: Lịch thi đấu theo ngày (Hôm nay, Ngày mai, Giải đấu). Trận > 180p có badge KẾT THÚC.
+- [Tab 0 - Trực tiếp (Live)]: Trận đấu bóng đá live. Hàng lọc đài phát riêng biệt: "Tất cả", "ColaTV", "Gà Vàng", "Khán Đài", "Socolive". Hero Banner gọn gàng. Tên giải đấu chuẩn tiếng Việt, tỷ số X : Y, nhãn XEM và countdown. Hộp thoại RoomPickerDialog chọn phòng BLV.
+- [Tab 1 - Lịch đấu (Schedule)]: Lịch thi đấu theo ngày (Hôm nay, Ngày mai, Giải đấu). Trận > 180p có badge KẾT THÚC. Chạm trận đấu (onFixtureTap) mở RoomPicker hoặc thông báo nếu chưa có phòng.
 - [Tab 2 - Truyền hình (IPTV)]: Danh mục Kênh Yêu Thích (bấm giữ OK để lưu), TV360, VTV, HTV. Hero Preview góc trên. Lưới kênh. OSD gõ số trực tiếp từ remote (0-9). Phím tắt đổi kênh CHANNEL_UP/DOWN, PAGE_UP/DOWN. Phím tắt Aspect Ratio (A/Đỏ) & Audio Boost (B/Vàng).
-- [Tab 3 - Tìm kiếm (Search)]: Ô nhập tìm kiếm (searchInput), gõ từ khóa không dấu, chuyển D-pad xuống danh sách kết quả.
-- [Tab 4 - Cài đặt (Settings)]: Thông tin phiên bản, kiểm tra cập nhật, liên hệ & báo lỗi Telegram (@T990512S), cài đặt server.
-- [Tab 5 - Kho Phim (NguonC & Anime)]: Apple Pills thể loại, Lịch Sử Xem (lưu phim, tập đang xem dở). Trình phát phim hỗ trợ tua D-pad Trái/Phải (-10s / +10s) và tự động tiếp tục xem (Resume).
+- [Tab 3 - Tìm kiếm (Search)]: Ô nhập tìm kiếm (searchInput), gõ từ khóa không dấu, chuyển D-pad xuống danh sách kết quả (resultList), nút xóa nhanh clearBtn.
+- [Tab 4 - Cài đặt (Settings)]: Thông tin phiên bản, kiểm tra cập nhật, liên hệ & báo lỗi Telegram (@T990512S) có mã QR ngoại tuyến, cài đặt video và audio.
+- [Tab 5 - Kho Phim (NguonC & Anime)]: Apple Pills thể loại, nút XEM NGAY (btnHeroPlay), nút CHỌN TẬP (btnHeroEpisodes), nút LƯU PHIM (btnHeroFavorite), hộp thoại EpisodePickerDialog. Trình phát phim hỗ trợ tua D-pad Trái/Phải (-10s / +10s) và tự động lưu/tiếp tục xem (Resume Playback).
+- [Sidebar Rail]: Mở bằng DPAD_LEFT từ mép trái, duyệt dọc qua 6 tab, đóng bằng DPAD_RIGHT hoặc BACK.
 - [PlayerActivity]: Trình phát video, phím MENU mở Server Picker, phím A/Đỏ xoay vòng tỉ lệ khung hình (Fit/Fill/Zoom/Fixed), phím B/Vàng tăng âm lượng, gõ số kênh hiện OSD nhảy kênh ngay khi bấm OK. Khung báo lỗi có nút Báo Lỗi Telegram @T990512S.
-- [MultiViewActivity]: Xem đồng thời 2 trận bóng đá side-by-side (--es open mv), phím UP/DOWN đổi focus viền trắng.
+- [MultiViewActivity]: Xem đồng thời đa trận bóng đá side-by-side (--es open mv hoặc OPEN_MULTIVIEW), phím UP/DOWN/LEFT/RIGHT đổi focus giữa các ô xem, mở RoomPicker đổi trận cho từng slot.
 
-NGUYÊN TẮC BỘ NHỚ PHIÊN & SĂN LỖI (Session Memory & Bug Hunting):
+NGUYÊN TẮC BỘ NHỚ PHIÊN & SĂN LỖI SÂU (Deep Bug Hunting & Session Memory):
 1. Bạn có TRÍ NHỚ LIÊN TỤC xuyên suốt cả phiên test. Hãy ghi nhớ các màn hình đã đi qua, các thao tác đã thực hiện và các lỗi đã phát hiện để không lặp lại hoặc kiểm tra lại xem lỗi có tái diễn.
-2. Chủ động khám phá toàn bộ các tính năng, di chuyển qua các tab bằng SWITCH_TAB hoặc DPAD_LEFT mở rail navigation.
-3. Khi phát hiện lỗi thực sự (Mất dấu focus, Kẹt nút Focus Trap, Tràn viền text, Màn hình rỗng chết kẹt, App crash), hãy báo ngay vào trường 'defect_detected'.
+2. Chủ động khám phá toàn bộ các tính năng, di chuyển qua các tab bằng SWITCH_TAB, OPEN_MULTIVIEW hoặc DPAD_LEFT mở rail navigation.
+3. Khi phát hiện lỗi thực sự (Mất dấu focus, Kẹt nút Focus Trap, Rò rỉ focus vào view ẩn/ngoài màn hình, Tràn viền text, Chữ hiển thị 'null'/'undefined', Dialog không trap focus, App crash, Video đứng hình), hãy báo ngay vào trường 'defect_detected'.
 4. Tính năng tự phục hồi (Failover & Self-Healing): Nếu app tự đổi sang server dự phòng thành công, đây là tính năng bảo vệ hoạt động đúng, KHÔNG coi là lỗi.
 
 ĐỊNH DẠNG TRẢ VỀ DUY NHẤT: Trả về một khối JSON hợp lệ:
 {
   "thought": "Quan sát thấy gì trên màn hình hiện tại, liên hệ với các bước trước trong phiên kiểm thử và lý do chọn hành động này",
-  "action_type": "KEY" | "LONG_PRESS" | "KEYPAD" | "SWITCH_TAB" | "TEXT" | "WAIT" | "VERIFY_STREAM" | "COMPLETE_MISSION",
+  "action_type": "KEY" | "LONG_PRESS" | "KEYPAD" | "SWITCH_TAB" | "OPEN_MULTIVIEW" | "TEXT" | "WAIT" | "VERIFY_STREAM" | "COMPLETE_MISSION",
   "action_param": "DPAD_DOWN" | "OK" | "1" | "2" | "ENTER" | "BACK" | "uefa" | "2.0" | "",
   "expected_result": "Kỳ vọng gì sau khi thực hiện hành động này?",
   "defect_detected": null hoặc {
@@ -301,6 +302,7 @@ NGUYÊN TẮC BỘ NHỚ PHIÊN & SĂN LỖI (Session Memory & Bug Hunting):
 
         # 3. Xây dựng tin nhắn User cho bước hiện tại
         feedback_section = f"\nPHẢN HỒI TỪ BƯỚC TRƯỚC:\n{self.last_action_feedback}\n" if self.last_action_feedback else ""
+        deep_anomaly_section = f"\nCẢNH BÁO TỪ PROBE TỰ ĐỘNG (DEEP ANOMALY INSPECTOR):\n{state.get('deep_anomalies_text')}\n" if state.get('deep_anomalies_text') else ""
         step_prompt = f"""[LƯỢT #{self.turn_counter} · NHIỆM VỤ: {mission.name} ({mission.title})]
 - Tiến độ nhiệm vụ: Bước {mission.steps_executed + 1}/{mission.max_steps}
 - Mục tiêu: {mission.description}
@@ -317,7 +319,7 @@ TRẠNG THÁI MÀN HÌNH & HỆ THỐNG HIỆN TẠI:
 - Video đang chạy (Motion): {state.get('video_motion_playing')} (Motion delta: {state.get('video_motion_delta', 0.0):.2f}%)
 - Lịch sử 5 phím gần nhất: {state.get('recent_keys')}
 - Logcat cảnh báo/lỗi: {state.get('logcat_alerts')}
-{feedback_section}
+{feedback_section}{deep_anomaly_section}
 DANH SÁCH VIEW FOCUSABLE TRÊN MÀN HÌNH:
 {state.get('ui_summary')}
 
@@ -382,7 +384,7 @@ Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn b�
                 "suggestion": "Đảm bảo gán requestFocus() hoặc cấu hình focusable=true cho các view chính"
             }
 
-        # Logic điều hướng phản xạ theo từng nhiệm vụ
+        # Logic điều hướng phản xạ theo từng nhiệm vụ (15 Deep-Dive Missions)
         if m_id == "MISSION_COLD_START":
             if step == 0:
                 action_type = "WAIT"
@@ -392,72 +394,123 @@ Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn b�
                 action_type = "KEY"
                 action_param = "DPAD_DOWN"
                 thought = "Di chuyển focus xuống thẻ trận đầu tiên, kiểm tra độ nhạy Leanback"
+            elif step == 2:
+                action_type = "KEY"
+                action_param = "DPAD_RIGHT"
+                thought = "Duyệt thẻ trận đấu thứ hai trên hàng đầu tiên"
+            elif step == 3:
+                action_type = "KEY"
+                action_param = "DPAD_UP"
+                thought = "Quay lại Hero Banner kiểm tra khôi phục focus"
             else:
                 action_type = "COMPLETE_MISSION"
                 action_param = ""
                 thought = "Màn hình chính nạp thành công, Hero Banner gọn gàng không card rác"
 
         elif m_id == "MISSION_SPORTS_MULTI_SOURCE":
-            # Duyệt các danh mục nguồn thể thao: ColaTV, Gà Vàng, Khán Đài, Socolive
+            # Duyệt sâu các hàng nguồn thể thao: Socolive, ColaTV, Gà Vàng, Khán Đài
             if step == 0:
                 action_type = "KEY"
-                action_param = "DPAD_RIGHT"
-                thought = "Chuyển sang bộ lọc nguồn đài ColaTV"
-            elif step == 1:
+                action_param = "DPAD_DOWN"
+                thought = "Di chuyển xuống hàng Trực Tiếp Socolive"
+            elif step in (1, 2, 3):
                 action_type = "KEY"
                 action_param = "DPAD_RIGHT"
-                thought = "Khám phá danh mục đài Gà Vàng"
-            elif step == 2:
-                action_type = "KEY"
-                action_param = "DPAD_RIGHT"
-                thought = "Khám phá danh mục đài Khán Đài"
-            elif step == 3:
+                thought = f"Cuộn ngang sâu trên hàng Socolive (bước {step}) để kiểm tra biên phải"
+            elif step == 4:
                 action_type = "KEY"
                 action_param = "DPAD_DOWN"
-                thought = "Di chuyển xuống danh sách các trận đấu đang trực tiếp"
+                thought = "Di chuyển xuống hàng Trực Tiếp ColaTV"
+            elif step == 5:
+                action_type = "KEY"
+                action_param = "DPAD_RIGHT"
+                thought = "Cuộn ngang kiểm tra các trận trên đài ColaTV"
+            elif step == 6:
+                action_type = "KEY"
+                action_param = "DPAD_DOWN"
+                thought = "Di chuyển xuống hàng Trực Tiếp Gà Vàng TV"
+            elif step == 7:
+                action_type = "KEY"
+                action_param = "DPAD_DOWN"
+                thought = "Di chuyển xuống hàng Trực Tiếp Khán Đài TV"
             else:
                 action_type = "COMPLETE_MISSION"
                 action_param = ""
+                thought = "Đã kiểm tra sâu toàn bộ 4 hàng đài thể thao độc lập"
+
+        elif m_id == "MISSION_SPORTS_ROOM_PICKER":
+            if step == 0:
+                action_type = "KEY"
+                action_param = "ENTER"
+                thought = "Mở hộp thoại chọn phòng BLV (RoomPickerDialog) trên thẻ trận đấu"
+            elif step == 1:
+                action_type = "WAIT"
+                action_param = "1.0"
+                thought = "Chờ hộp thoại RoomPickerDialog hiển thị danh sách phòng"
+            elif step == 2:
+                action_type = "KEY"
+                action_param = "DPAD_DOWN"
+                thought = "Di chuyển xuống phòng BLV tiếp theo trong danh sách"
+            elif step == 3:
+                action_type = "KEY"
+                action_param = "DPAD_UP"
+                thought = "Di chuyển ngược lên phòng BLV đầu tiên"
+            elif step == 4:
+                action_type = "KEY"
+                action_param = "BACK"
+                thought = "Nhấn BACK đóng RoomPickerDialog trả focus về thẻ trận đấu"
+            else:
+                action_type = "COMPLETE_MISSION"
+                action_param = ""
+                thought = "Hộp thoại RoomPickerDialog đóng mở và trap focus chuẩn xác"
 
         elif m_id == "MISSION_SPORTS_DATA_ACCURACY":
             if step == 0:
+                action_type = "SWITCH_TAB"
+                action_param = "1"
+                thought = "Chuyển sang Tab Lịch đấu để kiểm tra tỷ số X : Y, giờ GMT+7 và nhãn KẾT THÚC"
+            elif step == 1:
                 action_type = "KEY"
                 action_param = "DPAD_DOWN"
                 thought = "Kiểm tra thẻ trận: Tên giải đấu chuẩn tiếng Việt, tỷ số dạng X : Y, không spam rác [HOT]/[VIP]"
-            elif step == 1:
+            elif step == 2:
                 action_type = "KEY"
-                action_param = "DPAD_RIGHT"
-                thought = "Kiểm tra trận tiếp theo trong hàng, xác nhận badge KẾT THÚC nếu trận > 180p"
+                action_param = "DPAD_DOWN"
+                thought = "Kiểm tra trận tiếp theo trong danh sách, xác nhận badge KẾT THÚC nếu trận > 180p"
             else:
                 action_type = "COMPLETE_MISSION"
                 action_param = ""
 
         elif m_id == "MISSION_PLAYER_STREAMING_AND_CONTROLS":
             if step == 0:
+                action_type = "SWITCH_TAB"
+                action_param = "0"
+                thought = "Quay về Tab Trực tiếp để mở phát một trận đấu"
+            elif step == 1:
+                action_type = "KEY"
+                action_param = "DPAD_DOWN"
+                thought = "Chọn thẻ trận đấu đầu tiên"
+            elif step == 2:
                 action_type = "KEY"
                 action_param = "ENTER"
                 thought = "Mở một trận đấu bóng đá để vào PlayerActivity kiểm tra luồng phát và phím tắt"
-            elif step == 1:
+            elif step == 3:
+                action_type = "KEY"
+                action_param = "ENTER"
+                thought = "Chọn phòng BLV đầu tiên nếu popup chọn phòng xuất hiện"
+            elif step == 4:
                 action_type = "VERIFY_STREAM"
                 action_param = ""
                 thought = "Kiểm tra ExoPlayer render video motion chuyển động mượt"
-            elif step == 2:
+            elif step == 5:
                 action_type = "KEY"
                 action_param = "KEY_A"
                 thought = "Bấm phím A (hoặc phím Đỏ) để test phím tắt xoay vòng tỉ lệ khung hình Aspect Ratio"
-            elif step == 3:
+            elif step == 6:
                 action_type = "KEY"
                 action_param = "KEY_B"
                 thought = "Bấm phím B (hoặc phím Vàng) để test phím tắt tăng âm lượng Audio Boost (+3dB/+6dB/+9dB)"
-            elif step == 4:
-                action_type = "KEY"
-                action_param = "MENU"
-                thought = "Mở menu cài đặt trình phát để kiểm tra tính năng Đổi nguồn phát (Server Picker)"
-            elif step == 5:
-                action_type = "KEY"
-                action_param = "BACK"
-                thought = "Đóng menu cài đặt"
-            elif step == 6:
+            elif step == 7:
                 action_type = "KEY"
                 action_param = "BACK"
                 thought = "Thoát PlayerActivity về lại màn hình chính"
@@ -465,7 +518,84 @@ Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn b�
                 action_type = "COMPLETE_MISSION"
                 action_param = ""
 
-        elif m_id == "MISSION_IPTV_FAVORITES_AND_ZAPPING":
+        elif m_id == "MISSION_MULTIVIEW_DUAL_AND_QUAD":
+            if step == 0:
+                action_type = "OPEN_MULTIVIEW"
+                action_param = ""
+                thought = "Khởi động màn hình xem đa trận MultiViewActivity"
+            elif step == 1:
+                action_type = "WAIT"
+                action_param = "1.5"
+                thought = "Chờ MultiViewActivity khởi tạo bố cục chia màn hình"
+            elif step == 2:
+                action_type = "KEY"
+                action_param = "DPAD_DOWN"
+                thought = "Di chuyển focus sang ô màn hình thứ hai"
+            elif step == 3:
+                action_type = "KEY"
+                action_param = "DPAD_UP"
+                thought = "Di chuyển focus về ô màn hình thứ nhất"
+            elif step == 4:
+                action_type = "KEY"
+                action_param = "ENTER"
+                thought = "Bấm OK mở popup chọn trận đấu cho ô MultiView"
+            elif step == 5:
+                action_type = "KEY"
+                action_param = "BACK"
+                thought = "Đóng popup chọn trận trên MultiView"
+            elif step == 6:
+                action_type = "KEY"
+                action_param = "BACK"
+                thought = "Thoát MultiViewActivity quay về màn hình chính"
+            else:
+                action_type = "COMPLETE_MISSION"
+                action_param = ""
+                thought = "Đã kiểm tra hoàn tất chế độ xem đa màn hình MultiView"
+
+        elif m_id in ("MISSION_SCHEDULE_AND_SIDEBAR_NAVIGATION", "MISSION_SCHEDULE_EPG_AND_FIXTURE_TAP"):
+            if step == 0:
+                action_type = "SWITCH_TAB"
+                action_param = "1"
+                thought = "Chuyển sang Tab Lịch đấu (Tab 1)"
+            elif step == 1:
+                action_type = "WAIT"
+                action_param = "1.0"
+                thought = "Chờ danh sách lịch nạp xong dữ liệu"
+            elif step == 2:
+                action_type = "KEY"
+                action_param = "DPAD_DOWN"
+                thought = "Duyệt lịch thi đấu bóng đá theo ngày"
+            elif step == 3:
+                action_type = "KEY"
+                action_param = "ENTER"
+                thought = "Bấm OK vào trận đấu trong lịch để kiểm tra sự kiện onFixtureTap"
+            elif step == 4:
+                action_type = "KEY"
+                action_param = "BACK"
+                thought = "Đóng popup phòng live (nếu có) và quay lại danh sách lịch"
+            else:
+                action_type = "COMPLETE_MISSION"
+                action_param = ""
+
+        elif m_id == "MISSION_SIDEBAR_RAIL_FULL_TRAVERSAL":
+            if step == 0:
+                action_type = "KEY"
+                action_param = "DPAD_LEFT"
+                thought = "Bấm DPAD_LEFT từ mép trái để mở thanh điều hướng Sidebar Rail"
+            elif step in (1, 2, 3, 4):
+                action_type = "KEY"
+                action_param = "DPAD_DOWN"
+                thought = f"Duyệt dọc xuống mục tiếp theo trên Sidebar Rail (bước {step}) kiểm tra không tự đóng"
+            elif step == 5:
+                action_type = "KEY"
+                action_param = "DPAD_RIGHT"
+                thought = "Bấm DPAD_RIGHT để đóng Sidebar Rail và chuyển focus vào nội dung tab"
+            else:
+                action_type = "COMPLETE_MISSION"
+                action_param = ""
+                thought = "Thanh điều hướng Sidebar Rail hoạt động chuẩn xác, không bị tự đóng hay rò rỉ focus"
+
+        elif m_id in ("MISSION_IPTV_FAVORITES_AND_ZAPPING", "MISSION_IPTV_CATEGORIES_AND_FAVORITES"):
             if step == 0:
                 action_type = "SWITCH_TAB"
                 action_param = "2"
@@ -484,17 +614,34 @@ Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn b�
                 thought = "Di chuyển lên thanh danh mục để kiểm tra tab Yêu Thích"
             elif step == 4:
                 action_type = "KEY"
+                action_param = "DPAD_RIGHT"
+                thought = "Duyệt qua các nhóm kênh truyền hình"
+            else:
+                action_type = "COMPLETE_MISSION"
+                action_param = ""
+
+        elif m_id in ("MISSION_IPTV_EPG_AND_HERO_PREVIEW", "MISSION_IPTV_EPG_AND_ZAPPING_PLAYER"):
+            if step == 0:
+                action_type = "KEY"
+                action_param = "DPAD_DOWN"
+                thought = "Duyệt qua lưới kênh để nạp lịch phát sóng EPG chuẩn GMT+7 và Hero Preview"
+            elif step == 1:
+                action_type = "WAIT"
+                action_param = "1.5"
+                thought = "Chờ Hero Preview debounce nạp luồng phát thử góc trên"
+            elif step == 2:
+                action_type = "KEY"
                 action_param = "ENTER"
-                thought = "Mở phát kênh truyền hình vào PlayerActivity"
-            elif step == 5:
+                thought = "Mở phát toàn màn hình kênh truyền hình"
+            elif step == 3:
                 action_type = "KEYPAD"
                 action_param = "1"
                 thought = "Gõ phím số 1 trên remote để test OSD nhảy kênh trực tiếp (Direct Zapping)"
-            elif step == 6:
+            elif step == 4:
                 action_type = "KEY"
                 action_param = "CHANNEL_UP"
-                thought = "Thử phím CHANNEL_UP chuyển kênh nhanh bằng phím cứng remote"
-            elif step == 7:
+                thought = "Thử phím CHANNEL_UP chuyển kênh nhanh"
+            elif step == 5:
                 action_type = "KEY"
                 action_param = "BACK"
                 thought = "Thoát trình phát về lại Tab IPTV"
@@ -502,86 +649,82 @@ Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn b�
                 action_type = "COMPLETE_MISSION"
                 action_param = ""
 
-        elif m_id == "MISSION_IPTV_EPG_AND_HERO_PREVIEW":
-            if step == 0:
-                action_type = "KEY"
-                action_param = "DPAD_DOWN"
-                thought = "Duyệt qua danh mục kênh để nạp lịch phát sóng EPG chuẩn GMT+7"
-            elif step == 1:
-                action_type = "KEY"
-                action_param = "DPAD_RIGHT"
-                thought = "Chuyển kênh tiếp theo kích hoạt Hero Preview phát thử góc trên"
-            elif step == 2:
-                action_type = "WAIT"
-                action_param = "1.5"
-                thought = "Chờ Hero Preview debounce nạp luồng phát mượt mà"
-            else:
-                action_type = "COMPLETE_MISSION"
-                action_param = ""
-
-        elif m_id == "MISSION_PHIM_NGUONC_AND_SEARCH":
+        elif m_id in ("MISSION_PHIM_NGUONC_AND_SEARCH", "MISSION_PHIM_NGUONC_AND_CATEGORIES"):
             if step == 0:
                 action_type = "SWITCH_TAB"
                 action_param = "5"
                 thought = "Điều hướng sang Tab Kho Phim (NguonC & Anime)"
             elif step == 1:
-                action_type = "KEY"
-                action_param = "DPAD_DOWN"
-                thought = "Khám phá Apple Pills bộ lọc thể loại & danh mục Lịch Sử Xem"
+                action_type = "WAIT"
+                action_param = "1.5"
+                thought = "Chờ kho phim tải Hero Banner và danh sách thể loại"
             elif step == 2:
                 action_type = "KEY"
-                action_param = "DPAD_RIGHT"
-                thought = "Duyệt danh sách thẻ phim NguonC"
+                action_param = "DPAD_UP"
+                thought = "Di chuyển lên thanh bộ lọc Apple Pills"
+            elif step == 3:
+                action_type = "KEY"
+                action_param = "DPAD_DOWN"
+                thought = "Nhấn DPAD_DOWN từ Apple Pill kiểm tra focus hạ cánh thẳng xuống nút XEM NGAY (btnHeroPlay)"
             else:
                 action_type = "COMPLETE_MISSION"
                 action_param = ""
 
-        elif m_id == "MISSION_PHIM_PLAYER_SEEK_AND_RESUME":
+        elif m_id == "MISSION_PHIM_EPISODE_PICKER_AND_FAVORITE":
             if step == 0:
                 action_type = "KEY"
-                action_param = "ENTER"
-                thought = "Mở một bộ phim để vào WebPlayerActivity"
+                action_param = "DPAD_RIGHT"
+                thought = "Chuyển focus từ nút XEM NGAY sang nút CHỌN TẬP (btnHeroEpisodes)"
             elif step == 1:
+                action_type = "KEY"
+                action_param = "ENTER"
+                thought = "Bấm OK mở hộp thoại chọn tập phim (EpisodePickerDialog)"
+            elif step == 2:
+                action_type = "KEY"
+                action_param = "DPAD_DOWN"
+                thought = "Duyệt danh sách các tập phim trong EpisodePickerDialog"
+            elif step == 3:
+                action_type = "KEY"
+                action_param = "BACK"
+                thought = "Đóng hộp thoại chọn tập bằng phím BACK"
+            elif step == 4:
+                action_type = "KEY"
+                action_param = "DPAD_RIGHT"
+                thought = "Chuyển focus sang nút LƯU PHIM (btnHeroFavorite)"
+            elif step == 5:
+                action_type = "KEY"
+                action_param = "ENTER"
+                thought = "Bấm OK lưu phim vào danh sách yêu thích"
+            else:
+                action_type = "COMPLETE_MISSION"
+                action_param = ""
+                thought = "Đã kiểm tra hoàn tất hộp thoại chọn tập và tính năng lưu phim"
+
+        elif m_id in ("MISSION_PHIM_PLAYER_SEEK_AND_RESUME", "MISSION_VOD_PLAYER_SEEK_AND_RESUME"):
+            if step == 0:
+                action_type = "SWITCH_TAB"
+                action_param = "5"
+                thought = "Đảm bảo đang ở Tab Kho Phim với focus tại nút XEM NGAY (btnHeroPlay)"
+            elif step == 1:
+                action_type = "KEY"
+                action_param = "ENTER"
+                thought = "Bấm OK mở phát bộ phim trên Hero Banner vào WebPlayerActivity"
+            elif step == 2:
                 action_type = "WAIT"
                 action_param = "2.0"
                 thought = "Chờ WebPlayer tải xong luồng phim và kiểm tra Toast Resume nếu có"
-            elif step == 2:
+            elif step == 3:
                 action_type = "KEY"
                 action_param = "DPAD_RIGHT"
                 thought = "Bấm phím D-pad Phải để test tua tới +10 giây"
-            elif step == 3:
+            elif step == 4:
                 action_type = "KEY"
                 action_param = "DPAD_LEFT"
                 thought = "Bấm phím D-pad Trái để test tua lùi -10 giây"
-            elif step == 4:
+            elif step == 5:
                 action_type = "KEY"
                 action_param = "BACK"
-                thought = "Thoát WebPlayer về lại kho phim, hệ thống tự động lưu vị trí phát"
-            else:
-                action_type = "COMPLETE_MISSION"
-                action_param = ""
-
-        elif m_id == "MISSION_SCHEDULE_AND_SIDEBAR_NAVIGATION":
-            if step == 0:
-                action_type = "SWITCH_TAB"
-                action_param = "1"
-                thought = "Chuyển sang Tab Lịch đấu (Tab 1)"
-            elif step == 1:
-                action_type = "WAIT"
-                action_param = "1.0"
-                thought = "Chờ danh sách lịch nạp xong dữ liệu"
-            elif step == 2:
-                action_type = "KEY"
-                action_param = "DPAD_DOWN"
-                thought = "Duyệt lịch thi đấu bóng đá theo ngày"
-            elif step == 3:
-                action_type = "KEY"
-                action_param = "DPAD_LEFT"
-                thought = "Bấm Trái để mở thanh điều hướng Sidebar Rail bên trái"
-            elif step == 4:
-                action_type = "KEY"
-                action_param = "BACK"
-                thought = "Bấm BACK để đóng Sidebar Rail và trả lại focus cho nội dung màn hình chính"
+                thought = "Thoát WebPlayer về lại kho phim, hệ thống tự động lưu vị trí phát vào Tiếp Tục Xem"
             else:
                 action_type = "COMPLETE_MISSION"
                 action_param = ""
@@ -590,7 +733,7 @@ Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn b�
             if step == 0:
                 action_type = "SWITCH_TAB"
                 action_param = "3"
-                thought = "Chuyển sang Tab Tìm kiếm (Tab 3) để kiểm tra ô nhập search"
+                thought = "Chuyển sang Tab Tìm kiếm (Tab 3) để kiểm tra ô nhập searchInput"
             elif step == 1:
                 action_type = "TEXT"
                 action_param = "ngoai hang"
@@ -605,9 +748,17 @@ Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn b�
                 thought = "Di chuyển xuống mục 'Liên hệ & Báo lỗi' Telegram @T990512S"
             elif step == 4:
                 action_type = "KEY"
+                action_param = "DPAD_DOWN"
+                thought = "Di chuyển tiếp xuống mục 'Liên hệ & Báo lỗi' Telegram @T990512S"
+            elif step == 5:
+                action_type = "KEY"
+                action_param = "DPAD_DOWN"
+                thought = "Focus vào dòng 'Liên hệ & Báo lỗi' Telegram @T990512S"
+            elif step == 6:
+                action_type = "KEY"
                 action_param = "ENTER"
                 thought = "Bấm OK mở hộp thoại FeedbackDialog kiểm tra mã QR và liên kết t.me/T990512S"
-            elif step == 5:
+            elif step == 7:
                 action_type = "KEY"
                 action_param = "BACK"
                 thought = "Bấm BACK để đóng FeedbackDialog và quay lại danh sách Cài đặt"
@@ -651,6 +802,8 @@ class AndroidTVDevice:
         self.adb = f"adb -s {serial}" if serial else "adb"
         self.pkg = pkg
         self.action_history = []
+        self.focus_step_history = []
+        self._reported_anomaly_keys = set()
         self._logcat_checkpoint = ""
 
     def launch_app(self):
@@ -718,6 +871,19 @@ class AndroidTVDevice:
         sh(f"{self.adb} shell am start -n {self.pkg}/.MainActivity --ei tab {int(tab_index)} -f 0x04000000")
         self.action_history.append(f"SWITCH_TAB({tab_index})")
 
+    def open_multiview(self):
+        """Khởi chạy màn hình xem đa trận MultiViewActivity."""
+        sh(f"{self.adb} shell am start -n {self.pkg}/.MultiViewActivity -f 0x04000000")
+        self.action_history.append("OPEN_MULTIVIEW")
+
+    def get_pss_memory_mb(self):
+        """Đo tổng lượng bộ nhớ RAM PSS (MB) của ứng dụng."""
+        out = sh(f"{self.adb} shell dumpsys meminfo {self.pkg} 2>/dev/null | grep -E 'TOTAL PSS:|TOTAL:' | head -1")
+        m = re.search(r"(\d+)", out)
+        if m:
+            return round(int(m.group(1)) / 1024.0, 1)
+        return -1.0
+
     def screencap_bytes(self):
         try:
             raw = subprocess.run(f"{self.adb} exec-out screencap -p".split(), capture_output=True, timeout=20).stdout
@@ -726,7 +892,7 @@ class AndroidTVDevice:
             return None
 
     def dump_ui_state(self):
-        """Đọc và bóc tách cây UI XML trong thời gian thực."""
+        """Đọc và bóc tách cây UI XML trong thời gian thực kèm thu thập dữ liệu cho Deep Anomaly Inspector."""
         sh(f"{self.adb} shell uiautomator dump /sdcard/uidump.xml >/dev/null 2>&1")
         xml_text = sh(f"{self.adb} shell cat /sdcard/uidump.xml 2>/dev/null", timeout=10)
         focused_sig = "NONE"
@@ -734,6 +900,8 @@ class AndroidTVDevice:
         focused_bounds = None
         focusable_nodes = []
         summary_lines = []
+        all_visible_texts = []
+        has_dialog = False
 
         if "<hierarchy" in xml_text:
             try:
@@ -747,9 +915,15 @@ class AndroidTVDevice:
                     a = elem.attrib
                     is_focused = a.get("focused") == "true"
                     is_focusable = a.get("focusable") == "true"
-                    txt = a.get("text", "") or a.get("content-desc", "")
+                    txt = (a.get("text", "") or a.get("content-desc", "")).strip()
                     r_id = a.get("resource-id", "").split("/")[-1]
                     bounds = a.get("bounds", "")
+
+                    if txt:
+                        all_visible_texts.append((r_id, txt))
+
+                    if r_id in ("dialogTitle", "roomList", "episodeList", "ivTelegramQr", "btnOpenTelegram", "alertTitle"):
+                        has_dialog = True
 
                     if is_focusable:
                         focusable_nodes.append({"id": r_id, "text": txt, "bounds": bounds, "focused": is_focused})
@@ -768,8 +942,101 @@ class AndroidTVDevice:
             "focused_text": focused_text,
             "focused_bounds": focused_bounds,
             "focusable_count": len(focusable_nodes),
+            "all_visible_texts": all_visible_texts,
+            "has_dialog": has_dialog,
             "ui_summary": "\n".join(summary_lines[:25]) or "(Không tìm thấy focusable view)"
         }
+
+    def inspect_deep_anomalies(self, ui_state, current_activity=""):
+        """Hệ thống quét lỗi tầng sâu tự động (Deep Anomaly Probes) trên mỗi bước thực thi."""
+        anomalies = []
+        focused_sig = ui_state.get("focused_sig", "NONE")
+        focused_bounds = ui_state.get("focused_bounds")
+        last_key = self.action_history[-1] if self.action_history else ""
+
+        # 1. Ghi nhận lịch sử bước focus để phát hiện Focus Trap (Kẹt nút D-pad)
+        self.focus_step_history.append((current_activity, focused_sig, last_key))
+        if len(self.focus_step_history) > 10:
+            self.focus_step_history.pop(0)
+
+        if len(self.focus_step_history) >= 3 and focused_sig != "NONE":
+            s1, s2, s3 = self.focus_step_history[-3], self.focus_step_history[-2], self.focus_step_history[-1]
+            dpad_dirs = ("DPAD_UP", "DPAD_DOWN", "DPAD_LEFT", "DPAD_RIGHT", "UP", "DOWN", "LEFT", "RIGHT")
+            if (s1[0] == s2[0] == s3[0] and
+                    s1[1] == s2[1] == s3[1] and
+                    s2[2] in dpad_dirs and s3[2] in dpad_dirs and s2[2] == s3[2]):
+                trap_key = f"TRAP:{current_activity}:{focused_sig}:{s3[2]}"
+                if trap_key not in self._reported_anomaly_keys:
+                    self._reported_anomaly_keys.add(trap_key)
+                    anomalies.append({
+                        "area": "Điều hướng Focus TV (Deep Probe)",
+                        "severity": "MEDIUM",
+                        "issue": f"Nghi vấn kẹt Focus (Focus Trap) tại '{focused_sig}' khi bấm {s3[2]}",
+                        "detail": f"Gửi phím {s3[2]} liên tiếp nhưng tiêu điểm giữ nguyên tại {focused_sig} trên {current_activity}",
+                        "suggestion": "Kiểm tra cấu hình nextFocus hoặc ranh giới cuộn của RecyclerView"
+                    })
+
+        # 2. Kiểm tra Off-screen Focus Leak & Zero-size View Focus
+        if focused_bounds:
+            m = re.findall(r"-?\d+", focused_bounds)
+            if len(m) >= 4:
+                x1, y1, x2, y2 = map(int, m[:4])
+                w, h = x2 - x1, y2 - y1
+                if x2 <= 0 or y2 <= 0 or x1 >= 1920 or y1 >= 1080:
+                    leak_key = f"OFFSCREEN:{focused_sig}"
+                    if leak_key not in self._reported_anomaly_keys:
+                        self._reported_anomaly_keys.add(leak_key)
+                        anomalies.append({
+                            "area": "Rò rỉ Focus ngoài màn hình (Deep Probe)",
+                            "severity": "HIGH",
+                            "issue": f"Focus lọt vào phần tử nằm ngoài khung hình TV: {focused_sig}",
+                            "detail": f"Tọa độ bounds={focused_bounds} nằm ngoài viewport 1920x1080",
+                            "suggestion": "Đặt visibility=GONE và descendantFocusability=FOCUS_BLOCK_DESCENDANTS khi ẩn panel"
+                        })
+                elif w <= 2 or h <= 2:
+                    zero_key = f"ZEROSIZE:{focused_sig}"
+                    if zero_key not in self._reported_anomaly_keys:
+                        self._reported_anomaly_keys.add(zero_key)
+                        anomalies.append({
+                            "area": "Focus vào phần tử tàng hình (Deep Probe)",
+                            "severity": "HIGH",
+                            "issue": f"Focus rơi vào view có kích thước {w}x{h}px: {focused_sig}",
+                            "detail": f"View {focused_sig} có diện tích quá nhỏ khiến người dùng mất dấu con trỏ trên TV",
+                            "suggestion": "Đặt isFocusable=false cho view ẩn hoặc vạch phân cách"
+                        })
+
+        # 3. Quét chuỗi văn bản lỗi / dữ liệu thô chưa xử lý (Raw Placeholder / Null / Exception)
+        bad_patterns = [r"\bnull\b", r"\bundefined\b", r"\bNaN\b", r"NullPointerException", r"JsonSyntaxException"]
+        for r_id, txt in ui_state.get("all_visible_texts", []):
+            for pat in bad_patterns:
+                if re.search(pat, txt):
+                    txt_key = f"BADTEXT:{r_id}:{txt[:20]}"
+                    if txt_key not in self._reported_anomaly_keys:
+                        self._reported_anomaly_keys.add(txt_key)
+                        anomalies.append({
+                            "area": "Hiển thị dữ liệu (Deep Probe)",
+                            "severity": "HIGH",
+                            "issue": f"Xuất hiện chuỗi lỗi/null thô trên giao diện: '{txt[:40]}'",
+                            "detail": f"Node '{r_id}' hiển thị văn bản '{txt}'",
+                            "suggestion": "Xử lý fallback chuỗi rỗng hoặc mặc định trước khi gán vào TextView"
+                        })
+
+        # 4. Kiểm tra rò rỉ focus xuống màn hình nền khi Dialog đang mở
+        if ui_state.get("has_dialog") and focused_sig != "NONE":
+            bg_views = ("cardRoot", "schedCard", "liveList", "schedList", "phimMainList", "phimPoster", "heroPlay")
+            if any(bg in focused_sig for bg in bg_views):
+                dlg_key = f"DLGLEAK:{focused_sig}"
+                if dlg_key not in self._reported_anomaly_keys:
+                    self._reported_anomaly_keys.add(dlg_key)
+                    anomalies.append({
+                        "area": "Quản lý Focus Hộp Thoại (Deep Probe)",
+                        "severity": "HIGH",
+                        "issue": f"Focus lọt xuống màn hình nền ({focused_sig}) khi Dialog đang mở",
+                        "detail": f"Hộp thoại đang hiển thị nhưng tiêu điểm D-pad vẫn nằm ở view nền {focused_sig}",
+                        "suggestion": "Gọi requestFocus() vào nút mặc định của Dialog trong setOnShowListener"
+                    })
+
+        return anomalies
 
     def detect_video_motion(self, duration_sec=1.0, samples=3):
         """Xác định toán học xem video ExoPlayer có đang render khung hình thật hay bị đứng hình."""
@@ -867,8 +1134,14 @@ class AndroidTVDevice:
                 print(f"💥 [LOGCAT CRASH DETECTED]:\n{stack}", flush=True)
             elif "ANR in " + self.pkg in line:
                 alerts.append(f"ANR: {line[:120]}")
+            elif "OutOfMemoryError" in line:
+                alerts.append(f"OOM: {line[:120]}")
             elif "ExoPlayer" in line and ("error" in line.lower() or "failure" in line.lower()):
                 alerts.append(f"PLAYER_ERR: {line[:100]}")
+            elif "Choreographer" in line and "Skipped" in line:
+                m_skip = re.search(r"Skipped\s+(\d+)\s+frames", line)
+                if m_skip and int(m_skip.group(1)) >= 45:
+                    alerts.append(f"UI_JANK: Bỏ lỡ {m_skip.group(1)} frames")
 
         return alerts[:5]
 
@@ -924,70 +1197,108 @@ class AutonomousQASuite:
         self.missions = [
             QAMission(
                 "MISSION_COLD_START",
-                "Khởi Động Nhanh & Hero Banner Rộng Rãi",
+                "Khởi Động Lạnh, TTI & Hero Banner Rộng Rãi",
                 "Mở app từ trạng thái tắt, kiểm tra Hero Banner đã bỏ thẻ thống kê trận đấu rác, đo TTI, kiểm tra giao diện Home không bị đen màn hình.",
-                "Màn hình chính nạp đủ dữ liệu, focus xuất hiện tại thẻ đầu tiên."
+                "Màn hình chính nạp đủ dữ liệu, focus xuất hiện tại thẻ đầu tiên.",
+                max_steps=6
             ),
             QAMission(
                 "MISSION_SPORTS_MULTI_SOURCE",
-                "Thể Thao Đa Nguồn (ColaTV, Gà Vàng, Khán Đài, Socolive)",
-                "Duyệt danh mục lọc 4 đài độc lập, kiểm tra không có emoji text [👁⏳⭐], nhãn XEM và countdown CÒN Xp.",
-                "Các tab lọc đài phản hồi chuẩn, D-pad di chuyển mượt mà không kẹt."
+                "Thể Thao Đa Nguồn & Cuộn Ngang Sâu (Horizontal Rail Deep Traversal)",
+                "Duyệt qua các hàng đài độc lập (Socolive, ColaTV, Gà Vàng, Khán Đài), cuộn ngang sâu liên tục để kiểm tra biên phải và khôi phục tiêu điểm.",
+                "Các tab lọc đài phản hồi chuẩn, D-pad di chuyển mượt mà không kẹt, không có emoji rác [👁⏳⭐].",
+                max_steps=10
+            ),
+            QAMission(
+                "MISSION_SPORTS_ROOM_PICKER",
+                "Hộp Thoại Chọn Phòng BLV & Vòng Đời Dialog (RoomPicker & Tab Switch)",
+                "Mở RoomPickerDialog trên thẻ trận đấu, duyệt danh sách phòng BLV, test đóng bằng BACK và kiểm tra không rò rỉ focus đè lên các tab khác.",
+                "Hộp thoại RoomPickerDialog trap focus chuẩn xác, đóng mở êm ái.",
+                max_steps=8
             ),
             QAMission(
                 "MISSION_SPORTS_DATA_ACCURACY",
-                "Chuẩn Hóa Dữ Liệu & Trạng Thái Trận Đấu",
+                "Chuẩn Hóa Dữ Liệu Bóng Đá GMT+7, Tỷ Số X:Y & Nhãn KẾT THÚC",
                 "Kiểm tra tên giải đấu chuẩn tiếng Việt (Ngoại Hạng Anh, Cúp C1...), điểm số trận hiển thị chuẩn dạng X : Y, trận qua 180p có badge KẾT THÚC.",
-                "Dữ liệu hiển thị sạch bóng, không spam [HOT]/[VIP], đúng múi giờ GMT+7."
+                "Dữ liệu hiển thị sạch bóng, không spam [HOT]/[VIP], đúng múi giờ GMT+7.",
+                max_steps=6
             ),
             QAMission(
                 "MISSION_PLAYER_STREAMING_AND_CONTROLS",
-                "Trình Phát Video, Server Picker & Phím Tắt TV",
-                "Mở phát trận đấu, kiểm tra ExoPlayer motion, menu đổi đài, phím tắt A/Đỏ chuyển Aspect Ratio, phím tắt B/Vàng tăng Audio Boost.",
-                "Video chuyển động mượt, phím tắt đổi tỉ lệ và âm lượng phản hồi nhanh."
+                "Trình Phát Video ExoPlayer, Server Picker & Phím Tắt TV (A/B/Menu)",
+                "Mở phát trận đấu, kiểm tra ExoPlayer motion render, menu đổi đài, phím tắt A/Đỏ chuyển Aspect Ratio, phím tắt B/Vàng tăng Audio Boost.",
+                "Video chuyển động mượt, phím tắt đổi tỉ lệ và âm lượng phản hồi nhanh.",
+                max_steps=8
             ),
             QAMission(
-                "MISSION_IPTV_FAVORITES_AND_ZAPPING",
-                "Truyền Hình IPTV, Kênh Yêu Thích & Remote Zapping",
-                "Chuyển sang Tab IPTV (Tab 2), test Long-press OK lưu Kênh Yêu Thích, duyệt tab Yêu Thích, test gõ số remote (1, 15) hiện OSD, test phím Channel/Page Up/Down.",
-                "Lưu kênh yêu thích thành công, OSD gõ số kênh hiện tức thì, nhảy kênh trơn tru."
+                "MISSION_MULTIVIEW_DUAL_AND_QUAD",
+                "Đa Màn Hình MultiView (Dual/Quad Screen & Slot Navigation)",
+                "Khởi động MultiViewActivity xem đồng thời đa trận, duyệt focus giữa các ô màn hình, mở chọn phòng cho ô và thoát an toàn về Home.",
+                "MultiView khởi chạy mượt mà, chuyển đổi focus viền trắng chuẩn xác giữa các slot, không crash.",
+                max_steps=8
             ),
             QAMission(
-                "MISSION_IPTV_EPG_AND_HERO_PREVIEW",
-                "Lịch Phát Sóng EPG & Hero Preview",
-                "Kiểm tra EPG chuẩn GMT+7, badge Đang phát / Tiếp theo, Hero Preview mượt mà góc trên.",
-                "Lịch EPG khớp đài phát sóng Việt Nam, không lệch múi giờ."
+                "MISSION_SCHEDULE_EPG_AND_FIXTURE_TAP",
+                "Lịch Thi Đấu EPG Đa Ngày & Chạm Trận Đấu (Schedule Tap & Detail)",
+                "Chuyển sang Tab Lịch đấu (Tab 1), duyệt lịch theo ngày, click trận kiểm tra onFixtureTap và xử lý trạng thái trận.",
+                "Lịch đấu phân chia theo ngày rõ ràng, sự kiện bấm trận phản hồi đúng.",
+                max_steps=8
             ),
             QAMission(
-                "MISSION_PHIM_NGUONC_AND_SEARCH",
-                "Kho Phim NguonC, Apple Pills & Lịch Sử Xem",
-                "Chuyển sang Tab Kho Phim (Tab 5), duyệt Apple Pills bộ lọc, tìm kiếm phim NguonC, kiểm tra Lịch Sử Xem.",
-                "Danh sách phim tải đủ thông tin, tìm kiếm trả kết quả nhanh."
+                "MISSION_SIDEBAR_RAIL_FULL_TRAVERSAL",
+                "Thanh Điều Hướng Sidebar Rail & Khám Phá Toàn Diện (Full Rail Traversal)",
+                "Mở Sidebar Rail bằng DPAD_LEFT, duyệt dọc qua toàn bộ 6 tab trên Rail kiểm tra không bị tự đóng hay cướp focus, đóng bằng DPAD_RIGHT.",
+                "Sidebar đóng mở êm ái, phím điều hướng không làm văng app hoặc mất focus.",
+                max_steps=8
             ),
             QAMission(
-                "MISSION_PHIM_PLAYER_SEEK_AND_RESUME",
-                "Trình Phát Phim, Tua D-pad & Tiếp Tục Xem",
+                "MISSION_IPTV_CATEGORIES_AND_FAVORITES",
+                "Truyền Hình IPTV, Lưới Kênh & Kênh Yêu Thích (Favorites Long-Press)",
+                "Chuyển sang Tab IPTV (Tab 2), duyệt qua các danh mục kênh, test Long-press OK lưu Kênh Yêu Thích, duyệt tab Yêu Thích.",
+                "Lưu kênh yêu thích thành công, lưới kênh nạp đủ logo sắc nét.",
+                max_steps=8
+            ),
+            QAMission(
+                "MISSION_IPTV_EPG_AND_ZAPPING_PLAYER",
+                "Hero Preview IPTV, Lịch Phát Sóng & Nhảy Kênh Bằng Phím Số (Zapping)",
+                "Kiểm tra Hero Preview góc trên, mở phát toàn màn hình kênh IPTV, test gõ số remote (1, 15) hiện OSD nhảy kênh, test phím Channel Up/Down.",
+                "Hero Preview phát thử trơn tru, OSD gõ số kênh hiện tức thì, nhảy kênh trơn tru.",
+                max_steps=8
+            ),
+            QAMission(
+                "MISSION_PHIM_NGUONC_AND_CATEGORIES",
+                "Kho Phim NguonC, Apple Pills Thể Loại & Hạ Cánh Focus Chuẩn Xác",
+                "Chuyển sang Tab Kho Phim (Tab 5), duyệt Apple Pills bộ lọc thể loại, bấm DPAD_DOWN kiểm tra focus hạ cánh chuẩn xác xuống nút XEM NGAY (btnHeroPlay).",
+                "Danh sách phim tải đủ thông tin, điều hướng từ filter xuống hero banner mượt mà.",
+                max_steps=8
+            ),
+            QAMission(
+                "MISSION_PHIM_EPISODE_PICKER_AND_FAVORITE",
+                "Hộp Thoại Chọn Tập (EpisodePicker) & Lưu Phim Yêu Thích (VOD Favorite)",
+                "Trên Hero Banner hoặc thẻ phim bộ, kiểm tra nút CHỌN TẬP (btnHeroEpisodes) mở EpisodePickerDialog, duyệt danh sách tập, test nút LƯU PHIM (btnHeroFavorite).",
+                "EpisodePickerDialog hiển thị danh sách tập đầy đủ, lưu phim vào danh sách yêu thích thành công.",
+                max_steps=8
+            ),
+            QAMission(
+                "MISSION_VOD_PLAYER_SEEK_AND_RESUME",
+                "Trình Phát Phim WebPlayer, Tua D-pad (-10s/+10s) & Hàng Tiếp Tục Xem",
                 "Mở player phim WebPlayerActivity, test D-pad Trái/Phải tua -10s/+10s có Toast/HUD, test tự động tiếp tục xem (Resume Playback).",
-                "Tua phim mượt mà, resume vị trí cũ chuẩn xác."
-            ),
-            QAMission(
-                "MISSION_SCHEDULE_AND_SIDEBAR_NAVIGATION",
-                "Lịch Thi Đấu & Sidebar Rail Navigation",
-                "Kiểm tra Tab Lịch thi đấu (Tab 1), mở Sidebar Rail bằng DPAD_LEFT, test phím BACK đóng Sidebar mượt mà trả lại focus nội dung.",
-                "Sidebar đóng mở êm ái, phím BACK không làm thoát app hoặc mất focus."
+                "Tua phim mượt mà, resume vị trí cũ chuẩn xác vào hàng Tiếp Tục Xem.",
+                max_steps=8
             ),
             QAMission(
                 "MISSION_SEARCH_AND_SETTINGS_FEEDBACK",
-                "Tìm Kiếm & Cài Đặt (Báo Lỗi Telegram @T990512S)",
+                "Tìm Kiếm Thông Minh & Cài Đặt (Hộp Thoại Báo Lỗi Telegram QR @T990512S)",
                 "Duyệt Tab Tìm kiếm (Tab 3), nhập từ khóa; chuyển sang Tab Cài đặt (Tab 4), mở mục 'Liên hệ & Báo lỗi', kiểm tra FeedbackDialog hiển thị mã QR Telegram và thông tin @T990512S.",
                 "Tìm kiếm hiển thị kết quả, FeedbackDialog mở chuẩn xác có mã QR và đóng bằng phím BACK/OK êm ái.",
                 max_steps=8
             ),
             QAMission(
                 "MISSION_DPAD_CHAOS_STRESS_AND_RECOVERY",
-                "D-pad Chaos Stress & Focus Recovery",
-                "Nhồi phím liên tục 4 hướng để kiểm tra độ bền, mép màn hình và khả năng giữ focus / auto recovery.",
-                "Không crash, không văng app, focus tự phục hồi khi chuyển cảnh."
+                "Thử Thách Stress Chaos D-pad & Đo Đạc Bộ Nhớ RAM (Memory Leak Audit)",
+                "Nhồi phím liên tục 4 hướng để kiểm tra độ bền, mép màn hình, khả năng giữ focus / auto recovery và đo tổng lượng RAM PSS qua dumpsys meminfo.",
+                "Không crash, không văng app, focus tự phục hồi khi chuyển cảnh, RAM PSS ổn định.",
+                max_steps=12
             )
         ]
 
@@ -1055,8 +1366,16 @@ class AutonomousQASuite:
                         current_tab_idx = t_idx
                         break
 
+                # 1.5 DEEP ANOMALY INSPECTOR: Tự động phát hiện lỗi tầng sâu
+                cur_act = self.device.current_activity()
+                deep_defects = self.device.inspect_deep_anomalies(ui_state, cur_act)
+                for df in deep_defects:
+                    print(f"      🔎 [Deep Inspector] Phát hiện lỗi [{df.get('severity')}]: {df.get('issue')}", flush=True)
+                    self.all_findings.append(df)
+                    mission.findings.append(df)
+
                 state_bundle = {
-                    "activity": self.device.current_activity(),
+                    "activity": cur_act,
                     "focused_sig": ui_state["focused_sig"],
                     "focused_text": ui_state["focused_text"],
                     "has_focus_ring": has_ring,
@@ -1065,6 +1384,7 @@ class AutonomousQASuite:
                     "video_motion_delta": motion_delta,
                     "recent_keys": self.device.action_history[-5:],
                     "logcat_alerts": "; ".join(logcat_alerts) or "Không có",
+                    "deep_anomalies_text": "\n".join(f"- [{d['severity']}] {d['issue']}: {d['detail']}" for d in deep_defects),
                     "ui_summary": ui_state["ui_summary"],
                     "screenshot_bytes": raw_png,
                     "tabs_tested": ", ".join(self.ALL_TABS[i] for i in sorted(self.tested_tabs)) if self.tested_tabs else "Chưa có",
@@ -1133,6 +1453,10 @@ class AutonomousQASuite:
                         print(f"      🔀 AI chủ động chuyển sang {self.ALL_TABS.get(t_idx, f'Tab {t_idx}')} để săn lỗi!", flush=True)
                     except Exception as e:
                         print(f"      ⚠️ Lỗi chuyển tab: {e}", flush=True)
+                elif act_type == "OPEN_MULTIVIEW":
+                    self.device.open_multiview()
+                    time.sleep(1.8)
+                    print(f"      📺 AI chủ động mở màn hình MultiView!", flush=True)
                 elif act_type == "TEXT":
                     self.device.input_text(act_param or "uefa")
                     time.sleep(0.8)
@@ -1163,7 +1487,10 @@ class AutonomousQASuite:
                 step_feedback = f"Hành động '{act_type} {act_param}' đã chạy xong. Focus hiện tại: '{post_ui.get('focused_text')}' ({post_ui.get('focused_sig')}), Activity: {self.device.current_activity()}"
                 self.brain.record_step_feedback(step_feedback)
 
-            # Chụp ảnh sau mỗi nhiệm vụ
+            # Chụp ảnh và đo PSS RAM sau mỗi nhiệm vụ
+            pss_mb = self.device.get_pss_memory_mb()
+            if pss_mb > 0:
+                print(f"   📊 [Telemetry] RAM PSS tiêu thụ: {pss_mb:.1f} MB", flush=True)
             safe_name = f"{m_idx + 2:02d}_{mission.name.lower()}"
             self._record_screen(safe_name)
 
