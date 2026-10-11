@@ -549,7 +549,10 @@ class IptvFragment : Fragment() {
         super.onHiddenChanged(hidden)
         if (hidden) {
             stopHeroPreview()
+            view?.clearFocus()
+            (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
         } else {
+            (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
             currentlyFocusedChannel?.let { scheduleHeroPreview(it) }
         }
     }

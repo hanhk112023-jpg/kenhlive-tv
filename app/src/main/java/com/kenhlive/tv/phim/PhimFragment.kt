@@ -87,7 +87,11 @@ class PhimFragment : Fragment() {
         btnRetry = v.findViewById(R.id.btnPhimRetry)
 
         filterList.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
-        filterList.adapter = FilterAdapter(filterCategories, selectedCategorySlug) { catSlug ->
+        filterList.adapter = FilterAdapter(
+            filterCategories,
+            selectedCategorySlug,
+            onDown = { focusMainListFromFilter() }
+        ) { catSlug ->
             selectedCategorySlug = catSlug
             loadFilmsByCategory(catSlug)
         }
@@ -108,28 +112,49 @@ class PhimFragment : Fragment() {
         // Cập nhật lại hàng tiếp tục xem khi quay lại từ player
         refreshContinueWatchingOnly()
         view?.postDelayed({
-            ensurePhimFocus()
+            if (!isHidden) ensurePhimFocus()
         }, 150L)
     }
 
-    fun ensurePhimFocus(): Boolean {
-        if (!isAdded || view == null) return false
-        val act = activity ?: return false
-        if (act.currentFocus != null) return true
-
-        if (::mainList.isInitialized && mainList.visibility == View.VISIBLE) {
-            val heroPlay = mainList.findViewById<View>(R.id.btnHeroPlay)
-            if (heroPlay != null && heroPlay.isFocusable && heroPlay.requestFocus()) {
-                return true
-            }
-            for (i in 0 until mainList.childCount) {
-                val child = mainList.getChildAt(i)
-                val btn = child.findViewById<View>(R.id.btnHeroPlay)
-                if (btn != null && btn.isFocusable && btn.requestFocus()) return true
-                val inner = firstFocusableIn(child)
-                if (inner != null && inner.requestFocus()) return true
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (hidden) {
+            dialog?.dismiss()
+            dialog = null
+            view?.clearFocus()
+            (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+        } else {
+            (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+            refreshContinueWatchingOnly()
+            if (DeviceMode.isTv) {
+                view?.post { ensurePhimFocus() }
             }
         }
+    }
+
+    private fun focusMainListFromFilter(): Boolean {
+        if (!::mainList.isInitialized || mainList.visibility != View.VISIBLE) return false
+        val heroPlay = mainList.findViewById<View>(R.id.btnHeroPlay)
+        if (heroPlay != null && heroPlay.isShown && heroPlay.isFocusable && heroPlay.requestFocus()) {
+            return true
+        }
+        for (i in 0 until mainList.childCount) {
+            val child = mainList.getChildAt(i)
+            val btn = child.findViewById<View>(R.id.btnHeroPlay)
+            if (btn != null && btn.isShown && btn.isFocusable && btn.requestFocus()) return true
+            val inner = firstFocusableIn(child)
+            if (inner != null && inner.requestFocus()) return true
+        }
+        return false
+    }
+
+    fun ensurePhimFocus(): Boolean {
+        if (!isAdded || view == null || isHidden) return false
+        (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+        val cur = view?.findFocus()
+        if (cur != null && cur !== view) return true
+
+        if (focusMainListFromFilter()) return true
 
         if (::filterList.isInitialized && filterList.visibility == View.VISIBLE) {
             for (i in 0 until filterList.childCount) {
@@ -562,6 +587,7 @@ class PhimFragment : Fragment() {
     private class FilterAdapter(
         private val categories: List<Pair<String, String>>,
         private var selectedSlug: String,
+        private val onDown: () -> Boolean,
         private val onSelect: (String) -> Unit
     ) : RecyclerView.Adapter<FilterAdapter.VH>() {
 
@@ -592,6 +618,13 @@ class PhimFragment : Fragment() {
                 selectedSlug = slug
                 notifyDataSetChanged()
                 onSelect(slug)
+            }
+
+            holder.itemView.setOnKeyListener { _, keyCode, event ->
+                if (event.action == android.view.KeyEvent.ACTION_DOWN &&
+                    keyCode == android.view.KeyEvent.KEYCODE_DPAD_DOWN) {
+                    onDown()
+                } else false
             }
 
             // TV focus animation

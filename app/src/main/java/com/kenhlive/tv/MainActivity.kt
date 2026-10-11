@@ -55,7 +55,7 @@ class MainActivity : AppCompatActivity() {
 
         // BACK: Nếu sidebar đang mở → đóng sidebar; tab khác → về Live trước; tab Live → dialog xác nhận thoát
         onBackPressedDispatcher.addCallback(this) {
-            if (DeviceMode.isTv && railPanel != null && railPanel?.translationX == 0f) {
+            if (DeviceMode.isTv && railPanel != null && railPanel?.visibility == View.VISIBLE && railPanel?.translationX == 0f) {
                 hideRail()
                 focusContentFirst()
                 return@addCallback
@@ -123,11 +123,22 @@ class MainActivity : AppCompatActivity() {
             val v = findViewById<View>(id) ?: return@forEach
             v.findViewById<ImageView>(R.id.navIcon)?.setImageResource(def.first)
             v.findViewById<TextView>(R.id.navLabel)?.setText(def.second)
-            v.setOnClickListener { showTab(tabIdx) }
+            v.setOnClickListener {
+                showTab(tabIdx)
+                if (DeviceMode.isTv) {
+                    hideRail()
+                    focusContentFirst()
+                }
+            }
             if (DeviceMode.isTv) {
                 v.setOnFocusChangeListener { _, hasFocus ->
-                    if (hasFocus && current != tabIdx) {
-                        showTab(tabIdx, animate = false)
+                    if (hasFocus) {
+                        v.animate().scaleX(1.06f).scaleY(1.06f).setDuration(120).start()
+                        if (current != tabIdx) {
+                            showTab(tabIdx, animate = false, keepRailOpen = true)
+                        }
+                    } else {
+                        v.animate().scaleX(1f).scaleY(1f).setDuration(120).start()
                     }
                 }
             }
@@ -150,71 +161,66 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun focusContentFirst() {
-        val c = findViewById<ViewGroup>(R.id.fragmentContainer) ?: return
-        val cur = c.findFocus()
-        if (cur != null && (c === cur.rootView || isDescendant(c, cur))) return
+        val activeTag = tabTags.getOrNull(current) ?: return
+        val activeFragment = supportFragmentManager.findFragmentByTag(activeTag)
+        val activeView = activeFragment?.view ?: return
 
-        // 1. Nếu fragment hiện tại là ScheduleFragment hoặc PhimFragment, ưu tiên gọi hàm khôi phục chuyên biệt
-        val activeFragment = supportFragmentManager.findFragmentByTag(tabTags.getOrNull(current))
-        if (activeFragment is ScheduleFragment) {
-            if (activeFragment.focusFirstMatch()) return
-        }
-        if (activeFragment is com.kenhlive.tv.phim.PhimFragment) {
-            if (activeFragment.ensurePhimFocus()) return
-        }
+        (activeView as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
 
-        // 2. Tìm view con của fragmentContainer đang hiển thị (VISIBLE & isShown)
-        for (i in 0 until c.childCount) {
-            val child = c.getChildAt(i)
-            if (child.visibility == View.VISIBLE) {
-                // Nếu fragment chứa RecyclerView: ưu tiên focus vào hàng trận đấu đầu tiên
-                val rv = findFirstRecyclerView(child)
-                if (rv != null) {
-                    val ad = rv.adapter as? SportAdapter
-                    if (ad != null && ad.focusRailFirst()) return
+        val cur = activeView.findFocus()
+        if (cur != null && cur.isShown && isDescendant(activeView, cur)) return
 
-                    // Ưu tiên duyệt các child view đang gắn kết trên màn hình
-                    for (ci in 0 until rv.childCount) {
-                        val cv = rv.getChildAt(ci)
-                        if (cv.isFocusable && cv.requestFocus()) return
-                        val inner = firstFocusableIn(cv)
-                        if (inner != null && inner.requestFocus()) return
-                    }
+        // 1. Nếu fragment hiện tại hỗ trợ khôi phục focus chuyên biệt:
+        if (activeFragment is ScheduleFragment && activeFragment.focusFirstMatch()) return
+        if (activeFragment is com.kenhlive.tv.phim.PhimFragment && activeFragment.ensurePhimFocus()) return
+        if (activeFragment is SearchFragment && activeFragment.ensureSearchFocus()) return
+        if (activeFragment is SettingsFragment && activeFragment.ensureSettingsFocus()) return
 
-                    for (pos in 0..10) {
-                        val vh = rv.findViewHolderForAdapterPosition(pos) ?: continue
-                        val inner = firstFocusableIn(vh.itemView) ?: (if (vh.itemView.isFocusable) vh.itemView else null)
-                        if (inner?.requestFocus() == true) return
-                    }
-                    val firstF = firstFocusableIn(rv) ?: firstFocusableIn(child)
-                    if (firstF != null && firstF.requestFocus()) return
-                    rv.post {
-                        val ad2 = rv.adapter as? SportAdapter
-                        if (ad2 != null && ad2.focusRailFirst()) return@post
-                        for (ci in 0 until rv.childCount) {
-                            val cv = rv.getChildAt(ci)
-                            if (cv.isFocusable && cv.requestFocus()) return@post
-                            val inner = firstFocusableIn(cv)
-                            if (inner != null && inner.requestFocus()) return@post
-                        }
-                        for (pos in 0..10) {
-                            val vh = rv.findViewHolderForAdapterPosition(pos) ?: continue
-                            val inner = firstFocusableIn(vh.itemView) ?: (if (vh.itemView.isFocusable) vh.itemView else null)
-                            if (inner?.requestFocus() == true) return@post
-                        }
-                        val fallback = firstFocusableIn(rv) ?: firstFocusableIn(child)
-                        fallback?.requestFocus()
-                    }
-                    return
-                }
+        // 2. Tìm view con của activeView đang hiển thị
+        val rv = findFirstRecyclerView(activeView)
+        if (rv != null) {
+            val ad = rv.adapter as? SportAdapter
+            if (ad != null && ad.focusRailFirst()) return
 
-                val target = firstFocusableIn(child)
-                if (target != null && target.requestFocus()) return
-
-                child.post { firstFocusableIn(child)?.requestFocus() }
-                return
+            for (ci in 0 until rv.childCount) {
+                val cv = rv.getChildAt(ci)
+                if (cv.isFocusable && cv.requestFocus()) return
+                val inner = firstFocusableIn(cv)
+                if (inner != null && inner.requestFocus()) return
             }
+
+            for (pos in 0..10) {
+                val vh = rv.findViewHolderForAdapterPosition(pos) ?: continue
+                val inner = firstFocusableIn(vh.itemView) ?: (if (vh.itemView.isFocusable) vh.itemView else null)
+                if (inner?.requestFocus() == true) return
+            }
+
+            val firstF = firstFocusableIn(rv) ?: firstFocusableIn(activeView)
+            if (firstF != null && firstF.requestFocus()) return
+
+            rv.post {
+                val ad2 = rv.adapter as? SportAdapter
+                if (ad2 != null && ad2.focusRailFirst()) return@post
+                for (ci in 0 until rv.childCount) {
+                    val cv = rv.getChildAt(ci)
+                    if (cv.isFocusable && cv.requestFocus()) return@post
+                    val inner = firstFocusableIn(cv)
+                    if (inner != null && inner.requestFocus()) return@post
+                }
+                for (pos in 0..10) {
+                    val vh = rv.findViewHolderForAdapterPosition(pos) ?: continue
+                    val inner = firstFocusableIn(vh.itemView) ?: (if (vh.itemView.isFocusable) vh.itemView else null)
+                    if (inner?.requestFocus() == true) return@post
+                }
+                val fallback = firstFocusableIn(rv) ?: firstFocusableIn(activeView)
+                fallback?.requestFocus()
+            }
+            return
         }
+
+        val target = firstFocusableIn(activeView)
+        if (target != null && target.requestFocus()) return
+        activeView.post { firstFocusableIn(activeView)?.requestFocus() }
     }
 
     private fun findFirstRecyclerView(root: View): RecyclerView? {
@@ -272,17 +278,23 @@ class MainActivity : AppCompatActivity() {
 
     private fun showRail() {
         val r = railPanel ?: return
+        r.visibility = View.VISIBLE
+        (r as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
         r.animate().translationX(0f).alpha(1f).setDuration(180).start()
     }
 
     private fun hideRail(immediate: Boolean = false) {
         val r = railPanel ?: return
         val offset = -r.width.toFloat().coerceAtLeast(160f)
+        (r as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
         if (immediate) {
             r.translationX = offset
             r.alpha = 0f
+            r.visibility = View.GONE
         } else {
-            r.animate().translationX(offset).alpha(0f).setDuration(220).start()
+            r.animate().translationX(offset).alpha(0f).setDuration(220).withEndAction {
+                r.visibility = View.GONE
+            }.start()
         }
     }
 
@@ -333,13 +345,14 @@ class MainActivity : AppCompatActivity() {
         return super.dispatchKeyEvent(event)
     }
 
-    fun showTab(pos: Int, animate: Boolean = true) {
+    fun showTab(pos: Int, animate: Boolean = true, keepRailOpen: Boolean = false) {
         current = pos
+        com.kenhlive.tv.ui.RoomPickerDialog.dismissActive()
         navViews.forEach { v ->
             val target = navIdToTab[v.id] ?: -1
             v.isSelected = (target == pos)
         }
-        if (DeviceMode.isTv) {
+        if (DeviceMode.isTv && keepRailOpen) {
             // Khi chuyển tab: đồng bộ tiêu điểm trên rail vào đúng icon tab đang chọn
             val activeNav = navViews.firstOrNull { navIdToTab[it.id] == pos }
             if (railPanel?.let { isDescendant(it, currentFocus) } == true) {
@@ -362,11 +375,32 @@ class MainActivity : AppCompatActivity() {
                         else -> LiveFragment()
                     }
                     tx.add(R.id.fragmentContainer, f, tag)
-                } else tx.show(f)
-            } else if (f != null) tx.hide(f)
+                } else {
+                    tx.show(f)
+                    (f.view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+                }
+            } else if (f != null) {
+                tx.hide(f)
+                f.view?.clearFocus()
+                (f.view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+                f.view?.isFocusable = false
+            }
         }
         tx.commitAllowingStateLoss()
-        if (DeviceMode.isTv) {
+        try { supportFragmentManager.executePendingTransactions() } catch (_: Throwable) {}
+
+        tabTags.forEachIndexed { i, tag ->
+            val f = supportFragmentManager.findFragmentByTag(tag) ?: return@forEachIndexed
+            if (i == pos) {
+                (f.view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+            } else {
+                f.view?.clearFocus()
+                (f.view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+                f.view?.isFocusable = false
+            }
+        }
+
+        if (DeviceMode.isTv && !keepRailOpen) {
             val fc = findViewById<View>(R.id.fragmentContainer)
             fc?.post {
                 hideRail()

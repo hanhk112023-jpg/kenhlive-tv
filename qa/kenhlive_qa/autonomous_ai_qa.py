@@ -1040,10 +1040,20 @@ class AutonomousQASuite:
 
                 # Tự động cập nhật tab đang hiển thị
                 current_tab_idx = None
-                for t_idx, kw in [(0, "tab_live"), (1, "tab_schedule"), (2, "tab_iptv"), (3, "tab_search"), (4, "tab_settings"), (5, "tab_phim")]:
-                    if kw in ui_state["ui_summary"] or kw in ui_state.get("focused_sig", ""):
+                summary_text = (ui_state.get("ui_summary", "") + " " + ui_state.get("focused_sig", "") + " " + ui_state.get("focused_text", "")).lower()
+                tab_indicators = [
+                    (0, ["livelist", "cardroot", "socolive", "colatv", "gà vàng", "khán đài", "heroplay", "trực tiếp"]),
+                    (1, ["schedlist", "schedcard", "lịch thi đấu", "hôm nay", "ngày mai"]),
+                    (2, ["iptv", "kênh tv", "channel", "vtv", "htv"]),
+                    (3, ["searchinput", "resultlist", "tìm kiếm"]),
+                    (4, ["settingslist", "cài đặt", "chất lượng video", "báo lỗi"]),
+                    (5, ["phim", "nguonc", "btnheroplay", "apple pill", "phim bộ", "phim lẻ", "tiếp tục xem"])
+                ]
+                for t_idx, kws in tab_indicators:
+                    if any(k in summary_text for k in kws):
                         self.tested_tabs.add(t_idx)
                         current_tab_idx = t_idx
+                        break
 
                 state_bundle = {
                     "activity": self.device.current_activity(),

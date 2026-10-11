@@ -37,9 +37,39 @@ class SettingsFragment : Fragment() {
 
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
-        if (!hidden) {
+        if (hidden) {
+            dialog?.dismiss()
+            dialog = null
+            view?.clearFocus()
+            (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+        } else {
+            (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
             rebuild(focusRow = if (DeviceMode.isTv) 1 else -1)
         }
+    }
+
+    fun ensureSettingsFocus(): Boolean {
+        if (!isAdded || view == null) return false
+        (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+        val cur = view?.findFocus()
+        if (cur != null && cur !== view) return true
+        val list = view?.findViewById<RecyclerView>(R.id.settingsList) ?: return false
+        for (i in 0 until list.childCount) {
+            val child = list.getChildAt(i)
+            if (child != null && child.isFocusable && child.requestFocus()) return true
+        }
+        val vh = list.findViewHolderForAdapterPosition(1)
+        if (vh?.itemView?.requestFocus() == true) return true
+        list.post {
+            val vh2 = list.findViewHolderForAdapterPosition(1)
+            if (vh2?.itemView?.requestFocus() != true) {
+                for (i in 0 until adapter.itemCount) {
+                    val r = list.findViewHolderForAdapterPosition(i)?.itemView
+                    if (r != null && r.isFocusable && r.requestFocus()) break
+                }
+            }
+        }
+        return true
     }
 
     private fun vqName(i: Int) = when (i) {

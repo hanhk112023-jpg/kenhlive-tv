@@ -87,9 +87,17 @@ class ScheduleFragment : Fragment() {
 
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
-        if (!hidden && DeviceMode.isTv) {
-            focusFirstMatch()
-            view?.postDelayed({ if (view?.findFocus() == null) focusFirstMatch() }, 150)
+        if (hidden) {
+            dialog?.dismiss()
+            dialog = null
+            view?.clearFocus()
+            (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+        } else {
+            (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+            if (DeviceMode.isTv) {
+                focusFirstMatch()
+                view?.postDelayed({ if (view?.findFocus() == null) focusFirstMatch() }, 150)
+            }
         }
     }
 

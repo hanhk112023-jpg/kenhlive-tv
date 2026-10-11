@@ -346,6 +346,18 @@ class LiveFragment : Fragment() {
         }
     }
 
+    override fun onHiddenChanged(hidden: Boolean) {
+        super.onHiddenChanged(hidden)
+        if (hidden) {
+            dialog?.dismiss()
+            dialog = null
+            view?.clearFocus()
+            (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+        } else {
+            (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+        }
+    }
+
     override fun onDestroyView() {
         dialog?.dismiss()
         dialog = null

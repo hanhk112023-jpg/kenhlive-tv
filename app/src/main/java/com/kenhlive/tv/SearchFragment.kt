@@ -135,8 +135,29 @@ class SearchFragment : Fragment() {
 
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
-        if (!hidden && DeviceMode.isTv) {
+        if (hidden) {
+            dialog?.dismiss()
+            dialog = null
+            view?.clearFocus()
+            (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
+        } else {
+            (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+            if (DeviceMode.isTv) {
+                focusAppropriate()
+            }
+        }
+    }
+
+    fun ensureSearchFocus(): Boolean {
+        if (!isAdded || view == null) return false
+        (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+        val cur = view?.findFocus()
+        if (cur != null && cur !== view) return true
+        return if (::input.isInitialized && input.isFocusable && input.requestFocus()) {
+            true
+        } else {
             focusAppropriate()
+            true
         }
     }
 

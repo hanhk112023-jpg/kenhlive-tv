@@ -24,6 +24,17 @@ import com.kenhlive.tv.SocoliveRepository
  */
 object RoomPickerDialog {
 
+    private var activeDialogRef: java.lang.ref.WeakReference<AlertDialog>? = null
+
+    fun dismissActive() {
+        try {
+            activeDialogRef?.get()?.let {
+                if (it.isShowing) it.dismiss()
+            }
+        } catch (_: Throwable) {}
+        activeDialogRef = null
+    }
+
     fun show(
         context: Context,
         group: LiveMatchGroup,
@@ -31,6 +42,7 @@ object RoomPickerDialog {
         otherGroups: List<LiveMatchGroup> = emptyList(),
         onPickGroup: (LiveMatchGroup) -> Unit = {}
     ): AlertDialog {
+        dismissActive()
         val view = LayoutInflater.from(context).inflate(R.layout.dialog_room_picker, null)
         view.findViewById<TextView>(R.id.dialogTitle).text = group.matchTitle
         view.findViewById<TextView>(R.id.dialogLeague).text =
@@ -42,6 +54,7 @@ object RoomPickerDialog {
         val dialog = AlertDialog.Builder(context)
             .setView(view)
             .create()
+        activeDialogRef = java.lang.ref.WeakReference(dialog)
 
         val items = mutableListOf<Pair<Any, () -> Unit>>()
         group.rooms.forEach { r ->
