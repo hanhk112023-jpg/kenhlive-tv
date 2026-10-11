@@ -841,7 +841,9 @@ class PlayerActivity : AppCompatActivity() {
 
         player?.stop()
         prepareChannelUrl(url)
-        Toast.makeText(this, "Đang chuyển sang: ${ch.name}", Toast.LENGTH_SHORT).show()
+        if (!DeviceMode.isTv) {
+            Toast.makeText(this, "Đang chuyển sang: ${ch.name}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun toggleSidebar() {

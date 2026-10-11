@@ -239,6 +239,8 @@ object IptvRepository {
                 }
                 cleanName = cleanName.replace(Regex("""\[Geo-blocked\]""", RegexOption.IGNORE_CASE), "")
                     .replace(Regex("""\[Not 24/7\]""", RegexOption.IGNORE_CASE), "")
+                    .replace(Regex("""\(\d+p\)""", RegexOption.IGNORE_CASE), "")
+                    .replace(Regex("""\s+HD$""", RegexOption.IGNORE_CASE), " HD")
                     .trim()
 
                 curName = cleanName

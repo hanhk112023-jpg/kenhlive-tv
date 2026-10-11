@@ -139,7 +139,7 @@ class IptvFragment : Fragment() {
         return sp.getStringSet("fav_ids", emptySet()) ?: emptySet()
     }
 
-    private fun toggleFavoriteChannel(ch: IptvChannel) {
+    private fun toggleFavoriteChannel(ch: IptvChannel, position: Int = -1) {
         val ctx = context ?: return
         val sp = ctx.getSharedPreferences("iptv_favorites", Context.MODE_PRIVATE)
         val cur = (sp.getStringSet("fav_ids", emptySet()) ?: emptySet()).toMutableSet()
@@ -155,8 +155,67 @@ class IptvFragment : Fragment() {
         if (selectedGroup == "Yêu Thích") {
             applyFilter()
         } else {
-            channelsAdapter?.notifyDataSetChanged()
+            if (position in 0 until displayedChannels.size) {
+                channelsAdapter?.notifyItemChanged(position)
+            } else {
+                val idx = displayedChannels.indexOfFirst { it.id == ch.id }
+                if (idx >= 0) channelsAdapter?.notifyItemChanged(idx) else channelsAdapter?.notifyDataSetChanged()
+            }
         }
+    }
+
+    private fun getChannelBadgeDrawable(ch: IptvChannel): android.graphics.drawable.Drawable {
+        val w = 240
+        val h = 135
+        val bm = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(bm)
+
+        val n = ch.name.uppercase(Locale.ROOT)
+        val (bgTop, bgBot, badgeText) = when {
+            n.contains("VTV1") -> Triple(0xFFD32F2F.toInt(), 0xFFB71C1C.toInt(), "VTV 1")
+            n.contains("VTV2") -> Triple(0xFF2E7D32.toInt(), 0xFF1B5E20.toInt(), "VTV 2")
+            n.contains("VTV3") -> Triple(0xFF1976D2.toInt(), 0xFF0D47A1.toInt(), "VTV 3")
+            n.contains("VTV4") -> Triple(0xFFF57C00.toInt(), 0xFFE65100.toInt(), "VTV 4")
+            n.contains("VTV5") -> Triple(0xFF7B1FA2.toInt(), 0xFF4A148C.toInt(), "VTV 5")
+            n.contains("VTV7") -> Triple(0xFF0097A7.toInt(), 0xFF006064.toInt(), "VTV 7")
+            n.contains("VTV8") -> Triple(0xFF0288D1.toInt(), 0xFF01579B.toInt(), "VTV 8")
+            n.contains("VTV9") -> Triple(0xFF388E3C.toInt(), 0xFF1B5E20.toInt(), "VTV 9")
+            n.contains("VTV") -> Triple(0xFFC2185B.toInt(), 0xFF880E4F.toInt(), "VTV")
+            n.contains("HTV7") -> Triple(0xFFF57C00.toInt(), 0xFFD84315.toInt(), "HTV 7")
+            n.contains("HTV9") -> Triple(0xFF00897B.toInt(), 0xFF004D40.toInt(), "HTV 9")
+            n.contains("HTV") -> Triple(0xFF5D4037.toInt(), 0xFF3E2723.toInt(), "HTV")
+            n.contains("THVL") -> Triple(0xFF1565C0.toInt(), 0xFF0D47A1.toInt(), "THVL")
+            n.contains("VTC") -> Triple(0xFFE53935.toInt(), 0xFFB71C1C.toInt(), "VTC")
+            n.contains("ANTV") -> Triple(0xFFC62828.toInt(), 0xFF8E0000.toInt(), "ANTV")
+            n.contains("QPVN") -> Triple(0xFF33691E.toInt(), 0xFF1B5E20.toInt(), "QPVN")
+            n.contains("360") || n.contains("TV360") -> Triple(0xFFFF6500.toInt(), 0xFFCC4400.toInt(), "TV360")
+            !ch.isVn -> Triple(0xFF37474F.toInt(), 0xFF212121.toInt(), ch.group.take(6).uppercase(Locale.ROOT))
+            else -> Triple(0xFF263238.toInt(), 0xFF101217.toInt(), ch.name.take(6).uppercase(Locale.ROOT))
+        }
+
+        val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
+        val shader = android.graphics.LinearGradient(0f, 0f, 0f, h.toFloat(), bgTop, bgBot, android.graphics.Shader.TileMode.CLAMP)
+        paint.shader = shader
+        val rectF = android.graphics.RectF(0f, 0f, w.toFloat(), h.toFloat())
+        canvas.drawRoundRect(rectF, 16f, 16f, paint)
+
+        // Viền tinh tế
+        paint.shader = null
+        paint.style = android.graphics.Paint.Style.STROKE
+        paint.strokeWidth = 3f
+        paint.color = 0x33FFFFFF
+        canvas.drawRoundRect(rectF, 16f, 16f, paint)
+
+        // Chữ logo đài truyền hình
+        paint.style = android.graphics.Paint.Style.FILL
+        paint.color = 0xFFFFFFFF.toInt()
+        paint.typeface = android.graphics.Typeface.DEFAULT_BOLD
+        paint.textSize = if (badgeText.length <= 4) 42f else 32f
+        paint.textAlign = android.graphics.Paint.Align.CENTER
+        val yPos = (h / 2f) - ((paint.descent() + paint.ascent()) / 2f)
+        canvas.drawText(badgeText, w / 2f, yPos, paint)
+
+        return android.graphics.drawable.BitmapDrawable(resources, bm)
     }
 
     private fun updateHeroPreview(ch: IptvChannel) {
@@ -169,14 +228,15 @@ class IptvFragment : Fragment() {
             else -> ch.group.uppercase()
         }
 
-        if (ch.logo.isNotEmpty()) {
+        val badge = getChannelBadgeDrawable(ch)
+        if (ch.logo.isNotEmpty() && !ch.logo.contains("imgur.com") && !ch.logo.contains("wikimedia.org")) {
             heroLogoImg?.load(ch.logo) {
                 crossfade(true)
-                error(R.drawable.ic_nav_tv)
-                placeholder(R.drawable.ic_nav_tv)
+                error(badge)
+                placeholder(badge)
             }
         } else {
-            heroLogoImg?.setImageResource(R.drawable.ic_nav_tv)
+            heroLogoImg?.setImageDrawable(badge)
         }
 
         val epg = EpgRepository.getCurrentAndNext(ch.id, ch.name)
@@ -246,8 +306,8 @@ class IptvFragment : Fragment() {
         val sportsCount = channels.size - vnCount
         countText.text = "Tổng: ${channels.size} kênh (${vnCount} VN, ${sportsCount} Thể thao)"
 
-        // Phân nhóm EPG: Yêu Thích -> VTV -> TV360 -> HTV / VTC -> VTVcab / SCTV -> Thể Thao -> Giải Trí / Phim -> Tin Tức / Tỉnh -> Tất cả
-        val distinctGroups = mutableListOf("Yêu Thích", "VTV", "TV360", "HTV / VTC", "VTVcab / SCTV", "Thể Thao", "Giải Trí & Phim", "Tin Tức & Tỉnh", "Tất cả")
+        // Phân nhóm EPG: Yêu Thích -> VTV -> TV360 -> HTV / VTC -> VTVcab / SCTV -> Thể Thao -> Giải Trí -> Địa Phương -> Tất cả
+        val distinctGroups = mutableListOf("Yêu Thích", "VTV", "TV360", "HTV / VTC", "VTVcab / SCTV", "Thể Thao", "Giải Trí", "Địa Phương", "Tất cả")
         val sportsBrandGroups = listOf("DAZN", "Sky Sports", "beIN Sports", "ESPN")
         distinctGroups.addAll(sportsBrandGroups)
 
@@ -273,7 +333,7 @@ class IptvFragment : Fragment() {
             "Thể Thao" -> list = list.filter {
                 !it.isVn || it.name.contains("Sport", ignoreCase = true) || it.name.contains("Thể Thao", ignoreCase = true) || it.name.contains("On Sports", ignoreCase = true) || it.group.contains("Thể Thao", ignoreCase = true)
             }
-            "Giải Trí & Phim" -> list = list.filter {
+            "Giải Trí", "Giải Trí & Phim" -> list = list.filter {
                 val n = it.name.lowercase(Locale.ROOT)
                 val g = it.group.lowercase(Locale.ROOT)
                 n.contains("movie") || n.contains("cinema") || n.contains("phim") || n.contains("drama") ||
@@ -281,7 +341,7 @@ class IptvFragment : Fragment() {
                 n.contains("cartoon") || n.contains("hoạt hình") || n.contains("entertainment") || n.contains("giải trí") ||
                 g.contains("giải trí") || g.contains("phim")
             }
-            "Tin Tức & Tỉnh", "Tin Tức / Địa Phương" -> list = list.filter {
+            "Địa Phương", "Tin Tức & Tỉnh", "Tin Tức / Địa Phương" -> list = list.filter {
                 it.isVn && !it.name.contains("VTV", ignoreCase = true) && !it.name.contains("HTV", ignoreCase = true) && !it.name.contains("VTC", ignoreCase = true) && !it.group.contains("TV360", ignoreCase = true)
             }
             "DAZN" -> list = list.filter { it.group.equals("DAZN", ignoreCase = true) || it.name.contains("DAZN", ignoreCase = true) }
@@ -410,14 +470,15 @@ class IptvFragment : Fragment() {
             holder.tvSub.text = if (ch.isVn) "Việt Nam" else ch.group
             holder.badge.text = if (ch.isVn) "VIỆT NAM" else ch.group.uppercase()
 
-            if (ch.logo.isNotEmpty()) {
+            val badge = getChannelBadgeDrawable(ch)
+            if (ch.logo.isNotEmpty() && !ch.logo.contains("imgur.com") && !ch.logo.contains("wikimedia.org")) {
                 holder.ivLogo.load(ch.logo) {
                     crossfade(false)
-                    error(R.drawable.ic_nav_tv)
-                    placeholder(R.drawable.ic_nav_tv)
+                    error(badge)
+                    placeholder(badge)
                 }
             } else {
-                holder.ivLogo.setImageResource(R.drawable.ic_nav_tv)
+                holder.ivLogo.setImageDrawable(badge)
             }
 
             val favIds = getFavoriteChannelIds()
@@ -428,7 +489,7 @@ class IptvFragment : Fragment() {
             }
 
             holder.itemView.setOnLongClickListener {
-                toggleFavoriteChannel(ch)
+                toggleFavoriteChannel(ch, position)
                 true
             }
 

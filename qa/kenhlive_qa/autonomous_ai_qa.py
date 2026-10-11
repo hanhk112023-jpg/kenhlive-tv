@@ -1293,7 +1293,7 @@ class AutonomousQASuite:
                 "Tìm Kiếm Thông Minh & Cài Đặt (Hộp Thoại Báo Lỗi Telegram QR @T990512S)",
                 "Duyệt Tab Tìm kiếm (Tab 3), nhập từ khóa; chuyển sang Tab Cài đặt (Tab 4), mở mục 'Liên hệ & Báo lỗi', kiểm tra FeedbackDialog hiển thị mã QR Telegram và thông tin @T990512S.",
                 "Tìm kiếm hiển thị kết quả, FeedbackDialog mở chuẩn xác có mã QR và đóng bằng phím BACK/OK êm ái.",
-                max_steps=8
+                max_steps=10
             ),
             QAMission(
                 "MISSION_DPAD_CHAOS_STRESS_AND_RECOVERY",
