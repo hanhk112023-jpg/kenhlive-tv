@@ -72,7 +72,7 @@ KEY_MAP = {
 # AI Gateways Configuration (100% loaded from environment/secrets)
 ANTIGRAVITY_BASE = os.environ.get("ANTIGRAVITY_API_BASE", "")
 ANTIGRAVITY_KEY = os.environ.get("ANTIGRAVITY_API_KEY", "")
-ANTIGRAVITY_MODEL = os.environ.get("ANTIGRAVITY_MODEL", "gemini-3.5-flash-lite")
+ANTIGRAVITY_MODEL = os.environ.get("ANTIGRAVITY_MODEL", "gemini-3.8-flash")
 
 KILO_BASE = os.environ.get("KILO_API_BASE", "https://api.kilo.ai/api/gateway/v1/chat/completions")
 KILO_KEY = os.environ.get("KILO_API_KEY", "")
@@ -1364,6 +1364,9 @@ class AutonomousQASuite:
         else:
             print("  ⚠️ Không bắt được focus ngay khi mở app", flush=True)
 
+        # Chờ 1.5s cho frame đầu tiên render hoàn tất sau hiệu ứng chuyển cảnh cửa sổ
+        time.sleep(1.5)
+
         # Chụp ảnh baseline
         self._record_screen("01_cold_start")
 
@@ -1387,12 +1390,12 @@ class AutonomousQASuite:
                 current_tab_idx = None
                 summary_text = (ui_state.get("ui_summary", "") + " " + ui_state.get("focused_sig", "") + " " + ui_state.get("focused_text", "")).lower()
                 tab_indicators = [
-                    (0, ["livelist", "cardroot", "socolive", "colatv", "gà vàng", "khán đài", "heroplay", "trực tiếp"]),
-                    (1, ["schedlist", "schedcard", "lịch thi đấu", "hôm nay", "ngày mai"]),
-                    (2, ["iptv", "kênh tv", "channel", "vtv", "htv"]),
-                    (3, ["searchinput", "resultlist", "tìm kiếm"]),
+                    (5, ["phim", "nguonc", "btnheroplay", "apple pill", "phim bộ", "phim lẻ", "tiếp tục xem", "rạp phim tại gia"]),
                     (4, ["settingslist", "cài đặt", "chất lượng video", "báo lỗi"]),
-                    (5, ["phim", "nguonc", "btnheroplay", "apple pill", "phim bộ", "phim lẻ", "tiếp tục xem"])
+                    (3, ["searchinput", "resultlist", "tìm kiếm"]),
+                    (2, ["iptv", "kênh tv", "channel", "vtv", "htv"]),
+                    (1, ["schedlist", "schedcard", "lịch thi đấu", "hôm nay", "ngày mai"]),
+                    (0, ["livelist", "cardroot", "socolive", "colatv", "gà vàng", "khán đài", "trực tiếp"])
                 ]
                 for t_idx, kws in tab_indicators:
                     if any(k in summary_text for k in kws):

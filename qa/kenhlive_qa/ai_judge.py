@@ -15,7 +15,7 @@ TYPESAFE_MODEL = os.environ.get('TYPESAFE_MODEL', 'jev-latest')
 
 ANTIGRAVITY_BASE = os.environ.get('ANTIGRAVITY_API_BASE', '')
 ANTIGRAVITY_KEY  = os.environ.get('ANTIGRAVITY_API_KEY', '')
-ANTIGRAVITY_MODEL = os.environ.get('ANTIGRAVITY_MODEL', 'gemini-3.5-flash-lite')
+ANTIGRAVITY_MODEL = os.environ.get("ANTIGRAVITY_MODEL", "gemini-3.8-flash")
 
 def _msgs(prompt, imgs):
     content = [{"type": "text", "text": prompt}]

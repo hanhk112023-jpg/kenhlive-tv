@@ -41,7 +41,13 @@ object SocoliveParser {
                 val level = grow?.optString("name", "") ?: ""
                 val score = a.optInt("score", 0)
                 val focus = r.optInt("focusCount", 0)
-                val notice = r.optString("notice", "").ifBlank { r.optString("detail", "") }
+                val rawNotice = r.optString("notice", "").ifBlank { r.optString("detail", "") }.trim()
+                val spamRegex = Regex("(nhóm|nhom|vip|zalo|tele|liên hệ|lien he|trợ lý|tro ly|lộc|loc|code|km|khuyến mãi|cược|nhà cái|trang|web|http|@|\\d{8,})", RegexOption.IGNORE_CASE)
+                val notice = if (rawNotice.isBlank() || spamRegex.containsMatchIn(rawNotice)) {
+                    "Bình luận trực tiếp tiếng Việt · Socolive HD"
+                } else {
+                    rawNotice
+                }
                 out.add(
                     LiveRoom(
                         roomNum = num,

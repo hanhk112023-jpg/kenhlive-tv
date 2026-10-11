@@ -129,7 +129,11 @@ class HeroPagerAdapter(
             append(formattedBlv)
             if (top.blvLevel.isNotBlank()) append(" (${top.blvLevel})")
             if (g.count > 1) append(" • ${g.count} phòng live")
-            if (top.notice.isNotBlank()) append(" • ${top.notice}")
+            val cleanNotice = top.notice.trim()
+            val spamRegex = Regex("(nhóm|nhom|vip|zalo|tele|liên hệ|lien he|trợ lý|tro ly|lộc|loc|code|km|cược|nhà cái|@|\\d{8,})", RegexOption.IGNORE_CASE)
+            if (cleanNotice.isNotBlank() && !spamRegex.containsMatchIn(cleanNotice)) {
+                append(" • $cleanNotice")
+            }
         }
         h.blv.text = desc
         h.viewers.text = SocoliveRepository.fmtViewers(g.totalViewers)
