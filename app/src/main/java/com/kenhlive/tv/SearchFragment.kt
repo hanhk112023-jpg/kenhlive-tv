@@ -134,9 +134,15 @@ class SearchFragment : Fragment() {
         if (DeviceMode.isTv && main?.isRailActive() != true) focusAppropriate()
     }
 
+    override fun onPause() {
+        super.onPause()
+        (activity as? MainActivity)?.hideKeyboard()
+    }
+
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
         if (hidden) {
+            (activity as? MainActivity)?.hideKeyboard()
             dialog?.dismiss()
             dialog = null
             view?.clearFocus()

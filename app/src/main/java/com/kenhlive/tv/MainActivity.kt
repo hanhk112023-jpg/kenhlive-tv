@@ -357,6 +357,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun showTab(pos: Int, animate: Boolean = true, keepRailOpen: Boolean = false) {
+        hideKeyboard()
         current = pos
         com.kenhlive.tv.ui.RoomPickerDialog.dismissActive()
         navViews.forEach { v ->
@@ -440,8 +441,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun hideKeyboard() {
-        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
-        currentFocus?.let { imm.hideSoftInputFromWindow(it.windowToken, 0) }
+        val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as? android.view.inputmethod.InputMethodManager ?: return
+        val token = currentFocus?.windowToken ?: window?.decorView?.windowToken
+        if (token != null) {
+            imm.hideSoftInputFromWindow(token, 0)
+        }
     }
 
     // ===== debug hooks (CI screenshot / QA) =====
