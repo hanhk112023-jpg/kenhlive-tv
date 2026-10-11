@@ -249,14 +249,15 @@ class LiveFragment : Fragment() {
         if (hadFocus) {
             list.post { list.post { FocusKit.restore(adapter) } }
         } else if (items.isNotEmpty() && DeviceMode.isTv) {
-            // Đảm bảo luôn có 1 view nhận focus trên màn hình TV (tránh mất focus)
-            list.post {
-                if (list.findFocus() == null) {
+            // Đảm bảo luôn có 1 view cụ thể (heroPlay hoặc card) nhận focus trên màn hình TV
+            list.postDelayed({
+                val curF = list.findFocus()
+                if (curF == null || curF == list || curF is RecyclerView || curF is androidx.viewpager2.widget.ViewPager2) {
                     if (!adapter.focusHero()) {
                         FocusKit.focusNow(list, 1, 0)
                     }
                 }
-            }
+            }, 60)
         }
         if (items.size > 2) state.hide()
         else if (liveGroups.isEmpty() && daysLabeled.isEmpty()) {
@@ -272,7 +273,8 @@ class LiveFragment : Fragment() {
             adapter.restoreFocus()
             if (DeviceMode.isTv) {
                 list.postDelayed({
-                    if (list.findFocus() == null) {
+                    val curF = list.findFocus()
+                    if (curF == null || curF == list || curF is RecyclerView || curF is androidx.viewpager2.widget.ViewPager2) {
                         if (!adapter.focusHero()) {
                             FocusKit.focusNow(list, 1, 0)
                         }

@@ -197,6 +197,12 @@ class SportAdapter(
         val dots: LinearLayout = v.findViewById(R.id.heroDots)
         init {
             pager.clipToOutline = true
+            pager.isFocusable = false
+            pager.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+            (pager.getChildAt(0) as? ViewGroup)?.apply {
+                isFocusable = false
+                descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+            }
         }
     }
 

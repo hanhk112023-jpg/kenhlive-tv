@@ -2,6 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:focusable="false"
     android:descendantFocusability="afterDescendants">
 
     <androidx.viewpager2.widget.ViewPager2
@@ -11,6 +12,8 @@
         android:layout_marginLeft="@dimen/hero_side_margin"
         android:layout_marginRight="@dimen/hero_side_margin"
         android:background="@drawable/bg_hero_card"
+        android:focusable="false"
+        android:descendantFocusability="afterDescendants"
         android:clipToOutline="true" />
 
     <!-- dots indicator -->

@@ -1071,6 +1071,28 @@ class AndroidTVDevice:
         avg_diff = sum(diffs) / len(diffs)
         # Video phát trực tiếp thường có pixel difference > 0.35%
         is_playing = avg_diff >= 0.35
+        if not is_playing:
+            # Cho phép thời gian đệm (buffer) thêm 2.0s trên Android emulator CI trước khi kết luận đứng hình
+            time.sleep(2.0)
+            frames = []
+            for _ in range(samples):
+                b = self.screencap_bytes()
+                if b:
+                    try:
+                        im = Image.open(io.BytesIO(b)).convert("L").resize((160, 90))
+                        frames.append(im)
+                    except Exception:
+                        pass
+                time.sleep(interval)
+            if len(frames) >= 2:
+                diffs = []
+                for i in range(len(frames) - 1):
+                    diff = ImageChops.difference(frames[i], frames[i + 1])
+                    mean_diff = ImageStat.Stat(diff).mean[0] / 255.0 * 100.0
+                    diffs.append(mean_diff)
+                avg_diff = sum(diffs) / len(diffs)
+                is_playing = avg_diff >= 0.35
+
         return is_playing, avg_diff
 
     def detect_focus_ring(self, png_bytes, focused_bounds_str):

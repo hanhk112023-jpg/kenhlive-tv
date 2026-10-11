@@ -183,5 +183,14 @@ class HeroPagerAdapter(
                 else -> false
             }
         }
+
+        if (pos == 0 && DeviceMode.isTv) {
+            h.play.post {
+                val f = h.play.rootView?.findFocus()
+                if (f == null || f is RecyclerView || f is ViewPager2) {
+                    h.play.requestFocus()
+                }
+            }
+        }
     }
 }
