@@ -152,18 +152,18 @@ object SportsStreamResolver {
                         if (urls != null) {
                             for (j in 0 until urls.length()) {
                                 val u = urls.optString(j)
-                                if (u.contains(".m3u8")) {
+                                if (u.contains(".m3u8") && !u.contains("gvvsb.com")) {
                                     stream = u
                                     allStreams.add(u)
                                     break
                                 }
                             }
                         }
-                        if (stream.isBlank() && defaultLink.isNotBlank()) stream = defaultLink
+                        if (stream.isBlank()) continue
 
                         rooms.add(
                             LiveRoom(
-                                roomNum = "gavang33_${if (stream.isNotBlank()) stream else k}",
+                                roomNum = "gavang33_$stream",
                                 blvName = "[Gà Vàng 33] $nick",
                                 avatar = avatar,
                                 viewers = 1200 + (Math.abs(k.hashCode()) % 800),
@@ -177,7 +177,7 @@ object SportsStreamResolver {
                             )
                         )
                     }
-                } else if (defaultLink.isNotBlank()) {
+                } else if (defaultLink.isNotBlank() && !defaultLink.contains("gvvsb.com")) {
                     allStreams.add(defaultLink)
                     rooms.add(
                         LiveRoom(
@@ -197,16 +197,20 @@ object SportsStreamResolver {
                 }
 
                 if (rooms.isNotEmpty()) {
-                    groups.add(
-                        LiveMatchGroup(
-                            league = league,
-                            matchTitle = matchTitle,
-                            rooms = rooms,
-                            category = "Bóng đá",
-                            hostIcon = homeLogo,
-                            guestIcon = awayLogo
-                        )
+                    val isLive = m.optString("matchStatus") == "live"
+                    val group = LiveMatchGroup(
+                        league = league,
+                        matchTitle = matchTitle,
+                        rooms = rooms,
+                        category = "Bóng đá",
+                        hostIcon = homeLogo,
+                        guestIcon = awayLogo
                     )
+                    if (isLive) {
+                        groups.add(0, group)
+                    } else {
+                        groups.add(group)
+                    }
                 }
             }
 

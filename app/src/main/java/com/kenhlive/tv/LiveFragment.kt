@@ -318,8 +318,20 @@ class LiveFragment : Fragment() {
 
     private fun openGroupPicker(g: LiveMatchGroup) {
         val topRoom = g.rooms.firstOrNull()
-        if (g.rooms.size == 1 && topRoom != null && (topRoom.roomNum.startsWith("cola_") || topRoom.roomNum.startsWith("gavang_") || topRoom.roomNum.startsWith("khandai_"))) {
-            openRoom(topRoom)
+        if (topRoom != null && (
+                topRoom.roomNum.startsWith("cola_") ||
+                topRoom.roomNum.startsWith("gavang33_") ||
+                topRoom.roomNum.startsWith("gavang_") ||
+                topRoom.roomNum.startsWith("giovang_") ||
+                topRoom.roomNum.startsWith("khandai_")
+            )
+        ) {
+            if (g.rooms.size == 1) {
+                openRoom(topRoom)
+            } else {
+                dialog?.dismiss()
+                dialog = RoomPickerDialog.show(requireContext(), g, onPickRoom = { r -> openRoom(r) })
+            }
             return
         }
         val enriched = com.kenhlive.tv.sports.SportsAggregator.enrichMatchGroup(g)
