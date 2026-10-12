@@ -10,7 +10,7 @@ Quy trình:
   3. Mỗi màn hình: screenshot → AI vision judge (rubric UX TV) + deterministic blank-check
   4. Đo jank (gfxinfo), memory (PSS) sau mỗi tương tác
   5. Probe auto-refresh: ngồi yên 3'+ đo pixel-diff (tính năng v4.7)
-  6. Test multiview + player qua debug hook (--es open mv|player)
+  6. Test Home Hub 3 Card Portal & VOD Cinema player
   7. Logcat AI triage (lỗi ẩn) + perf AI analysis
   8. Báo cáo HTML + JSON: điểm /100, severity, gợi ý khắc phục, ảnh hiện trường
 """
@@ -218,35 +218,34 @@ else:
     judge('PIP', png if 'png' in dir() else shot('pip2'))
     sh('adb shell am force-stop ' + PKG); time.sleep(2)
 
-# ---------- 4. MULTIVIEW ----------
-print('[4] Multiview', flush=True)
-sh(f'adb shell am start -n {PKG}/.MainActivity --es open mv')
-time.sleep(14)
-add_check('Mở MultiViewActivity', P.current_activity().endswith('MultiViewActivity') or P.has_focus(), 'activity=' + P.current_activity())
-png = shot('multiview')
-if P.is_blank(png): add_finding('Multiview', 'CRITICAL', 'Multiview màn đen', '', 'cả 2 ExoPlayer instance — kiểm tra audio focus + surface')
-judge('Multiview', png)
-P.key('20'); time.sleep(1)  # DOWN đổi focus trận
-png2 = shot('multiview_focus2')
+# ---------- 4. CỔNG CHỌN 3 CARD HOME HUB & LOGO CANVA ----------
+print('[4] Cổng chọn 3 Card Home Hub & Logo Canva Mới', flush=True)
+sh(f'adb shell am start -n {PKG}/.MainActivity --ei tab 6 -f 0x04000000')
+time.sleep(4)
+P.key('4'); time.sleep(1.5)  # đóng dialog thông báo nếu có để lộ trọn 3 thẻ
+add_check('Mở Home Hub 3 Card Portal', P.has_focus(), 'activity=' + P.current_activity())
+png = shot('home_hub_3_cards')
+if P.is_blank(png): add_finding('Home Hub', 'CRITICAL', 'Cổng chọn 3 card màn đen', '', 'kiểm tra HomeHubFragment layout & background')
+judge('Home Hub 3 Cards Portal', png)
+
+sh(f'{P.a} shell uiautomator dump /sdcard/hub_ui.xml >/dev/null 2>&1')
+hub_xml = sh(f'{P.a} shell cat /sdcard/hub_ui.xml 2>/dev/null', timeout=15)
+has_sports = 'cardHubSports' in hub_xml or 'THỂ THAO' in hub_xml
+has_tv = 'cardHubTv' in hub_xml or 'TRUYỀN HÌNH' in hub_xml
+has_movies = 'cardHubMovies' in hub_xml or 'PHIM TRUYỆN' in hub_xml
+no_mv = 'btnHubMultiview' not in hub_xml and 'XEM ĐA MÀN HÌNH' not in hub_xml
+
+add_check('Card THỂ THAO hiển thị với Logo Canva', has_sports, 'cardHubSports có trong Home Hub')
+add_check('Card TRUYỀN HÌNH hiển thị', has_tv, 'cardHubTv có trong Home Hub')
+add_check('Card PHIM TRUYỆN hiển thị với Logo Canva', has_movies, 'cardHubMovies có trong Home Hub')
+add_check('Đã gỡ bỏ nút Đa màn hình (MultiView)', no_mv, 'không còn btnHubMultiview trong thanh đáy')
+
+P.key('22'); time.sleep(1)  # RIGHT sang card Truyền Hình
+png2 = shot('home_hub_focus_tv')
 if png and png2:
     d = P.pixel_diff(png, png2)
-    add_check('Đổi focus trận (DOWN)', d > 0.3, f'pixel diff {d:.1f}%')
-    if d <= 0.3: add_finding('Multiview', 'HIGH', 'Bấm DOWN không đổi trận focus', '2 screenshot giống hệt', 'kiểm tra key listener trong MultiViewActivity, focus border update')
-
-# 4b. CHỐNG TRÀN Ô: live nạp sau không được đè live trước (SurfaceView+ZOOM từng gây vậy)
-#     v5.3.1: focus = vien TRANG 5px (khong con vien do) → dem px trang lien mach quanh o focus
-#     LƯU Ý: shot() trả BYTES png (không phải path) → phải mở qua io.BytesIO
-if png:
-    from PIL import Image as _IM
-    _im = _IM.open(io.BytesIO(png)).convert('RGB'); _w, _h = _im.size
-    _px = _im.load()
-    white = 0
-    for _y in range(0, _h, 2):
-        for _x in range(0, _w, 2):
-            r, g, b = _px[_x, _y]
-            if r > 225 and g > 225 and b > 225: white += 1
-    add_check('Viền trắng ô focus hiển thị (không bị video đè)', white > 700, f'~{white*4}px trắng')
-    if white <= 700: add_finding('Multiview', 'HIGH', 'Video ô sau tràn đè viền trắng/live ô trước', f'chỉ ~{white*4}px trắng', 'PlayerView phải dùng surface_type=texture_view (SurfaceView không clip theo ô khi ZOOM)')
+    add_check('Đổi focus Card (RIGHT)', d > 0.3, f'pixel diff {d:.1f}%')
+    if d <= 0.3: add_finding('Home Hub', 'HIGH', 'Bấm RIGHT không đổi focus sang card tiếp theo', '2 screenshot giống hệt', 'kiểm tra focus border trong HomeHubFragment')
 
 # ---------- 5. BACK & RESILIENCE ----------
 print('[5] Nút back', flush=True)

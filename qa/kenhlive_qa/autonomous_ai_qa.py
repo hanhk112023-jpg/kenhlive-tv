@@ -143,10 +143,10 @@ BẢN ĐỒ TOÀN BỘ 6 TAB VÀ CÁC MÀN HÌNH CỦA APP KENHLIVE TV:
 - [Tab 2 - Truyền hình (IPTV)]: Danh mục Kênh Yêu Thích (bấm giữ OK để lưu), TV360, VTV, HTV. Hero Preview góc trên. Lưới kênh. OSD gõ số trực tiếp từ remote (0-9). Phím tắt đổi kênh CHANNEL_UP/DOWN, PAGE_UP/DOWN. Phím tắt Aspect Ratio (A/Đỏ) & Audio Boost (B/Vàng).
 - [Tab 3 - Tìm kiếm (Search)]: Ô nhập tìm kiếm (searchInput), gõ từ khóa không dấu, chuyển D-pad xuống danh sách kết quả (resultList), nút xóa nhanh clearBtn.
 - [Tab 4 - Cài đặt (Settings)]: Thông tin phiên bản, kiểm tra cập nhật, liên hệ & báo lỗi Telegram (@T990512S) có mã QR ngoại tuyến, cài đặt video và audio.
-- [Tab 5 - Kho Phim (NguonC & Anime)]: Apple Pills thể loại, nút XEM NGAY (btnHeroPlay), nút CHỌN TẬP (btnHeroEpisodes), nút LƯU PHIM (btnHeroFavorite), hộp thoại EpisodePickerDialog. Trình phát phim hỗ trợ tua D-pad Trái/Phải (-10s / +10s) và tự động lưu/tiếp tục xem (Resume Playback).
+- [Tab 5 - Kho Phim (KKPhim & NguonC)]: Apple Pills thể loại & quốc gia, nút XEM NGAY (btnHeroPlay), nút CHỌN TẬP (btnHeroEpisodes), nút LƯU PHIM (btnHeroFavorite), hộp thoại EpisodePickerDialog hỗ trợ chọn Server (Vietsub/Thuyết Minh) và phân nhóm 30 tập. Trình phát phim hỗ trợ HLS 4K native ExoPlayer, tua D-pad Trái/Phải (-15s / +15s) và tự động lưu/tiếp tục xem (Resume Playback).
 - [Sidebar Rail]: Mở bằng DPAD_LEFT từ mép trái, duyệt dọc qua 6 tab, đóng bằng DPAD_RIGHT hoặc BACK.
-- [PlayerActivity]: Trình phát video, phím MENU mở Server Picker, phím A/Đỏ xoay vòng tỉ lệ khung hình (Fit/Fill/Zoom/Fixed), phím B/Vàng tăng âm lượng, gõ số kênh hiện OSD nhảy kênh ngay khi bấm OK. Khung báo lỗi có nút Báo Lỗi Telegram @T990512S.
-- [MultiViewActivity]: Xem đồng thời đa trận bóng đá side-by-side (--es open mv hoặc OPEN_MULTIVIEW), phím UP/DOWN/LEFT/RIGHT đổi focus giữa các ô xem, mở RoomPicker đổi trận cho từng slot.
+- [PlayerActivity]: Trình phát video Live & VOD, phím MENU mở Server Picker, phím A/Đỏ xoay vòng tỉ lệ khung hình (Fit/Fill/Zoom/Fixed), phím B/Vàng tăng âm lượng, gõ số kênh hiện OSD nhảy kênh ngay khi bấm OK. Khung báo lỗi có nút Báo Lỗi Telegram @T990512S.
+- [Home Hub Portal (Tab 6)]: Cổng chọn 3 card lớn (THỂ THAO, TRUYỀN HÌNH, PHIM TRUYỆN) tích hợp Logo Canva 3D (Bóng Đá & Phim Ảnh), kèm 4 nút tiện ích thanh đáy (Cài đặt, Báo lỗi Telegram, Lịch thi đấu, Tìm kiếm), đã gỡ bỏ nút Xem Đa Màn Hình.
 
 NGUYÊN TẮC BỘ NHỚ PHIÊN & SĂN LỖI SÂU (Deep Bug Hunting & Session Memory):
 1. Bạn có TRÍ NHỚ LIÊN TỤC xuyên suốt cả phiên test. Hãy ghi nhớ các màn hình đã đi qua, các thao tác đã thực hiện và các lỗi đã phát hiện để không lặp lại hoặc kiểm tra lại xem lỗi có tái diễn.
@@ -518,39 +518,35 @@ Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn b�
                 action_type = "COMPLETE_MISSION"
                 action_param = ""
 
-        elif m_id == "MISSION_MULTIVIEW_DUAL_AND_QUAD":
+        elif m_id == "MISSION_HOME_HUB_3_CARDS_AND_CANVA_LOGOS":
             if step == 0:
-                action_type = "OPEN_MULTIVIEW"
-                action_param = ""
-                thought = "Khởi động màn hình xem đa trận MultiViewActivity"
+                action_type = "SWITCH_TAB"
+                action_param = "6"
+                thought = "Chuyển sang Cổng Chọn 3 Card Home Hub (Tab 6)"
             elif step == 1:
-                action_type = "WAIT"
-                action_param = "1.5"
-                thought = "Chờ MultiViewActivity khởi tạo bố cục chia màn hình"
+                action_type = "KEY"
+                action_param = "DPAD_RIGHT"
+                thought = "Chuyển focus sang card TRUYỀN HÌNH"
             elif step == 2:
                 action_type = "KEY"
-                action_param = "DPAD_DOWN"
-                thought = "Di chuyển focus sang ô màn hình thứ hai"
+                action_param = "DPAD_RIGHT"
+                thought = "Chuyển focus sang card PHIM TRUYỆN tích hợp Logo Canva"
             elif step == 3:
                 action_type = "KEY"
-                action_param = "DPAD_UP"
-                thought = "Di chuyển focus về ô màn hình thứ nhất"
+                action_param = "DPAD_DOWN"
+                thought = "Di chuyển focus xuống thanh tiện ích 4 nút dưới đáy"
             elif step == 4:
                 action_type = "KEY"
-                action_param = "ENTER"
-                thought = "Bấm OK mở popup chọn trận đấu cho ô MultiView"
+                action_param = "DPAD_RIGHT"
+                thought = "Duyệt qua các nút tiện ích đáy (đã gỡ bỏ nút Đa màn hình)"
             elif step == 5:
                 action_type = "KEY"
-                action_param = "BACK"
-                thought = "Đóng popup chọn trận trên MultiView"
-            elif step == 6:
-                action_type = "KEY"
-                action_param = "BACK"
-                thought = "Thoát MultiViewActivity quay về màn hình chính"
+                action_param = "DPAD_UP"
+                thought = "Quay lại các card chính trên Cổng Chọn Home Hub"
             else:
                 action_type = "COMPLETE_MISSION"
                 action_param = ""
-                thought = "Đã kiểm tra hoàn tất chế độ xem đa màn hình MultiView"
+                thought = "Đã kiểm tra hoàn tất Cổng Chọn 3 Card Home Hub và Logo Canva"
 
         elif m_id in ("MISSION_SCHEDULE_AND_SIDEBAR_NAVIGATION", "MISSION_SCHEDULE_EPG_AND_FIXTURE_TAP"):
             if step == 0:
@@ -880,9 +876,9 @@ class AndroidTVDevice:
         self.action_history.append(f"SWITCH_TAB({tab_index})")
 
     def open_multiview(self):
-        """Khởi chạy màn hình xem đa trận MultiViewActivity."""
-        sh(f"{self.adb} shell am start -n {self.pkg}/.MultiViewActivity -f 0x04000000")
-        self.action_history.append("OPEN_MULTIVIEW")
+        """Khởi chạy Home Hub Portal (thay thế MultiView cũ)."""
+        sh(f"{self.adb} shell am start -n {self.pkg}/.MainActivity --ei tab 6 -f 0x04000000")
+        self.action_history.append("OPEN_HOME_HUB")
 
     def get_pss_memory_mb(self):
         """Đo tổng lượng bộ nhớ RAM PSS (MB) của ứng dụng."""
@@ -1266,11 +1262,11 @@ class AutonomousQASuite:
                 max_steps=6
             ),
             QAMission(
-                "MISSION_MULTIVIEW_DUAL_AND_QUAD",
-                "Đa Màn Hình MultiView (Dual/Quad Screen & Slot Navigation)",
-                "Khởi động MultiViewActivity xem đồng thời đa trận, duyệt focus giữa các ô màn hình, mở chọn phòng cho ô và thoát an toàn về Home.",
-                "MultiView khởi chạy mượt mà, chuyển đổi focus viền trắng chuẩn xác giữa các slot, không crash.",
-                max_steps=5
+                "MISSION_HOME_HUB_3_CARDS_AND_CANVA_LOGOS",
+                "Cổng Chọn 3 Card Home Hub & Logo Canva Mới (Sports & Movies)",
+                "Chuyển sang Tab 6 (Home Hub Portal), duyệt qua 3 card lớn THỂ THAO, TRUYỀN HÌNH, PHIM TRUYỆN tích hợp Logo Canva mới, kiểm tra viền focus phát sáng, xuống hàng tiện ích 4 nút (không còn MultiView) và kiểm tra mở từng mục.",
+                "Cổng Chọn 3 Card hiển thị sắc nét với Logo Canva, phím D-pad chuyển đổi mượt mà giữa các card và hàng tiện ích, không có lỗi rò rỉ focus.",
+                max_steps=6
             ),
             QAMission(
                 "MISSION_SCHEDULE_EPG_AND_FIXTURE_TAP",

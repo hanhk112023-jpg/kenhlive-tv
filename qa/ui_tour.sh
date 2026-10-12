@@ -215,18 +215,23 @@ startrec rec2.mp4; sleep 1; mark "TIEP: BACK khoi player ve Home"
 go "BACK ra player"        4 2
 FG=$(focus); case "$FG" in *kenhlive*) : ;; *) relaunch 0; key 20; sleep 1;; esac
 
-# 7. MULTIVIEW (2 Ô VÀ 4 Ô)
-adb shell am force-stop com.kenhlive.tv; sleep 1
-adb shell am start -n com.kenhlive.tv/.MultiViewActivity --ei mv_layout 2 >/dev/null 2>&1
-sleep 5; mark "MULTIVIEW 2 o"
-adb exec-out screencap -p > $OUT/multiview2.png
-go "DOWN: o 2"             20 1
-go "UP: o 1"               19 1
-
-adb shell am start -n com.kenhlive.tv/.MultiViewActivity --ei mv_layout 4 >/dev/null 2>&1
-sleep 5; mark "MULTIVIEW 4 o"
-adb exec-out screencap -p > $OUT/multiview4.png
-go "BACK khoi MV"          4 2
+# 7. KHO PHIM NGUONC / KKPHIM VỚI NATIVE PLAYER VOD (HLS 4K & D-PAD TUA 15s)
+relaunch 5
+sleep 4
+go "DOWN: chon phim dau tien" 20 2
+go "OK: mo danh sach tap va server" 23 2
+adb exec-out screencap -p > $OUT/phim_episodes_dialog.png
+mark "CHUP ANH: Dialog chon tap & server Vietsub/Thuyet minh"
+go "OK: phat tap 1 tren native ExoPlayer" 23 5
+adb exec-out screencap -p > $OUT/phim_vod_playing.png
+mark "CHUP ANH: Player VOD phat HLS native 4K"
+go "RIGHT: tua nhanh 15 giay (+15s)" 22 2
+adb exec-out screencap -p > $OUT/phim_vod_seek_forward.png
+mark "CHUP ANH: OSD tua nhanh +15s"
+go "LEFT: tua lui 15 giay (-15s)" 21 2
+adb exec-out screencap -p > $OUT/phim_vod_seek_backward.png
+mark "CHUP ANH: OSD tua lui -15s"
+go "BACK: thoat player ve kho phim" 4 2
 
 # 7.5 TEST GIAO DIỆN MOBILE PHONE (CHUYỂN PROFILE PHONE 1080x2400 PORTRAIT & LANDSCAPE)
 # Tắt đoạn ghi hình TV (rec1) để tránh việc đổi kích thước màn hình adb wm size làm co giật video TV
