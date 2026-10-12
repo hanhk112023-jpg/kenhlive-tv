@@ -1224,7 +1224,8 @@ class AutonomousQASuite:
             2: "Tab 2: Truyền hình (IPTV - TV360 HLS, VTV, HTV, Hero Preview, Lưới 5 cột)",
             3: "Tab 3: Tìm kiếm (Search - Ô nhập từ khóa & Danh sách kết quả)",
             4: "Tab 4: Cài đặt (Settings - Cập nhật & cấu hình server)",
-            5: "Tab 5: Kho Phim (NguonC - Phim mới, Phim bộ, Phim lẻ, Anime)"
+            5: "Tab 5: Kho Phim (NguonC - Phim mới, Phim bộ, Phim lẻ, Anime)",
+            6: "Tab 6: Cổng Chọn (Home Hub - Thể thao, Truyền hình, Phim truyện + Cài đặt)"
         }
         self.tested_tabs = set()
 
@@ -1390,6 +1391,7 @@ class AutonomousQASuite:
                 current_tab_idx = None
                 summary_text = (ui_state.get("ui_summary", "") + " " + ui_state.get("focused_sig", "") + " " + ui_state.get("focused_text", "")).lower()
                 tab_indicators = [
+                    (6, ["cổng giải trí", "cardsports", "cardiptv", "cardphim", "cổng chọn", "ấn ok để vào"]),
                     (5, ["phim", "nguonc", "btnheroplay", "apple pill", "phim bộ", "phim lẻ", "tiếp tục xem", "rạp phim tại gia"]),
                     (4, ["settingslist", "cài đặt", "chất lượng video", "báo lỗi"]),
                     (3, ["searchinput", "resultlist", "tìm kiếm"]),

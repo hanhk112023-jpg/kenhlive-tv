@@ -26,7 +26,8 @@ KENHLIVE_TABS = {
     2: {"name": "Truyền Hình (IPTV)", "icon": "📺", "desc": "TV360 HLS, VTV, HTV, Lưới 5 cột"},
     3: {"name": "Tìm Kiếm (Search)", "icon": "🔍", "desc": "Tìm kiếm kênh, trận đấu, phim ảnh"},
     4: {"name": "Cài Đặt (Settings)", "icon": "⚙️", "desc": "Cấu hình ứng dụng, cập nhật OTA"},
-    5: {"name": "Kho Phim (NguonC)", "icon": "🎬", "desc": "Phim mới, Phim bộ, Phim lẻ, Anime"}
+    5: {"name": "Kho Phim (NguonC)", "icon": "🎬", "desc": "Phim mới, Phim bộ, Phim lẻ, Anime"},
+    6: {"name": "Cổng Chọn (Home Hub)", "icon": "🏠", "desc": "3 mục Thể thao, Truyền hình, Phim truyện + Cài đặt"}
 }
 
 REMOTE_KEY_ICONS = {

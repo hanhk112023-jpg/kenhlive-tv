@@ -18,7 +18,7 @@ adb shell am start -W -n com.kenhlive.tv/.MainActivity >/dev/null 2>&1
 wait_ready() {
   for w in $(seq 1 15); do
     D=$(adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1; adb shell cat /sdcard/u.xml 2>/dev/null)
-    if echo "$D" | grep -qE 'XEM NGAY|phòng live|Hôm nay|Truyền hình|Việt Nam'; then return 0; fi
+    if echo "$D" | grep -qE 'XEM NGAY|phòng live|Hôm nay|Truyền hình|Việt Nam|THỂ THAO|TRUYỀN HÌNH|PHIM TRUYỆN'; then return 0; fi
     if echo "$D" | grep -qE 'Không tải|THỬ LẠI|Sân vắng'; then return 1; fi
     sleep 2
   done; return 1
@@ -37,9 +37,22 @@ startrec(){ REC_CUR="$1"; adb shell rm -f /sdcard/$REC_CUR; adb shell screenreco
 stoprec() { local f="${1:-${REC_CUR:-rec1.mp4}}"; adb shell screenrecord --stop >/dev/null 2>&1; wait $REC_PID 2>/dev/null || true; sleep 2; adb pull /sdcard/$f $OUT/$f >/dev/null 2>&1 || true; }
 
 # ==================== ĐOẠN 1 ====================
-startrec rec1.mp4; sleep 2; mark "MO APP: Trang Chu & Truc Tiep The Thao"
+startrec rec1.mp4; sleep 2; mark "MO APP: Cong Chon 3 Muc & The Thao"
 
-# 1. TAB 0: HOME / TRỰC TIẾP
+# 0. CỔNG CHỌN CHÍNH (TAB 6: HOME HUB PORTAL)
+relaunch 6
+sleep 3
+adb exec-out screencap -p > $OUT/tab6_home_hub_portal.png
+mark "CHUP ANH: Cong chon 3 muc The thao, Truyen hinh, Phim truyen"
+go "RIGHT: sang muc Truyen Hinh" 22 1; foc
+go "RIGHT: sang muc Phim Truyen" 22 1; foc
+go "LEFT: tro lai muc Truyen Hinh" 21 1; foc
+go "LEFT: tro lai The Thao" 21 1; foc
+go "DOWN: xuong hang Cai Dat & Tien Ich" 20 1; foc
+go "UP: len lai The Thao" 19 1; foc
+go "OK: mo giao dien rieng The Thao" 23 2; foc
+
+# 1. TAB 0: TRỰC TIẾP THỂ THAO
 relaunch 0
 sleep 3
 adb exec-out screencap -p > $OUT/tab0_fullscreen_no_rail.png
