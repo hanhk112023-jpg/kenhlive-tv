@@ -1,33 +1,24 @@
-# 🚀 KENHLIVE TV v7.4.5 (Build 121) — LOGO & GIAO DIỆN CANVA MỚI, RẠP PHIM NATIVE HLS 4K & GỠ BỎ ĐA MÀN HÌNH
+# 🚀 KENHLIVE TV v7.4.6 (Build 122) — GIỮ NGUYÊN BỐ CỤC CỔNG CHỌN 3 CARD, BỘ LOGO BÓNG ĐÁ & PHIM TRUYỆN MỚI TỪ CANVA
 
-### 🎨 1. Bộ Nhận Diện Thương Hiệu & Giao Diện Thiết Kế Từ Canva
-- **Logo & TV Banner mới từ Canva**:
-  - Biểu tượng Play hai tông màu **Neon Electric Cyan (`#00E5FF`)** và **Crimson Red (`#E50914`)** trên nền đen sâu sang trọng, tối ưu độ tương phản cho màn hình TV lớn (10-foot UI).
-  - Cập nhật đồng bộ toàn bộ Icon ứng dụng (`ic_launcher`), Android TV Leanback Banner (`320x180` & `640x360`) và Logo thanh điều hướng.
-
----
-
-### 🎬 2. Đại Nâng Cấp Kho Phim Truyện (Native ExoPlayer HLS `.m3u8` 4K)
-- **Tích hợp Hạ Tầng Phim Trực Tiếp (Direct `.m3u8` CDN)**:
-  - Toàn bộ phim bộ, phim lẻ, hoạt hình/anime giờ đây phát trực tiếp bằng luồng **HLS `.m3u8` gốc trên trình phát ExoPlayer phần cứng** thay vì nhúng qua trình duyệt WebView.
-  - **Không quảng cáo / không popup web**, mở tập phát tức thì, giải mã phần cứng mượt mà trên mọi dòng Android TV Box.
-- **Tua Nhanh Bằng Remote TV (D-Pad Left / Right)**:
-  - Khi đang xem phim, bấm phím **Trái / Phải trên điều khiển TV** để tua lùi / tua tới **15 giây** tức thì kèm hiển thị mốc thời gian.
-  - Tự động lưu tiến độ xem và **Tiếp tục phát đúng phút giây đang xem dở** khi mở lại.
-- **Đa Máy Chủ Ngôn Ngữ (`Vietsub` · `Thuyết Minh` · `Lồng Tiếng`)**:
-  - Hộp thoại chọn tập hỗ trợ chuyển đổi trực tiếp giữa các server **Vietsub**, **Thuyết Minh** và **Lồng Tiếng** bằng điều khiển TV.
-- **Phân Đoạn Tập Thông Minh Cho Phim Dài Tập**:
-  - Tự động chia cụm 30 tập (`Tập 1 - 30`, `31 - 60`, `61 - 90`... lên tới hơn 1.200 tập như *Thám Tử Lừng Danh Conan*), giúp điều khiển TV bấm chọn tập nhanh chóng không cần cuộn dài.
-- **Mở Rộng Danh Mục Quốc Gia & Thể Loại**:
-  - Bổ sung các dải phim và bộ lọc: *Phim Hàn Quốc Thịnh Hành · Phim Trung Quốc Hot · Điện Ảnh Âu Mỹ Bom Tấn · Anime & Hoạt Hình · Hành Động · Cổ Trang · Tình Cảm · Kinh Dị*.
+### 🌟 1. Giữ Nguyên Giao Diện Cổng Chọn Home Hub (3 Cards Lớn)
+- Giữ nguyên thiết kế Cổng Giải Trí Trực Tuyến 3 Card lớn truyền thống được người dùng yêu thích:
+  - **THỂ THAO** (Trực tiếp bóng đá 4 nhà đài Socolive, Gà Vàng 33, ColaTV, Giờ Vàng).
+  - **TRUYỀN HÌNH** (150+ kênh HD VTV, HTV, VTC, K+, Thể thao, Quốc tế).
+  - **PHIM TRUYỆN** (Kho 33.000+ phim bom tấn, Anime phát trực tiếp HLS 4K).
 
 ---
 
-### 🧹 3. Loại Bỏ Hoàn Toàn Tính Năng Đa Màn Hình (MultiView)
-- Gỡ bỏ hoàn toàn nút và chế độ **Đa màn hình (MultiView)** khỏi thanh điều hướng trái (Left Navigation Rail), Cổng Chọn (Home Hub), Trình Phát (Player) và Cài Đặt để giao diện gọn nhẹ, tập trung tối đa cho trải nghiệm Điện Ảnh và Thể Thao.
+### 🎨 2. Bộ Logo Chuyên Nghiệp Mới Thiết Kế Từ Canva
+- **Card THỂ THAO**: Logo quả bóng đá lửa 3D phát sáng (**Fiery 3D Football Emblem**) với viền cam rực lửa `#FF6500`, vòng xoáy năng lượng và vệt chuyển động tốc độ cao.
+- **Card PHIM TRUYỆN**: Logo điện ảnh sang trọng (**3D Cinema Clapperboard & Film Reel**) với cuộn phim vàng óng, bảng clapperboard đạo diễn và huy hiệu **`4K ULTRA HD`** viền ánh vàng `#FFB800`.
+- **Thanh Đáy**: Gỡ bỏ hoàn toàn nút **XEM ĐA MÀN HÌNH**, giữ lại các nút tiện ích: **CÀI ĐẶT** · **BÁO LỖI TELEGRAM** · **LỊCH THI ĐẤU** · **TÌM KIẾM**.
+
+---
+
+### 🎬 3. Nâng Cấp Toàn Diện Kho Phim Truyện Native HLS 4K
+- Toàn bộ phim phát trực tiếp bằng file `.m3u8` trên ExoPlayer phần cứng, tua 15 giây bằng phím Trái/Phải remote, tự động lưu lịch sử và hỗ trợ đa server Vietsub / Thuyết Minh cùng cụm 30 tập.
 
 ---
 
 ### 📦 Tải & Cài Đặt:
-- Tải trực tiếp file `KenhLive-v7.4.5.apk` bên dưới.
-- Tương thích tất cả dòng Android TV, Google TV, Android TV Box (Android 5.0 trở lên, chip 32-bit & 64-bit).
+- Tải trực tiếp file `KenhLive-v7.4.6.apk` bên dưới.

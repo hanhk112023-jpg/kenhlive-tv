@@ -158,13 +158,12 @@
                     android:layout_height="0dp"
                     android:layout_weight="1" />
 
-                <!-- Icon -->
+                <!-- Icon: Canva 3D Glowing Football Logo -->
                 <ImageView
-                    android:layout_width="54dp"
-                    android:layout_height="54dp"
-                    android:src="@drawable/ic_nav_live"
-                    android:tint="@color/kl_brand"
-                    android:layout_marginBottom="12dp"
+                    android:layout_width="68dp"
+                    android:layout_height="68dp"
+                    android:src="@drawable/ic_hub_football"
+                    android:layout_marginBottom="14dp"
                     android:contentDescription="Thể thao" />
 
                 <!-- Title -->
@@ -182,7 +181,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="Trực tiếp bóng đá Socolive, Gà Vàng 33, ColaTV, Giờ Vàng · Lịch thi đấu &amp; Đa màn hình"
+                    android:text="Trực tiếp bóng đá Socolive, Gà Vàng 33, ColaTV, Giờ Vàng · Lịch thi đấu &amp; Trực tiếp HD"
                     android:textColor="@color/kl_text_2"
                     android:textSize="12.5sp"
                     android:lineSpacingExtra="3dp"
@@ -359,13 +358,12 @@
                     android:layout_height="0dp"
                     android:layout_weight="1" />
 
-                <!-- Icon -->
+                <!-- Icon: Canva 3D Cinema Clapperboard & Reel Logo -->
                 <ImageView
-                    android:layout_width="54dp"
-                    android:layout_height="54dp"
-                    android:src="@drawable/ic_nav_phim"
-                    android:tint="@color/kl_amber"
-                    android:layout_marginBottom="12dp"
+                    android:layout_width="68dp"
+                    android:layout_height="68dp"
+                    android:src="@drawable/ic_hub_cinema"
+                    android:layout_marginBottom="14dp"
                     android:contentDescription="Phim truyện" />
 
                 <!-- Title -->
@@ -383,7 +381,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="Hơn 33.000+ phim điện ảnh, phim bộ Hàn/Trung/Âu Mỹ, hoạt hình Anime chất lượng cao"
+                    android:text="Hơn 33.000+ phim điện ảnh, phim bộ Hàn/Trung/Âu Mỹ, hoạt hình Anime phát trực tiếp HLS 4K"
                     android:textColor="@color/kl_text_2"
                     android:textSize="12.5sp"
                     android:lineSpacingExtra="3dp"
