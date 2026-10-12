@@ -966,24 +966,15 @@ class PlayerActivity : AppCompatActivity() {
                                 error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ||
                                 error.errorCodeName.startsWith("ERROR_CODE_IO")
 
-                        // 1. Thể thao tự động failover sang nguồn đài tiếp theo
+                        // 1. Thể thao: Tự động kết nối lại luồng hiện tại khi mạng chập chờn
                         if (!isIptvMode && sportsFailoverCount < 3) {
                             sportsFailoverCount++
-                            val nextSource = when (currentSportsSource) {
-                                com.kenhlive.tv.sports.SportsSource.SOCOLIVE -> com.kenhlive.tv.sports.SportsSource.COLATV
-                                com.kenhlive.tv.sports.SportsSource.COLATV -> com.kenhlive.tv.sports.SportsSource.GAVANG33
-                                com.kenhlive.tv.sports.SportsSource.GAVANG33 -> com.kenhlive.tv.sports.SportsSource.GIOVANG
-                                com.kenhlive.tv.sports.SportsSource.GIOVANG -> com.kenhlive.tv.sports.SportsSource.SOCOLIVE
-                            }
-                            val cleanRoom = com.kenhlive.tv.sports.SportsSource.extractRealRoomNum(currentRoomNum)
-                            val targetRoom = when (nextSource) {
-                                com.kenhlive.tv.sports.SportsSource.COLATV -> "cola_$cleanRoom"
-                                com.kenhlive.tv.sports.SportsSource.GAVANG33 -> "gavang33_$cleanRoom"
-                                com.kenhlive.tv.sports.SportsSource.GIOVANG -> "giovang_$cleanRoom"
-                                com.kenhlive.tv.sports.SportsSource.SOCOLIVE -> cleanRoom
-                            }
-                            Toast.makeText(this@PlayerActivity, "Tự động đổi sang máy chủ ${nextSource.displayName}...", Toast.LENGTH_SHORT).show()
-                            switchSportsServer(com.kenhlive.tv.sports.SportsServer(nextSource, nextSource.displayName, targetRoom))
+                            Toast.makeText(this@PlayerActivity, "Đang kết nối lại luồng trực tiếp (Lần $sportsFailoverCount/3)...", Toast.LENGTH_SHORT).show()
+                            handler.postDelayed({
+                                if (!isFinishing && !isDestroyed) {
+                                    prepareChannelUrl(url)
+                                }
+                            }, 1000)
                             return
                         }
 

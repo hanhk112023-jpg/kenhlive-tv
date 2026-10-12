@@ -39,6 +39,7 @@ class LiveFragment : Fragment() {
 
     private var liveGroups: List<LiveMatchGroup> = listOf()
     private var daysLabeled: LinkedHashMap<String, MutableList<ScheduleMatch>> = LinkedHashMap()
+    private var colaApiGroups: List<LiveMatchGroup> = listOf()
     private var gavang33ApiGroups: List<LiveMatchGroup> = listOf()
     private var giovangApiGroups: List<LiveMatchGroup> = listOf()
 
@@ -101,6 +102,12 @@ class LiveFragment : Fragment() {
         svm.load()
         viewLifecycleOwner.lifecycleScope.launch {
             try {
+                colaApiGroups = com.kenhlive.tv.sports.SportsStreamResolver.fetchColaMatchGroups()
+                rebuild()
+            } catch (_: Exception) {}
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
                 gavang33ApiGroups = com.kenhlive.tv.sports.SportsStreamResolver.fetchGavang33MatchGroups()
                 rebuild()
             } catch (_: Exception) {}
@@ -149,7 +156,9 @@ class LiveFragment : Fragment() {
         if (selLeague >= leagueLabels.size) selLeague = 0
 
         val socoGroups = com.kenhlive.tv.sports.SportsAggregator.createProviderMatchGroups(enrichedLiveGroups, com.kenhlive.tv.sports.SportsSource.SOCOLIVE)
-        val colaGroups = com.kenhlive.tv.sports.SportsAggregator.createProviderMatchGroups(enrichedLiveGroups, com.kenhlive.tv.sports.SportsSource.COLATV)
+        val colaGroups = colaApiGroups.ifEmpty {
+            com.kenhlive.tv.sports.SportsAggregator.createProviderMatchGroups(enrichedLiveGroups, com.kenhlive.tv.sports.SportsSource.COLATV)
+        }
         val gavang33Groups = gavang33ApiGroups.ifEmpty {
             com.kenhlive.tv.sports.SportsAggregator.createProviderMatchGroups(enrichedLiveGroups, com.kenhlive.tv.sports.SportsSource.GAVANG33)
         }

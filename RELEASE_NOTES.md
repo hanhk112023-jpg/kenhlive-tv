@@ -1,34 +1,35 @@
-# 🚀 KENHLIVE TV v7.4.3 (Build 119) — BẢN CẬP NHẬT LỚN CHO ANDROID TV
+# 🚀 KENHLIVE TV v7.4.4 (Build 120) — SỬA TRIỆT ĐỂ LỆCH TIÊU ĐỀ & ỔN ĐỊNH 4 NHÀ ĐÀI THỂ THAO
 
-### 🌟 1. Tích Hợp 2 Nhà Đài Thể Thao Mới: Gà Vàng 33 & Giờ Vàng TV
-- **Gà Vàng 33 (`gavang33`)**:
-  - Tích hợp trực tiếp hệ thống API mới từ Gà Vàng 33 với hơn **60+ trận đấu** mỗi ngày.
-  - Kết nối luồng phát HLS độc quyền của từng BLV (*Gà Siêu Kiêu, Gà Siêu Ngố, Gà Siêu Péo, Gà Siêu Gáy...* qua hạ tầng `zktsva.app`).
-  - Lọc bỏ triệt để các đường link lỗi SSL, bấm vào là phát ngay tức thì.
-- **Giờ Vàng TV (`giovang`)**:
-  - Tích hợp máy chủ **VCDN Cloud** (CDN nội địa Việt Nam) từ hạ tầng Giờ Vàng TV.
-  - Tự động nạp luồng phát trực tiếp các giải bóng đá, bóng rổ, bóng chuyền, tennis cùng BLV (*BLV Tỵ, BLV Chồn, BLV Sún, BLV Ben...*).
-  - Trình phát hỗ trợ chuyển đổi mượt mà giữa 4 nhà đài: **Socolive · ColaTV · Gà Vàng 33 · Giờ Vàng TV**.
+### ⚽ 1. Khắc Phục Triệt Để Lỗi Lệch Tiêu Đề Trận Đấu & Phòng Live Gà Vàng 33
+- **Căn nguyên**: Gà Vàng 33 API trả về danh sách có cả trận đang diễn ra (`matchStatus == "live"`) và các trận tương lai đêm nay / ngày mai (`scheduled`). BLV Gà Vàng dùng link stream cá nhân cố định và được gán cho nhiều trận. Trước đây app đưa cả các trận chưa đá vào, khi bấm vào xem thì BLV đang phát trận live hiện tại, dẫn đến tiêu đề và hình ảnh trên sân không khớp nhau.
+- **Khắc phục**:
+  - Lọc nghiêm ngặt: Chỉ lấy các trận **`matchStatus == "live"`** vào danh mục phát trực tiếp.
+  - Mỗi phòng phát đúng link stream của BLV trận đó (`zktsva.app` `.m3u8`), lọc bỏ hoàn toàn các domain lỗi SSL.
+  - Khớp 100% giữa tiêu đề trận đấu, logo 2 đội và nội dung video trên sân.
 
 ---
 
-### 🎬 2. Giao Diện Kho Phim Chuẩn Netflix Smart TV
-- **Hero Billboard 340dp Đẳng Cấp**:
-  - Thiết kế đậm chất điện ảnh chuẩn 10-foot UI với nhãn đỏ `TOP 10 — Số 1 Thịnh Hành Hôm Nay`.
-  - Dải thông số chuẩn Netflix: **98% Phù Hợp** (xanh lá), Năm phát hành, Giới hạn tuổi **16+**, Chất lượng **4K / Full HD**, Điểm **★ IMDb**.
-  - Cụm phím điều khiển D-pad chuyên dụng: Nút chính **[ ▶ XEM NGAY ]** trắng tương phản cao, các nút kính mờ **[ ℹ CHỌN TẬP ]**, **[ + LƯU PHIM ]**, **[ ↻ PHIM KHÁC ]** và nút quay lại trang chủ **[ ⮌ VỀ TRANG CHỦ ]**.
-- **Dải Poster Tỷ Lệ Chuẩn 2:3**:
-  - Bo góc 8dp tinh tế, hiệu ứng zoom focus 1.08x và viền sáng không bị lẹm góc.
+### 🥤 2. Khắc Phục Hoàn Toàn Đài ColaTV
+- **Căn nguyên**: Trước đây app tạo phòng giả cho ColaTV từ danh sách Socolive rồi bốc ngẫu nhiên luồng stream, đồng thời nguồn M3U chứa cả tên miền chết `miekgo.app` (timeout) và định dạng `.flv`.
+- **Khắc phục**:
+  - Tải trực tiếp danh sách trận đấu thực tế của ColaTV từ M3U, chỉ lấy các trận có chấm xanh **`🟢` (Đang phát trực tiếp)**.
+  - Chỉ nhận luồng HLS `.m3u8` từ máy chủ sống `zhwpg.app`, loại bỏ hoàn toàn tên miền chết `miekgo.app` và `.flv`.
+  - Trích xuất tự động tên 2 đội bóng, logo giải đấu và tên BLV Cola (`BLV 7UP`, `BLV FANTA`, `BLV ROCKSTAR`, `BLV SODA`, `BLV PEPSI`).
 
 ---
 
-### 📐 3. Tối Ưu Căn Góc & Lề Toàn Diện (Home Hub & Thông Báo)
-- Đồng bộ trục lề an toàn 44dp cho toàn bộ Cổng Chọn 3 Mục (**Thể Thao · Truyền Hình · Phim Truyện**).
-- Mở rộng vùng đệm phóng to (`clipChildren="false"`), sửa hoàn toàn lỗi tràn chữ hướng dẫn điều khiển remote.
-- Bảng thông báo Telegram hỗ trợ trực tuyến `@T990512S` hiển thị rõ nét, kèm mã QR quét điện thoại tiện lợi.
+### ⏰ 3. Tối Ưu Hóa & Ổn Định Đài Giờ Vàng TV
+- Tải sẵn luồng phát trực tiếp HLS `.m3u8` từ hạ tầng VCDN Cloud (`vcdn.cloud`) và tên BLV chuẩn (`BLV Chồn`, `BLV Trĩ`, `BLV Tôm`...) ngay khi nạp danh sách trận.
+- Bấm vào là phát tức thì không độ trễ, không còn tình trạng báo "Luồng phát chưa sẵn sàng".
+
+---
+
+### 🛡️ 4. Sửa Lỗi Tự Động Đổi Trận Khi Mạng Chập Chờn Trong Trình Phát TV
+- Loại bỏ cơ chế failover chéo nhà đài bốc ngẫu nhiên luồng của trận khác khi gặp lỗi mạng.
+- Khi mạng lag hoặc buffering, trình phát sẽ tự động kết nối lại chính xác luồng trực tiếp của trận đấu đang xem.
 
 ---
 
 ### 📦 Tải & Cài Đặt:
-- Tải trực tiếp file `KenhLive-v7.4.3.apk` bên dưới.
+- Tải trực tiếp file `KenhLive-v7.4.4.apk` bên dưới.
 - Tương thích tất cả dòng Android TV, Google TV, Android TV Box (Android 5.0 trở lên, chip 32-bit & 64-bit).

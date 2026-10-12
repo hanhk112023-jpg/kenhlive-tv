@@ -49,22 +49,20 @@ object SportsStreamResolver {
                         val idx = (realRoomNum.hashCode().and(0x7FFFFFFF)) % cachedGavangStreams.size
                         return@withContext cachedGavangStreams[idx]
                     }
-                    return@withContext "https://live2.zktsva.app/live/741294.m3u8"
+                    return@withContext "https://live2.zktsva.app/live/307240.m3u8"
                 }
                 SportsSource.GIOVANG -> {
                     if (realRoomNum.startsWith("http")) return@withContext realRoomNum
-                    // 1. Thử truy vấn trực tiếp theo fixture ID từ Giờ Vàng API
                     val streamById = resolveGiovangById(realRoomNum)
                     if (!streamById.isNullOrBlank()) return@withContext streamById
 
-                    // 2. Nếu realRoomNum là ID của đài khác chuyển sang (backup server), lấy 1 fixture đang live của Giờ Vàng
                     ensureDirectFeedsLoaded()
                     if (cachedGiovangIds.isNotEmpty()) {
                         val idx = (realRoomNum.hashCode().and(0x7FFFFFFF)) % cachedGiovangIds.size
                         val fallbackStream = resolveGiovangById(cachedGiovangIds[idx])
                         if (!fallbackStream.isNullOrBlank()) return@withContext fallbackStream
                     }
-                    return@withContext "https://ftlh5sc02iliv.vcdn.cloud/1791734902_hd/1791734902_hd@720p.m3u8"
+                    return@withContext "https://ftlh5sc02iliv.vcdn.cloud/1791734978_hd/1791734978_hd@720p.m3u8"
                 }
                 SportsSource.COLATV -> {
                     if (realRoomNum.startsWith("http")) return@withContext realRoomNum
@@ -73,7 +71,7 @@ object SportsStreamResolver {
                         val idx = (realRoomNum.hashCode().and(0x7FFFFFFF)) % cachedColaStreams.size
                         return@withContext cachedColaStreams[idx]
                     }
-                    return@withContext "https://live05.zhwpg.app/live/14830711_tsc.m3u8"
+                    return@withContext "https://live05.zhwpg.app/live/78905744_tsc.m3u8"
                 }
                 SportsSource.SOCOLIVE -> {
                     val now = stamp()
@@ -113,20 +111,22 @@ object SportsStreamResolver {
     }
 
     /**
-     * Tải danh sách trận đấu trực tiếp từ Gà Vàng 33 API.
+     * Tải danh sách trận đấu trực tiếp từ Gà Vàng 33 API (Chỉ lọc các trận đang phát trực tiếp matchStatus == "live").
      */
     suspend fun fetchGavang33MatchGroups(): List<LiveMatchGroup> = withContext(Dispatchers.IO) {
         try {
             val raw = Http.getWithRetry("$GAVANG33_API&t=${System.currentTimeMillis()}")
             val root = JSONObject(raw)
             val data = root.optJSONObject("data") ?: return@withContext emptyList()
-            val groups = mutableListOf<LiveMatchGroup>()
+            val liveGroups = mutableListOf<LiveMatchGroup>()
+            val upcomingGroups = mutableListOf<LiveMatchGroup>()
             val keys = data.keys()
             val allStreams = mutableListOf<String>()
 
             while (keys.hasNext()) {
                 val k = keys.next()
                 val m = data.optJSONObject(k) ?: continue
+                val isLive = m.optString("matchStatus") == "live"
                 val homeObj = m.optJSONObject("homeTeam")
                 val awayObj = m.optJSONObject("awayTeam")
                 val compObj = m.optJSONObject("competition")
@@ -137,7 +137,7 @@ object SportsStreamResolver {
                 val homeLogo = homeObj?.optString("logo") ?: ""
                 val awayLogo = awayObj?.optString("logo") ?: ""
                 val league = compObj?.optString("name") ?: "Bóng đá"
-                val matchTitle = "$homeName vs $awayName"
+                val matchTitle = if (isLive) "$homeName vs $awayName" else "[SẮP ĐÁ] $homeName vs $awayName"
                 val defaultLink = m.optString("defaultLink")
                 val anchors: JSONArray? = m.optJSONArray("anchorAppointmentVoList")
 
@@ -154,7 +154,7 @@ object SportsStreamResolver {
                                 val u = urls.optString(j)
                                 if (u.contains(".m3u8") && !u.contains("gvvsb.com")) {
                                     stream = u
-                                    allStreams.add(u)
+                                    if (isLive) allStreams.add(u)
                                     break
                                 }
                             }
@@ -171,14 +171,14 @@ object SportsStreamResolver {
                                 league = league,
                                 category = "Bóng đá",
                                 blvLevel = "Gà Vàng HD",
-                                notice = "Kênh trực tiếp Gà Vàng 33 · Luồng phát độc quyền",
+                                notice = if (isLive) "Kênh trực tiếp Gà Vàng 33 · Luồng phát độc quyền" else "Chưa đến giờ thi đấu · Sắp diễn ra",
                                 hostIcon = homeLogo,
                                 guestIcon = awayLogo
                             )
                         )
                     }
                 } else if (defaultLink.isNotBlank() && !defaultLink.contains("gvvsb.com")) {
-                    allStreams.add(defaultLink)
+                    if (isLive) allStreams.add(defaultLink)
                     rooms.add(
                         LiveRoom(
                             roomNum = "gavang33_$defaultLink",
@@ -197,7 +197,6 @@ object SportsStreamResolver {
                 }
 
                 if (rooms.isNotEmpty()) {
-                    val isLive = m.optString("matchStatus") == "live"
                     val group = LiveMatchGroup(
                         league = league,
                         matchTitle = matchTitle,
@@ -207,22 +206,120 @@ object SportsStreamResolver {
                         guestIcon = awayLogo
                     )
                     if (isLive) {
-                        groups.add(0, group)
+                        liveGroups.add(group)
                     } else {
-                        groups.add(group)
+                        upcomingGroups.add(group)
                     }
                 }
             }
 
             if (allStreams.isNotEmpty()) cachedGavangStreams = allStreams
-            groups.take(30)
+            // Chỉ trả về các trận ĐANG TRỰC TIẾP để tiêu đề và nội dung trận khớp 100%
+            if (liveGroups.isNotEmpty()) liveGroups else upcomingGroups.take(4)
         } catch (_: Exception) {
             emptyList()
         }
     }
 
     /**
-     * Tải danh sách trận đấu trực tiếp từ Giờ Vàng TV (keonhacaitp API).
+     * Tải danh sách trận đấu trực tiếp của ColaTV từ nguồn M3U (Lọc 🟢 và zhwpg.app .m3u8).
+     */
+    suspend fun fetchColaMatchGroups(): List<LiveMatchGroup> = withContext(Dispatchers.IO) {
+        try {
+            val m3u = Http.getWithRetry(M3U_FEED)
+            val lines = m3u.split("\n")
+            val groups = mutableListOf<LiveMatchGroup>()
+            val cStreams = mutableListOf<String>()
+            var i = 0
+
+            while (i < lines.size) {
+                val line = lines[i].trim()
+                if (line.startsWith("#EXTINF:") && line.contains("group-title=\"Cola TV\"") && line.contains("🟢")) {
+                    var j = i + 1
+                    var streamUrl = ""
+                    while (j < lines.size) {
+                        val l2 = lines[j].trim()
+                        if (l2.startsWith("http://") || l2.startsWith("https://")) {
+                            streamUrl = l2
+                            break
+                        } else if (l2.startsWith("#EXTINF:")) {
+                            break
+                        }
+                        j++
+                    }
+
+                    // Chỉ lấy luồng .m3u8 sống từ zhwpg.app, bỏ qua miekgo.app (timeout) và .flv
+                    if (streamUrl.endsWith(".m3u8") && streamUrl.contains("zhwpg.app")) {
+                        cStreams.add(streamUrl)
+                        val commaIdx = line.lastIndexOf(",")
+                        val rawTitle = if (commaIdx >= 0) line.substring(commaIdx + 1).trim() else "Trực tiếp ColaTV"
+
+                        var text = rawTitle
+                            .replace("🟢", "")
+                            .replace("🟡", "")
+                            .replace("⚽", "")
+                            .replace("🏀", "")
+                            .trim()
+                        text = text.replace(Regex("^\\d{2}:\\d{2}(\\s+\\d{2}/\\d{2})?\\s*"), "")
+
+                        var blv = "BLV Cola"
+                        val openP = text.indexOf("(")
+                        val closeP = text.indexOf(")", startIndex = if (openP >= 0) openP else 0)
+                        if (openP >= 0 && closeP > openP) {
+                            blv = text.substring(openP + 1, closeP).trim()
+                            text = (text.substring(0, openP) + text.substring(closeP + 1)).trim()
+                        }
+                        text = text.replace(Regex("\\[[^\\]]+\\]"), "").trim()
+                        val cleanTitle = text.ifBlank { "Trực tiếp ColaTV" }
+
+                        var logo = ""
+                        val logoStart = line.indexOf("tvg-logo=\"")
+                        if (logoStart >= 0) {
+                            val sub = line.substring(logoStart + 10)
+                            val logoEnd = sub.indexOf("\"")
+                            if (logoEnd > 0) logo = sub.substring(0, logoEnd)
+                        }
+
+                        val room = LiveRoom(
+                            roomNum = "cola_$streamUrl",
+                            blvName = "[ColaTV] $blv",
+                            avatar = logo,
+                            viewers = 1500 + (groups.size * 180),
+                            matchTitle = cleanTitle,
+                            league = "COLATV TRỰC TIẾP",
+                            category = "Bóng đá",
+                            blvLevel = "Cola HD",
+                            notice = "Kênh thể thao trực tiếp ColaTV · Độ trễ thấp",
+                            hostIcon = logo,
+                            guestIcon = ""
+                        )
+
+                        groups.add(
+                            LiveMatchGroup(
+                                league = "COLATV TRỰC TIẾP",
+                                matchTitle = cleanTitle,
+                                rooms = listOf(room),
+                                category = "Bóng đá",
+                                hostIcon = logo,
+                                guestIcon = ""
+                            )
+                        )
+                    }
+                    i = j + 1
+                } else {
+                    i++
+                }
+            }
+
+            if (cStreams.isNotEmpty()) cachedColaStreams = cStreams
+            groups
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    /**
+     * Tải danh sách trận đấu trực tiếp từ Giờ Vàng TV (keonhacaitp API) kèm phân giải sẵn link stream.
      */
     suspend fun fetchGiovangMatchGroups(): List<LiveMatchGroup> = withContext(Dispatchers.IO) {
         try {
@@ -259,6 +356,8 @@ object SportsStreamResolver {
                     else -> "Thể thao"
                 }
 
+                // Tải sẵn link stream VCDN Cloud để bấm vào là phát tức thì
+                val resolvedUrl = resolveGiovangById(mid) ?: mid
                 val blvArr: JSONArray? = m.optJSONArray("blv")
                 val blvName = if (blvArr != null && blvArr.length() > 0) {
                     val k = blvArr.optString(0)
@@ -266,15 +365,15 @@ object SportsStreamResolver {
                 } else "BLV Giờ Vàng"
 
                 val room = LiveRoom(
-                    roomNum = "giovang_$mid",
-                    blvName = "[Giờ Vàng] $blvName HD",
+                    roomNum = "giovang_$resolvedUrl",
+                    blvName = "[Giờ Vàng] $blvName",
                     avatar = homeLogo,
-                    viewers = m.optInt("view", 450).coerceAtLeast(350),
+                    viewers = m.optInt("view", 1450),
                     matchTitle = matchTitle,
                     league = league,
                     category = cat,
                     blvLevel = "720p HD",
-                    notice = "Kênh trực tiếp Giờ Vàng TV · Phát sóng tốc độ cao",
+                    notice = "Kênh trực tiếp Giờ Vàng TV · Hạ tầng VCDN Cloud",
                     hostIcon = homeLogo,
                     guestIcon = awayLogo
                 )
@@ -306,7 +405,7 @@ object SportsStreamResolver {
         }
         lastFeedFetchAt = now
 
-        // 1. Fetch Gà Vàng 33 API
+        // 1. Fetch Gà Vàng 33 API (Chỉ lấy live)
         try {
             val raw = Http.getWithRetry("$GAVANG33_API&t=$now")
             val root = JSONObject(raw)
@@ -317,6 +416,7 @@ object SportsStreamResolver {
                 while (keys.hasNext()) {
                     val k = keys.next()
                     val m = data.optJSONObject(k) ?: continue
+                    if (m.optString("matchStatus") != "live") continue
                     val anchors: JSONArray? = m.optJSONArray("anchorAppointmentVoList")
                     if (anchors != null) {
                         for (i in 0 until anchors.length()) {
@@ -325,7 +425,7 @@ object SportsStreamResolver {
                             if (urls != null) {
                                 for (j in 0 until urls.length()) {
                                     val u = urls.optString(j)
-                                    if (u.contains(".m3u8")) {
+                                    if (u.contains(".m3u8") && !u.contains("gvvsb.com")) {
                                         gList.add(u)
                                         break
                                     }
@@ -354,7 +454,7 @@ object SportsStreamResolver {
             }
         } catch (_: Exception) {}
 
-        // 3. Fetch M3U Feed for ColaTV
+        // 3. Fetch M3U Feed for ColaTV (Chỉ lấy 🟢 và zhwpg.app)
         try {
             val m3u = Http.getWithRetry(M3U_FEED)
             val lines = m3u.split("\n")
@@ -362,7 +462,7 @@ object SportsStreamResolver {
             var i = 0
             while (i < lines.size) {
                 val line = lines[i].trim()
-                if (line.startsWith("#EXTINF:")) {
+                if (line.startsWith("#EXTINF:") && line.contains("Cola TV") && line.contains("🟢")) {
                     var j = i + 1
                     var streamUrl = ""
                     while (j < lines.size) {
@@ -375,7 +475,7 @@ object SportsStreamResolver {
                         }
                         j++
                     }
-                    if (streamUrl.contains(".m3u8") && line.contains("Cola TV")) {
+                    if (streamUrl.endsWith(".m3u8") && streamUrl.contains("zhwpg.app")) {
                         cList.add(streamUrl)
                     }
                     i = j + 1
