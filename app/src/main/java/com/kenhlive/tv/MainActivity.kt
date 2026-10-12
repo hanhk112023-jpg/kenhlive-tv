@@ -28,13 +28,17 @@ import kotlinx.coroutines.launch
  */
 class MainActivity : AppCompatActivity() {
 
+    companion object {
+        const val TAB_HUB = 6
+    }
+
     private val vm: LiveViewModel by viewModels()
-    private var current = 0
+    private var current = TAB_HUB
     private val navViews = mutableListOf<View>()
     private var railPanel: View? = null
 
-    // 0: Live, 1: Schedule, 2: IPTV, 3: Search, 4: Settings, 5: Phim
-    private val tabTags = arrayOf("tab_live", "tab_schedule", "tab_iptv", "tab_search", "tab_settings", "tab_phim")
+    // 0: Live, 1: Schedule, 2: IPTV, 3: Search, 4: Settings, 5: Phim, 6: Home Hub
+    private val tabTags = arrayOf("tab_live", "tab_schedule", "tab_iptv", "tab_search", "tab_settings", "tab_phim", "tab_hub")
     private val navIdToTab = mutableMapOf<Int, Int>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,18 +53,22 @@ class MainActivity : AppCompatActivity() {
 
         setupNav()
 
-        // deep-link: --ei tab N mở thẳng tab N (0 Live / 1 Lịch / 2 IPTV / 3 Tìm / 4 Cài đặt / 5 Phim)
+        // deep-link: --ei tab N mở thẳng tab N (0 Live / 1 Lịch / 2 IPTV / 3 Tìm / 4 Cài đặt / 5 Phim / 6 Hub)
+        // Mặc định khi khởi động sẽ mở Cổng Chọn 3 Mục (TAB_HUB = 6)
         val tabX = intent?.getIntExtra("tab", -1) ?: -1
-        showTab(if (tabX in 0..5) tabX else 0, animate = false)
+        showTab(if (tabX in 0..6) tabX else TAB_HUB, animate = false)
 
-        // BACK: Nếu sidebar đang mở → đóng sidebar; tab khác → về Live trước; tab Live → dialog xác nhận thoát
+        // BACK: Nếu sidebar đang mở → đóng sidebar; đang ở mục con → về Cổng Chọn (TAB_HUB); ở Cổng Chọn → dialog xác nhận thoát
         onBackPressedDispatcher.addCallback(this) {
             if (DeviceMode.isTv && railPanel != null && railPanel?.visibility == View.VISIBLE && railPanel?.translationX == 0f) {
                 hideRail()
                 focusContentFirst()
                 return@addCallback
             }
-            if (current != 0) { showTab(0); return@addCallback }
+            if (current != TAB_HUB) {
+                showTab(TAB_HUB)
+                return@addCallback
+            }
             val d = AlertDialog.Builder(this@MainActivity, R.style.Theme_KenhLive_Dialog)
                 .setTitle(R.string.dialog_exit_title)
                 .setPositiveButton(R.string.dialog_exit_yes) { _, _ -> finishAffinity() }
@@ -179,6 +187,7 @@ class MainActivity : AppCompatActivity() {
         if (cur != null && cur.isShown && isDescendant(activeView, cur)) return
 
         // 1. Nếu fragment hiện tại hỗ trợ khôi phục focus chuyên biệt:
+        if (activeFragment is HomeHubFragment && activeFragment.ensureHubFocus()) return
         if (activeFragment is ScheduleFragment && activeFragment.focusFirstMatch()) return
         if (activeFragment is com.kenhlive.tv.iptv.IptvFragment && activeFragment.ensureIptvFocus()) return
         if (activeFragment is com.kenhlive.tv.phim.PhimFragment && activeFragment.ensurePhimFocus()) return
@@ -334,7 +343,7 @@ class MainActivity : AppCompatActivity() {
             val insideRail = railPanel?.let { isDescendant(it, f) } == true
             when (event.keyCode) {
                 android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
-                    if (f != null && !insideRail && atLeftEdge(f)) {
+                    if (current != TAB_HUB && f != null && !insideRail && atLeftEdge(f)) {
                         showRail()
                         val activeNav = navViews.firstOrNull { navIdToTab[it.id] == current }
                         activeNav?.requestFocus() ?: navViews.firstOrNull()?.requestFocus()
@@ -364,15 +373,24 @@ class MainActivity : AppCompatActivity() {
         return super.dispatchKeyEvent(event)
     }
 
+    fun openSection(tabIdx: Int) {
+        showTab(tabIdx, animate = true)
+    }
+
     fun showTab(pos: Int, animate: Boolean = true, keepRailOpen: Boolean = false) {
         hideKeyboard()
         current = pos
         com.kenhlive.tv.ui.RoomPickerDialog.dismissActive()
+        if (pos == TAB_HUB) {
+            hideRail(immediate = true)
+        }
+        findViewById<View>(R.id.topBar)?.visibility = if (pos == TAB_HUB) View.GONE else View.VISIBLE
+        findViewById<View>(R.id.bottomNav)?.visibility = if (pos == TAB_HUB) View.GONE else View.VISIBLE
         navViews.forEach { v ->
             val target = navIdToTab[v.id] ?: -1
             v.isSelected = (target == pos)
         }
-        if (DeviceMode.isTv && keepRailOpen) {
+        if (DeviceMode.isTv && keepRailOpen && pos != TAB_HUB) {
             // Khi chuyển tab: đồng bộ tiêu điểm trên rail vào đúng icon tab đang chọn
             val activeNav = navViews.firstOrNull { navIdToTab[it.id] == pos }
             if (railPanel?.let { isDescendant(it, currentFocus) } == true) {
@@ -392,7 +410,8 @@ class MainActivity : AppCompatActivity() {
                         3 -> SearchFragment()
                         4 -> SettingsFragment()
                         5 -> PhimFragment()
-                        else -> LiveFragment()
+                        6 -> HomeHubFragment()
+                        else -> HomeHubFragment()
                     }
                     tx.add(R.id.fragmentContainer, f, tag)
                 } else {
@@ -476,6 +495,7 @@ class MainActivity : AppCompatActivity() {
                 "search" -> showTab(3, animate = false)
                 "settings" -> showTab(4, animate = false)
                 "phim" -> showTab(5, animate = false)
+                "hub" -> showTab(TAB_HUB, animate = false)
                 "player" -> lifecycleScope.launch { openPlayer(pip = false) }
                 else -> {}
             }
@@ -504,7 +524,7 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         val tabX = intent.getIntExtra("tab", -1)
-        if (tabX in 0..5) showTab(tabX, animate = false)
+        if (tabX in 0..6) showTab(tabX, animate = false)
         handleDebugIntent(intent)
     }
 }

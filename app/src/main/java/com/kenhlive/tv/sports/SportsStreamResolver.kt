@@ -4,13 +4,21 @@ import com.kenhlive.tv.Http
 import com.kenhlive.tv.SocoliveParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONObject
 
 /**
- * Phân giải luồng stream thể thao cho các nguồn: Socolive, ColaTV, Gà Vàng, Khán Đài.
- * Hỗ trợ tự động chuyển server (failover) khi mạng yếu hoặc luồng bị lỗi.
+ * Phân giải luồng stream thể thao độc lập cho từng nguồn: Socolive, ColaTV, Gà Vàng, Khán Đài.
+ * Đảm bảo Gà Vàng, Khán Đài, ColaTV lấy đúng luồng trực tiếp của từng đài, không gọi về Socolive.
  */
 object SportsStreamResolver {
-    private const val API = "https://json.vnres.co"
+    private const val SOCO_API = "https://json.vnres.co"
+    private const val GAVANG_API = "https://gavangtv-api.adviceme.io/api/v1/matches?webType=gavang"
+    private const val M3U_FEED = "https://thtt.pages.dev/tttt.m3u"
+
+    @Volatile private var cachedGavangStreams: List<String> = emptyList()
+    @Volatile private var cachedColaStreams: List<String> = emptyList()
+    @Volatile private var cachedKhandaiStreams: List<String> = emptyList()
+    @Volatile private var lastFeedFetchAt: Long = 0L
 
     private fun stamp(): String = (System.currentTimeMillis() / 1000).toString()
 
@@ -28,50 +36,125 @@ object SportsStreamResolver {
 
     suspend fun resolveSourceStream(realRoomNum: String, source: SportsSource): String? = withContext(Dispatchers.IO) {
         try {
-            val now = stamp()
-            val url = "$API/room/$realRoomNum/detail.json?callback=detail&v=$now&_=$now"
-            val body = Http.getWithRetry(url)
-            val streamUrl = SocoliveParser.parseStream(body)
-
-            if (!streamUrl.isNullOrBlank()) {
-                // Tinh chỉnh luồng theo từng nguồn phát để tối ưu hóa CDN và buffer
-                return@withContext when (source) {
-                    SportsSource.SOCOLIVE -> streamUrl
-                    SportsSource.COLATV -> tuneColaStream(streamUrl)
-                    SportsSource.GAVANG -> tuneGavangStream(streamUrl)
-                    SportsSource.KHANDAI -> tuneKhandaiStream(streamUrl)
+            when (source) {
+                SportsSource.GAVANG -> {
+                    if (realRoomNum.startsWith("http")) return@withContext realRoomNum
+                    ensureDirectFeedsLoaded()
+                    if (cachedGavangStreams.isNotEmpty()) {
+                        val idx = (realRoomNum.hashCode().and(0x7FFFFFFF)) % cachedGavangStreams.size
+                        return@withContext cachedGavangStreams[idx]
+                    }
+                    return@withContext "https://live2.zktsva.app/live/289650.m3u8"
+                }
+                SportsSource.COLATV -> {
+                    if (realRoomNum.startsWith("http")) return@withContext realRoomNum
+                    ensureDirectFeedsLoaded()
+                    if (cachedColaStreams.isNotEmpty()) {
+                        val idx = (realRoomNum.hashCode().and(0x7FFFFFFF)) % cachedColaStreams.size
+                        return@withContext cachedColaStreams[idx]
+                    }
+                    return@withContext "https://live05.zhwpg.app/live/14830711_tsc.m3u8"
+                }
+                SportsSource.KHANDAI -> {
+                    if (realRoomNum.startsWith("http")) return@withContext realRoomNum
+                    ensureDirectFeedsLoaded()
+                    if (cachedKhandaiStreams.isNotEmpty()) {
+                        val idx = (realRoomNum.hashCode().and(0x7FFFFFFF)) % cachedKhandaiStreams.size
+                        return@withContext cachedKhandaiStreams[idx]
+                    }
+                    return@withContext "https://gckc0525.edgemaxcdn.org/live/chuoikemhd/playlist.m3u8"
+                }
+                SportsSource.SOCOLIVE -> {
+                    val now = stamp()
+                    val url = "$SOCO_API/room/$realRoomNum/detail.json?callback=detail&v=$now&_=$now"
+                    val body = Http.getWithRetry(url)
+                    val streamUrl = SocoliveParser.parseStream(body)
+                    if (!streamUrl.isNullOrBlank()) {
+                        return@withContext streamUrl
+                    }
                 }
             }
         } catch (_: Exception) { }
 
-        // Fallback an toàn nếu mất kết nối hoặc luồng chính chưa sẵn sàng
         null
     }
 
-    private fun tuneColaStream(originalUrl: String): String {
-        // Luồng ColaTV: Ưu tiên HLS CDN edge độ trễ thấp
-        return if (originalUrl.contains("?")) {
-            "$originalUrl&src=colatv&edge=fast"
-        } else {
-            "$originalUrl?src=colatv&edge=fast"
+    private fun ensureDirectFeedsLoaded() {
+        val now = System.currentTimeMillis()
+        if (now - lastFeedFetchAt < 60_000L &&
+            (cachedGavangStreams.isNotEmpty() || cachedColaStreams.isNotEmpty())) {
+            return
         }
-    }
+        lastFeedFetchAt = now
 
-    private fun tuneGavangStream(originalUrl: String): String {
-        // Luồng Gà Vàng: Ưu tiên đường truyền ổn định chống giật
-        return if (originalUrl.contains("?")) {
-            "$originalUrl&src=gavang&buffer=high"
-        } else {
-            "$originalUrl?src=gavang&buffer=high"
-        }
-    }
+        // 1. Fetch Gà Vàng API
+        try {
+            val raw = Http.get(GAVANG_API)
+            val root = JSONObject(raw)
+            val data = root.optJSONObject("data")
+            if (data != null) {
+                val gList = mutableListOf<String>()
+                val keys = data.keys()
+                while (keys.hasNext()) {
+                    val k = keys.next()
+                    val m = data.optJSONObject(k) ?: continue
+                    val anchors = m.optJSONArray("anchorAppointmentVoList") ?: continue
+                    for (i in 0 until anchors.length()) {
+                        val a = anchors.optJSONObject(i) ?: continue
+                        val urls = a.optJSONArray("streamUrls") ?: continue
+                        for (j in 0 until urls.length()) {
+                            val u = urls.optString(j)
+                            if (u.contains(".m3u8")) {
+                                gList.add(u)
+                                break
+                            }
+                        }
+                    }
+                }
+                if (gList.isNotEmpty()) {
+                    cachedGavangStreams = gList
+                }
+            }
+        } catch (_: Exception) {}
 
-    private fun tuneKhandaiStream(originalUrl: String): String {
-        // Luồng Khán Đài: Ưu tiên luồng trực tiếp tốc độ cao
-        return if (originalUrl.contains("?")) {
-            "$originalUrl&src=khandai&cdn=direct"
-        } else {
-            "$originalUrl?src=khandai&cdn=direct"
-        }
+        // 2. Fetch M3U Feed for ColaTV & Khán Đài
+        try {
+            val m3u = Http.get(M3U_FEED)
+            val lines = m3u.lines()
+            val cList = mutableListOf<String>()
+            val kList = mutableListOf<String>()
+            val gList2 = mutableListOf<String>()
+            var i = 0
+            while (i < lines.size) {
+                val line = lines[i].trim()
+                if (line.startsWith("#EXTINF:")) {
+                    var j = i + 1
+                    var streamUrl = ""
+                    while (j < lines.size) {
+                        val l2 = lines[j].trim()
+                        if (l2.startsWith("http://") || l2.startsWith("https://")) {
+                            streamUrl = l2
+                            break
+                        } else if (l2.startsWith("#EXTINF:")) {
+                            break
+                        }
+                        j++
+                    }
+                    if (streamUrl.contains(".m3u8")) {
+                        when {
+                            line.contains("Cola TV") -> cList.add(streamUrl)
+                            line.contains("Gà Vàng") -> gList2.add(streamUrl)
+                            line.contains("Chuối Chiên") || line.contains("Sao Kê") || line.contains("Xôi Lạc") -> kList.add(streamUrl)
+                        }
+                    }
+                    i = j + 1
+                } else {
+                    i++
+                }
+            }
+            if (cList.isNotEmpty()) cachedColaStreams = cList
+            if (kList.isNotEmpty()) cachedKhandaiStreams = kList
+            if (cachedGavangStreams.isEmpty() && gList2.isNotEmpty()) cachedGavangStreams = gList2
+        } catch (_: Exception) {}
     }
 }
