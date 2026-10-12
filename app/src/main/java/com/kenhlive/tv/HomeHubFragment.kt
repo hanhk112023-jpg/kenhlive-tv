@@ -43,6 +43,7 @@ class HomeHubFragment : Fragment() {
         val cardPhim = view.findViewById<View>(R.id.cardPhim)
 
         val btnSettings = view.findViewById<View>(R.id.btnHubSettings)
+        val btnFeedback = view.findViewById<View>(R.id.btnHubFeedback)
         val btnMultiview = view.findViewById<View>(R.id.btnHubMultiview)
         val btnSchedule = view.findViewById<View>(R.id.btnHubSchedule)
         val btnSearch = view.findViewById<View>(R.id.btnHubSearch)
@@ -86,9 +87,10 @@ class HomeHubFragment : Fragment() {
             }
         }
 
-        // Setup utility row buttons (Tab 4 Settings + Quick Tools)
+        // Setup utility row buttons (Tab 4 Settings, Feedback & Quick Tools)
         val bottomButtons = listOf(
             btnSettings to { (activity as? MainActivity)?.openSection(4) },
+            btnFeedback to { com.kenhlive.tv.ui.FeedbackDialog.show(requireContext()) },
             btnMultiview to {
                 startActivity(Intent(requireContext(), MultiViewActivity::class.java))
             },
@@ -144,6 +146,17 @@ class HomeHubFragment : Fragment() {
         // Initial focus on Sports Card
         view.post {
             ensureHubFocus()
+        }
+
+        // Tự động hiện bảng thông báo v7.4.0 (1 lần đầu) nếu mở app bình thường
+        val act = activity
+        val hasIntentExtra = (act?.intent?.getIntExtra("tab", -1) ?: -1) != -1 || act?.intent?.getStringExtra("open") != null
+        if (!hasIntentExtra) {
+            view.postDelayed({
+                if (isAdded && !isDetached) {
+                    com.kenhlive.tv.ui.FeedbackDialog.showIfNeeded(requireContext())
+                }
+            }, 1000L)
         }
     }
 

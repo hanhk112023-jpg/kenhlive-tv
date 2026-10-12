@@ -428,8 +428,37 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="8dp"
-                android:text="CÀI ĐẶT HỆ THỐNG"
+                android:text="CÀI ĐẶT"
                 android:textColor="@color/white"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/btnHubFeedback"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginLeft="12dp"
+            android:background="@drawable/bg_hub_pill_btn"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:focusable="true"
+            android:clickable="true">
+
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:src="@drawable/ic_telegram"
+                android:contentDescription="Báo lỗi Telegram" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="8dp"
+                android:text="BÁO LỖI TELEGRAM"
+                android:textColor="@color/kl_brand"
                 android:textSize="12sp"
                 android:textStyle="bold" />
         </LinearLayout>
