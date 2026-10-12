@@ -755,6 +755,7 @@ class PhimFragment : Fragment() {
         val btnEpisodes: Button = v.findViewById(R.id.btnHeroEpisodes)
         val btnFavorite: Button = v.findViewById(R.id.btnHeroFavorite)
         val btnNext: Button? = v.findViewById(R.id.btnHeroNext)
+        val btnBackHome: View? = v.findViewById(R.id.btnHeroBackHome)
 
         fun bind(
             film: NguoncFilm,
@@ -765,6 +766,10 @@ class PhimFragment : Fragment() {
             onFavoriteToggle: (NguoncFilm) -> Unit,
             onHeroNext: () -> Unit
         ) {
+            btnBackHome?.setOnClickListener {
+                (itemView.context as? MainActivity)?.openSection(MainActivity.TAB_HUB)
+            }
+            btnBackHome?.let { setupFocusAnimation(it) }
             title.text = film.name
             year.text = film.year.ifBlank { "2026" }
             quality.text = "${film.quality.ifBlank { "FHD" }} · ${film.language.ifBlank { "Vietsub" }}"
@@ -810,10 +815,7 @@ class PhimFragment : Fragment() {
 
             (itemView.context as? androidx.appcompat.app.AppCompatActivity)?.lifecycleScope?.launch {
                 val isFav = withContext(Dispatchers.IO) { WatchHistoryManager.isFavorite(film.slug) }
-                btnFavorite.text = if (isFav) "ĐÃ LƯU" else "LƯU PHIM"
-                btnFavorite.setCompoundDrawablesWithIntrinsicBounds(
-                    if (isFav) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark, 0, 0, 0
-                )
+                btnFavorite.text = if (isFav) "✓  ĐÃ LƯU" else "+  LƯU PHIM"
             }
 
             btnPlay.setOnClickListener { onHeroPlay(film) }
@@ -849,6 +851,8 @@ class PhimFragment : Fragment() {
             title.text = section.title
             count.text = "${section.films.size} phim"
 
+            carousel.clipChildren = false
+            carousel.clipToPadding = false
             carousel.layoutManager = LinearLayoutManager(itemView.context, LinearLayoutManager.HORIZONTAL, false)
             carousel.adapter = PhimCardAdapter(section.films, onFilmClick, onFavoriteToggle)
         }
@@ -916,11 +920,12 @@ class PhimFragment : Fragment() {
                 true
             }
 
-            // TV focus dynamics
+            // TV focus dynamics (Netflix Zoom Effect)
             holder.itemView.setOnFocusChangeListener { v, hasFocus ->
-                v.animate().scaleX(if (hasFocus) 1.05f else 1f).scaleY(if (hasFocus) 1.05f else 1f)
+                v.animate().cancel()
+                v.animate().scaleX(if (hasFocus) 1.075f else 1f).scaleY(if (hasFocus) 1.075f else 1f)
                     .setDuration(140).start()
-                v.elevation = if (hasFocus) 10f else 0f
+                v.elevation = if (hasFocus) 14f else 0f
             }
         }
 

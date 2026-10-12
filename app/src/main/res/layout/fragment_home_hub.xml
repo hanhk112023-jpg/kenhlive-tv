@@ -6,10 +6,12 @@
     android:orientation="vertical"
     android:background="@color/kl_bg_deep"
     android:descendantFocusability="afterDescendants"
-    android:paddingLeft="36dp"
-    android:paddingRight="36dp"
-    android:paddingTop="24dp"
-    android:paddingBottom="24dp">
+    android:clipChildren="false"
+    android:clipToPadding="false"
+    android:paddingLeft="44dp"
+    android:paddingRight="44dp"
+    android:paddingTop="20dp"
+    android:paddingBottom="20dp">
 
     <!-- 1. TOP HEADER BRAND & CLOCK -->
     <LinearLayout
@@ -93,6 +95,10 @@
         android:layout_weight="1"
         android:orientation="horizontal"
         android:gravity="center_vertical"
+        android:clipChildren="false"
+        android:clipToPadding="false"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
         android:baselineAligned="false">
 
         <!-- CARD 1: THỂ THAO -->
