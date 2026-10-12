@@ -4,6 +4,7 @@ import com.kenhlive.tv.Http
 import com.kenhlive.tv.SocoliveParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.json.JSONArray
 import org.json.JSONObject
 
 /**
@@ -89,7 +90,7 @@ object SportsStreamResolver {
 
         // 1. Fetch Gà Vàng API
         try {
-            val raw = Http.get(GAVANG_API)
+            val raw = Http.getWithRetry(GAVANG_API)
             val root = JSONObject(raw)
             val data = root.optJSONObject("data")
             if (data != null) {
@@ -98,15 +99,19 @@ object SportsStreamResolver {
                 while (keys.hasNext()) {
                     val k = keys.next()
                     val m = data.optJSONObject(k) ?: continue
-                    val anchors = m.optJSONArray("anchorAppointmentVoList") ?: continue
-                    for (i in 0 until anchors.length()) {
-                        val a = anchors.optJSONObject(i) ?: continue
-                        val urls = a.optJSONArray("streamUrls") ?: continue
-                        for (j in 0 until urls.length()) {
-                            val u = urls.optString(j)
-                            if (u.contains(".m3u8")) {
-                                gList.add(u)
-                                break
+                    val anchors: JSONArray? = m.optJSONArray("anchorAppointmentVoList")
+                    if (anchors != null) {
+                        for (i in 0 until anchors.length()) {
+                            val a: JSONObject? = anchors.optJSONObject(i) ?: continue
+                            val urls: JSONArray? = a?.optJSONArray("streamUrls") ?: continue
+                            if (urls != null) {
+                                for (j in 0 until urls.length()) {
+                                    val u = urls.optString(j)
+                                    if (u.contains(".m3u8")) {
+                                        gList.add(u)
+                                        break
+                                    }
+                                }
                             }
                         }
                     }
@@ -119,8 +124,8 @@ object SportsStreamResolver {
 
         // 2. Fetch M3U Feed for ColaTV & Khán Đài
         try {
-            val m3u = Http.get(M3U_FEED)
-            val lines = m3u.lines()
+            val m3u = Http.getWithRetry(M3U_FEED)
+            val lines = m3u.split("\n")
             val cList = mutableListOf<String>()
             val kList = mutableListOf<String>()
             val gList2 = mutableListOf<String>()
