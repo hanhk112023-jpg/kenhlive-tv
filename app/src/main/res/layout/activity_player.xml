@@ -288,7 +288,8 @@
                 android:layout_height="44dp"
                 android:layout_marginLeft="10dp"
                 android:src="@drawable/ic_multiview"
-                android:contentDescription="@string/nav_multiview" />
+                android:contentDescription="@string/nav_multiview"
+                android:visibility="gone" />
 
             <ImageButton
                 android:id="@+id/pipBtn"

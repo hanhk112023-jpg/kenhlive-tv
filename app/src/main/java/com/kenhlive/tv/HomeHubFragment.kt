@@ -88,12 +88,10 @@ class HomeHubFragment : Fragment() {
         }
 
         // Setup utility row buttons (Tab 4 Settings, Feedback & Quick Tools)
+        btnMultiview?.visibility = View.GONE
         val bottomButtons = listOf(
             btnSettings to { (activity as? MainActivity)?.openSection(4) },
             btnFeedback to { com.kenhlive.tv.ui.FeedbackDialog.show(requireContext()) },
-            btnMultiview to {
-                startActivity(Intent(requireContext(), MultiViewActivity::class.java))
-            },
             btnSchedule to { (activity as? MainActivity)?.openSection(1) },
             btnSearch to { (activity as? MainActivity)?.openSection(3) }
         )

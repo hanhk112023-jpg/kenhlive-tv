@@ -1,9 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Logo KenhLive v6: phang 1 y — vong phat song (2 cung) + play xan -->
+<!-- Logo KenhLive TV: Canva Neon Cyan + Crimson Red Play Symbol -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="48dp" android:height="48dp"
-    android:viewportWidth="48" android:viewportHeight="48">
-    <path android:pathData="M14.2,9.4 a17,17 0 0 1 0,29.2" android:strokeColor="#FF6500" android:strokeWidth="3" android:strokeLineCap="round" android:fillColor="#00000000"/>
-    <path android:pathData="M33.8,9.4 a17,17 0 0 0 0,29.2" android:strokeColor="#FF6500" android:strokeWidth="3" android:strokeLineCap="round" android:fillColor="#00000000"/>
-    <path android:pathData="M19,17 L34,24 L19,31 Z" android:fillColor="#FF6500"/>
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <!-- Vòng phát sóng mềm phía sau -->
+    <path
+        android:pathData="M13,10 A16,16 0 0,0 13,38"
+        android:strokeColor="#00E5FF"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <path
+        android:pathData="M35,10 A16,16 0 0,1 35,38"
+        android:strokeColor="#E50914"
+        android:strokeWidth="2.5"
+        android:strokeLineCap="round"
+        android:fillColor="#00000000" />
+    <!-- Biểu tượng Play tam giác Neon hai màu -->
+    <path
+        android:pathData="M18,15 L28,21.5 L28,26.5 L18,33 Z"
+        android:fillColor="#00E5FF" />
+    <path
+        android:pathData="M28,21.5 L34,24 L28,26.5 Z"
+        android:fillColor="#E50914" />
 </vector>

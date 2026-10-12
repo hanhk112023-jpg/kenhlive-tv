@@ -68,7 +68,10 @@ class PhimFragment : Fragment() {
         "phim-moi" to "Mới Cập Nhật",
         "phim-bo" to "Phim Bộ",
         "phim-le" to "Phim Lẻ",
-        "hoat-hinh" to "Hoạt Hình & Anime",
+        "hoat-hinh" to "Anime & Hoạt Hình",
+        "han-quoc" to "Hàn Quốc",
+        "trung-quoc" to "Trung Quốc",
+        "au-my" to "Âu Mỹ Bom Tấn",
         "hanh-dong" to "Hành Động",
         "tinh-cam" to "Tình Cảm",
         "co-trang" to "Cổ Trang",
@@ -281,7 +284,7 @@ class PhimFragment : Fragment() {
             addView(et)
         }
         AlertDialog.Builder(ctx, R.style.Theme_KenhLive_Dialog)
-            .setTitle("Tìm Kiếm Phim Nguồn C")
+            .setTitle("Tìm Kiếm Kho Phim 4K")
             .setView(container)
             .setPositiveButton("Tìm kiếm") { _, _ ->
                 val kw = et.text.toString().trim()
@@ -426,20 +429,26 @@ class PhimFragment : Fragment() {
                 // NẠP ĐỒNG THỜI TOÀN BỘ CÁC DANH MỤC CÙNG LÚC (Full Parallel Loading)
                 val sectionsData = withContext(Dispatchers.IO) {
                     coroutineScope {
-                        val defNew = async { NguoncRepository.fetchFilmsBatch("phim-moi", pages = 1..8, context = requireContext()) }
-                        val defBo = async { NguoncRepository.fetchFilmsBatch("phim-bo", pages = 1..8, context = requireContext()) }
-                        val defLe = async { NguoncRepository.fetchFilmsBatch("phim-le", pages = 1..8, context = requireContext()) }
-                        val defAnime = async { NguoncRepository.fetchFilmsBatch("hoat-hinh", pages = 1..8, context = requireContext()) }
-                        val defAction = async { NguoncRepository.fetchFilmsBatch("hanh-dong", pages = 1..6, isCategory = true, context = requireContext()) }
-                        val defRomance = async { NguoncRepository.fetchFilmsBatch("tinh-cam", pages = 1..6, isCategory = true, context = requireContext()) }
-                        val defHistorical = async { NguoncRepository.fetchFilmsBatch("co-trang", pages = 1..6, isCategory = true, context = requireContext()) }
-                        val defHorror = async { NguoncRepository.fetchFilmsBatch("kinh-di", pages = 1..6, isCategory = true, context = requireContext()) }
+                        val defNew = async { NguoncRepository.fetchFilmsBatch("phim-moi", pages = 1..5, context = requireContext()) }
+                        val defBo = async { NguoncRepository.fetchFilmsBatch("phim-bo", pages = 1..5, context = requireContext()) }
+                        val defLe = async { NguoncRepository.fetchFilmsBatch("phim-le", pages = 1..5, context = requireContext()) }
+                        val defAnime = async { NguoncRepository.fetchFilmsBatch("hoat-hinh", pages = 1..5, context = requireContext()) }
+                        val defKorea = async { NguoncRepository.fetchFilmsByCountry("han-quoc", page = 1, context = requireContext()) }
+                        val defChina = async { NguoncRepository.fetchFilmsByCountry("trung-quoc", page = 1, context = requireContext()) }
+                        val defWestern = async { NguoncRepository.fetchFilmsByCountry("au-my", page = 1, context = requireContext()) }
+                        val defAction = async { NguoncRepository.fetchFilmsBatch("hanh-dong", pages = 1..4, isCategory = true, context = requireContext()) }
+                        val defRomance = async { NguoncRepository.fetchFilmsBatch("tinh-cam", pages = 1..4, isCategory = true, context = requireContext()) }
+                        val defHistorical = async { NguoncRepository.fetchFilmsBatch("co-trang", pages = 1..4, isCategory = true, context = requireContext()) }
+                        val defHorror = async { NguoncRepository.fetchFilmsBatch("kinh-di", pages = 1..4, isCategory = true, context = requireContext()) }
 
                         listOf(
-                            "PHIM MỚI CẬP NHẬT" to defNew.await(),
-                            "PHIM BỘ CHỌN LỌC" to defBo.await(),
-                            "PHIM LẺ ĐẶC SẮC" to defLe.await(),
+                            "PHIM MỚI CẬP NHẬT (HLS 4K)" to defNew.await(),
+                            "PHIM BỘ ĐẶC SẮC" to defBo.await(),
+                            "PHIM LẺ CHIẾU RẠP" to defLe.await(),
                             "HOẠT HÌNH & ANIME" to defAnime.await(),
+                            "PHIM HÀN QUỐC THỊNH HÀNH" to defKorea.await(),
+                            "PHIM TRUNG QUỐC HOT" to defChina.await(),
+                            "ĐIỆN ẢNH ÂU MỸ BOM TẤN" to defWestern.await(),
                             "HÀNH ĐỘNG KỊCH TÍNH" to defAction.await(),
                             "TÌNH CẢM LÃNG MẠN" to defRomance.await(),
                             "CỔ TRANG ĐẶC SẮC" to defHistorical.await(),
@@ -458,6 +467,20 @@ class PhimFragment : Fragment() {
                     if (list.isNotEmpty()) {
                         builtSections.add(PhimSection(title, list))
                     }
+                }
+            } else if (categorySlug in listOf("han-quoc", "trung-quoc", "au-my", "nhat-ban", "viet-nam", "thai-lan")) {
+                val films = withContext(Dispatchers.IO) {
+                    coroutineScope {
+                        (1..6).map { p -> async { NguoncRepository.fetchFilmsByCountry(categorySlug, p, requireContext()) } }
+                            .map { it.await() }.flatten().distinctBy { it.slug }
+                    }
+                }
+                featuredFilms = films.take(8)
+                currentHeroIdx = 0
+                heroFilm = featuredFilms.firstOrNull()
+                val catTitle = filterCategories.firstOrNull { it.first == categorySlug }?.second?.uppercase() ?: "PHIM QUỐC GIA"
+                if (films.isNotEmpty()) {
+                    builtSections.add(PhimSection(catTitle, films))
                 }
             } else {
                 // NẠP HÀNG LOẠT 10-15 TRANG CÙNG LÚC CHO DANH MỤC ĐƯỢC CHỌN (100-150 phim)
@@ -598,16 +621,35 @@ class PhimFragment : Fragment() {
     private fun playEpisode(film: NguoncFilm, episode: NguoncEpisodeItem, startPosMs: Long = 0L) {
         val ctx = context ?: return
         try {
-            val intent = Intent(ctx, WebPlayerActivity::class.java)
-                .putExtra("embed_url", episode.embed)
-                .putExtra("m3u8_url", episode.m3u8)
-                .putExtra("film_slug", film.slug)
-                .putExtra("film_title", film.name)
-                .putExtra("episode_slug", episode.slug)
-                .putExtra("episode_title", if (episode.name.all { it.isDigit() }) "Tập ${episode.name}" else episode.name)
-                .putExtra("poster_url", film.posterUrl.ifBlank { film.thumbUrl })
-                .putExtra("start_position_ms", startPosMs)
-            startActivity(intent)
+            val epTitle = if (episode.name.all { it.isDigit() }) "Tập ${episode.name}" else episode.name
+            val directM3u8 = when {
+                episode.m3u8.isNotBlank() -> episode.m3u8
+                episode.embed.contains(".m3u8", ignoreCase = true) -> episode.embed
+                else -> ""
+            }
+            if (directM3u8.isNotBlank()) {
+                val intent = Intent(ctx, com.kenhlive.tv.PlayerActivity::class.java)
+                    .putExtra("url", directM3u8)
+                    .putExtra("name", "${film.name} · $epTitle")
+                    .putExtra("film_slug", film.slug)
+                    .putExtra("film_title", film.name)
+                    .putExtra("episode_slug", episode.slug)
+                    .putExtra("episode_title", epTitle)
+                    .putExtra("poster_url", film.posterUrl.ifBlank { film.thumbUrl })
+                    .putExtra("start_position_ms", startPosMs)
+                startActivity(intent)
+            } else {
+                val intent = Intent(ctx, WebPlayerActivity::class.java)
+                    .putExtra("embed_url", episode.embed)
+                    .putExtra("m3u8_url", episode.m3u8)
+                    .putExtra("film_slug", film.slug)
+                    .putExtra("film_title", film.name)
+                    .putExtra("episode_slug", episode.slug)
+                    .putExtra("episode_title", epTitle)
+                    .putExtra("poster_url", film.posterUrl.ifBlank { film.thumbUrl })
+                    .putExtra("start_position_ms", startPosMs)
+                startActivity(intent)
+            }
             (activity as? MainActivity)?.hideKeyboard()
         } catch (t: Throwable) {
             android.util.Log.e("PhimFragment", "playEpisode error", t)

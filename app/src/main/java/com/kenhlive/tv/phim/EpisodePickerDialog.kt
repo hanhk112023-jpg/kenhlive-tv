@@ -1,6 +1,7 @@
 package com.kenhlive.tv.phim
 
 import android.content.Context
+import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -10,6 +11,7 @@ import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import com.kenhlive.tv.DeviceMode
@@ -20,11 +22,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /**
- * EpisodePickerDialog — Hộp thoại chọn tập phim Nguồn C chuẩn Android TV & Mobile:
- * - Hiển thị poster, thông tin phim, năm phát hành, chất lượng
- * - Tự động tải danh sách tập phim từ API hoặc Fallback cache
- * - Tích hợp xem tiếp: Nhận diện tập đang xem dở và đánh dấu các tập đã xem
- * - Lưới tập phim trực quan, điều hướng D-pad remote TV mượt mà
+ * EpisodePickerDialog Pro — Hộp thoại chọn Server & Tập phim chuẩn Android TV & Mobile:
+ * - Hỗ trợ đa server: Chuyển đổi mượt mà giữa Vietsub, Thuyết Minh, Lồng Tiếng.
+ * - Phân đoạn tập thông minh (Chunking): Chia cụm 30 tập (1-30, 31-60...) cho các bộ phim dài tập.
+ * - Hiển thị nhãn phát sóng HLS 4K Native, đánh dấu tập đang xem & tập đã xem.
+ * - Tối ưu điều hướng D-pad Remote TV: Server -> Cụm tập -> Lưới tập phim.
  */
 object EpisodePickerDialog {
 
@@ -54,6 +56,8 @@ object EpisodePickerDialog {
         val tvEpisodesCount = view.findViewById<TextView>(R.id.dialogFilmEpisodesCount)
         val tvDesc = view.findViewById<TextView>(R.id.dialogFilmDesc)
         val loading = view.findViewById<ProgressBar>(R.id.dialogLoading)
+        val rvServers = view.findViewById<RecyclerView>(R.id.dialogServersRow)
+        val rvChunks = view.findViewById<RecyclerView>(R.id.dialogChunksRow)
         val rvEpisodes = view.findViewById<RecyclerView>(R.id.dialogEpisodesGrid)
         val tvNoEpisodes = view.findViewById<TextView>(R.id.dialogNoEpisodes)
         val btnClose = view.findViewById<Button>(R.id.dialogBtnClose)
@@ -102,7 +106,7 @@ object EpisodePickerDialog {
         }
         tvDesc.text = film.description.ifBlank { "Không có mô tả chi tiết." }
 
-        val posterUrl = film.thumbUrl.ifBlank { film.posterUrl }
+        val posterUrl = film.posterUrl.ifBlank { film.thumbUrl }
         if (posterUrl.isNotBlank()) {
             ivPoster.load(posterUrl) {
                 crossfade(false)
@@ -122,8 +126,13 @@ object EpisodePickerDialog {
         val spanCount = if (DeviceMode.isTv) 5 else 3
         rvEpisodes.layoutManager = GridLayoutManager(context, spanCount)
 
+        rvServers.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+        rvChunks.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
+
         scope.launch {
             loading.visibility = View.VISIBLE
+            rvServers.visibility = View.GONE
+            rvChunks.visibility = View.GONE
             rvEpisodes.visibility = View.GONE
             tvNoEpisodes.visibility = View.GONE
 
@@ -135,57 +144,128 @@ object EpisodePickerDialog {
             }
 
             loading.visibility = View.GONE
-            val allEpisodes = detail?.episodes?.flatMap { it.items } ?: emptyList()
+            val serverList = detail?.episodes?.filter { it.items.isNotEmpty() } ?: emptyList()
 
-            if (allEpisodes.isNotEmpty()) {
-                val watchedSlugs = withContext(Dispatchers.IO) {
-                    allEpisodes.filter { ep ->
-                        WatchHistoryManager.isEpisodeWatched(film.slug, ep.slug)
-                    }.map { it.slug }.toSet()
+            if (serverList.isNotEmpty()) {
+                var selectedServerIndex = 0
+                // Nếu tập đang xem dở thuộc server nào, ưu tiên chọn server đó
+                progress?.episodeSlug?.let { curSlug ->
+                    val foundIdx = serverList.indexOfFirst { srv -> srv.items.any { it.slug == curSlug } }
+                    if (foundIdx >= 0) selectedServerIndex = foundIdx
                 }
 
-                rvEpisodes.visibility = View.VISIBLE
-                val adapter = EpisodeAdapter(
-                    items = allEpisodes,
-                    currentEpSlug = progress?.episodeSlug,
-                    watchedEpSlugs = watchedSlugs,
-                    onClick = { item ->
-                        dialog.dismiss()
-                        val startPos = if (item.slug == progress?.episodeSlug) progress.positionMs else 0L
-                        onSelectEpisode(film, item, startPos)
-                    },
-                    onBookmark = { item ->
+                fun renderChunksAndEpisodes() {
+                    val currentServer = serverList.getOrNull(selectedServerIndex) ?: return
+                    val serverItems = currentServer.items
+                    val chunkSize = 30
+                    val totalChunks = if (serverItems.size > chunkSize) (serverItems.size + chunkSize - 1) / chunkSize else 1
+
+                    var selectedChunkIndex = 0
+                    progress?.episodeSlug?.let { curSlug ->
+                        val epIdx = serverItems.indexOfFirst { it.slug == curSlug }
+                        if (epIdx >= 0) selectedChunkIndex = epIdx / chunkSize
+                    }
+
+                    fun updateEpisodesForChunk(chunkIdx: Int) {
+                        val start = chunkIdx * chunkSize
+                        val end = (start + chunkSize).coerceAtMost(serverItems.size)
+                        val chunkItems = serverItems.subList(start, end)
+
                         scope.launch {
-                            withContext(Dispatchers.IO) {
-                                WatchHistoryManager.saveProgress(
-                                    slug = film.slug,
-                                    filmName = film.name,
-                                    posterUrl = film.posterUrl.ifBlank { film.thumbUrl },
-                                    episodeName = item.name,
-                                    episodeSlug = item.slug,
-                                    embedUrl = item.embed,
-                                    positionMs = 1000L,
-                                    durationMs = 0L
-                                )
-                                if (!WatchHistoryManager.isFavorite(film.slug)) {
-                                    WatchHistoryManager.toggleFavorite(film, item.name, item.slug, item.embed)
+                            val watchedSlugs = withContext(Dispatchers.IO) {
+                                chunkItems.filter { ep ->
+                                    WatchHistoryManager.isEpisodeWatched(film.slug, ep.slug)
+                                }.map { it.slug }.toSet()
+                            }
+
+                            rvEpisodes.visibility = View.VISIBLE
+                            val adapter = EpisodeAdapter(
+                                items = chunkItems,
+                                currentEpSlug = progress?.episodeSlug,
+                                watchedEpSlugs = watchedSlugs,
+                                onClick = { item ->
+                                    dialog.dismiss()
+                                    val startPos = if (item.slug == progress?.episodeSlug) progress.positionMs else 0L
+                                    onSelectEpisode(film, item, startPos)
+                                },
+                                onBookmark = { item ->
+                                    scope.launch {
+                                        withContext(Dispatchers.IO) {
+                                            WatchHistoryManager.saveProgress(
+                                                slug = film.slug,
+                                                filmName = film.name,
+                                                posterUrl = film.posterUrl.ifBlank { film.thumbUrl },
+                                                episodeName = item.name,
+                                                episodeSlug = item.slug,
+                                                embedUrl = if (item.m3u8.isNotBlank()) item.m3u8 else item.embed,
+                                                positionMs = 1000L,
+                                                durationMs = 0L
+                                            )
+                                            if (!WatchHistoryManager.isFavorite(film.slug)) {
+                                                WatchHistoryManager.toggleFavorite(film, item.name, item.slug, item.embed)
+                                            }
+                                        }
+                                        withContext(Dispatchers.Main) {
+                                            btnFavorite.text = "Đã Lưu (${item.name})"
+                                            btnFavorite.setCompoundDrawablesWithIntrinsicBounds(
+                                                R.drawable.ic_bookmark_filled, 0, 0, 0
+                                            )
+                                            android.widget.Toast.makeText(
+                                                context,
+                                                "Đã lưu \"${film.name}\" tại ${item.name}!",
+                                                android.widget.Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
                                 }
-                            }
-                            withContext(Dispatchers.Main) {
-                                btnFavorite.text = "Đã Lưu (${item.name})"
-                                btnFavorite.setCompoundDrawablesWithIntrinsicBounds(
-                                    R.drawable.ic_bookmark_filled, 0, 0, 0
-                                )
-                                android.widget.Toast.makeText(
-                                    context,
-                                    "Đã lưu \"${film.name}\" tại ${item.name}!",
-                                    android.widget.Toast.LENGTH_SHORT
-                                ).show()
-                            }
+                            )
+                            rvEpisodes.adapter = adapter
                         }
                     }
-                )
-                rvEpisodes.adapter = adapter
+
+                    if (totalChunks > 1) {
+                        rvChunks.visibility = View.VISIBLE
+                        val chunkLabels = (0 until totalChunks).map { c ->
+                            val s = c * chunkSize + 1
+                            val e = ((c + 1) * chunkSize).coerceAtMost(serverItems.size)
+                            "Tập $s - $e"
+                        }
+                        rvChunks.adapter = ChipSelectorAdapter(
+                            labels = chunkLabels,
+                            selectedIndex = selectedChunkIndex,
+                            onSelect = { idx ->
+                                selectedChunkIndex = idx
+                                updateEpisodesForChunk(idx)
+                            }
+                        )
+                    } else {
+                        rvChunks.visibility = View.GONE
+                    }
+
+                    updateEpisodesForChunk(selectedChunkIndex)
+                }
+
+                if (serverList.size > 1) {
+                    rvServers.visibility = View.VISIBLE
+                    val serverNames = serverList.map { srv ->
+                        val clean = srv.serverName.replace("#", "").trim()
+                        val count = srv.items.size
+                        "$clean ($count tập)"
+                    }
+                    rvServers.adapter = ChipSelectorAdapter(
+                        labels = serverNames,
+                        selectedIndex = selectedServerIndex,
+                        onSelect = { idx ->
+                            selectedServerIndex = idx
+                            renderChunksAndEpisodes()
+                        }
+                    )
+                } else {
+                    rvServers.visibility = View.GONE
+                }
+
+                renderChunksAndEpisodes()
+
                 if (DeviceMode.isTv) {
                     rvEpisodes.post {
                         rvEpisodes.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
@@ -198,6 +278,57 @@ object EpisodePickerDialog {
 
         dialog.show()
         return dialog
+    }
+
+    private class ChipSelectorAdapter(
+        private val labels: List<String>,
+        private var selectedIndex: Int,
+        private val onSelect: (Int) -> Unit
+    ) : RecyclerView.Adapter<ChipSelectorAdapter.VH>() {
+
+        class VH(v: View) : RecyclerView.ViewHolder(v) {
+            val tv: TextView = v.findViewById(R.id.tvEpisodeName)
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+            val v = LayoutInflater.from(parent.context).inflate(R.layout.item_episode_chip, parent, false)
+            return VH(v)
+        }
+
+        override fun onBindViewHolder(holder: VH, position: Int) {
+            val label = labels[position]
+            val isSel = position == selectedIndex
+            holder.tv.text = label
+
+            if (isSel) {
+                holder.tv.setBackgroundResource(R.drawable.bg_badge_hd)
+                holder.tv.setTextColor(Color.WHITE)
+            } else {
+                holder.tv.setBackgroundResource(R.drawable.bg_badge_glass)
+                holder.tv.setTextColor(0xFFCBD5E1.toInt())
+            }
+
+            holder.itemView.setOnClickListener {
+                if (selectedIndex != position) {
+                    val prev = selectedIndex
+                    selectedIndex = position
+                    notifyItemChanged(prev)
+                    notifyItemChanged(position)
+                    onSelect(position)
+                }
+            }
+
+            holder.itemView.setOnFocusChangeListener { v, hasFocus ->
+                v.animate().scaleX(if (hasFocus) 1.08f else 1.0f).scaleY(if (hasFocus) 1.08f else 1.0f).setDuration(100).start()
+                if (hasFocus) {
+                    holder.tv.setTextColor(0xFFFF334B.toInt())
+                } else if (!isSel) {
+                    holder.tv.setTextColor(0xFFCBD5E1.toInt())
+                }
+            }
+        }
+
+        override fun getItemCount(): Int = labels.size
     }
 
     private class EpisodeAdapter(
@@ -244,7 +375,7 @@ object EpisodePickerDialog {
             }
 
             if (isCurrent) {
-                holder.tv.setTextColor(0xFFFF9F0A.toInt()) // Apple Orange highlight
+                holder.tv.setTextColor(0xFFFF334B.toInt()) // Crimson Red active
             } else if (isWatched) {
                 holder.tv.setTextColor(0xFF3DDC97.toInt()) // Green checked
             } else {
@@ -259,6 +390,19 @@ object EpisodePickerDialog {
                 updateCurrent(item.slug)
                 onBookmark(item)
                 true
+            }
+
+            holder.itemView.setOnFocusChangeListener { v, hasFocus ->
+                v.animate().scaleX(if (hasFocus) 1.08f else 1.0f).scaleY(if (hasFocus) 1.08f else 1.0f).setDuration(100).start()
+                if (hasFocus) {
+                    holder.tv.setTextColor(Color.WHITE)
+                } else if (isCurrent) {
+                    holder.tv.setTextColor(0xFFFF334B.toInt())
+                } else if (isWatched) {
+                    holder.tv.setTextColor(0xFF3DDC97.toInt())
+                } else {
+                    holder.tv.setTextColor(0xFFE2E8F0.toInt())
+                }
             }
         }
 

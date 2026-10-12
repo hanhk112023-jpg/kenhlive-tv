@@ -3,16 +3,16 @@
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <!-- Tam giác Play lớn màu Trắng -->
+    <!-- Thân trái Play màu Electric Cyan #00E5FF -->
     <path
-        android:pathData="M35.8,27.4 L80.2,54 L35.8,80.6 Z"
-        android:fillColor="#FFFFFF"/>
-    <!-- Vạch cắt âm bản màu Đen thuần #000000 -->
-    <path
-        android:pathData="M48.5,23.2 L52.7,23.2 L40.1,84.4 L35.8,84.4 Z"
-        android:fillColor="#000000"/>
-    <!-- Điểm nhấn Cyan năng động ở phần chóp Play -->
-    <path
-        android:pathData="M61.2,42.6 L80.2,54 L61.2,54 Z"
+        android:pathData="M34,26 L64,44.75 L64,63.25 L34,82 Z"
         android:fillColor="#00E5FF"/>
+    <!-- Vạch cắt âm bản Đen #000000 -->
+    <path
+        android:pathData="M48,22 L53,22 L41,86 L36,86 Z"
+        android:fillColor="#000000"/>
+    <!-- Chóp phải Play màu Crimson Red #E50914 chuẩn Canva -->
+    <path
+        android:pathData="M64,44.75 L79,54 L64,63.25 Z"
+        android:fillColor="#E50914"/>
 </vector>

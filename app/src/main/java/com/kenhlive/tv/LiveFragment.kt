@@ -50,7 +50,7 @@ class LiveFragment : Fragment() {
 
         adapter = SportAdapter(
             onGroupClick = { g -> openGroupPicker(g) },
-            onGroupLong = { g -> openMultiView(g) },
+            onGroupLong = { g -> openGroupPicker(g) },
             onFixtureClick = { m -> onFixtureTap(m) },
             onLeaguePick = { i -> selLeague = i; rebuild() },
             onGroupDetails = { g -> openGroupPicker(g) },

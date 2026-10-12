@@ -56,10 +56,7 @@
         <!-- 3. Kho Phim VOD Cinema Icon -->
         <include layout="@layout/item_nav_slim" android:id="@+id/nav_phim" />
 
-        <!-- 4. MultiView / Đa màn hình Icon -->
-        <include layout="@layout/item_nav_slim" android:id="@+id/nav_multiview" />
-
-        <!-- 5. Sports / Soccer Ball Icon -->
+        <!-- 4. Sports / Soccer Ball Icon -->
         <include layout="@layout/item_nav_slim" android:id="@+id/nav_schedule" />
 
         <!-- 6. Search Icon -->

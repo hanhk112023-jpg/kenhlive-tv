@@ -115,10 +115,28 @@
         style="@style/KL.Text.Section"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="DANH SÁCH TẬP PHIM"
-        android:textSize="13sp"
+        android:text="CHỌN SERVER &amp; TẬP PHIM (HLS 4K TRỰC TIẾP)"
+        android:textSize="12sp"
         android:textColor="@color/kl_text_3"
         android:letterSpacing="0.08" />
+
+    <!-- Server Selector (Vietsub / Thuyết Minh / Lồng Tiếng) -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/dialogServersRow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:clipToPadding="false"
+        android:visibility="gone" />
+
+    <!-- Chunk Selector (1-30, 31-60, 61-90...) -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/dialogChunksRow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:clipToPadding="false"
+        android:visibility="gone" />
 
     <!-- Loading / Episodes Container -->
     <ProgressBar

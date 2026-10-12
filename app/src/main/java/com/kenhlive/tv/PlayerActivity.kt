@@ -94,6 +94,16 @@ class PlayerActivity : AppCompatActivity() {
     private var currentChannelIndex: Int = 0
     private var pendingChannelIndex: Int = -1
 
+    // VOD Cinema State (Direct HLS 4K)
+    private var isVodMode: Boolean = false
+    private var filmSlug: String = ""
+    private var filmTitle: String = ""
+    private var episodeSlug: String = ""
+    private var episodeTitle: String = ""
+    private var posterUrl: String = ""
+    private var startPositionMs: Long = 0L
+    private var hasSeekedToStart: Boolean = false
+
     // Quick Channel OSD Banner
     private var quickChannelOsd: View? = null
     private var osdChannelNumber: TextView? = null
@@ -197,6 +207,17 @@ class PlayerActivity : AppCompatActivity() {
         currentChannelIndex = intent.getIntExtra("current_index", 0)
         currentRoomNum = intent.getStringExtra("roomNum") ?: ""
         currentSportsSource = com.kenhlive.tv.sports.SportsSource.detectSource(currentRoomNum)
+
+        // Read VOD Extras
+        filmSlug = intent.getStringExtra("film_slug").orEmpty()
+        filmTitle = intent.getStringExtra("film_title").orEmpty()
+        episodeSlug = intent.getStringExtra("episode_slug").orEmpty()
+        episodeTitle = intent.getStringExtra("episode_title").orEmpty()
+        posterUrl = intent.getStringExtra("poster_url").orEmpty()
+        startPositionMs = intent.getLongExtra("start_position_ms", 0L)
+        if (filmSlug.isNotBlank()) {
+            isVodMode = true
+        }
 
         topOverlay = findViewById(R.id.topOverlay)
         hint = findViewById(R.id.playerHint)
@@ -316,13 +337,7 @@ class PlayerActivity : AppCompatActivity() {
                 b.setOnClickListener { enterPip(manual = true) }
             }
         }
-        multiBtn.setOnClickListener {
-            startActivity(
-                Intent(this, MultiViewActivity::class.java)
-                    .putExtra("initial_room", name)
-                    .putExtra("initial_url", url)
-            )
-        }
+        multiBtn.visibility = View.GONE
         if (intent.getBooleanExtra("pip", false)) pv.post { enterPip(manual = false) }
 
         hint?.text = getString(if (DeviceMode.isTv) R.string.player_hint_tv else R.string.player_hint_phone)
@@ -496,17 +511,7 @@ class PlayerActivity : AppCompatActivity() {
         options.add("Thông số kỹ thuật (Stats)")
         actions.add { toggleStatsHud() }
 
-        // 7. MultiView nếu muốn xem nhiều trận
-        options.add("MultiView (Xem nhiều màn hình)")
-        actions.add {
-            startActivity(
-                Intent(this, MultiViewActivity::class.java)
-                    .putExtra("initial_room", findViewById<TextView>(R.id.playerTitle).text.toString())
-                    .putExtra("initial_url", url)
-            )
-        }
-
-        // 8. Danh sách kênh (nếu đang ở IPTV)
+        // 7. Danh sách kênh (nếu đang ở IPTV)
         if (isIptvMode) {
             options.add("Mở danh sách kênh")
             actions.add { toggleSidebar() }
@@ -1032,6 +1037,13 @@ class PlayerActivity : AppCompatActivity() {
                             handler.removeCallbacks(autoRecoveryRunnable)
                             findViewById<View>(R.id.playerErrorBox)?.visibility = View.GONE
                             findViewById<View>(R.id.bufferBox)?.visibility = View.GONE
+                            if (isVodMode && startPositionMs > 5000L && !hasSeekedToStart) {
+                                hasSeekedToStart = true
+                                player?.seekTo(startPositionMs)
+                                val m = startPositionMs / 60000L
+                                val s = (startPositionMs % 60000L) / 1000L
+                                Toast.makeText(this@PlayerActivity, String.format(Locale.US, "Tiếp tục phát từ %02d:%02d", m, s), Toast.LENGTH_SHORT).show()
+                            }
                         } else if (state == Player.STATE_BUFFERING) {
                             handler.removeCallbacks(autoRecoveryRunnable)
                             handler.postDelayed(autoRecoveryRunnable, 4000L)
@@ -1067,6 +1079,27 @@ class PlayerActivity : AppCompatActivity() {
             })
         }
         prepareChannelUrl(url)
+    }
+
+    private fun saveVodProgress() {
+        if (!isVodMode || filmSlug.isBlank()) return
+        val p = player ?: return
+        val pos = p.currentPosition
+        val dur = p.duration.coerceAtLeast(0L)
+        if (pos > 1000L) {
+            lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+                com.kenhlive.tv.phim.WatchHistoryManager.saveProgress(
+                    slug = filmSlug,
+                    filmName = if (filmTitle.isNotBlank()) filmTitle else findViewById<TextView>(R.id.playerTitle).text.toString(),
+                    posterUrl = posterUrl,
+                    episodeName = episodeTitle,
+                    episodeSlug = episodeSlug,
+                    embedUrl = url,
+                    positionMs = pos,
+                    durationMs = dur
+                )
+            }
+        }
     }
 
     override fun onStart() {
@@ -1365,6 +1398,35 @@ class PlayerActivity : AppCompatActivity() {
         // 5. Khi đang xem (overlay ẩn): Phím D-pad UP/DOWN mở Carousel chuyển kênh mượt mà
         // LƯU Ý: Phím BACK tuyệt đối KHÔNG gọi showOverlay() để tránh bẫy loop (BACK khi overlay ẩn phải finish activity)
         if (isDown && topOverlay?.visibility != View.VISIBLE && dialog == null && e.keyCode != KeyEvent.KEYCODE_BACK) {
+            // Tua lùi / Tua tiến bằng remote D-pad Left / Right khi đang xem Phim VOD
+            if (isVodMode || (player != null && !player!!.isCurrentMediaItemLive && player!!.duration > 0L)) {
+                if (e.keyCode == KeyEvent.KEYCODE_DPAD_LEFT || e.keyCode == KeyEvent.KEYCODE_MEDIA_REWIND) {
+                    val p = player
+                    if (p != null) {
+                        val target = (p.currentPosition - 15_000L).coerceAtLeast(0L)
+                        p.seekTo(target)
+                        val m = target / 60000L
+                        val s = (target % 60000L) / 1000L
+                        showGestureFeedback(R.drawable.ic_back, 0, String.format(Locale.US, "-15s (%02d:%02d)", m, s))
+                        saveVodProgress()
+                        return true
+                    }
+                }
+                if (e.keyCode == KeyEvent.KEYCODE_DPAD_RIGHT || e.keyCode == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD) {
+                    val p = player
+                    if (p != null) {
+                        val dur = p.duration.coerceAtLeast(0L)
+                        val target = if (dur > 0L) (p.currentPosition + 15_000L).coerceAtMost(dur) else p.currentPosition + 15_000L
+                        p.seekTo(target)
+                        val m = target / 60000L
+                        val s = (target % 60000L) / 1000L
+                        showGestureFeedback(R.drawable.ic_play, 100, String.format(Locale.US, "+15s (%02d:%02d)", m, s))
+                        saveVodProgress()
+                        return true
+                    }
+                }
+            }
+
             if (isIptvMode && (e.keyCode == KeyEvent.KEYCODE_DPAD_DOWN || e.keyCode == KeyEvent.KEYCODE_DPAD_UP)) {
                 showCarousel()
                 return true
@@ -1439,12 +1501,14 @@ class PlayerActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
+        saveVodProgress()
         handler.removeCallbacks(commitChannelSwitch)
         handler.removeCallbacks(autoRecoveryRunnable)
     }
 
     override fun onStop() {
         super.onStop()
+        saveVodProgress()
         val inPip = Build.VERSION.SDK_INT >= 26 && isInPictureInPictureMode && !DeviceMode.isTv
         if (inPip && !isFinishing) return
         handler.removeCallbacks(hideOverlay)

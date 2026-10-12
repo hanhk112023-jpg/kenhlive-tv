@@ -164,15 +164,6 @@ class MainActivity : AppCompatActivity() {
             findViewById<View>(R.id.nav_profile)?.setOnClickListener {
                 com.kenhlive.tv.ui.FeedbackDialog.show(this)
             }
-            findViewById<View>(R.id.nav_multiview)?.apply {
-                val iv = findViewById<ImageView>(R.id.navIcon)
-                iv?.setImageResource(R.drawable.ic_multiview)
-                setOnFocusChangeListener { _, hasFocus ->
-                    animate().scaleX(if (hasFocus) 1.06f else 1f).scaleY(if (hasFocus) 1.06f else 1f).setDuration(120).start()
-                    if (hasFocus) iv?.setColorFilter(android.graphics.Color.WHITE) else iv?.clearColorFilter()
-                }
-                setOnClickListener { startActivity(Intent(this@MainActivity, MultiViewActivity::class.java)) }
-            }
         }
     }
 

@@ -111,12 +111,6 @@ class SettingsFragment : Fragment() {
                     value = aqName(EnhanceSettings.audioMode(ctx))
                 ) { pickAudioMode() },
 
-                SettingsAdapter.Item.Section(getString(R.string.settings_section_view)),
-                SettingsAdapter.Item.Row(
-                    R.drawable.ic_multiview, getString(R.string.settings_mv_layout),
-                    value = if (mvLayout == 4) getString(R.string.mv_layout_4) else getString(R.string.mv_layout_2)
-                ) { pickMvLayout(mvLayout) },
-
                 SettingsAdapter.Item.Section(getString(R.string.settings_section_app)),
                 SettingsAdapter.Item.Row(
                     R.drawable.ic_telegram, getString(R.string.settings_feedback),
