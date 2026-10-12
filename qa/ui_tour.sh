@@ -42,6 +42,8 @@ startrec rec1.mp4; sleep 2; mark "MO APP: Cong Chon 3 Muc & The Thao"
 # 0. CỔNG CHỌN CHÍNH (TAB 6: HOME HUB PORTAL)
 relaunch 6
 sleep 3
+adb exec-out screencap -p > $OUT/tab6_home_hub_dialog.png
+go "BACK: dong dialog thong bao de hien tron ven 3 the Portal" 4 1
 adb exec-out screencap -p > $OUT/tab6_home_hub_portal.png
 mark "CHUP ANH: Cong chon 3 muc The thao, Truyen hinh, Phim truyen"
 go "RIGHT: sang muc Truyen Hinh" 22 1; foc
@@ -180,6 +182,15 @@ go "OK: chon che do am thanh va dong dialog"           23 2
 go "UP: quay lai dong dau"                             19 1
 adb exec-out screencap -p > $OUT/tab4_settings.png
 mark "CHUP ANH: Tab 4 Settings sau khi chinh chat luong"
+
+# 5.5. TAB 5: KHO PHIM PHONG CÁCH NETFLIX
+relaunch 5
+sleep 4
+adb exec-out screencap -p > $OUT/tab5_phim_netflix.png
+mark "CHUP ANH: Kho phim phong cach Netflix Smart TV"
+go "DOWN: xuong hang poster phim" 20 2; foc
+adb exec-out screencap -p > $OUT/tab5_phim_cards_focused.png
+mark "CHUP ANH: Focus poster phim zoom phong cach Netflix"
 
 # 6. VÀO PHÒNG LIVE -> PLAYER EXOPLAYER
 relaunch 0
