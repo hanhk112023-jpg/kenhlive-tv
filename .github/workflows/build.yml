@@ -71,9 +71,10 @@ jobs:
         with:
           files: |
             KenhLive-${{ github.ref_name }}*.apk
-          name: KenhLive ${{ github.ref_name }} — Apple Glassmorphism & Cinema VOD Hub
+          name: KenhLive TV ${{ github.ref_name }} — Gà Vàng 33, Giờ Vàng TV & Giao Diện Netflix Cinema
+          body_path: RELEASE_NOTES.md
           draft: false
           prerelease: false
-          generate_release_notes: true
+          generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
