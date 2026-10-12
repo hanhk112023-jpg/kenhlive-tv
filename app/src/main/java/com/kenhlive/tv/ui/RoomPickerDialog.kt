@@ -104,8 +104,8 @@ object RoomPickerDialog {
                     val vText = ctx.getString(R.string.picker_viewers_live, SocoliveRepository.fmtViewers(model.viewers))
                     h.meta.text = when {
                         model.notice.isNotBlank() && model.roomNum.startsWith("cola_") -> model.notice
-                        model.notice.isNotBlank() && model.roomNum.startsWith("gavang_") -> model.notice
-                        model.notice.isNotBlank() && model.roomNum.startsWith("khandai_") -> model.notice
+                        model.notice.isNotBlank() && (model.roomNum.startsWith("gavang33_") || model.roomNum.startsWith("gavang_")) -> model.notice
+                        model.notice.isNotBlank() && (model.roomNum.startsWith("giovang_") || model.roomNum.startsWith("khandai_")) -> model.notice
                         model.score > 0 -> "$vText • Điểm: ${SocoliveRepository.fmtViewers(model.score)}"
                         else -> vText
                     }

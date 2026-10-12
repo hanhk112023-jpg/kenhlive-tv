@@ -39,6 +39,8 @@ class LiveFragment : Fragment() {
 
     private var liveGroups: List<LiveMatchGroup> = listOf()
     private var daysLabeled: LinkedHashMap<String, MutableList<ScheduleMatch>> = LinkedHashMap()
+    private var gavang33ApiGroups: List<LiveMatchGroup> = listOf()
+    private var giovangApiGroups: List<LiveMatchGroup> = listOf()
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, s: Bundle?): View {
         val v = inflater.inflate(R.layout.fragment_live, container, false)
@@ -97,6 +99,18 @@ class LiveFragment : Fragment() {
         }
         vm.load()
         svm.load()
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                gavang33ApiGroups = com.kenhlive.tv.sports.SportsStreamResolver.fetchGavang33MatchGroups()
+                rebuild()
+            } catch (_: Exception) {}
+        }
+        viewLifecycleOwner.lifecycleScope.launch {
+            try {
+                giovangApiGroups = com.kenhlive.tv.sports.SportsStreamResolver.fetchGiovangMatchGroups()
+                rebuild()
+            } catch (_: Exception) {}
+        }
         return v
     }
 
@@ -126,7 +140,7 @@ class LiveFragment : Fragment() {
             }
         })
 
-        val baseCategories = listOf("Tất cả", "Bóng đá", "Bóng rổ", "ColaTV", "Gà Vàng", "Khán Đài")
+        val baseCategories = listOf("Tất cả", "Bóng đá", "Bóng rổ", "ColaTV", "Gà Vàng 33", "Giờ Vàng")
         val activeLeagues = enrichedLiveGroups.map { it.league }
             .filter { it.isNotBlank() && it !in baseCategories }
             .distinct()
@@ -136,8 +150,12 @@ class LiveFragment : Fragment() {
 
         val socoGroups = com.kenhlive.tv.sports.SportsAggregator.createProviderMatchGroups(enrichedLiveGroups, com.kenhlive.tv.sports.SportsSource.SOCOLIVE)
         val colaGroups = com.kenhlive.tv.sports.SportsAggregator.createProviderMatchGroups(enrichedLiveGroups, com.kenhlive.tv.sports.SportsSource.COLATV)
-        val gavangGroups = com.kenhlive.tv.sports.SportsAggregator.createProviderMatchGroups(enrichedLiveGroups, com.kenhlive.tv.sports.SportsSource.GAVANG)
-        val khandaiGroups = com.kenhlive.tv.sports.SportsAggregator.createProviderMatchGroups(enrichedLiveGroups, com.kenhlive.tv.sports.SportsSource.KHANDAI)
+        val gavang33Groups = gavang33ApiGroups.ifEmpty {
+            com.kenhlive.tv.sports.SportsAggregator.createProviderMatchGroups(enrichedLiveGroups, com.kenhlive.tv.sports.SportsSource.GAVANG33)
+        }
+        val giovangGroups = giovangApiGroups.ifEmpty {
+            com.kenhlive.tv.sports.SportsAggregator.createProviderMatchGroups(enrichedLiveGroups, com.kenhlive.tv.sports.SportsSource.GIOVANG)
+        }
 
         val now = System.currentTimeMillis()
         val upcoming = allScheduleMatches
@@ -172,11 +190,11 @@ class LiveFragment : Fragment() {
                 if (colaGroups.isNotEmpty()) {
                     items.add(SportAdapter.RailItem(colaGroups, emptyList(), title = "Trực Tiếp ColaTV"))
                 }
-                if (gavangGroups.isNotEmpty()) {
-                    items.add(SportAdapter.RailItem(gavangGroups, emptyList(), title = "Trực Tiếp Gà Vàng TV"))
+                if (gavang33Groups.isNotEmpty()) {
+                    items.add(SportAdapter.RailItem(gavang33Groups, emptyList(), title = "Trực Tiếp Gà Vàng 33"))
                 }
-                if (khandaiGroups.isNotEmpty()) {
-                    items.add(SportAdapter.RailItem(khandaiGroups, emptyList(), title = "Trực Tiếp Khán Đài TV"))
+                if (giovangGroups.isNotEmpty()) {
+                    items.add(SportAdapter.RailItem(giovangGroups, emptyList(), title = "Trực Tiếp Giờ Vàng TV"))
                 }
             }
             leagueLabels[selLeague] == "ColaTV" -> {
@@ -184,23 +202,23 @@ class LiveFragment : Fragment() {
                 if (!DeviceMode.isTv) items.add(0, SportAdapter.ChipsItem(leagueLabels, selLeague))
                 items.add(SportAdapter.RailItem(colaGroups, upFiltered, title = "Trực Tiếp ColaTV"))
             }
-            leagueLabels[selLeague] == "Gà Vàng" -> {
-                items.add(SportAdapter.HeroItem(gavangGroups))
+            leagueLabels[selLeague] == "Gà Vàng 33" -> {
+                items.add(SportAdapter.HeroItem(gavang33Groups))
                 if (!DeviceMode.isTv) items.add(0, SportAdapter.ChipsItem(leagueLabels, selLeague))
-                items.add(SportAdapter.RailItem(gavangGroups, upFiltered, title = "Trực Tiếp Gà Vàng TV"))
+                items.add(SportAdapter.RailItem(gavang33Groups, upFiltered, title = "Trực Tiếp Gà Vàng 33"))
             }
-            leagueLabels[selLeague] == "Khán Đài" -> {
-                items.add(SportAdapter.HeroItem(khandaiGroups))
+            leagueLabels[selLeague] == "Giờ Vàng" -> {
+                items.add(SportAdapter.HeroItem(giovangGroups))
                 if (!DeviceMode.isTv) items.add(0, SportAdapter.ChipsItem(leagueLabels, selLeague))
-                items.add(SportAdapter.RailItem(khandaiGroups, upFiltered, title = "Trực Tiếp Khán Đài TV"))
+                items.add(SportAdapter.RailItem(giovangGroups, upFiltered, title = "Trực Tiếp Giờ Vàng TV"))
             }
             else -> {
                 val target = leagueLabels[selLeague]
                 val socoF = socoGroups.filter { it.category.equals(target, ignoreCase = true) || it.league.contains(target, ignoreCase = true) }
                 val colaF = colaGroups.filter { it.category.equals(target, ignoreCase = true) || it.league.contains(target, ignoreCase = true) }
-                val gavangF = gavangGroups.filter { it.category.equals(target, ignoreCase = true) || it.league.contains(target, ignoreCase = true) }
-                val khandaiF = khandaiGroups.filter { it.category.equals(target, ignoreCase = true) || it.league.contains(target, ignoreCase = true) }
-                val allF = socoF + colaF + gavangF + khandaiF
+                val gavang33F = gavang33Groups.filter { it.category.equals(target, ignoreCase = true) || it.league.contains(target, ignoreCase = true) }
+                val giovangF = giovangGroups.filter { it.category.equals(target, ignoreCase = true) || it.league.contains(target, ignoreCase = true) }
+                val allF = socoF + colaF + gavang33F + giovangF
 
                 items.add(SportAdapter.HeroItem(allF.ifEmpty { socoGroups }))
                 if (!DeviceMode.isTv) items.add(0, SportAdapter.ChipsItem(leagueLabels, selLeague))
@@ -211,11 +229,11 @@ class LiveFragment : Fragment() {
                 if (colaF.isNotEmpty()) {
                     items.add(SportAdapter.RailItem(colaF, emptyList(), title = "Trực Tiếp ColaTV · $target"))
                 }
-                if (gavangF.isNotEmpty()) {
-                    items.add(SportAdapter.RailItem(gavangF, emptyList(), title = "Trực Tiếp Gà Vàng TV · $target"))
+                if (gavang33F.isNotEmpty()) {
+                    items.add(SportAdapter.RailItem(gavang33F, emptyList(), title = "Trực Tiếp Gà Vàng 33 · $target"))
                 }
-                if (khandaiF.isNotEmpty()) {
-                    items.add(SportAdapter.RailItem(khandaiF, emptyList(), title = "Trực Tiếp Khán Đài TV · $target"))
+                if (giovangF.isNotEmpty()) {
+                    items.add(SportAdapter.RailItem(giovangF, emptyList(), title = "Trực Tiếp Giờ Vàng TV · $target"))
                 }
             }
         }

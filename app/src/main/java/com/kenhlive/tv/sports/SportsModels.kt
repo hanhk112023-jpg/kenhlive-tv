@@ -28,19 +28,19 @@ enum class SportsSource(
         shortTag = "COLA",
         description = "Kênh thể thao trực tiếp ColaTV · Độ trễ thấp"
     ),
-    GAVANG(
-        id = "gavang",
-        displayName = "Gà Vàng TV",
+    GAVANG33(
+        id = "gavang33",
+        displayName = "Gà Vàng 33",
         badgeColor = Color.parseColor("#F59E0B"), // Amber / Gold
-        shortTag = "GÀ VÀNG",
-        description = "Kênh trực tiếp Gà Vàng TV · Âm thanh sống động"
+        shortTag = "GÀ VÀNG 33",
+        description = "Kênh trực tiếp Gà Vàng 33 · Âm thanh sống động"
     ),
-    KHANDAI(
-        id = "khandai",
-        displayName = "Khán Đài TV",
+    GIOVANG(
+        id = "giovang",
+        displayName = "Giờ Vàng TV",
         badgeColor = Color.parseColor("#3B82F6"), // Blue Neon
-        shortTag = "KHÁN ĐÀI",
-        description = "Kênh trực tiếp Khán Đài TV · Đường truyền tốc độ cao"
+        shortTag = "GIỜ VÀNG",
+        description = "Kênh trực tiếp Giờ Vàng TV · Đường truyền tốc độ cao"
     );
 
     companion object {
@@ -48,14 +48,16 @@ enum class SportsSource(
 
         fun detectSource(roomNum: String, blvName: String = ""): SportsSource = when {
             roomNum.startsWith("cola_") || blvName.contains("Cola", ignoreCase = true) -> COLATV
-            roomNum.startsWith("gavang_") || blvName.contains("Gà Vàng", ignoreCase = true) || blvName.contains("Gavang", ignoreCase = true) -> GAVANG
-            roomNum.startsWith("khandai_") || blvName.contains("Khán Đài", ignoreCase = true) || blvName.contains("Khandai", ignoreCase = true) -> KHANDAI
+            roomNum.startsWith("gavang33_") || roomNum.startsWith("gavang_") || blvName.contains("Gà Vàng", ignoreCase = true) || blvName.contains("Gavang", ignoreCase = true) -> GAVANG33
+            roomNum.startsWith("giovang_") || roomNum.startsWith("khandai_") || blvName.contains("Giờ Vàng", ignoreCase = true) || blvName.contains("Giovang", ignoreCase = true) || blvName.contains("Khán Đài", ignoreCase = true) -> GIOVANG
             else -> SOCOLIVE
         }
 
         fun extractRealRoomNum(roomNum: String): String = when {
             roomNum.startsWith("cola_") -> roomNum.removePrefix("cola_")
+            roomNum.startsWith("gavang33_") -> roomNum.removePrefix("gavang33_")
             roomNum.startsWith("gavang_") -> roomNum.removePrefix("gavang_")
+            roomNum.startsWith("giovang_") -> roomNum.removePrefix("giovang_")
             roomNum.startsWith("khandai_") -> roomNum.removePrefix("khandai_")
             else -> roomNum
         }

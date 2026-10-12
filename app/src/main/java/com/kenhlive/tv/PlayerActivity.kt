@@ -971,15 +971,15 @@ class PlayerActivity : AppCompatActivity() {
                             sportsFailoverCount++
                             val nextSource = when (currentSportsSource) {
                                 com.kenhlive.tv.sports.SportsSource.SOCOLIVE -> com.kenhlive.tv.sports.SportsSource.COLATV
-                                com.kenhlive.tv.sports.SportsSource.COLATV -> com.kenhlive.tv.sports.SportsSource.GAVANG
-                                com.kenhlive.tv.sports.SportsSource.GAVANG -> com.kenhlive.tv.sports.SportsSource.KHANDAI
-                                com.kenhlive.tv.sports.SportsSource.KHANDAI -> com.kenhlive.tv.sports.SportsSource.SOCOLIVE
+                                com.kenhlive.tv.sports.SportsSource.COLATV -> com.kenhlive.tv.sports.SportsSource.GAVANG33
+                                com.kenhlive.tv.sports.SportsSource.GAVANG33 -> com.kenhlive.tv.sports.SportsSource.GIOVANG
+                                com.kenhlive.tv.sports.SportsSource.GIOVANG -> com.kenhlive.tv.sports.SportsSource.SOCOLIVE
                             }
                             val cleanRoom = com.kenhlive.tv.sports.SportsSource.extractRealRoomNum(currentRoomNum)
                             val targetRoom = when (nextSource) {
                                 com.kenhlive.tv.sports.SportsSource.COLATV -> "cola_$cleanRoom"
-                                com.kenhlive.tv.sports.SportsSource.GAVANG -> "gavang_$cleanRoom"
-                                com.kenhlive.tv.sports.SportsSource.KHANDAI -> "khandai_$cleanRoom"
+                                com.kenhlive.tv.sports.SportsSource.GAVANG33 -> "gavang33_$cleanRoom"
+                                com.kenhlive.tv.sports.SportsSource.GIOVANG -> "giovang_$cleanRoom"
                                 com.kenhlive.tv.sports.SportsSource.SOCOLIVE -> cleanRoom
                             }
                             Toast.makeText(this@PlayerActivity, "Tự động đổi sang máy chủ ${nextSource.displayName}...", Toast.LENGTH_SHORT).show()

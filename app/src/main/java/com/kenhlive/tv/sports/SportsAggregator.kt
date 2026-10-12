@@ -5,12 +5,12 @@ import com.kenhlive.tv.LiveRoom
 
 /**
  * Bộ tổng hợp và làm giàu dữ liệu thể thao đa nguồn (Multi-source Sports Aggregator).
- * Tích hợp song song 4 hạ tầng phát sóng: Socolive, ColaTV, Gà Vàng TV, Khán Đài TV.
+ * Tích hợp song song 4 hạ tầng phát sóng: Socolive, ColaTV, Gà Vàng 33, Giờ Vàng TV.
  */
 object SportsAggregator {
 
     /**
-     * Bổ sung các server phát sóng ColaTV, Gà Vàng, Khán Đài vào mỗi trận đấu.
+     * Bổ sung các server phát sóng ColaTV, Gà Vàng 33, Giờ Vàng vào mỗi trận đấu.
      */
     fun enrichMatchGroup(group: LiveMatchGroup): LiveMatchGroup {
         if (group.rooms.isEmpty()) return group
@@ -20,8 +20,8 @@ object SportsAggregator {
 
         // Kiểm tra xem đã có các nguồn phụ chưa
         val hasCola = group.rooms.any { it.roomNum.startsWith("cola_") }
-        val hasGavang = group.rooms.any { it.roomNum.startsWith("gavang_") }
-        val hasKhandai = group.rooms.any { it.roomNum.startsWith("khandai_") }
+        val hasGavang = group.rooms.any { it.roomNum.startsWith("gavang33_") || it.roomNum.startsWith("gavang_") }
+        val hasGiovang = group.rooms.any { it.roomNum.startsWith("giovang_") || it.roomNum.startsWith("khandai_") }
 
         val extraRooms = mutableListOf<LiveRoom>()
 
@@ -49,8 +49,8 @@ object SportsAggregator {
         if (!hasGavang) {
             extraRooms.add(
                 LiveRoom(
-                    roomNum = "gavang_$baseRoomNum",
-                    blvName = "[Gà Vàng] BLV Gà Rừng HD",
+                    roomNum = "gavang33_$baseRoomNum",
+                    blvName = "[Gà Vàng 33] BLV Gà Rừng HD",
                     avatar = top.avatar,
                     viewers = (top.viewers * 0.76).toInt().coerceAtLeast(980),
                     matchTitle = group.matchTitle,
@@ -60,18 +60,18 @@ object SportsAggregator {
                     blvLevel = "Server 2",
                     score = top.score,
                     focusCount = top.focusCount,
-                    notice = "Kênh trực tiếp Gà Vàng TV · Âm thanh vòm sống động",
+                    notice = "Kênh trực tiếp Gà Vàng 33 · Âm thanh vòm sống động",
                     hostIcon = group.hostIcon,
                     guestIcon = group.guestIcon
                 )
             )
         }
 
-        if (!hasKhandai) {
+        if (!hasGiovang) {
             extraRooms.add(
                 LiveRoom(
-                    roomNum = "khandai_$baseRoomNum",
-                    blvName = "[Khán Đài] BLV Khán Đài 1 HD",
+                    roomNum = "giovang_$baseRoomNum",
+                    blvName = "[Giờ Vàng] BLV Giờ Vàng HD",
                     avatar = top.avatar,
                     viewers = (top.viewers * 0.65).toInt().coerceAtLeast(850),
                     matchTitle = group.matchTitle,
@@ -81,7 +81,7 @@ object SportsAggregator {
                     blvLevel = "Server 3",
                     score = top.score,
                     focusCount = top.focusCount,
-                    notice = "Kênh trực tiếp Khán Đài TV · Bình luận chuyên sâu",
+                    notice = "Kênh trực tiếp Giờ Vàng TV · Đường truyền tốc độ cao",
                     hostIcon = group.hostIcon,
                     guestIcon = group.guestIcon
                 )
@@ -114,7 +114,8 @@ object SportsAggregator {
                 SportsSource.SOCOLIVE -> {
                     val socoRooms = g.rooms.filter {
                         !it.roomNum.startsWith("cola_") &&
-                        !it.roomNum.startsWith("gavang_") &&
+                        !it.roomNum.startsWith("gavang") &&
+                        !it.roomNum.startsWith("giovang") &&
                         !it.roomNum.startsWith("khandai_")
                     }
                     if (socoRooms.isNotEmpty()) g.copy(rooms = socoRooms) else g
@@ -138,10 +139,10 @@ object SportsAggregator {
                     )
                     g.copy(rooms = listOf(colaRoom))
                 }
-                SportsSource.GAVANG -> {
+                SportsSource.GAVANG33 -> {
                     val gavangRoom = LiveRoom(
-                        roomNum = "gavang_$baseRoomNum",
-                        blvName = "[Gà Vàng] BLV Gà Rừng HD",
+                        roomNum = "gavang33_$baseRoomNum",
+                        blvName = "[Gà Vàng 33] BLV Gà Rừng HD",
                         avatar = top.avatar,
                         viewers = (top.viewers * 0.76).toInt().coerceAtLeast(980),
                         matchTitle = g.matchTitle,
@@ -151,16 +152,16 @@ object SportsAggregator {
                         blvLevel = "Server 2",
                         score = top.score,
                         focusCount = top.focusCount,
-                        notice = "Kênh trực tiếp Gà Vàng TV · Âm thanh vòm sống động",
+                        notice = "Kênh trực tiếp Gà Vàng 33 · Âm thanh vòm sống động",
                         hostIcon = g.hostIcon,
                         guestIcon = g.guestIcon
                     )
                     g.copy(rooms = listOf(gavangRoom))
                 }
-                SportsSource.KHANDAI -> {
-                    val khandaiRoom = LiveRoom(
-                        roomNum = "khandai_$baseRoomNum",
-                        blvName = "[Khán Đài] BLV Khán Đài 1 HD",
+                SportsSource.GIOVANG -> {
+                    val giovangRoom = LiveRoom(
+                        roomNum = "giovang_$baseRoomNum",
+                        blvName = "[Giờ Vàng] BLV Giờ Vàng HD",
                         avatar = top.avatar,
                         viewers = (top.viewers * 0.65).toInt().coerceAtLeast(850),
                         matchTitle = g.matchTitle,
@@ -170,11 +171,11 @@ object SportsAggregator {
                         blvLevel = "Server 3",
                         score = top.score,
                         focusCount = top.focusCount,
-                        notice = "Kênh trực tiếp Khán Đài TV · Bình luận chuyên sâu",
+                        notice = "Kênh trực tiếp Giờ Vàng TV · Đường truyền tốc độ cao",
                         hostIcon = g.hostIcon,
                         guestIcon = g.guestIcon
                     )
-                    g.copy(rooms = listOf(khandaiRoom))
+                    g.copy(rooms = listOf(giovangRoom))
                 }
             }
         }
@@ -188,8 +189,8 @@ object SportsAggregator {
         return listOf(
             SportsServer(SportsSource.SOCOLIVE, "Máy Chủ Socolive (Chính)", cleanRoom, isPrimary = true),
             SportsServer(SportsSource.COLATV, "Máy Chủ ColaTV (Dự phòng 1)", "cola_$cleanRoom"),
-            SportsServer(SportsSource.GAVANG, "Máy Chủ Gà Vàng (Dự phòng 2)", "gavang_$cleanRoom"),
-            SportsServer(SportsSource.KHANDAI, "Máy Chủ Khán Đài (Dự phòng 3)", "khandai_$cleanRoom")
+            SportsServer(SportsSource.GAVANG33, "Máy Chủ Gà Vàng 33 (Dự phòng 2)", "gavang33_$cleanRoom"),
+            SportsServer(SportsSource.GIOVANG, "Máy Chủ Giờ Vàng (Dự phòng 3)", "giovang_$cleanRoom")
         )
     }
 }

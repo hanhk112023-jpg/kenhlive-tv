@@ -182,7 +182,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="Trực tiếp bóng đá Socolive, Gà Vàng, ColaTV, Khán Đài · Lịch thi đấu &amp; Đa màn hình"
+                    android:text="Trực tiếp bóng đá Socolive, Gà Vàng 33, ColaTV, Giờ Vàng · Lịch thi đấu &amp; Đa màn hình"
                     android:textColor="@color/kl_text_2"
                     android:textSize="12.5sp"
                     android:lineSpacingExtra="3dp"
