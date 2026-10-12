@@ -59,12 +59,9 @@ relaunch 0
 sleep 3
 adb exec-out screencap -p > $OUT/tab0_fullscreen_no_rail.png
 mark "CHUP ANH: Full man hinh noi dung (Side tab da an)"
-go "LEFT: cham canh trai de goi Side tab hien len" 21 2; foc
-adb exec-out screencap -p > $OUT/tab0_rail_revealed.png
-mark "CHUP ANH: Side tab tu dong hien khi tuong tac sang trai"
-go "DOWN: chuyen focus tren Side tab xuong Tab Lich thi dau" 20 1; foc
-adb exec-out screencap -p > $OUT/tab0_rail_focus_nav.png
-mark "CHUP ANH: Focus di chuyen tren Side tab"
+go "RIGHT: duyet qua cac hang nha dai the thao" 22 1; foc
+adb exec-out screencap -p > $OUT/tab0_sports_providers.png
+mark "CHUP ANH: Giao dien rieng The Thao voi cac dai Socolive, ColaTV, Ga Vang, Gio Vang"
 
 # 2. TAB 1: LỊCH THI ĐẤU
 relaunch 1
@@ -273,13 +270,19 @@ adb shell wm size 1920x1080
 adb shell wm density 320
 adb shell am force-stop com.kenhlive.tv; sleep 2
 
-# 8. DIALOG THOAT APP (Đoạn 2)
+# 8. TEST THOÁT MỤC (ẤN 2 LẦN BACK VỀ MENU CHỌN) & DIALOG THOÁT APP
 startrec rec2.mp4
-relaunch 0
-go "BACK top-level"        4 2
+relaunch 2
+sleep 3
+go "BACK lan 1 (hien Toast nhan back lan nua)" 4 1
+go "BACK lan 2 (thoat ve Menu Chon)"           4 2
+adb exec-out screencap -p > $OUT/back_double_returned_hub.png
+mark "CHUP ANH: Da quay ve Menu Chon sau 2 lan back"
+
+go "BACK tai Menu Chon (hien dialog thoat app)" 4 2
 adb exec-out screencap -p > $OUT/back_dialog.png
 mark "DIALOG Thoat?"
-go "BACK huy (o lai)"      4 2
+go "BACK huy (o lai)"                          4 2
 sleep 1; stoprec rec2.mp4
 
 adb exec-out screencap -p > $OUT/end.png

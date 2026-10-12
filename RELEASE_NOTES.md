@@ -1,24 +1,24 @@
-# 🚀 KENHLIVE TV v7.4.6 (Build 122) — GIỮ NGUYÊN BỐ CỤC CỔNG CHỌN 3 CARD, BỘ LOGO BÓNG ĐÁ & PHIM TRUYỆN MỚI TỪ CANVA
+# 🚀 KENHLIVE TV v7.4.7 (Build 123) — GIAO DIỆN ĐỘC LẬP TỪNG MỤC, ẤN 2 LẦN BACK VỀ MENU CHỌN & LOGO CANVA MỚI
 
-### 🌟 1. Giữ Nguyên Giao Diện Cổng Chọn Home Hub (3 Cards Lớn)
-- Giữ nguyên thiết kế Cổng Giải Trí Trực Tuyến 3 Card lớn truyền thống được người dùng yêu thích:
-  - **THỂ THAO** (Trực tiếp bóng đá 4 nhà đài Socolive, Gà Vàng 33, ColaTV, Giờ Vàng).
-  - **TRUYỀN HÌNH** (150+ kênh HD VTV, HTV, VTC, K+, Thể thao, Quốc tế).
-  - **PHIM TRUYỆN** (Kho 33.000+ phim bom tấn, Anime phát trực tiếp HLS 4K).
+### 🌟 1. Mỗi Mục Có Giao Diện Riêng Biệt 100% Toàn Màn Hình
+- **Tách biệt hoàn toàn từng mục:** Khi bấm vào bất kỳ mục nào từ Menu Chọn (`THỂ THAO`, `TRUYỀN HÌNH`, `PHIM TRUYỆN`), ứng dụng mở **giao diện riêng biệt toàn màn hình** của mục đó, gỡ bỏ hoàn toàn thanh điều hướng chung (`bottomNav` / `railPanel`).
+- **Mục TRUYỀN HÌNH (IPTV):** Chỉ hiển thị thuần túy các kênh truyền hình trực tuyến (`Yêu Thích`, `VTV`, `TV360`, `HTV / VTC`, `VTVcab / SCTV`, `Địa Phương`, `Tất cả`), **loại bỏ hoàn toàn** các tab hay mục Bóng đá và Phim bị lẫn vào trong phần Truyền hình.
 
 ---
 
-### 🎨 2. Bộ Logo Chuyên Nghiệp Mới Thiết Kế Từ Canva
-- **Card THỂ THAO**: Logo quả bóng đá lửa 3D phát sáng (**Fiery 3D Football Emblem**) với viền cam rực lửa `#FF6500`, vòng xoáy năng lượng và vệt chuyển động tốc độ cao.
-- **Card PHIM TRUYỆN**: Logo điện ảnh sang trọng (**3D Cinema Clapperboard & Film Reel**) với cuộn phim vàng óng, bảng clapperboard đạo diễn và huy hiệu **`4K ULTRA HD`** viền ánh vàng `#FFB800`.
-- **Thanh Đáy**: Gỡ bỏ hoàn toàn nút **XEM ĐA MÀN HÌNH**, giữ lại các nút tiện ích: **CÀI ĐẶT** · **BÁO LỖI TELEGRAM** · **LỊCH THI ĐẤU** · **TÌM KIẾM**.
+### 🔙 2. Cơ Chế Thoát Mục Chuẩn TV: Ấn 2 Lần BACK Về Lại Menu Chọn
+- Khi đang ở trong bất kỳ mục nào (`Thể Thao`, `Truyền Hình`, `Phim Truyện`, `Cài Đặt`, `Lịch Đấu`, `Tìm Kiếm`):
+  - **Ấn BACK lần 1:** Hiện thông báo nhắc *`"Nhấn BACK lần nữa để quay lại Menu Chọn"`*, tránh việc lỡ tay bấm BACK bị văng khỏi mục đang xem.
+  - **Ấn BACK lần 2 (trong vòng 2 giây):** Thoát khỏi mục hiện tại và quay trở về **Menu Chọn 3 Card (Home Hub)**.
+- Khi đang ở **Menu Chọn (Home Hub)**: Ấn BACK sẽ hiển thị hộp thoại xác nhận thoát ứng dụng.
 
 ---
 
-### 🎬 3. Nâng Cấp Toàn Diện Kho Phim Truyện Native HLS 4K
-- Toàn bộ phim phát trực tiếp bằng file `.m3u8` trên ExoPlayer phần cứng, tua 15 giây bằng phím Trái/Phải remote, tự động lưu lịch sử và hỗ trợ đa server Vietsub / Thuyết Minh cùng cụm 30 tập.
+### 🎨 3. Bộ Logo Chuyên Nghiệp Từ Canva & Kho Phim Native HLS 4K
+- **Logo Canva 3D:** Card **THỂ THAO** dùng logo quả bóng đá lửa 3D viền vàng cam; Card **PHIM TRUYỆN** dùng logo Clapperboard & cuộn phim 4K vàng ánh kim.
+- **Kho Phim KKPhim Direct HLS 4K:** Phát trực tiếp bằng ExoPlayer native, tua 15s bằng phím D-pad Trái/Phải, chọn Server (`Vietsub`, `Thuyết Minh`, `Lồng Tiếng`) và phân nhóm 30 tập.
 
 ---
 
 ### 📦 Tải & Cài Đặt:
-- Tải trực tiếp file `KenhLive-v7.4.6.apk` bên dưới.
+- Tải trực tiếp file `KenhLive-v7.4.7.apk` bên dưới.

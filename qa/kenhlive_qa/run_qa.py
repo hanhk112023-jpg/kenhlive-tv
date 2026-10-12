@@ -247,12 +247,13 @@ if png and png2:
     add_check('Đổi focus Card (RIGHT)', d > 0.3, f'pixel diff {d:.1f}%')
     if d <= 0.3: add_finding('Home Hub', 'HIGH', 'Bấm RIGHT không đổi focus sang card tiếp theo', '2 screenshot giống hệt', 'kiểm tra focus border trong HomeHubFragment')
 
-# ---------- 5. BACK & RESILIENCE ----------
-print('[5] Nút back', flush=True)
-P.key('4'); time.sleep(2.5)
-add_check('Back không văng app', P.has_focus(), 'activity=' + P.current_activity())
-if not P.has_focus(): add_finding('Navigation', 'HIGH', 'Bấm back văng khỏi app', 'mất focus về launcher', 'override onBackPressed: back từ multiview→home, không finish Activity gốc')
-shot('after_back')
+# ---------- 5. THOÁT MỤC BẰNG 2 LẦN BACK & RESILIENCE ----------
+print('[5] Thoát mục bằng 2 lần BACK', flush=True)
+P.key('4'); time.sleep(0.5)  # BACK lần 1: Hiện toast nhắc bấm lần nữa
+P.key('4'); time.sleep(2.0)  # BACK lần 2: Thoát mục về Menu Chọn
+add_check('Ấn 2 lần BACK quay về Menu Chọn', P.has_focus(), 'activity=' + P.current_activity())
+if not P.has_focus(): add_finding('Navigation', 'HIGH', 'Bấm back văng khỏi app', 'mất focus về launcher', 'override onBackPressed: 2 lần back về Home Hub')
+shot('after_double_back')
 
 # ---------- 5.5 UPDATE FLOW (bug văng khi bấm TẢI NGAY) ----------
 print('[5.5] Luồng tự cập nhật', flush=True)

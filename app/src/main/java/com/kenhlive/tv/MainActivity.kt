@@ -36,6 +36,8 @@ class MainActivity : AppCompatActivity() {
     private var current = TAB_HUB
     private val navViews = mutableListOf<View>()
     private var railPanel: View? = null
+    private var lastBackPressTime: Long = 0L
+    private var backToast: android.widget.Toast? = null
 
     // 0: Live, 1: Schedule, 2: IPTV, 3: Search, 4: Settings, 5: Phim, 6: Home Hub
     private val tabTags = arrayOf("tab_live", "tab_schedule", "tab_iptv", "tab_search", "tab_settings", "tab_phim", "tab_hub")
@@ -58,16 +60,28 @@ class MainActivity : AppCompatActivity() {
         val tabX = intent?.getIntExtra("tab", -1) ?: -1
         showTab(if (tabX in 0..6) tabX else TAB_HUB, animate = false)
 
-        // BACK: Nếu sidebar đang mở → đóng sidebar; đang ở mục con → về Cổng Chọn (TAB_HUB); ở Cổng Chọn → dialog xác nhận thoát
+        // BACK:
+        // - Đang ở mục con (Thể thao / Truyền hình / Phim truyện / ...): Ấn 2 lần BACK liên tiếp (trong 2s) để thoát ra Menu Chọn (TAB_HUB)
+        // - Đang ở Menu Chọn (TAB_HUB): Hiện hộp thoại xác nhận thoát ứng dụng
         onBackPressedDispatcher.addCallback(this) {
-            if (DeviceMode.isTv && railPanel != null && railPanel?.visibility == View.VISIBLE && railPanel?.translationX == 0f) {
-                hideRail()
-                focusContentFirst()
-                return@addCallback
-            }
             if (current != TAB_HUB) {
-                showTab(TAB_HUB)
-                return@addCallback
+                val now = System.currentTimeMillis()
+                if (now - lastBackPressTime < 2200L) {
+                    backToast?.cancel()
+                    lastBackPressTime = 0L
+                    showTab(TAB_HUB)
+                    return@addCallback
+                } else {
+                    lastBackPressTime = now
+                    backToast?.cancel()
+                    backToast = android.widget.Toast.makeText(
+                        this@MainActivity,
+                        "Nhấn BACK lần nữa để quay lại Menu Chọn",
+                        android.widget.Toast.LENGTH_SHORT
+                    )
+                    backToast?.show()
+                    return@addCallback
+                }
             }
             val d = AlertDialog.Builder(this@MainActivity, R.style.Theme_KenhLive_Dialog)
                 .setTitle(R.string.dialog_exit_title)
@@ -323,41 +337,6 @@ class MainActivity : AppCompatActivity() {
                 if (f == null) {
                     val decorFirst = firstFocusableIn(window.decorView)
                     decorFirst?.requestFocus()
-                    f = currentFocus
-                }
-                if (f == null) {
-                    val activeNav = navViews.firstOrNull { navIdToTab[it.id] == current } ?: navViews.firstOrNull()
-                    activeNav?.requestFocus()
-                    f = currentFocus
-                }
-            }
-            val insideRail = railPanel?.let { isDescendant(it, f) } == true
-            when (event.keyCode) {
-                android.view.KeyEvent.KEYCODE_DPAD_LEFT -> {
-                    if (current != TAB_HUB && f != null && !insideRail && atLeftEdge(f)) {
-                        showRail()
-                        val activeNav = navViews.firstOrNull { navIdToTab[it.id] == current }
-                        activeNav?.requestFocus() ?: navViews.firstOrNull()?.requestFocus()
-                        return true
-                    }
-                }
-                android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> {
-                    if (insideRail) {
-                        // Kích hoạt tab nếu người dùng đang đứng ở item nav tương ứng
-                        val focusedNav = navViews.firstOrNull { it === f || isDescendant(it, f) }
-                        if (focusedNav != null) {
-                            val targetTab = navIdToTab[focusedNav.id] ?: 0
-                            if (targetTab != current) {
-                                showTab(targetTab, animate = false)
-                            }
-                        }
-                        hideRail()
-                        val activeTag = tabTags.getOrNull(current)
-                        val activeFrag = activeTag?.let { supportFragmentManager.findFragmentByTag(it) }
-                        (activeFrag?.view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
-                        focusContentFirst()
-                        return true
-                    }
                 }
             }
         }
@@ -371,12 +350,12 @@ class MainActivity : AppCompatActivity() {
     fun showTab(pos: Int, animate: Boolean = true, keepRailOpen: Boolean = false) {
         hideKeyboard()
         current = pos
+        lastBackPressTime = 0L
+        backToast?.cancel()
         com.kenhlive.tv.ui.RoomPickerDialog.dismissActive()
-        if (pos == TAB_HUB) {
-            hideRail(immediate = true)
-        }
-        findViewById<View>(R.id.topBar)?.visibility = if (pos == TAB_HUB) View.GONE else View.VISIBLE
-        findViewById<View>(R.id.bottomNav)?.visibility = if (pos == TAB_HUB) View.GONE else View.VISIBLE
+        hideRail(immediate = true)
+        findViewById<View>(R.id.topBar)?.visibility = View.GONE
+        findViewById<View>(R.id.bottomNav)?.visibility = View.GONE
         navViews.forEach { v ->
             val target = navIdToTab[v.id] ?: -1
             v.isSelected = (target == pos)
@@ -470,10 +449,7 @@ class MainActivity : AppCompatActivity() {
     private fun handleDebugIntent(i: Intent?) {
         i?.getStringExtra("open")?.let { target ->
             when (target) {
-                "mv" -> startActivity(
-                    Intent(this, MultiViewActivity::class.java)
-                        .putExtra("mv_layout", i.getIntExtra("mv_layout", 0))
-                )
+                "mv" -> showTab(TAB_HUB, animate = false)
                 "pip" -> lifecycleScope.launch { openPlayer(pip = true) }
                 "update" -> UpdateManager.debugForceDialog(this)
                 "refresh" -> {

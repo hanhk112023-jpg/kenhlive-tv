@@ -146,7 +146,8 @@ BẢN ĐỒ TOÀN BỘ 6 TAB VÀ CÁC MÀN HÌNH CỦA APP KENHLIVE TV:
 - [Tab 5 - Kho Phim (KKPhim & NguonC)]: Apple Pills thể loại & quốc gia, nút XEM NGAY (btnHeroPlay), nút CHỌN TẬP (btnHeroEpisodes), nút LƯU PHIM (btnHeroFavorite), hộp thoại EpisodePickerDialog hỗ trợ chọn Server (Vietsub/Thuyết Minh) và phân nhóm 30 tập. Trình phát phim hỗ trợ HLS 4K native ExoPlayer, tua D-pad Trái/Phải (-15s / +15s) và tự động lưu/tiếp tục xem (Resume Playback).
 - [Sidebar Rail]: Mở bằng DPAD_LEFT từ mép trái, duyệt dọc qua 6 tab, đóng bằng DPAD_RIGHT hoặc BACK.
 - [PlayerActivity]: Trình phát video Live & VOD, phím MENU mở Server Picker, phím A/Đỏ xoay vòng tỉ lệ khung hình (Fit/Fill/Zoom/Fixed), phím B/Vàng tăng âm lượng, gõ số kênh hiện OSD nhảy kênh ngay khi bấm OK. Khung báo lỗi có nút Báo Lỗi Telegram @T990512S.
-- [Home Hub Portal (Tab 6)]: Cổng chọn 3 card lớn (THỂ THAO, TRUYỀN HÌNH, PHIM TRUYỆN) tích hợp Logo Canva 3D (Bóng Đá & Phim Ảnh), kèm 4 nút tiện ích thanh đáy (Cài đặt, Báo lỗi Telegram, Lịch thi đấu, Tìm kiếm), đã gỡ bỏ nút Xem Đa Màn Hình.
+- [Home Hub Portal (Tab 6)]: Cổng chọn 3 card lớn (THỂ THAO, TRUYỀN HÌNH, PHIM TRUYỆN) tích hợp Logo Canva 3D (Bóng Đá & Phim Ảnh), kèm 4 nút tiện ích thanh đáy (Cài đặt, Báo lỗi Telegram, Lịch thi đấu, Tìm kiếm). Mỗi mục khi vào sẽ có GIAO DIỆN RIÊNG BIỆT toàn màn hình, không bị lẫn các tab của mục khác.
+- [Thoát mục về Menu Chọn]: Khi đang ở bất kỳ mục nào (current != TAB_HUB), nhấn BACK 2 lần liên tiếp trong 2 giây sẽ thoát mục quay lại Menu Chọn (Home Hub). Nhấn BACK tại Menu Chọn sẽ hiện dialog xác nhận thoát app.
 
 NGUYÊN TẮC BỘ NHỚ PHIÊN & SĂN LỖI SÂU (Deep Bug Hunting & Session Memory):
 1. Bạn có TRÍ NHỚ LIÊN TỤC xuyên suốt cả phiên test. Hãy ghi nhớ các màn hình đã đi qua, các thao tác đã thực hiện và các lỗi đã phát hiện để không lặp lại hoặc kiểm tra lại xem lỗi có tái diễn.

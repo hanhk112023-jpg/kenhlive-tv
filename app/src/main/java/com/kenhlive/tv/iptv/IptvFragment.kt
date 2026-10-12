@@ -303,12 +303,11 @@ class IptvFragment : Fragment() {
     }
 
     private fun populateUi(channels: List<IptvChannel>, focusFirst: Boolean) {
-        val vnCount = channels.count { it.isVn }
-        val sportsCount = channels.size - vnCount
-        countText.text = "Tổng: ${channels.size} kênh (${vnCount} VN, ${sportsCount} Thể thao)"
+        countText.text = "Tổng: ${channels.size} kênh truyền hình HD"
 
-        // Phân nhóm EPG: Yêu Thích -> VTV -> TV360 -> HTV / VTC -> VTVcab / SCTV -> Thể Thao -> Giải Trí -> Địa Phương -> Tất cả
-        val distinctGroups = mutableListOf("Yêu Thích", "VTV", "TV360", "HTV / VTC", "VTVcab / SCTV", "Thể Thao", "Giải Trí", "Địa Phương", "Tất cả")
+        // Phân nhóm EPG: Yêu Thích -> VTV -> TV360 -> HTV / VTC -> VTVcab / SCTV -> Địa Phương -> Tất cả
+        // Loại bỏ mục Thể Thao và Giải Trí/Phim để phần Truyền Hình thuần túy là các kênh truyền hình
+        val distinctGroups = mutableListOf("Yêu Thích", "VTV", "TV360", "HTV / VTC", "VTVcab / SCTV", "Địa Phương", "Tất cả")
         setupGroups(distinctGroups)
         applyFilter(focusFirst = focusFirst)
     }

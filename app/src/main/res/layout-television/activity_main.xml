@@ -14,7 +14,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- SLIM LEFT NAVIGATION RAIL: Trượt ẩn/hiện đè lên cạnh trái khi tương tác -->
+    <!-- SLIM LEFT NAVIGATION RAIL: Đã ẩn hoàn toàn để mỗi mục có giao diện riêng biệt -->
     <LinearLayout
         android:id="@+id/railPanel"
         android:layout_width="@dimen/rail_slim_w"
@@ -27,7 +27,8 @@
         android:paddingBottom="16dp"
         android:paddingLeft="6dp"
         android:paddingRight="6dp"
-        android:elevation="12dp">
+        android:elevation="12dp"
+        android:visibility="gone">
 
         <!-- User / Profile circle avatar at top -->
         <FrameLayout
