@@ -32,16 +32,16 @@
                 style="@style/KL.Text.Section"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="THÔNG BÁO MỚI &amp; BÁO LỖI"
+                android:text="THÔNG BÁO"
                 android:textColor="#FFFFFF"
-                android:textSize="19sp"
+                android:textSize="20sp"
                 android:textStyle="bold"
-                android:letterSpacing="0.04" />
+                android:letterSpacing="0.06" />
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="KENHLIVE TV · HỖ TRỢ TRỰC TUYẾN QUA TELEGRAM"
+                android:text="HỖ TRỢ &amp; XỬ LÝ SỰ CỐ TRỰC TUYẾN"
                 android:textColor="@color/kl_brand"
                 android:textSize="11sp"
                 android:textStyle="bold"
@@ -62,7 +62,7 @@
             android:paddingRight="12dp"
             android:paddingTop="5dp"
             android:paddingBottom="5dp"
-            android:text="BẢN v7.4.0"
+            android:text="KENHLIVE TV"
             android:textColor="@color/kl_cyan"
             android:textSize="11sp"
             android:textStyle="bold" />
@@ -75,7 +75,7 @@
         android:layout_marginBottom="18dp"
         android:background="#222838" />
 
-    <!-- Two-Column Body: Announcement Content (Left) + Telegram QR Code Card (Right) -->
+    <!-- Two-Column Body: Exact Announcement Text (Left) + Telegram QR Code Card (Right) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -83,7 +83,7 @@
         android:gravity="center_vertical"
         android:baselineAligned="false">
 
-        <!-- Left Column: Details & Instructions -->
+        <!-- Left Column: Exact Message -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
@@ -94,55 +94,29 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="✦ Giao diện Cổng Chọn mới:"
+                android:text="Nếu bạn gặp lỗi, sự cố hoặc bất kỳ vấn đề nào trong quá trình sử dụng, vui lòng liên hệ với chúng tôi để được hỗ trợ và xử lý sớm nhất."
                 android:textColor="#FFFFFF"
-                android:textSize="13.5sp"
-                android:textStyle="bold" />
+                android:textSize="14sp"
+                android:lineSpacingExtra="4dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:layout_marginBottom="10dp"
-                android:text="Chọn nhanh 3 mục Thể Thao, Truyền Hình, Phim Truyện với phím bấm D-pad rộng rãi."
-                android:textColor="#94A3B8"
-                android:textSize="12sp"
-                android:lineSpacingExtra="2dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="✦ Nguồn phát thể thao độc lập:"
-                android:textColor="#FFFFFF"
-                android:textSize="13.5sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:layout_marginBottom="10dp"
-                android:text="Gà Vàng TV, Khán Đài TV, ColaTV và Socolive đã kết nối luồng riêng, không còn bị nhầm lẫn luồng phát."
-                android:textColor="#94A3B8"
-                android:textSize="12sp"
-                android:lineSpacingExtra="2dp" />
-
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="✦ Báo lỗi &amp; Góp ý kênh:"
+                android:layout_marginTop="14dp"
+                android:text="Vui lòng cung cấp: mô tả lỗi, ảnh/video hoặc thông tin liên quan nếu có."
                 android:textColor="@color/kl_brand"
                 android:textSize="13.5sp"
-                android:textStyle="bold" />
+                android:textStyle="bold"
+                android:lineSpacingExtra="4dp" />
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="Nếu gặp lỗi mất kênh, đứng hình hoặc yêu cầu thêm nội dung, vui lòng nhắn tin trực tiếp qua Telegram để được xử lý ngay!"
+                android:layout_marginTop="14dp"
+                android:text="Cảm ơn bạn đã thông báo và đóng góp để hệ thống ngày càng hoàn thiện."
                 android:textColor="#CBD5E1"
-                android:textSize="12sp"
-                android:lineSpacingExtra="2dp" />
+                android:textSize="13sp"
+                android:lineSpacingExtra="4dp" />
         </LinearLayout>
 
         <!-- Right Column: QR Code & Direct Handle -->
