@@ -72,7 +72,9 @@ adb exec-out screencap -p > $OUT/06_returned_hub_from_iptv.png
 mark "DA QUAY VE MENU CHON TU TRUYEN HINH"
 
 # ================= 4. VÀO MỤC PHIM TRUYỆN =================
-go "RIGHT: chuyen sang the PHIM TRUYEN" 22 2; foc
+# Khi quay về Hub, focus ở thẻ THỂ THAO, bấm RIGHT 2 lần để sang PHIM TRUYỆN
+go "RIGHT: tu The Thao sang Truyen Hinh" 22 1; foc
+go "RIGHT: tu Truyen Hinh sang PHIM TRUYEN" 22 2; foc
 adb exec-out screencap -p > $OUT/07_hub_focus_phim.png
 mark "OK: VAO MUC PHIM TRUYEN (KHO BOM TAN 4K)"
 go "OK: vao muc Phim Truyen" 23 5; foc
