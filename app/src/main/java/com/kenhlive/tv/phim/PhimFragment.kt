@@ -195,10 +195,18 @@ class PhimFragment : Fragment() {
 
     private fun refreshContinueWatchingOnly() {
         viewLifecycleOwner.lifecycleScope.launch {
+            if (selectedCategorySlug == "da-luu") {
+                loadFilmsByCategory("da-luu")
+                return@launch
+            }
+
             val history = withContext(Dispatchers.IO) {
                 WatchHistoryManager.getContinueWatchingList(15)
             }
-            if (history.isEmpty() && sections.none { it.isContinueWatching }) return@launch
+            val favorites = withContext(Dispatchers.IO) {
+                WatchHistoryManager.getFavoriteFilms()
+            }
+            if (history.isEmpty() && favorites.isEmpty() && sections.none { it.isContinueWatching }) return@launch
 
             val historyFilms = history.map { h ->
                 NguoncFilm(
@@ -211,7 +219,10 @@ class PhimFragment : Fragment() {
                 )
             }
 
-            val newSections = sections.filterNot { it.isContinueWatching }.toMutableList()
+            val newSections = sections.filterNot { it.isContinueWatching || it.title.startsWith("BỘ PHIM ĐÃ LƯU") }.toMutableList()
+            if (favorites.isNotEmpty() && selectedCategorySlug == "tat-ca") {
+                newSections.add(0, PhimSection("BỘ PHIM ĐÃ LƯU (${favorites.size})", favorites))
+            }
             if (historyFilms.isNotEmpty()) {
                 newSections.add(0, PhimSection("TIẾP TỤC XEM", historyFilms, isContinueWatching = true))
             }
@@ -222,13 +233,14 @@ class PhimFragment : Fragment() {
                 totalHero = featuredFilms.size,
                 sections = sections,
                 onFilmClick = { film ->
-                    if (film.watchProgress != null) {
+                    if (film.watchProgress != null && film.watchProgress.embedUrl.isNotBlank()) {
                         playEpisode(
                             film = film,
                             episode = NguoncEpisodeItem(
                                 name = film.watchProgress.episodeName,
                                 slug = film.watchProgress.episodeSlug,
-                                embed = film.watchProgress.embedUrl
+                                embed = film.watchProgress.embedUrl,
+                                m3u8 = if (film.watchProgress.embedUrl.contains(".m3u8")) film.watchProgress.embedUrl else ""
                             ),
                             startPosMs = film.watchProgress.positionMs
                         )
@@ -248,21 +260,35 @@ class PhimFragment : Fragment() {
 
     private fun toggleFilmFavorite(film: NguoncFilm) {
         viewLifecycleOwner.lifecycleScope.launch {
-            val nowFav = withContext(Dispatchers.IO) { WatchHistoryManager.toggleFavorite(film) }
+            val progress = withContext(Dispatchers.IO) {
+                film.watchProgress ?: WatchHistoryManager.getProgressForFilm(film.slug)
+            }
+            val nowFav = withContext(Dispatchers.IO) {
+                WatchHistoryManager.toggleFavorite(
+                    film = film,
+                    episodeName = progress?.episodeName,
+                    episodeSlug = progress?.episodeSlug,
+                    embedUrl = progress?.embedUrl,
+                    positionMs = progress?.positionMs,
+                    durationMs = progress?.durationMs
+                )
+            }
+            val timeText = progress?.formattedTimeOnly()?.let { if (it.isNotBlank()) " · $it" else "" } ?: ""
+            val epSuffix = if (progress != null) " (${progress.episodeName}$timeText)" else ""
             android.widget.Toast.makeText(
                 requireContext(),
-                if (nowFav) "Đã lưu \"${film.name}\" vào danh sách yêu thích" else "Đã bỏ lưu \"${film.name}\"",
+                if (nowFav) "Đã lưu \"${film.name}\"$epSuffix vào danh sách yêu thích" else "Đã bỏ lưu \"${film.name}\"",
                 android.widget.Toast.LENGTH_SHORT
             ).show()
             // Cập nhật trực tiếp nút yêu thích trên Hero nếu đang hiển thị phim này để giữ nguyên focus
             val heroFavBtn = mainList.findViewById<Button>(R.id.btnHeroFavorite)
             if (heroFavBtn != null && heroFilm?.slug == film.slug) {
-                heroFavBtn.text = if (nowFav) "ĐÃ LƯU" else "LƯU PHIM"
+                heroFavBtn.text = if (nowFav) "✓  ĐÃ LƯU$epSuffix" else "+  LƯU PHIM"
                 heroFavBtn.setCompoundDrawablesWithIntrinsicBounds(
                     if (nowFav) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark, 0, 0, 0
                 )
             }
-            if (selectedCategorySlug == "da-luu") {
+            if (selectedCategorySlug == "da-luu" || selectedCategorySlug == "tat-ca") {
                 loadFilmsByCategory(selectedCategorySlug)
             }
         }
@@ -514,13 +540,14 @@ class PhimFragment : Fragment() {
                     totalHero = featuredFilms.size,
                     sections = sections,
                     onFilmClick = { film ->
-                        if (film.watchProgress != null) {
+                        if (film.watchProgress != null && film.watchProgress.embedUrl.isNotBlank()) {
                             playEpisode(
                                 film = film,
                                 episode = NguoncEpisodeItem(
                                     name = film.watchProgress.episodeName,
                                     slug = film.watchProgress.episodeSlug,
-                                    embed = film.watchProgress.embedUrl
+                                    embed = film.watchProgress.embedUrl,
+                                    m3u8 = if (film.watchProgress.embedUrl.contains(".m3u8")) film.watchProgress.embedUrl else ""
                                 ),
                                 startPosMs = film.watchProgress.positionMs
                             )
@@ -857,7 +884,10 @@ class PhimFragment : Fragment() {
 
             (itemView.context as? androidx.appcompat.app.AppCompatActivity)?.lifecycleScope?.launch {
                 val isFav = withContext(Dispatchers.IO) { WatchHistoryManager.isFavorite(film.slug) }
-                btnFavorite.text = if (isFav) "✓  ĐÃ LƯU" else "+  LƯU PHIM"
+                val progress = withContext(Dispatchers.IO) { WatchHistoryManager.getProgressForFilm(film.slug) }
+                val timePart = progress?.formattedTimeOnly()?.let { if (it.isNotBlank()) " · $it" else "" } ?: ""
+                val epPart = if (progress != null) " (${progress.episodeName}$timePart)" else ""
+                btnFavorite.text = if (isFav) "✓  ĐÃ LƯU$epPart" else "+  LƯU PHIM"
             }
 
             btnPlay.setOnClickListener { onHeroPlay(film) }
@@ -928,12 +958,14 @@ class PhimFragment : Fragment() {
             val score = 8.2 + (Math.abs(film.name.hashCode()) % 15) / 10.0
             holder.ratingBadge?.text = String.format(Locale.US, "★ %.1f", score)
 
-            // Xử lý hiển thị tiến độ xem (Continue Watching)
+            // Xử lý hiển thị tiến độ xem (Continue Watching hoặc Phim Đã Lưu có tiến độ)
             val progress = film.watchProgress
-            if (progress != null && progress.progressPct > 0) {
+            if (progress != null && (progress.progressPct > 0 || progress.positionMs > 0L)) {
                 holder.progressBar.visibility = View.VISIBLE
-                holder.progressBar.progress = progress.progressPct
-                holder.episodeBadge.text = "${progress.episodeName} (${progress.progressPct}%)"
+                holder.progressBar.progress = progress.progressPct.coerceAtLeast(3)
+                val timeLabel = progress.formattedTimeOnly()
+                val badgeText = if (timeLabel.isNotBlank()) "${progress.episodeName} · $timeLabel" else "${progress.episodeName} (${progress.progressPct}%)"
+                holder.episodeBadge.text = badgeText
                 holder.meta.text = progress.formattedProgress()
             } else {
                 holder.progressBar.visibility = View.GONE

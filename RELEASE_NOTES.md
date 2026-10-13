@@ -1,24 +1,32 @@
-# 🚀 KENHLIVE TV v7.4.7 (Build 123) — GIAO DIỆN ĐỘC LẬP TỪNG MỤC, ẤN 2 LẦN BACK VỀ MENU CHỌN & LOGO CANVA MỚI
+# 🚀 KENHLIVE TV v7.4.8 (Build 124) — LƯU TẬP & THỜI GIAN XEM CHI TIẾT, BẢO TOÀN DỮ LIỆU BỀN VỮNG KHI CÀI BẢN MỚI
 
-### 🌟 1. Mỗi Mục Có Giao Diện Riêng Biệt 100% Toàn Màn Hình
-- **Tách biệt hoàn toàn từng mục:** Khi bấm vào bất kỳ mục nào từ Menu Chọn (`THỂ THAO`, `TRUYỀN HÌNH`, `PHIM TRUYỆN`), ứng dụng mở **giao diện riêng biệt toàn màn hình** của mục đó, gỡ bỏ hoàn toàn thanh điều hướng chung (`bottomNav` / `railPanel`).
-- **Mục TRUYỀN HÌNH (IPTV):** Chỉ hiển thị thuần túy các kênh truyền hình trực tuyến (`Yêu Thích`, `VTV`, `TV360`, `HTV / VTC`, `VTVcab / SCTV`, `Địa Phương`, `Tất cả`), **loại bỏ hoàn toàn** các tab hay mục Bóng đá và Phim bị lẫn vào trong phần Truyền hình.
-
----
-
-### 🔙 2. Cơ Chế Thoát Mục Chuẩn TV: Ấn 2 Lần BACK Về Lại Menu Chọn
-- Khi đang ở trong bất kỳ mục nào (`Thể Thao`, `Truyền Hình`, `Phim Truyện`, `Cài Đặt`, `Lịch Đấu`, `Tìm Kiếm`):
-  - **Ấn BACK lần 1:** Hiện thông báo nhắc *`"Nhấn BACK lần nữa để quay lại Menu Chọn"`*, tránh việc lỡ tay bấm BACK bị văng khỏi mục đang xem.
-  - **Ấn BACK lần 2 (trong vòng 2 giây):** Thoát khỏi mục hiện tại và quay trở về **Menu Chọn 3 Card (Home Hub)**.
-- Khi đang ở **Menu Chọn (Home Hub)**: Ấn BACK sẽ hiển thị hộp thoại xác nhận thoát ứng dụng.
+### 🛡️ 1. Khắc Phục Triệt Để Lỗi Mất Phim & Tập Khi Cài Bản Mới / Nâng Cấp APK
+- **Nâng cấp Database SQLite lên DB_VERSION 2:** Tự động tạo và kiểm tra schema (`ensureColumn`) cho bảng phim đã lưu (`favorite_films`), bảng lịch sử xem (`watch_history`) và bảng chi tiết từng tập (`watched_episodes`). Không bao giờ xảy ra lỗi thiếu bảng khi nâng cấp từ các bản cũ.
+- **Hệ Thống Sao Lưu Đa Tầng Bền Vững (Dual-Layer Persistent Vault):**
+  - Mọi thao tác lưu phim, đánh dấu tập hay cập nhật tiến độ xem đều được tự động đồng bộ tức thì sang **SharedPreferences** và tệp sao lưu JSON bền vững (`kenhlive_cinema_vault.json`) lưu tại bộ nhớ trong và bộ nhớ ngoài của thiết bị.
+  - **Tự động khôi phục 100%:** Khi cài bản mới, cập nhật APK hoặc sau khi xóa dữ liệu, ứng dụng tự động nhận diện và khôi phục toàn bộ danh sách phim yêu thích, các tập đã lưu và thời gian xem mà người dùng không bị mất bất kỳ dữ liệu nào.
+  - **Bảo vệ danh sách Đã Lưu:** Thuật toán dọn dẹp lịch sử thông minh không bao giờ xóa các bộ phim nằm trong mục Phim Đã Lưu.
 
 ---
 
-### 🎨 3. Bộ Logo Chuyên Nghiệp Từ Canva & Kho Phim Native HLS 4K
-- **Logo Canva 3D:** Card **THỂ THAO** dùng logo quả bóng đá lửa 3D viền vàng cam; Card **PHIM TRUYỆN** dùng logo Clapperboard & cuộn phim 4K vàng ánh kim.
-- **Kho Phim KKPhim Direct HLS 4K:** Phát trực tiếp bằng ExoPlayer native, tua 15s bằng phím D-pad Trái/Phải, chọn Server (`Vietsub`, `Thuyết Minh`, `Lồng Tiếng`) và phân nhóm 30 tập.
+### ⏱️ 2. Lưu Chi Tiết Từng Tập Phim & Thời Gian Xem (Giờ:Phút:Giây)
+- **Lưu chính xác thời gian xem:** Ghi nhận chi tiết từng giây mili-giây, định dạng rõ ràng dạng `15:20 / 45:00 (34%)` hoặc `01:12:30 / 02:05:00` thay vì chỉ làm tròn phút.
+- **Hiển thị trực quan trên giao diện:**
+  - **Trên Poster phim:** Hiển thị nhãn tập và thời gian (ví dụ: `Tập 1 · 15:20/45:00`) kèm thanh tiến độ xem màu cam nổi bật.
+  - **Trong Hộp thoại Chọn Tập (Episode Picker):** Nút lưu hiển thị rõ ràng `Đã Lưu (Tập 1 · 15:20/45:00)`, và trên từng ô chip tập phim hiển thị thời gian đang xem dở.
+  - **Trên Billboard Hero:** Nút `✓ ĐÃ LƯU` tự động đính kèm tên tập và thời gian xem hiện tại.
+- **Tự động lưu tiến độ liên tục (Auto-Save):**
+  - Tự động lưu ngầm định kỳ mỗi 5 giây khi đang phát video.
+  - Tự động lưu ngay lập tức vị trí mới khi bấm phím D-pad Trái/Phải để tua nhanh/tua lùi 15s.
+  - Sử dụng tiến trình độc lập (`SupervisorJob`), đảm bảo dữ liệu ghi vào đĩa 100% thành công ngay cả khi người dùng bấm phím BACK thoát nhanh khỏi trình phát.
+
+---
+
+### 🎬 3. Tự Động Tiếp Tục Phát (Resume Playback) Tức Thì
+- Khi bấm vào bất kỳ phim nào trong mục **TIẾP TỤC XEM** hoặc **BỘ PHIM ĐÃ LƯU**, trình phát native ExoPlayer sẽ tự động tua ngay đến chính xác vị trí phút/giây mà bạn đang xem dở.
+- Người dùng có thể chọn bất kỳ tập nào trong danh sách, ứng dụng ghi nhớ riêng tiến độ của từng tập độc lập.
 
 ---
 
 ### 📦 Tải & Cài Đặt:
-- Tải trực tiếp file `KenhLive-v7.4.7.apk` bên dưới.
+- Tải trực tiếp file `KenhLive-v7.4.8.apk` bên dưới.

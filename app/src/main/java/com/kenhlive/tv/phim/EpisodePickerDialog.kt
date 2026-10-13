@@ -66,8 +66,9 @@ object EpisodePickerDialog {
         scope.launch {
             val isFav = withContext(Dispatchers.IO) { WatchHistoryManager.isFavorite(film.slug) }
             val progress = withContext(Dispatchers.IO) { WatchHistoryManager.getProgressForFilm(film.slug) }
-            val epSuffix = if (progress != null) " (${progress.episodeName})" else ""
-            btnFavorite.text = if (isFav) "Đã Lưu$epSuffix" else "Lưu Phim"
+            val timePart = progress?.formattedTimeOnly()?.let { if (it.isNotBlank()) " · $it" else "" } ?: ""
+            val epSuffix = if (progress != null) " (${progress.episodeName}$timePart)" else ""
+            btnFavorite.text = if (isFav) "Đã Lưu$epSuffix" else "Lưu Phim$epSuffix"
             btnFavorite.setCompoundDrawablesWithIntrinsicBounds(
                 if (isFav) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark, 0, 0, 0
             )
@@ -81,11 +82,14 @@ object EpisodePickerDialog {
                         film = film,
                         episodeName = progress?.episodeName,
                         episodeSlug = progress?.episodeSlug,
-                        embedUrl = progress?.embedUrl
+                        embedUrl = progress?.embedUrl,
+                        positionMs = progress?.positionMs,
+                        durationMs = progress?.durationMs
                     )
                 }
-                val epSuffix = if (progress != null) " (${progress.episodeName})" else ""
-                btnFavorite.text = if (nowFav) "Đã Lưu$epSuffix" else "Lưu Phim"
+                val timePart = progress?.formattedTimeOnly()?.let { if (it.isNotBlank()) " · $it" else "" } ?: ""
+                val epSuffix = if (progress != null) " (${progress.episodeName}$timePart)" else ""
+                btnFavorite.text = if (nowFav) "Đã Lưu$epSuffix" else "Lưu Phim$epSuffix"
                 btnFavorite.setCompoundDrawablesWithIntrinsicBounds(
                     if (nowFav) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark, 0, 0, 0
                 )
@@ -183,13 +187,30 @@ object EpisodePickerDialog {
                                 items = chunkItems,
                                 currentEpSlug = progress?.episodeSlug,
                                 watchedEpSlugs = watchedSlugs,
+                                currentEpTimeLabel = progress?.formattedTimeOnly().orEmpty(),
                                 onClick = { item ->
                                     dialog.dismiss()
-                                    val startPos = if (item.slug == progress?.episodeSlug) progress.positionMs else 0L
-                                    onSelectEpisode(film, item, startPos)
+                                    scope.launch {
+                                        val epProgress = withContext(Dispatchers.IO) {
+                                            WatchHistoryManager.getProgressForEpisode(film.slug, item.slug)
+                                                ?: WatchHistoryManager.getProgressForFilm(film.slug)?.takeIf { it.episodeSlug == item.slug }
+                                        }
+                                        val startPos = epProgress?.positionMs
+                                            ?: if (item.slug == progress?.episodeSlug) (progress?.positionMs ?: 0L) else 0L
+                                        withContext(Dispatchers.Main) {
+                                            onSelectEpisode(film, item, startPos)
+                                        }
+                                    }
                                 },
                                 onBookmark = { item ->
                                     scope.launch {
+                                        val existing = withContext(Dispatchers.IO) {
+                                            WatchHistoryManager.getProgressForEpisode(film.slug, item.slug)
+                                                ?: WatchHistoryManager.getProgressForFilm(film.slug)?.takeIf { it.episodeSlug == item.slug }
+                                        }
+                                        val pos = existing?.positionMs ?: 0L
+                                        val dur = existing?.durationMs ?: 0L
+                                        val m3u8Url = if (item.m3u8.isNotBlank()) item.m3u8 else item.embed
                                         withContext(Dispatchers.IO) {
                                             WatchHistoryManager.saveProgress(
                                                 slug = film.slug,
@@ -197,22 +218,33 @@ object EpisodePickerDialog {
                                                 posterUrl = film.posterUrl.ifBlank { film.thumbUrl },
                                                 episodeName = item.name,
                                                 episodeSlug = item.slug,
-                                                embedUrl = if (item.m3u8.isNotBlank()) item.m3u8 else item.embed,
-                                                positionMs = 1000L,
-                                                durationMs = 0L
+                                                embedUrl = m3u8Url,
+                                                positionMs = pos,
+                                                durationMs = dur
                                             )
                                             if (!WatchHistoryManager.isFavorite(film.slug)) {
-                                                WatchHistoryManager.toggleFavorite(film, item.name, item.slug, item.embed)
+                                                WatchHistoryManager.toggleFavorite(
+                                                    film = film,
+                                                    episodeName = item.name,
+                                                    episodeSlug = item.slug,
+                                                    embedUrl = m3u8Url,
+                                                    positionMs = pos,
+                                                    durationMs = dur
+                                                )
                                             }
                                         }
                                         withContext(Dispatchers.Main) {
-                                            btnFavorite.text = "Đã Lưu (${item.name})"
+                                            val timeStr = if (pos > 0L) {
+                                                val m = pos / 60000L; val s = (pos % 60000L) / 1000L
+                                                String.format(java.util.Locale.US, " · %02d:%02d", m, s)
+                                            } else ""
+                                            btnFavorite.text = "Đã Lưu (${item.name}$timeStr)"
                                             btnFavorite.setCompoundDrawablesWithIntrinsicBounds(
                                                 R.drawable.ic_bookmark_filled, 0, 0, 0
                                             )
                                             android.widget.Toast.makeText(
                                                 context,
-                                                "Đã lưu \"${film.name}\" tại ${item.name}!",
+                                                "Đã lưu \"${film.name}\" tại ${item.name}$timeStr!",
                                                 android.widget.Toast.LENGTH_SHORT
                                             ).show()
                                         }
@@ -335,12 +367,14 @@ object EpisodePickerDialog {
         private val items: List<NguoncEpisodeItem>,
         private var currentEpSlug: String?,
         private val watchedEpSlugs: Set<String>,
+        private var currentEpTimeLabel: String = "",
         private val onClick: (NguoncEpisodeItem) -> Unit,
         private val onBookmark: (NguoncEpisodeItem) -> Unit
     ) : RecyclerView.Adapter<EpisodeAdapter.VH>() {
 
-        fun updateCurrent(slug: String) {
+        fun updateCurrent(slug: String, timeLabel: String = "") {
             currentEpSlug = slug
+            if (timeLabel.isNotBlank()) currentEpTimeLabel = timeLabel
             notifyDataSetChanged()
         }
 
@@ -360,7 +394,11 @@ object EpisodePickerDialog {
             val isCurrent = item.slug == currentEpSlug
             val isWatched = watchedEpSlugs.contains(item.slug)
 
-            holder.tv.text = baseName
+            holder.tv.text = if (isCurrent && currentEpTimeLabel.isNotBlank()) {
+                "$baseName ($currentEpTimeLabel)"
+            } else {
+                baseName
+            }
 
             val iconRes = when {
                 isCurrent -> R.drawable.ic_play_arrow

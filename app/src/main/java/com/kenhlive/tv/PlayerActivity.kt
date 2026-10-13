@@ -1037,7 +1037,7 @@ class PlayerActivity : AppCompatActivity() {
                             handler.removeCallbacks(autoRecoveryRunnable)
                             findViewById<View>(R.id.playerErrorBox)?.visibility = View.GONE
                             findViewById<View>(R.id.bufferBox)?.visibility = View.GONE
-                            if (isVodMode && startPositionMs > 5000L && !hasSeekedToStart) {
+                            if (isVodMode && startPositionMs > 1000L && !hasSeekedToStart) {
                                 hasSeekedToStart = true
                                 player?.seekTo(startPositionMs)
                                 val m = startPositionMs / 60000L
@@ -1069,6 +1069,15 @@ class PlayerActivity : AppCompatActivity() {
                     if (DeviceMode.isPhone) {
                         centerPlayPauseBtn?.setImageResource(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
                     }
+                    if (isVodMode) {
+                        if (isPlaying) {
+                            handler.removeCallbacks(vodAutoSaveRunnable)
+                            handler.postDelayed(vodAutoSaveRunnable, 5000L)
+                        } else {
+                            handler.removeCallbacks(vodAutoSaveRunnable)
+                            saveVodProgress()
+                        }
+                    }
                 }
                 override fun onEvents(p: Player, events: Player.Events) {
                     val sid = (p as? ExoPlayer)?.audioSessionId ?: 0
@@ -1081,24 +1090,32 @@ class PlayerActivity : AppCompatActivity() {
         prepareChannelUrl(url)
     }
 
-    private fun saveVodProgress() {
+    private val vodAutoSaveRunnable = object : Runnable {
+        override fun run() {
+            if (isVodMode && player?.isPlaying == true) {
+                saveVodProgress()
+            }
+            handler.postDelayed(this, 5000L)
+        }
+    }
+
+    private fun saveVodProgress(explicitPos: Long? = null) {
         if (!isVodMode || filmSlug.isBlank()) return
         val p = player ?: return
-        val pos = p.currentPosition
+        val pos = explicitPos ?: p.currentPosition
         val dur = p.duration.coerceAtLeast(0L)
-        if (pos > 1000L) {
-            lifecycleScope.launch(kotlinx.coroutines.Dispatchers.IO) {
-                com.kenhlive.tv.phim.WatchHistoryManager.saveProgress(
-                    slug = filmSlug,
-                    filmName = if (filmTitle.isNotBlank()) filmTitle else findViewById<TextView>(R.id.playerTitle).text.toString(),
-                    posterUrl = posterUrl,
-                    episodeName = episodeTitle,
-                    episodeSlug = episodeSlug,
-                    embedUrl = url,
-                    positionMs = pos,
-                    durationMs = dur
-                )
-            }
+        if (pos > 1000L || explicitPos != null) {
+            val resolvedFilmName = if (filmTitle.isNotBlank()) filmTitle else findViewById<TextView>(R.id.playerTitle).text.toString()
+            com.kenhlive.tv.phim.WatchHistoryManager.saveProgressAsync(
+                slug = filmSlug,
+                filmName = resolvedFilmName,
+                posterUrl = posterUrl,
+                episodeName = episodeTitle,
+                episodeSlug = episodeSlug,
+                embedUrl = url,
+                positionMs = pos,
+                durationMs = dur
+            )
         }
     }
 
@@ -1408,7 +1425,7 @@ class PlayerActivity : AppCompatActivity() {
                         val m = target / 60000L
                         val s = (target % 60000L) / 1000L
                         showGestureFeedback(R.drawable.ic_back, 0, String.format(Locale.US, "-15s (%02d:%02d)", m, s))
-                        saveVodProgress()
+                        saveVodProgress(target)
                         return true
                     }
                 }
@@ -1421,7 +1438,7 @@ class PlayerActivity : AppCompatActivity() {
                         val m = target / 60000L
                         val s = (target % 60000L) / 1000L
                         showGestureFeedback(R.drawable.ic_play, 100, String.format(Locale.US, "+15s (%02d:%02d)", m, s))
-                        saveVodProgress()
+                        saveVodProgress(target)
                         return true
                     }
                 }
@@ -1501,6 +1518,7 @@ class PlayerActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
+        handler.removeCallbacks(vodAutoSaveRunnable)
         saveVodProgress()
         handler.removeCallbacks(commitChannelSwitch)
         handler.removeCallbacks(autoRecoveryRunnable)
@@ -1508,6 +1526,7 @@ class PlayerActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
+        handler.removeCallbacks(vodAutoSaveRunnable)
         saveVodProgress()
         val inPip = Build.VERSION.SDK_INT >= 26 && isInPictureInPictureMode && !DeviceMode.isTv
         if (inPip && !isFinishing) return

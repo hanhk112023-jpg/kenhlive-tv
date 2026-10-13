@@ -423,18 +423,16 @@ class WebPlayerActivity : AppCompatActivity() {
 
     private fun saveCurrentProgress() {
         if (filmSlug.isBlank() || currentPositionMs <= 0L) return
-        lifecycleScope.launch {
-            WatchHistoryManager.saveProgress(
-                slug = filmSlug,
-                filmName = filmTitle,
-                posterUrl = posterUrl,
-                episodeName = episodeTitle,
-                episodeSlug = episodeSlug,
-                embedUrl = embedUrl,
-                positionMs = currentPositionMs,
-                durationMs = currentDurationMs
-            )
-        }
+        WatchHistoryManager.saveProgressAsync(
+            slug = filmSlug,
+            filmName = filmTitle,
+            posterUrl = posterUrl,
+            episodeName = episodeTitle,
+            episodeSlug = episodeSlug,
+            embedUrl = embedUrl,
+            positionMs = currentPositionMs,
+            durationMs = currentDurationMs
+        )
     }
 
     private fun showOsd() {
