@@ -1,6 +1,6 @@
 #!/bin/bash
-# UI TOUR V2 (Tối ưu tốc độ + AI Driver): quay toàn bộ giao diện KenhLive trên ROM Android TV
-# Sử dụng dynamic settle thay vì sleep mù để giảm 50% thời gian chạy.
+# UI TOUR V3: Quay toàn bộ giao diện KenhLive TV v7.4.7
+# Trọng tâm: Vào trực tiếp Phim Truyện từ Home Hub, duyệt Netflix UI, tua 15s, thoát 2 lần BACK về Home Hub, vào Truyền Hình & Thể Thao.
 set -u
 OUT=/tmp/tour; mkdir -p $OUT
 adb root >/dev/null 2>&1 || true; sleep 1
@@ -12,18 +12,6 @@ adb shell wm density 320
 adb install -r app/build/outputs/apk/debug/app-debug.apk >/dev/null 2>&1
 adb logcat -c
 adb shell am force-stop com.kenhlive.tv; sleep 1
-adb shell am start -W -n com.kenhlive.tv/.MainActivity >/dev/null 2>&1
-
-# Chờ UI sẵn sàng nhanh qua uiautomator
-wait_ready() {
-  for w in $(seq 1 15); do
-    D=$(adb shell uiautomator dump /sdcard/u.xml >/dev/null 2>&1; adb shell cat /sdcard/u.xml 2>/dev/null)
-    if echo "$D" | grep -qE 'XEM NGAY|phòng live|Hôm nay|Truyền hình|Việt Nam|THỂ THAO|TRUYỀN HÌNH|PHIM TRUYỆN'; then return 0; fi
-    if echo "$D" | grep -qE 'Không tải|THỬ LẠI|Sân vắng'; then return 1; fi
-    sleep 2
-  done; return 1
-}
-wait_ready || true
 
 TL=$OUT/timeline.txt; : > $TL
 T0=$(date +%s)
@@ -32,267 +20,114 @@ mark()  { echo "$(($(date +%s)-T0))s|$1|$(focus)" >> $TL; }
 key()   { adb shell input keyevent $1; }
 foc()   { local X=$(adb shell "uiautomator dump /sdcard/f.xml >/dev/null 2>&1; cat /sdcard/f.xml" 2>/dev/null | tr '>' '\n' | grep 'focused="true"' | grep -o 'bounds="[^"]*"' | head -1); echo "$(($(date +%s)-T0))s|FOCU $X" >> $TL; }
 go()    { local n="$1" c="$2" w="$3"; key "$c"; sleep "$w"; mark "$n"; }
-relaunch(){ adb shell am start -n com.kenhlive.tv/.MainActivity --ei tab "$1" >/dev/null 2>&1; sleep 3; mark "RELAUNCH tab$1"; }
-startrec(){ REC_CUR="$1"; adb shell rm -f /sdcard/$REC_CUR; adb shell screenrecord --bit-rate 6000000 --time-limit 150 /sdcard/$REC_CUR & REC_PID=$!; }
-stoprec() { local f="${1:-${REC_CUR:-rec1.mp4}}"; adb shell screenrecord --stop >/dev/null 2>&1; wait $REC_PID 2>/dev/null || true; sleep 2; adb pull /sdcard/$f $OUT/$f >/dev/null 2>&1 || true; }
 
-# ==================== ĐOẠN 1 ====================
-startrec rec1.mp4; sleep 2; mark "MO APP: Cong Chon 3 Muc & The Thao"
-
-# 0. CỔNG CHỌN CHÍNH (TAB 6: HOME HUB PORTAL)
-relaunch 6
-sleep 3
-adb exec-out screencap -p > $OUT/tab6_home_hub_dialog.png
-go "BACK: dong dialog thong bao de hien tron ven 3 the Portal" 4 1
-adb exec-out screencap -p > $OUT/tab6_home_hub_portal.png
-mark "CHUP ANH: Cong chon 3 muc The thao, Truyen hinh, Phim truyen"
-go "RIGHT: sang muc Truyen Hinh" 22 1; foc
-go "RIGHT: sang muc Phim Truyen" 22 1; foc
-go "LEFT: tro lai muc Truyen Hinh" 21 1; foc
-go "LEFT: tro lai The Thao" 21 1; foc
-go "DOWN: xuong hang Cai Dat & Tien Ich" 20 1; foc
-go "UP: len lai The Thao" 19 1; foc
-go "OK: mo giao dien rieng The Thao" 23 2; foc
-
-# 1. TAB 0: TRỰC TIẾP THỂ THAO
-relaunch 0
-sleep 3
-adb exec-out screencap -p > $OUT/tab0_fullscreen_no_rail.png
-mark "CHUP ANH: Full man hinh noi dung (Side tab da an)"
-go "RIGHT: duyet qua cac hang nha dai the thao" 22 1; foc
-adb exec-out screencap -p > $OUT/tab0_sports_providers.png
-mark "CHUP ANH: Giao dien rieng The Thao voi cac dai Socolive, ColaTV, Ga Vang, Gio Vang"
-
-# 2. TAB 1: LỊCH THI ĐẤU
-relaunch 1
-sleep 3
-go "DOWN: cuon xuong tran ke tiep"                         20 1
-go "UP: cuon tro lai tran dau tien"                         19 1
-adb exec-out screencap -p > $OUT/tab1_schedule.png
-mark "CHUP ANH: Tab 1 Schedule"
-
-# 3. TAB 2: TRUYỀN HÌNH IPTV (LƯỚI 5 CỘT & HERO PREVIEW)
-relaunch 2
-sleep 4
-adb exec-out screencap -p > $OUT/tab2_iptv.png
-mark "CHUP ANH: Tab 2 IPTV va EPG Live"
-
-# Đưa focus vào card kênh đầu tiên trong lưới 5 cột
-go "DOWN: xuong luoi kenh" 20 1; foc
-go "RIGHT: vao kenh dau tien" 22 1; foc
-adb exec-out screencap -p > $OUT/tab2_vtv_focused.png
-mark "CHUP ANH: Card kenh duoc focus va Hero Preview cap nhat"
-
-# Lướt D-pad qua các cột trong lưới 5 cột (cột 2, cột 3, cột 4, cột 5)
-go "RIGHT: sang cot 2" 22 1; foc
-go "RIGHT: sang cot 3" 22 1; foc
-go "RIGHT: sang cot 4" 22 1; foc
-go "RIGHT: sang cot 5" 22 1; foc
-adb exec-out screencap -p > $OUT/tab2_grid_columns.png
-mark "CHUP ANH: Duyet qua 5 cot luoi kenh"
-
-# Bấm DOWN xuống hàng thứ 2
-go "DOWN: xuong hang 2 cua luoi kenh" 20 1; foc
-adb exec-out screencap -p > $OUT/tab2_grid_row2.png
-mark "CHUP ANH: Hang 2 cua luoi kenh IPTV"
-
-# Lên nhóm danh mục để lọc Thể thao
-go "UP: len hang 1" 19 1; foc
-go "UP: len thanh danh muc nhom kenh" 19 1; foc
-go "RIGHT: sang nhom The Thao" 22 1; foc
-go "OK: kich hoat filter The Thao" 23 2; foc
+# 1. KHỞI CHẠY QUAY VIDEO DUY NHẤT (Single-pass continuous 1080p recording)
+adb shell rm -f /sdcard/rec.mp4
+adb shell screenrecord --bit-rate 6000000 --time-limit 170 /sdcard/rec.mp4 &
+REC_PID=$!
 sleep 2
-adb exec-out screencap -p > $OUT/tab2_sports_filter.png
-mark "CHUP ANH: Nhom The Thao sau khi loc"
 
-# Vào một kênh thể thao và bấm OK để mở Player Pro
-go "DOWN: xuong kenh the thao dau tien" 20 1; foc
-go "OK: mo xem kenh the thao trong Player Pro" 23 5
-adb exec-out screencap -p > $OUT/tab2_vtv_player.png
-mark "CHUP ANH: Player Pro phat kenh truyen hinh"
-
-# Thao tác trong Player Pro
-go "UP: Quick Channel OSD Banner chuyen kenh" 19 2
-adb exec-out screencap -p > $OUT/tab2_quick_osd.png
-mark "CHUP ANH: Quick Channel OSD Banner"
-go "DOWN: mo Carousel chuyen kenh ngang duoi day TV" 20 1
-adb exec-out screencap -p > $OUT/tab2_carousel_channels.png
-mark "CHUP ANH: Bottom Channel Carousel ngang"
-go "RIGHT: luot chon kenh ke tiep tren carousel" 22 1
-go "RIGHT: luot chon them kenh nua" 22 1
-adb exec-out screencap -p > $OUT/tab2_carousel_focused.png
-mark "CHUP ANH: Carousel focus va hien EPG"
-go "BACK: dong carousel" 4 1
-go "OK: hien controls player va sidebar" 23 1
-go "RIGHT: toi nut Aspect Ratio" 22 1
-go "OK: bam chuyen ti le man hinh (Fit/Fill/Zoom)" 23 1
-go "RIGHT: toi nut Sleep Timer" 22 1
-go "OK: mo dialog Hen Gio Tat TV" 23 1
-adb exec-out screencap -p > $OUT/player_sleep_timer_dialog.png
-mark "CHUP ANH: Dialog Hen Gio Tat TV"
-go "DOWN: chon hen 30 phut" 20 1
-go "OK: xac nhan hen gio" 23 1
-go "OK: hien lai controls player" 23 1
-go "RIGHT: toi nut Audio Tracks" 22 1
-go "OK: mo dialog Chon Luong Audio / BLV" 23 1
-adb exec-out screencap -p > $OUT/player_audio_tracks_dialog.png
-mark "CHUP ANH: Dialog Chon Luong Audio"
-go "BACK: dong dialog audio" 4 1
-go "OK: hien lai controls player" 23 1
-go "RIGHT: toi nut Audio Boost" 22 1
-go "OK: tang am luong phan cung (+3dB / +6dB / +9dB)" 23 1
-go "RIGHT: toi nut Stats for Nerds HUD" 22 1
-go "OK: mo Stats for Nerds HUD" 23 2
-adb exec-out screencap -p > $OUT/tab2_stats_hud.png
-mark "CHUP ANH: Stats for Nerds HUD"
-go "BACK: dong Stats HUD" 4 1
-go "OK: mo danh sach kenh Sidebar" 23 1
-adb exec-out screencap -p > $OUT/tab2_sidebar_channels.png
-mark "CHUP ANH: Sidebar danh sach kenh IPTV"
-go "BACK: dong sidebar ve player" 4 1
-go "BACK: thoat player ve tab truyen hinh" 4 2
-
-# 4. TAB 3: TÌM KIẾM
-relaunch 3
-sleep 3
-adb shell input text "vtv" >/dev/null 2>&1; sleep 2; mark "TYPE 'vtv' -> ket qua tim kiem"
-go "BACK dong ban phim"                       4 1
-go "DOWN: chuyen focus xuong chip giai hoac ket qua" 20 1
-adb exec-out screencap -p > $OUT/tab3_search.png
-mark "CHUP ANH: Tab 3 Search"
-
-# 5. TAB 4: CÀI ĐẶT
-relaunch 4
-sleep 3
-go "DOWN: dong cai dat dau tien (Chat luong hinh anh)" 20 1
-go "OK: mo dialog chon chat luong hinh anh"            23 2
-adb exec-out screencap -p > $OUT/tab4_dialog_video.png
-mark "CHUP ANH: Dialog chon chat luong hinh anh"
-go "DOWN: chuyen lua chon chat luong"                   20 1
-go "OK: chon chat luong moi va dong dialog"             23 2
-go "DOWN: dong cai dat thu 2 (Che do am thanh)"         20 1
-go "OK: mo dialog chon che do am thanh"                23 2
-adb exec-out screencap -p > $OUT/tab4_dialog_audio.png
-mark "CHUP ANH: Dialog chon che do am thanh"
-go "DOWN: chuyen lua chon am thanh (Bass)"             20 1
-go "OK: chon che do am thanh va dong dialog"           23 2
-go "UP: quay lai dong dau"                             19 1
-adb exec-out screencap -p > $OUT/tab4_settings.png
-mark "CHUP ANH: Tab 4 Settings sau khi chinh chat luong"
-
-# 5.5. TAB 5: KHO PHIM PHONG CÁCH NETFLIX
-relaunch 5
+# 2. MỞ APP TẠI CỔNG CHỌN (HOME HUB - TAB 6)
+mark "MO APP: Menu Chon 3 Card Home Hub"
+adb shell am start -W -n com.kenhlive.tv/.MainActivity --ei tab 6 >/dev/null 2>&1
 sleep 4
-adb exec-out screencap -p > $OUT/tab5_phim_netflix.png
-mark "CHUP ANH: Kho phim phong cach Netflix Smart TV"
+adb exec-out screencap -p > $OUT/01_home_hub.png
+
+# Đóng thông báo nếu có
+go "BACK: dong thong bao" 4 1
+adb exec-out screencap -p > $OUT/02_home_hub_clean.png
+
+# 3. CHUYỂN TIÊU ĐIỂM VÀ BẤM OK VÀO THẲNG MỤC PHIM TRUYỆN
+go "RIGHT: chuyen sang the Truyen Hinh" 22 1; foc
+go "RIGHT: chuyen sang the PHIM TRUYEN" 22 1; foc
+adb exec-out screencap -p > $OUT/03_hub_focus_phim.png
+mark "OK: VAO MUC PHIM TRUYEN (KHO BOM TAN 4K)"
+go "OK: vao muc Phim Truyen" 23 4; foc
+
+# Giao diện Phim Truyện Netflix Smart TV
+adb exec-out screencap -p > $OUT/04_phim_netflix_home.png
+mark "KHO PHIM NETFLIX: Billboard 4K & Apple Pills"
 go "DOWN: xuong hang poster phim" 20 2; foc
-adb exec-out screencap -p > $OUT/tab5_phim_cards_focused.png
-mark "CHUP ANH: Focus poster phim zoom phong cach Netflix"
+go "RIGHT: duyet poster phim 2" 22 1; foc
+go "RIGHT: duyet poster phim 3" 22 1; foc
+adb exec-out screencap -p > $OUT/05_phim_posters.png
 
-# 6. VÀO PHÒNG LIVE -> PLAYER EXOPLAYER
-relaunch 0
-sleep 3
-go "DOWN toi card LIVE"    20 2
-go "OK: danh sach phong"   23 2
-go "OK: vao phong"         23 6; mark "PLAYER dang phat ExoPlayer"
-go "OK: hien control overlay player" 23 1
-go "OK: mo dialog cai dat chat luong hinh/am" 23 2
-adb exec-out screencap -p > $OUT/player_settings_dialog.png
-mark "CHUP ANH: Player settings dialog"
-go "RIGHT: chon muc chat luong khac" 22 1
-go "DOWN: chuyen xuong nhom am thanh" 20 1
-go "BACK: dong dialog cai dat player" 4 1
-adb exec-out screencap -p > $OUT/player.png
-mark "CHUP ANH: Player"
-SPLIT=$(($(date +%s)-T0)); echo "$SPLIT" > $OUT/split_at.txt
-stoprec
+# Bấm mở thông tin & danh sách tập phim
+mark "OK: mo danh sach tap va server phim"
+go "OK: mo thong tin tap va server" 23 3
+adb exec-out screencap -p > $OUT/06_phim_episodes_dialog.png
 
-# ==================== ĐOẠN 2 ====================
-startrec rec2.mp4; sleep 1; mark "TIEP: BACK khoi player ve Home"
-go "BACK ra player"        4 2
-FG=$(focus); case "$FG" in *kenhlive*) : ;; *) relaunch 0; key 20; sleep 1;; esac
+# Bấm phát phim trên Native ExoPlayer
+mark "OK: phat tap 1 tren Trinh Phat Native ExoPlayer 4K"
+go "OK: phat phim" 23 4
+adb exec-out screencap -p > $OUT/07_phim_vod_playing.png
 
-# 7. KHO PHIM NGUONC / KKPHIM VỚI NATIVE PLAYER VOD (HLS 4K & D-PAD TUA 15s)
-relaunch 5
-sleep 4
-go "DOWN: chon phim dau tien" 20 2
-go "OK: mo danh sach tap va server" 23 2
-adb exec-out screencap -p > $OUT/phim_episodes_dialog.png
-mark "CHUP ANH: Dialog chon tap & server Vietsub/Thuyet minh"
-go "OK: phat tap 1 tren native ExoPlayer" 23 5
-adb exec-out screencap -p > $OUT/phim_vod_playing.png
-mark "CHUP ANH: Player VOD phat HLS native 4K"
+# Thao tác tua D-pad Trái/Phải 15s
 go "RIGHT: tua nhanh 15 giay (+15s)" 22 2
-adb exec-out screencap -p > $OUT/phim_vod_seek_forward.png
-mark "CHUP ANH: OSD tua nhanh +15s"
+adb exec-out screencap -p > $OUT/08_phim_seek_forward.png
 go "LEFT: tua lui 15 giay (-15s)" 21 2
-adb exec-out screencap -p > $OUT/phim_vod_seek_backward.png
-mark "CHUP ANH: OSD tua lui -15s"
-go "BACK: thoat player ve kho phim" 4 2
+adb exec-out screencap -p > $OUT/09_phim_seek_backward.png
 
-# 7.5 TEST GIAO DIỆN MOBILE PHONE (CHUYỂN PROFILE PHONE 1080x2400 PORTRAIT & LANDSCAPE)
-# Tắt đoạn ghi hình TV (rec1) để tránh việc đổi kích thước màn hình adb wm size làm co giật video TV
-stoprec rec1.mp4
-mark "BAT DAU TEST PHONE MODE: Chuyen man hinh doc dien thoai"
-adb shell wm size 1080x2400
-adb shell wm density 420
-adb shell am force-stop com.kenhlive.tv; sleep 1
+# Thoát Player về Kho Phim
+go "BACK: thoat player ve Kho Phim" 4 2
 
-# Mở trực tiếp PlayerActivity với URL test trên Phone dọc
-adb shell am start -n com.kenhlive.tv/.PlayerActivity --es url "https://bitdash-a.akamaihd.net/content/sintel/hls/video/master.m3u8" --es name "Chelsea vs Arsenal" >/dev/null 2>&1
-sleep 4
-adb shell input keyevent 23 # phím OK/Enter kích hoạt overlay
-sleep 1
-adb exec-out screencap -p > $OUT/phone_player_portrait.png
-mark "CHUP ANH: Mobile Phone Player Portrait doc"
+# 4. TEST THOÁT MỤC PHIM TRUYỆN: ẤN 2 LẦN BACK VỀ MENU CHỌN
+mark "THOAT MUC PHIM TRUYEN: An 2 lan BACK"
+go "BACK lan 1 (hien Toast nhac nho)" 4 1
+go "BACK lan 2 (ve Menu Chon)" 4 2
+adb exec-out screencap -p > $OUT/10_returned_hub_from_phim.png
+mark "DA QUAY VE MENU CHON TU PHIM TRUYEN"
 
-# Bấm mở Menu More Options trên Phone (nút 3 chấm ⋮ ở góc trên bên phải)
-adb shell input tap 990 100
+# 5. CHUYỂN SANG VÀ VÀO MỤC TRUYỀN HÌNH
+go "LEFT: chuyen sang the TRUYEN HINH" 21 1; foc
+mark "OK: VAO MUC TRUYEN HINH"
+go "OK: vao muc Truyen Hinh" 23 4; foc
+adb exec-out screencap -p > $OUT/11_iptv_fullscreen.png
+
+# Duyệt lưới kênh truyền hình
+go "DOWN: xuong luoi kenh TV" 20 1; foc
+go "RIGHT: kenh VTV1" 22 1; foc
+go "RIGHT: kenh VTV2" 22 1; foc
+go "RIGHT: kenh VTV3" 22 1; foc
+adb exec-out screencap -p > $OUT/12_iptv_grid_focus.png
+
+# Test thoát mục Truyền Hình: Ấn 2 lần BACK về Menu Chọn
+mark "THOAT MUC TRUYEN HINH: An 2 lan BACK"
+go "BACK lan 1" 4 1
+go "BACK lan 2 ve Menu Chon" 4 2
+adb exec-out screencap -p > $OUT/13_returned_hub_from_iptv.png
+
+# 6. CHUYỂN SANG VÀ VÀO MỤC THỂ THAO
+go "LEFT: chuyen sang the THE THAO" 21 1; foc
+mark "OK: VAO MUC THE THAO"
+go "OK: vao muc The Thao" 23 3; foc
+adb exec-out screencap -p > $OUT/14_sports_fullscreen.png
+
+# Duyệt qua các hàng đài thể thao
+go "DOWN: xuong danh sach tran dau" 20 1; foc
+go "RIGHT: duyet tran dang live" 22 1; foc
+
+# Test thoát mục Thể Thao: Ấn 2 lần BACK về Menu Chọn
+mark "THOAT MUC THE THAO: An 2 lan BACK"
+go "BACK lan 1" 4 1
+go "BACK lan 2 ve Menu Chon" 4 2
+adb exec-out screencap -p > $OUT/15_returned_hub_from_sports.png
+
+# 7. TẠI MENU CHỌN: BẤM BACK HIỆN DIALOG THOÁT ỨNG DỤNG
+mark "BACK TAI MENU CHON: Hien Dialog Thoat App"
+go "BACK tai Menu Chon" 4 2
+adb exec-out screencap -p > $OUT/16_dialog_exit_app.png
+go "BACK huy dialog o lai app" 4 1
+
+# KẾT THÚC QUÁ TRÌNH GHI HÌNH
 sleep 2
-adb exec-out screencap -p > $OUT/phone_player_menu_dialog.png
-mark "CHUP ANH: Mobile Phone Player More Options Menu"
-adb shell input keyevent 4 # Đóng menu
-sleep 1
+adb shell screenrecord --stop >/dev/null 2>&1
+wait $REC_PID 2>/dev/null || true
+sleep 2
+adb pull /sdcard/rec.mp4 $OUT/rec.mp4 >/dev/null 2>&1 || true
 
-# Chuyển Phone sang Landscape xoay ngang (2400x1080)
-adb shell settings put system user_rotation 1
-adb shell wm size 2400x1080
-sleep 3
-# Chạm nhẹ màn hình để gọi hiển thị controls trên màn hình ngang
-adb shell input keyevent 23
-sleep 1
-adb exec-out screencap -p > $OUT/phone_player_landscape.png
-mark "CHUP ANH: Mobile Phone Player Landscape ngang"
-
-# Khôi phục lại chuẩn Android TV
-adb shell settings put system user_rotation 0
-adb shell wm size 1920x1080
-adb shell wm density 320
-adb shell am force-stop com.kenhlive.tv; sleep 2
-
-# 8. TEST THOÁT MỤC (ẤN 2 LẦN BACK VỀ MENU CHỌN) & DIALOG THOÁT APP
-startrec rec2.mp4
-relaunch 2
-sleep 3
-go "BACK lan 1 (hien Toast nhan back lan nua)" 4 1
-go "BACK lan 2 (thoat ve Menu Chon)"           4 2
-adb exec-out screencap -p > $OUT/back_double_returned_hub.png
-mark "CHUP ANH: Da quay ve Menu Chon sau 2 lan back"
-
-go "BACK tai Menu Chon (hien dialog thoat app)" 4 2
-adb exec-out screencap -p > $OUT/back_dialog.png
-mark "DIALOG Thoat?"
-go "BACK huy (o lai)"                          4 2
-sleep 1; stoprec rec2.mp4
-
-adb exec-out screencap -p > $OUT/end.png
-adb logcat -d -s AndroidRuntime:E | tail -40 > $OUT/crash.txt
-adb logcat -d -b events | grep -E 'am_(crash|anr|proc_died)' | grep -i kenhlive > $OUT/events.txt || true
-echo "===== TIMELINE ====="; cat $TL
-S1=$(stat -c%s $OUT/rec1.mp4 2>/dev/null || echo 0); S2=$(stat -c%s $OUT/rec2.mp4 2>/dev/null || echo 0)
-
-# Ghép 2 đoạn + burn phụ đề timeline vào rec.mp4
-if [ "$S1" -gt 100000 ] && [ "$S2" -gt 100000 ]; then
+# Burn phụ đề timeline vào video
+if [ -s "$OUT/rec.mp4" ] && [ -s "$TL" ]; then
   python3 - <<'PY'
 import os
 OUT='/tmp/tour'
@@ -309,24 +144,16 @@ if os.path.exists(OUT+'/timeline.txt'):
 def esc(x): return x.replace('{','(').replace('}',')')
 def fmt(s):
     m,ss=divmod(s,60); return f"0:{m:02d}:{ss:02d}"
-lines=["[Script Info]","PlayResX: 1920","PlayResY: 1080","ScriptType: v4.00+","","[V4+ Styles]","Format: Name, Fontname, Fontsize, PrimaryColour, Outline, Shadow, Alignment, MarginV","Style: Cap,Noto Sans,46,&H00FFFFFF,2,1,1,60","","[Events]","Format: Marked, Start, End, Text"]
+lines=["[Script Info]","PlayResX: 1920","PlayResY: 1080","ScriptType: v4.00+","","[V4+ Styles]","Format: Name, Fontname, Fontsize, PrimaryColour, Outline, Shadow, Alignment, MarginV","Style: Cap,Noto Sans,44,&H00FFFFFF,2,1,1,55","","[Events]","Format: Marked, Start, End, Text"]
 for idx,(t,lab) in enumerate(seg):
-    end=seg[idx+1][0] if idx+1<len(seg) else t+8
+    end=seg[idx+1][0] if idx+1<len(seg) else t+6
     lines.append(f"Dialogue: 0,{fmt(t)},{fmt(end)},{esc(lab)}")
 open(OUT+'/caps.ass','w',encoding='utf-8').write("\n".join(lines))
 PY
-  printf "file '%s'\nfile '%s'\n" "$OUT/rec1.mp4" "$OUT/rec2.mp4" > $OUT/list.txt
-  ffmpeg -y -f concat -safe 0 -i $OUT/list.txt -vf "ass=$OUT/caps.ass" -c:v libx264 -preset veryfast -crf 27 $OUT/rec.mp4 >/dev/null 2>&1 \
-    || ffmpeg -y -f concat -safe 0 -i $OUT/list.txt -c copy $OUT/rec.mp4 >/dev/null 2>&1 \
-    || cp "$OUT/rec1.mp4" "$OUT/rec.mp4"
-fi
-
-if [ ! -s "$OUT/rec.mp4" ]; then
-  if [ -s "$OUT/rec1.mp4" ]; then
-    cp "$OUT/rec1.mp4" "$OUT/rec.mp4"
-  fi
+  ffmpeg -y -i $OUT/rec.mp4 -vf "ass=$OUT/caps.ass" -c:v libx264 -preset veryfast -crf 27 $OUT/rec_sub.mp4 >/dev/null 2>&1 \
+    && mv $OUT/rec_sub.mp4 $OUT/rec.mp4 || true
 fi
 
 SZ=$(stat -c%s $OUT/rec.mp4 2>/dev/null || echo 0)
-echo "KET-QUA rec1=$S1 rec2=$S2 rec=$SZ split=$SPLIT crash=$(wc -l < $OUT/crash.txt) appcrash=$(wc -l < $OUT/events.txt)"
+echo "KET-QUA rec.mp4=$SZ bytes"
 [ "$SZ" -gt 100000 ] || { echo "::error::thieu video"; exit 1; }
