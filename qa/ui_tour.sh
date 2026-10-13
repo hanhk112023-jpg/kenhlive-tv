@@ -55,16 +55,19 @@ adb exec-out screencap -p > $OUT/04_iptv_grid_focus.png
 
 # Bấm OK phát kênh truyền hình
 mark "OK: PHAT KENH TRUYEN HINH VTV"
-go "OK: phat kenh truyen hinh" 23 6; foc
+go "OK: phat kenh truyen hinh" 23 5; foc
 adb exec-out screencap -p > $OUT/05_iptv_playing.png
 
-# Thoát Player kênh truyền hình (nếu đang fullscreen) về lưới kênh
+# Thoát Player kênh truyền hình về lưới kênh (ấn 2 lần BACK để đóng overlay và finish PlayerActivity)
+mark "THOAT PLAYER KENH TV VE LUOI KENH"
 key 4; sleep 1
+key 4; sleep 2
+adb exec-out screencap -p > $OUT/05b_iptv_grid_returned.png
 
 # Thoát mục Truyền Hình: Ấn 2 lần BACK về Menu Chọn
 mark "THOAT MUC TRUYEN HINH: An 2 lan BACK"
 go "BACK lan 1 (hien Toast nhac nho)" 4 1
-go "BACK lan 2 (ve Menu Chon)" 4 2
+go "BACK lan 2 (ve Menu Chon)" 4 3
 adb exec-out screencap -p > $OUT/06_returned_hub_from_iptv.png
 mark "DA QUAY VE MENU CHON TU TRUYEN HINH"
 
@@ -104,8 +107,10 @@ adb exec-out screencap -p > $OUT/13_phim_seek_backward.png
 # Xem thêm 3 giây để hệ thống tự lưu tiến độ định kỳ
 sleep 3
 
-# Thoát Player về Kho Phim
-go "BACK: thoat player ve Kho Phim" 4 3
+# Thoát Player về Kho Phim (2 lần BACK để đóng overlay nếu có và finish PlayerActivity)
+mark "THOAT PLAYER VOD VE KHO PHIM"
+key 4; sleep 1
+key 4; sleep 3
 adb exec-out screencap -p > $OUT/14_phim_saved_progress_view.png
 mark "KHO PHIM: Da luu tien do va thoi gian xem tap"
 
