@@ -32,17 +32,14 @@ mark "MO APP: Menu Chon 3 Card Home Hub"
 adb shell am start -W -n com.kenhlive.tv/.MainActivity --ei tab 6 >/dev/null 2>&1
 sleep 4
 adb exec-out screencap -p > $OUT/01_home_hub.png
-
-# Đóng thông báo nếu có
-go "BACK: dong thong bao" 4 1
-adb exec-out screencap -p > $OUT/02_home_hub_clean.png
+cp $OUT/01_home_hub.png $OUT/02_home_hub_clean.png
 
 # 3. CHUYỂN TIÊU ĐIỂM VÀ BẤM OK VÀO THẲNG MỤC PHIM TRUYỆN
 go "RIGHT: chuyen sang the Truyen Hinh" 22 1; foc
 go "RIGHT: chuyen sang the PHIM TRUYEN" 22 1; foc
 adb exec-out screencap -p > $OUT/03_hub_focus_phim.png
 mark "OK: VAO MUC PHIM TRUYEN (KHO BOM TAN 4K)"
-go "OK: vao muc Phim Truyen" 23 4; foc
+go "OK: vao muc Phim Truyen" 23 5; foc
 
 # Giao diện Phim Truyện Netflix Smart TV
 adb exec-out screencap -p > $OUT/04_phim_netflix_home.png
