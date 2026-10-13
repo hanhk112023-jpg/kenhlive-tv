@@ -82,19 +82,13 @@ go "OK: vao muc Phim Truyen" 23 5; foc
 # Giao diện Phim Truyện Netflix Smart TV
 adb exec-out screencap -p > $OUT/08_phim_netflix_home.png
 mark "KHO PHIM NETFLIX: Billboard 4K & Apple Pills"
-go "DOWN: xuong hang poster phim" 20 2; foc
-go "RIGHT: duyet poster phim 2" 22 2; foc
-go "RIGHT: duyet poster phim 3" 22 2; foc
-adb exec-out screencap -p > $OUT/09_phim_posters.png
-
-# Bấm mở thông tin & danh sách tập phim
-mark "OK: mo danh sach tap va server phim"
-go "OK: mo thong tin tap va server" 23 3
-adb exec-out screencap -p > $OUT/10_phim_episodes_dialog.png
+# Focus nút XEM NGAY trên Hero Banner
+go "DOWN: xuong hang nut Hero (focus nut XEM NGAY)" 20 2; foc
+adb exec-out screencap -p > $OUT/09_phim_hero_play_focused.png
 
 # Bấm phát phim trên Native ExoPlayer 4K
-mark "OK: phat tap 1 tren Trinh Phat Native ExoPlayer 4K"
-go "OK: phat phim" 23 6
+mark "OK: phat phim tren Trinh Phat Native ExoPlayer 4K"
+go "OK: phat phim qua nut XEM NGAY" 23 7; foc
 adb exec-out screencap -p > $OUT/11_phim_vod_playing.png
 
 # Xem phim trong 5s để tiến độ tự động ghi nhận
