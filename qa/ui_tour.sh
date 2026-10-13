@@ -1,6 +1,11 @@
 #!/bin/bash
-# UI TOUR V3: Quay toàn bộ giao diện KenhLive TV v7.4.7
-# Trọng tâm: Vào trực tiếp Phim Truyện từ Home Hub, duyệt Netflix UI, tua 15s, thoát 2 lần BACK về Home Hub, vào Truyền Hình & Thể Thao.
+# UI TOUR V4: Quay toàn bộ giao diện KenhLive TV v7.4.8
+# Luồng chi tiết:
+# 1. Home Hub 3 card (Canva 3D logos)
+# 2. Vào mục Truyền Hình (xem kênh TV, chuyển nhóm kênh, 2 lần BACK về Hub)
+# 3. Vào mục Phim Truyện (duyệt Netflix Cinema, mở chọn tập & server, phát Native 4K ExoPlayer, tua 15s, lưu tiến độ thời gian, 2 lần BACK về Hub)
+# 4. Vào mục Thể Thao (duyệt trận live, 2 lần BACK về Hub)
+# 5. Thoát app dialog tại Home Hub
 set -u
 OUT=/tmp/tour; mkdir -p $OUT
 adb root >/dev/null 2>&1 || true; sleep 1
@@ -23,7 +28,7 @@ go()    { local n="$1" c="$2" w="$3"; key "$c"; sleep "$w"; mark "$n"; }
 
 # 1. KHỞI CHẠY QUAY VIDEO DUY NHẤT (Single-pass continuous 1080p recording)
 adb shell rm -f /sdcard/rec.mp4
-adb shell screenrecord --bit-rate 6000000 --time-limit 170 /sdcard/rec.mp4 &
+adb shell screenrecord --bit-rate 6000000 --time-limit 180 /sdcard/rec.mp4 &
 REC_PID=$!
 sleep 2
 
@@ -32,88 +37,107 @@ mark "MO APP: Menu Chon 3 Card Home Hub"
 adb shell am start -W -n com.kenhlive.tv/.MainActivity --ei tab 6 >/dev/null 2>&1
 sleep 4
 adb exec-out screencap -p > $OUT/01_home_hub.png
-cp $OUT/01_home_hub.png $OUT/02_home_hub_clean.png
 
-# 3. CHUYỂN TIÊU ĐIỂM VÀ BẤM OK VÀO THẲNG MỤC PHIM TRUYỆN
-go "RIGHT: chuyen sang the Truyen Hinh" 22 1; foc
-go "RIGHT: chuyen sang the PHIM TRUYEN" 22 1; foc
-adb exec-out screencap -p > $OUT/03_hub_focus_phim.png
+# Duyệt qua các card trên Home Hub
+go "RIGHT: chuyen sang the TRUYEN HINH" 22 2; foc
+adb exec-out screencap -p > $OUT/02_hub_focus_iptv.png
+
+# ================= 3. VÀO MỤC TRUYỀN HÌNH =================
+mark "OK: VAO MUC TRUYEN HINH (IPTV)"
+go "OK: vao muc Truyen Hinh" 23 4; foc
+adb exec-out screencap -p > $OUT/03_iptv_fullscreen.png
+
+# Duyệt lưới kênh truyền hình VTV
+go "DOWN: xuong luoi kenh TV" 20 2; foc
+go "RIGHT: chuyen sang kenh VTV1" 22 2; foc
+go "RIGHT: chuyen sang kenh VTV2" 22 2; foc
+adb exec-out screencap -p > $OUT/04_iptv_grid_focus.png
+
+# Bấm OK phát kênh truyền hình
+mark "OK: PHAT KENH TRUYEN HINH VTV"
+go "OK: phat kenh truyen hinh" 23 6; foc
+adb exec-out screencap -p > $OUT/05_iptv_playing.png
+
+# Thoát Player kênh truyền hình (nếu đang fullscreen) về lưới kênh
+key 4; sleep 1
+
+# Thoát mục Truyền Hình: Ấn 2 lần BACK về Menu Chọn
+mark "THOAT MUC TRUYEN HINH: An 2 lan BACK"
+go "BACK lan 1 (hien Toast nhac nho)" 4 1
+go "BACK lan 2 (ve Menu Chon)" 4 2
+adb exec-out screencap -p > $OUT/06_returned_hub_from_iptv.png
+mark "DA QUAY VE MENU CHON TU TRUYEN HINH"
+
+# ================= 4. VÀO MỤC PHIM TRUYỆN =================
+go "RIGHT: chuyen sang the PHIM TRUYEN" 22 2; foc
+adb exec-out screencap -p > $OUT/07_hub_focus_phim.png
 mark "OK: VAO MUC PHIM TRUYEN (KHO BOM TAN 4K)"
 go "OK: vao muc Phim Truyen" 23 5; foc
 
 # Giao diện Phim Truyện Netflix Smart TV
-adb exec-out screencap -p > $OUT/04_phim_netflix_home.png
+adb exec-out screencap -p > $OUT/08_phim_netflix_home.png
 mark "KHO PHIM NETFLIX: Billboard 4K & Apple Pills"
 go "DOWN: xuong hang poster phim" 20 2; foc
-go "RIGHT: duyet poster phim 2" 22 1; foc
-go "RIGHT: duyet poster phim 3" 22 1; foc
-adb exec-out screencap -p > $OUT/05_phim_posters.png
+go "RIGHT: duyet poster phim 2" 22 2; foc
+go "RIGHT: duyet poster phim 3" 22 2; foc
+adb exec-out screencap -p > $OUT/09_phim_posters.png
 
 # Bấm mở thông tin & danh sách tập phim
 mark "OK: mo danh sach tap va server phim"
 go "OK: mo thong tin tap va server" 23 3
-adb exec-out screencap -p > $OUT/06_phim_episodes_dialog.png
+adb exec-out screencap -p > $OUT/10_phim_episodes_dialog.png
 
-# Bấm phát phim trên Native ExoPlayer
+# Bấm phát phim trên Native ExoPlayer 4K
 mark "OK: phat tap 1 tren Trinh Phat Native ExoPlayer 4K"
-go "OK: phat phim" 23 4
-adb exec-out screencap -p > $OUT/07_phim_vod_playing.png
+go "OK: phat phim" 23 6
+adb exec-out screencap -p > $OUT/11_phim_vod_playing.png
+
+# Xem phim trong 5s để tiến độ tự động ghi nhận
+sleep 4
 
 # Thao tác tua D-pad Trái/Phải 15s
-go "RIGHT: tua nhanh 15 giay (+15s)" 22 2
-adb exec-out screencap -p > $OUT/08_phim_seek_forward.png
-go "LEFT: tua lui 15 giay (-15s)" 21 2
-adb exec-out screencap -p > $OUT/09_phim_seek_backward.png
+go "RIGHT: tua nhanh 15 giay (+15s)" 22 3
+adb exec-out screencap -p > $OUT/12_phim_seek_forward.png
+go "LEFT: tua lui 15 giay (-15s)" 21 3
+adb exec-out screencap -p > $OUT/13_phim_seek_backward.png
+
+# Xem thêm 3 giây để hệ thống tự lưu tiến độ định kỳ
+sleep 3
 
 # Thoát Player về Kho Phim
-go "BACK: thoat player ve Kho Phim" 4 2
+go "BACK: thoat player ve Kho Phim" 4 3
+adb exec-out screencap -p > $OUT/14_phim_saved_progress_view.png
+mark "KHO PHIM: Da luu tien do va thoi gian xem tap"
 
-# 4. TEST THOÁT MỤC PHIM TRUYỆN: ẤN 2 LẦN BACK VỀ MENU CHỌN
+# Thoát mục Phim Truyện: Ấn 2 lần BACK về Menu Chọn
 mark "THOAT MUC PHIM TRUYEN: An 2 lan BACK"
 go "BACK lan 1 (hien Toast nhac nho)" 4 1
 go "BACK lan 2 (ve Menu Chon)" 4 2
-adb exec-out screencap -p > $OUT/10_returned_hub_from_phim.png
+adb exec-out screencap -p > $OUT/15_returned_hub_from_phim.png
 mark "DA QUAY VE MENU CHON TU PHIM TRUYEN"
 
-# 5. CHUYỂN SANG VÀ VÀO MỤC TRUYỀN HÌNH
+# ================= 5. VÀO MỤC THỂ THAO =================
 go "LEFT: chuyen sang the TRUYEN HINH" 21 1; foc
-mark "OK: VAO MUC TRUYEN HINH"
-go "OK: vao muc Truyen Hinh" 23 4; foc
-adb exec-out screencap -p > $OUT/11_iptv_fullscreen.png
-
-# Duyệt lưới kênh truyền hình
-go "DOWN: xuong luoi kenh TV" 20 1; foc
-go "RIGHT: kenh VTV1" 22 1; foc
-go "RIGHT: kenh VTV2" 22 1; foc
-go "RIGHT: kenh VTV3" 22 1; foc
-adb exec-out screencap -p > $OUT/12_iptv_grid_focus.png
-
-# Test thoát mục Truyền Hình: Ấn 2 lần BACK về Menu Chọn
-mark "THOAT MUC TRUYEN HINH: An 2 lan BACK"
-go "BACK lan 1" 4 1
-go "BACK lan 2 ve Menu Chon" 4 2
-adb exec-out screencap -p > $OUT/13_returned_hub_from_iptv.png
-
-# 6. CHUYỂN SANG VÀ VÀO MỤC THỂ THAO
 go "LEFT: chuyen sang the THE THAO" 21 1; foc
+adb exec-out screencap -p > $OUT/16_hub_focus_sports.png
 mark "OK: VAO MUC THE THAO"
 go "OK: vao muc The Thao" 23 3; foc
-adb exec-out screencap -p > $OUT/14_sports_fullscreen.png
+adb exec-out screencap -p > $OUT/17_sports_fullscreen.png
 
 # Duyệt qua các hàng đài thể thao
-go "DOWN: xuong danh sach tran dau" 20 1; foc
-go "RIGHT: duyet tran dang live" 22 1; foc
+go "DOWN: xuong danh sach tran dau" 20 2; foc
+go "RIGHT: duyet tran dang live" 22 2; foc
 
-# Test thoát mục Thể Thao: Ấn 2 lần BACK về Menu Chọn
+# Thoát mục Thể Thao: Ấn 2 lần BACK về Menu Chọn
 mark "THOAT MUC THE THAO: An 2 lan BACK"
 go "BACK lan 1" 4 1
 go "BACK lan 2 ve Menu Chon" 4 2
-adb exec-out screencap -p > $OUT/15_returned_hub_from_sports.png
+adb exec-out screencap -p > $OUT/18_returned_hub_from_sports.png
 
-# 7. TẠI MENU CHỌN: BẤM BACK HIỆN DIALOG THOÁT ỨNG DỤNG
+# ================= 6. TẠI MENU CHỌN: BẤM BACK HIỆN DIALOG THOÁT ỨNG DỤNG =================
 mark "BACK TAI MENU CHON: Hien Dialog Thoat App"
 go "BACK tai Menu Chon" 4 2
-adb exec-out screencap -p > $OUT/16_dialog_exit_app.png
+adb exec-out screencap -p > $OUT/19_dialog_exit_app.png
 go "BACK huy dialog o lai app" 4 1
 
 # KẾT THÚC QUÁ TRÌNH GHI HÌNH
