@@ -93,7 +93,11 @@ object SportsStreamResolver {
     private fun resolveGiovangById(fixtureId: String): String? {
         if (fixtureId.isBlank()) return null
         return try {
-            val raw = Http.getWithRetry("$GIOVANG_FIXTURE_API$fixtureId?t=${System.currentTimeMillis()}")
+            val raw = try {
+                Http.getDirectWithRetry("$GIOVANG_FIXTURE_API$fixtureId?t=${System.currentTimeMillis()}", attempts = 2)
+            } catch (_: Exception) {
+                Http.getWithRetry("$GIOVANG_FIXTURE_API$fixtureId?t=${System.currentTimeMillis()}", attempts = 1)
+            }
             val root = JSONObject(raw)
             val resp = root.optJSONObject("response") ?: return null
             val blvs = resp.optJSONArray("blv") ?: return null
@@ -580,8 +584,8 @@ object SportsStreamResolver {
                     else -> "Thể thao"
                 }
 
-                // Tải sẵn link stream VCDN Cloud để bấm vào là phát tức thì
-                val resolvedUrl = resolveGiovangById(mid) ?: mid
+                // Sử dụng ID trận đấu trực tiếp (stream URL sẽ được phân giải on-demand khi bấm phát)
+                val resolvedUrl = mid
                 val blvArr: JSONArray? = m.optJSONArray("blv")
                 val blvName = if (blvArr != null && blvArr.length() > 0) {
                     val k = blvArr.optString(0)
@@ -615,6 +619,7 @@ object SportsStreamResolver {
             }
 
             if (ids.isNotEmpty()) cachedGiovangIds = ids
+            android.util.Log.i("SportsStreamResolver", "Giovang API matches fetched: ${groups.size}")
             groups
         } catch (_: Exception) {
             emptyList()
