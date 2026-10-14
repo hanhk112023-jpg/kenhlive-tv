@@ -237,9 +237,31 @@ object SportsStreamResolver {
 
     private fun fetchColaOfficialApiMatches(): List<LiveMatchGroup> {
         return try {
-            val apiUrl = resolveColaApiBase()
-            val raw = Http.getWithRetry("$apiUrl/api/matches?t=${System.currentTimeMillis()}")
-            if (raw.isBlank()) return emptyList()
+            var raw = ""
+            // 1. Thử gọi trực tiếp API chính thức COLA_DEFAULT_API (cực nhanh, không qua gateway)
+            try {
+                raw = Http.getWithRetry("$COLA_DEFAULT_API/api/matches?t=${System.currentTimeMillis()}", attempts = 1)
+            } catch (e: Exception) {
+                android.util.Log.w("SportsStreamResolver", "Direct COLA_DEFAULT_API failed: ${e.message}, trying gateway resolve...")
+            }
+
+            // 2. Nếu direct URL lỗi, phân giải gateway với attempts = 1
+            if (raw.isBlank()) {
+                val apiUrl = resolveColaApiBase()
+                if (apiUrl != COLA_DEFAULT_API) {
+                    try {
+                        raw = Http.getWithRetry("$apiUrl/api/matches?t=${System.currentTimeMillis()}", attempts = 1)
+                    } catch (e: Exception) {
+                        android.util.Log.w("SportsStreamResolver", "Gateway resolved API failed: ${e.message}")
+                    }
+                }
+            }
+
+            if (raw.isBlank()) {
+                android.util.Log.w("SportsStreamResolver", "All Cola API attempts returned blank, falling back to M3U")
+                return emptyList()
+            }
+
             val root = JSONObject(raw)
             val data = root.optJSONObject("data") ?: return emptyList()
 
@@ -362,15 +384,17 @@ object SportsStreamResolver {
             }
 
             if (cStreams.isNotEmpty()) cachedColaStreams = cStreams
+            android.util.Log.i("SportsStreamResolver", "Cola API matches fetched: ${liveGroups.size} live, ${upcomingGroups.size} upcoming")
             liveGroups + upcomingGroups
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            android.util.Log.e("SportsStreamResolver", "fetchColaOfficialApiMatches fatal error: ${e.message}", e)
             emptyList()
         }
     }
 
     private fun resolveColaApiBase(): String {
         return try {
-            val raw = Http.getWithRetry("$COLA_CONFIG_URL${System.currentTimeMillis()}")
+            val raw = Http.getWithRetry("$COLA_CONFIG_URL${System.currentTimeMillis()}", attempts = 1)
             if (raw.isNotBlank()) {
                 val json = JSONObject(raw)
                 val u = json.optString("api_url").ifBlank { json.optString("api_url_2") }

@@ -146,6 +146,7 @@ go "BACK huy dialog o lai app" 4 1
 
 # KẾT THÚC QUÁ TRÌNH GHI HÌNH
 sleep 2
+adb logcat -d -s SportsStreamResolver:V Http:V KenhLive:V AndroidRuntime:E > $OUT/logcat.txt 2>/dev/null || true
 adb shell screenrecord --stop >/dev/null 2>&1
 wait $REC_PID 2>/dev/null || true
 sleep 2
