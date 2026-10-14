@@ -41,6 +41,14 @@ class DataNormalizerTest {
         assertEquals(2, parsed2.hostScore)
         assertEquals(1, parsed2.guestScore)
         assertEquals("Real Madrid vs Barcelona", parsed2.cleanTitle)
+
+        // Test format từ ColaTV Official API kèm tỉ số thời gian thực
+        val parsedCola = DataNormalizer.parseMatch("CLB Persib Bandung 1 - 0 Thể Công - Viettel", "AFC Champions League Two")
+        assertEquals("CLB Persib Bandung", parsedCola.host)
+        assertEquals("Thể Công - Viettel", parsedCola.guest)
+        assertEquals(1, parsedCola.hostScore)
+        assertEquals(0, parsedCola.guestScore)
+        assertEquals("CLB Persib Bandung vs Thể Công - Viettel", parsedCola.cleanTitle)
     }
 
     @Test

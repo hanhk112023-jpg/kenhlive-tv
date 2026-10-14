@@ -19,6 +19,8 @@ object SportsStreamResolver {
     private const val GIOVANG_LIVE_JSON = "https://live-api.keonhacaitp.one/storage/livestream/live.json"
     private const val GIOVANG_FIXTURE_API = "https://live-api.keonhacaitp.one/api/fixtures/"
     private const val M3U_FEED = "https://thtt.pages.dev/tttt.m3u"
+    private const val COLA_CONFIG_URL = "https://api.colaapis6.com/?t="
+    private const val COLA_DEFAULT_API = "https://api.gvapi.cc"
 
     @Volatile private var cachedGavangStreams: List<String> = emptyList()
     @Volatile private var cachedColaStreams: List<String> = emptyList()
@@ -222,10 +224,166 @@ object SportsStreamResolver {
     }
 
     /**
-     * Tải danh sách trận đấu trực tiếp của ColaTV từ nguồn M3U (Lọc 🟢 và zhwpg.app .m3u8).
+     * Tải danh sách trận đấu thể thao trực tiếp từ ColaTV API chính thức (hỗ trợ tỉ số real-time, logo đội bóng & tên BLV).
+     * Fallback sang M3U feed nếu API chính không phản hồi.
      */
     suspend fun fetchColaMatchGroups(): List<LiveMatchGroup> = withContext(Dispatchers.IO) {
-        try {
+        val groups = fetchColaOfficialApiMatches()
+        if (groups.isNotEmpty()) {
+            return@withContext groups
+        }
+        fetchColaM3uMatches()
+    }
+
+    private fun fetchColaOfficialApiMatches(): List<LiveMatchGroup> {
+        return try {
+            val apiUrl = resolveColaApiBase()
+            val raw = Http.getWithRetry("$apiUrl/api/matches?t=${System.currentTimeMillis()}")
+            if (raw.isBlank()) return emptyList()
+            val root = JSONObject(raw)
+            val data = root.optJSONObject("data") ?: return emptyList()
+
+            val liveGroups = mutableListOf<LiveMatchGroup>()
+            val upcomingGroups = mutableListOf<LiveMatchGroup>()
+            val cStreams = mutableListOf<String>()
+            val keys = data.keys()
+
+            while (keys.hasNext()) {
+                val k = keys.next()
+                val m = data.optJSONObject(k) ?: continue
+                val hName = m.optString("homeTeamName").ifBlank { m.optJSONObject("home_team")?.optString("name") ?: "" }.trim()
+                val aName = m.optString("awayTeamName").ifBlank { m.optJSONObject("away_team")?.optString("name") ?: "" }.trim()
+                if (hName.isBlank() || aName.isBlank()) continue
+
+                val hLogo = m.optString("homeTeamLogo").ifBlank { m.optJSONObject("home_team")?.optString("logo") ?: "" }
+                val aLogo = m.optString("awayTeamLogo").ifBlank { m.optJSONObject("away_team")?.optString("logo") ?: "" }
+                val league = m.optString("competitionName").ifBlank { m.optJSONObject("competition")?.optString("name") ?: "ColaTV Thể Thao" }.trim()
+
+                val status = m.optInt("matchStatus", 0)
+                val isLive = status == 2 || m.optString("match_status") == "live"
+
+                val hs = m.optJSONArray("homeScore")
+                val as_ = m.optJSONArray("awayScore")
+
+                // Bóc tách tỉ số real-time nếu trận đấu đang diễn ra hoặc đã có bàn thắng
+                val matchTitle = if (isLive && hs != null && as_ != null && hs.length() > 0 && as_.length() > 0) {
+                    val hScore = hs.optInt(0, 0)
+                    val aScore = as_.optInt(0, 0)
+                    "$hName $hScore - $aScore $aName"
+                } else if (isLive) {
+                    "$hName vs $aName"
+                } else {
+                    "[SẮP ĐÁ] $hName vs $aName"
+                }
+
+                val anchors = m.optJSONArray("anchorAppointmentVoList")
+                val rooms = mutableListOf<LiveRoom>()
+
+                if (anchors != null && anchors.length() > 0) {
+                    for (i in 0 until anchors.length()) {
+                        val a = anchors.optJSONObject(i) ?: continue
+                        val nick = a.optString("nickName").ifBlank { "BLV Cola" }.trim()
+                        val blv = if (nick.startsWith("BLV ", ignoreCase = true)) nick else "BLV $nick"
+                        var stream = a.optString("playStreamAddress2")
+                        if (stream.isBlank()) {
+                            val servers = a.optJSONArray("servers")
+                            if (servers != null) {
+                                for (si in 0 until servers.length()) {
+                                    val s = servers.optString(si)
+                                    if (s.contains(".m3u8")) {
+                                        stream = s
+                                        break
+                                    }
+                                }
+                            }
+                        }
+                        if (stream.isBlank()) {
+                            stream = a.optString("playStreamAddress")
+                        }
+                        if (stream.isNotBlank()) {
+                            cStreams.add(stream)
+                            rooms.add(
+                                LiveRoom(
+                                    roomNum = "cola_$stream",
+                                    blvName = "[ColaTV] $blv",
+                                    avatar = a.optString("userImage").ifBlank { hLogo },
+                                    viewers = a.optInt("visitHistory", 2000 + (liveGroups.size * 250)),
+                                    matchTitle = matchTitle,
+                                    league = league,
+                                    category = "Bóng đá",
+                                    blvLevel = "Cola HD",
+                                    notice = "Kênh trực tiếp ColaTV · Luồng phát gốc zhwpg.app",
+                                    hostIcon = hLogo,
+                                    guestIcon = aLogo
+                                )
+                            )
+                        }
+                    }
+                }
+
+                if (rooms.isEmpty()) {
+                    val vUrl = m.optString("video_url").ifBlank { m.optString("videoUrl") }
+                    val stream = if (vUrl.isNotBlank() && (vUrl.startsWith("http://") || vUrl.startsWith("https://"))) vUrl else ""
+                    if (stream.isNotBlank()) {
+                        cStreams.add(stream)
+                        rooms.add(
+                            LiveRoom(
+                                roomNum = "cola_$stream",
+                                blvName = "[ColaTV] Tiếng Hiện Trường",
+                                avatar = hLogo,
+                                viewers = 1500,
+                                matchTitle = matchTitle,
+                                league = league,
+                                category = "Bóng đá",
+                                blvLevel = "Cola Live",
+                                notice = "Kênh trực tiếp ColaTV · Luồng phát gốc",
+                                hostIcon = hLogo,
+                                guestIcon = aLogo
+                            )
+                        )
+                    }
+                }
+
+                if (rooms.isNotEmpty()) {
+                    val group = LiveMatchGroup(
+                        league = league,
+                        matchTitle = matchTitle,
+                        rooms = rooms,
+                        category = "Bóng đá",
+                        hostIcon = hLogo,
+                        guestIcon = aLogo
+                    )
+                    if (isLive) {
+                        liveGroups.add(group)
+                    } else {
+                        upcomingGroups.add(group)
+                    }
+                }
+            }
+
+            if (cStreams.isNotEmpty()) cachedColaStreams = cStreams
+            liveGroups + upcomingGroups
+        } catch (_: Exception) {
+            emptyList()
+        }
+    }
+
+    private fun resolveColaApiBase(): String {
+        return try {
+            val raw = Http.getWithRetry("$COLA_CONFIG_URL${System.currentTimeMillis()}")
+            if (raw.isNotBlank()) {
+                val json = JSONObject(raw)
+                val u = json.optString("api_url").ifBlank { json.optString("api_url_2") }
+                if (u.isNotBlank() && u.startsWith("http")) return u
+            }
+            COLA_DEFAULT_API
+        } catch (_: Exception) {
+            COLA_DEFAULT_API
+        }
+    }
+
+    private fun fetchColaM3uMatches(): List<LiveMatchGroup> {
+        return try {
             val m3u = Http.getWithRetry(M3U_FEED)
             val lines = m3u.split("\n")
             val groups = mutableListOf<LiveMatchGroup>()
