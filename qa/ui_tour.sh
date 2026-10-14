@@ -122,12 +122,15 @@ go "LEFT: chuyen sang the TRUYEN HINH" 21 1; foc
 go "LEFT: chuyen sang the THE THAO" 21 1; foc
 adb exec-out screencap -p > $OUT/16_hub_focus_sports.png
 mark "OK: VAO MUC THE THAO"
-go "OK: vao muc The Thao" 23 3; foc
+go "OK: vao muc The Thao" 23 4; foc
 adb exec-out screencap -p > $OUT/17_sports_fullscreen.png
 
-# Duyệt qua các hàng đài thể thao
-go "DOWN: xuong danh sach tran dau" 20 2; foc
-go "RIGHT: duyet tran dang live" 22 2; foc
+# Duyệt qua các hàng đài thể thao (Socolive -> ColaTV API chính thức)
+go "DOWN: xuong hang dai Socolive" 20 2; foc
+go "DOWN: xuong hang dai ColaTV (API chinh thuc)" 20 2; foc
+adb exec-out screencap -p > $OUT/17b_sports_colatv_cards.png
+go "RIGHT: duyet tran ColaTV co ti so real-time" 22 2; foc
+adb exec-out screencap -p > $OUT/17c_sports_colatv_score_card.png
 
 # Thoát mục Thể Thao: Ấn 2 lần BACK về Menu Chọn
 mark "THOAT MUC THE THAO: An 2 lan BACK"
