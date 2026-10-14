@@ -117,7 +117,11 @@ object SportsStreamResolver {
      */
     suspend fun fetchGavang33MatchGroups(): List<LiveMatchGroup> = withContext(Dispatchers.IO) {
         try {
-            val raw = Http.getWithRetry("$GAVANG33_API&t=${System.currentTimeMillis()}")
+            val raw = try {
+                Http.getDirectWithRetry("$GAVANG33_API&t=${System.currentTimeMillis()}", attempts = 2)
+            } catch (_: Exception) {
+                Http.getWithRetry("$GAVANG33_API&t=${System.currentTimeMillis()}", attempts = 1)
+            }
             val root = JSONObject(raw)
             val data = root.optJSONObject("data") ?: return@withContext emptyList()
             val liveGroups = mutableListOf<LiveMatchGroup>()
@@ -128,7 +132,7 @@ object SportsStreamResolver {
             while (keys.hasNext()) {
                 val k = keys.next()
                 val m = data.optJSONObject(k) ?: continue
-                val isLive = m.optString("matchStatus") == "live"
+                val isLive = m.optString("matchStatus") == "live" || m.optInt("matchStatus") == 2
                 val homeObj = m.optJSONObject("homeTeam")
                 val awayObj = m.optJSONObject("awayTeam")
                 val compObj = m.optJSONObject("competition")
@@ -139,7 +143,18 @@ object SportsStreamResolver {
                 val homeLogo = homeObj?.optString("logo") ?: ""
                 val awayLogo = awayObj?.optString("logo") ?: ""
                 val league = compObj?.optString("name") ?: "Bóng đá"
-                val matchTitle = if (isLive) "$homeName vs $awayName" else "[SẮP ĐÁ] $homeName vs $awayName"
+
+                val hs = m.optJSONArray("homeScores")
+                val as_ = m.optJSONArray("awayScores")
+                val matchTitle = if (isLive && hs != null && as_ != null && hs.length() > 0 && as_.length() > 0) {
+                    val hScore = hs.optInt(0, 0)
+                    val aScore = as_.optInt(0, 0)
+                    "$homeName $hScore - $aScore $awayName"
+                } else if (isLive) {
+                    "$homeName vs $awayName"
+                } else {
+                    "[SẮP ĐÁ] $homeName vs $awayName"
+                }
                 val defaultLink = m.optString("defaultLink")
                 val anchors: JSONArray? = m.optJSONArray("anchorAppointmentVoList")
 
@@ -512,7 +527,11 @@ object SportsStreamResolver {
      */
     suspend fun fetchGiovangMatchGroups(): List<LiveMatchGroup> = withContext(Dispatchers.IO) {
         try {
-            val raw = Http.getWithRetry("$GIOVANG_LIVE_JSON?t=${System.currentTimeMillis()}")
+            val raw = try {
+                Http.getDirectWithRetry("$GIOVANG_LIVE_JSON?t=${System.currentTimeMillis()}", attempts = 2)
+            } catch (_: Exception) {
+                Http.getWithRetry("$GIOVANG_LIVE_JSON?t=${System.currentTimeMillis()}", attempts = 1)
+            }
             val root = JSONObject(raw)
             val resp: JSONArray? = root.optJSONArray("response")
             if (resp == null) return@withContext emptyList()
@@ -535,7 +554,23 @@ object SportsStreamResolver {
                 val homeLogo = homeObj?.optString("logo") ?: ""
                 val awayLogo = awayObj?.optString("logo") ?: ""
                 val league = m.optJSONObject("league")?.optString("title") ?: "Thể thao"
-                val matchTitle = "$homeName vs $awayName"
+
+                val scoreObj = m.optJSONObject("score")
+                val ftObj = scoreObj?.optJSONObject("fulltime")
+                val hasScore = ftObj != null && ftObj.has("home") && ftObj.has("away")
+                val hScore = if (hasScore) ftObj?.optInt("home", 0) else null
+                val aScore = if (hasScore) ftObj?.optInt("away", 0) else null
+
+                val statusCode = m.optString("status_code", "").uppercase()
+                val isLive = statusCode == "LIVE" || m.optString("status").contains("diễn ra", ignoreCase = true)
+
+                val matchTitle = if (isLive && hScore != null && aScore != null) {
+                    "$homeName $hScore - $aScore $awayName"
+                } else if (isLive) {
+                    "$homeName vs $awayName"
+                } else {
+                    "[SẮP ĐÁ] $homeName vs $awayName"
+                }
                 val cat = when (m.optString("type")) {
                     "football" -> "Bóng đá"
                     "basketball" -> "Bóng rổ"

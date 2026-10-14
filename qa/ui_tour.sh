@@ -10,7 +10,7 @@ set -u
 OUT=/tmp/tour; mkdir -p $OUT
 adb root >/dev/null 2>&1 || true; sleep 1
 adb shell settings put global http_proxy 10.0.2.2:7891
-adb shell settings put global global_http_proxy_exclusion_list "api.gvapi.cc,api.colaapis6.com,*.colaapis6.com,*.gvapi.cc,*.zhwpg.app"
+adb shell settings put global global_http_proxy_exclusion_list "api.gvapi.cc,api.colaapis6.com,*.colaapis6.com,*.gvapi.cc,*.zhwpg.app,*.adviceme.io,*.keonhacaitp.one"
 adb shell settings put system accelerometer_rotation 0
 adb shell settings put system user_rotation 0
 adb shell wm size 1920x1080
@@ -126,12 +126,16 @@ mark "OK: VAO MUC THE THAO"
 go "OK: vao muc The Thao" 23 4; foc
 adb exec-out screencap -p > $OUT/17_sports_fullscreen.png
 
-# Duyệt qua các hàng đài thể thao (Socolive -> ColaTV API chính thức)
+# Duyệt qua các hàng đài thể thao (Socolive -> ColaTV -> Gà Vàng 33 -> Giờ Vàng TV)
 go "DOWN: xuong hang dai Socolive" 20 2; foc
 go "DOWN: xuong hang dai ColaTV (API chinh thuc)" 20 2; foc
 adb exec-out screencap -p > $OUT/17b_sports_colatv_cards.png
 go "RIGHT: duyet tran ColaTV co ti so real-time" 22 2; foc
 adb exec-out screencap -p > $OUT/17c_sports_colatv_score_card.png
+go "DOWN: xuong hang dai Ga Vang 33" 20 2; foc
+adb exec-out screencap -p > $OUT/17d_sports_gavang33_cards.png
+go "DOWN: xuong hang dai Gio Vang TV" 20 2; foc
+adb exec-out screencap -p > $OUT/17e_sports_giovang_cards.png
 
 # Thoát mục Thể Thao: Ấn 2 lần BACK về Menu Chọn
 mark "THOAT MUC THE THAO: An 2 lan BACK"
