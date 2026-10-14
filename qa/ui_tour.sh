@@ -10,6 +10,7 @@ set -u
 OUT=/tmp/tour; mkdir -p $OUT
 adb root >/dev/null 2>&1 || true; sleep 1
 adb shell settings put global http_proxy 10.0.2.2:7891
+adb shell settings put global global_http_proxy_exclusion_list "api.gvapi.cc,api.colaapis6.com,*.colaapis6.com,*.gvapi.cc,*.zhwpg.app"
 adb shell settings put system accelerometer_rotation 0
 adb shell settings put system user_rotation 0
 adb shell wm size 1920x1080

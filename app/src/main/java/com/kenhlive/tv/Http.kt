@@ -43,6 +43,9 @@ object Http {
 
     fun get(): OkHttpClient = client ?: error("Http.init() must be called from Application")
 
+    /** Client kết nối trực tiếp không qua proxy (bỏ qua ProxySelector / http_proxy hệ thống) */
+    fun getDirect(): OkHttpClient = get().newBuilder().proxy(java.net.Proxy.NO_PROXY).build()
+
     /** GET 1 lần, ném IOException nếu khác 200. */
     @Throws(IOException::class)
     fun getOnce(url: String): String {
@@ -51,6 +54,25 @@ object Http {
             if (!res.isSuccessful) throw IOException("HTTP ${res.code}")
             return res.body?.string() ?: throw IOException("empty body")
         }
+    }
+
+    /** GET trực tiếp không qua proxy (dùng cho các API quốc tế như ColaTV/GVAPI). */
+    @Throws(IOException::class)
+    fun getDirectWithRetry(url: String, attempts: Int = 2): String {
+        var last: Exception? = null
+        repeat(attempts) { i ->
+            try {
+                val call = getDirect().newCall(Request.Builder().url(url).build())
+                call.execute().use { res ->
+                    if (!res.isSuccessful) throw IOException("HTTP ${res.code}")
+                    return res.body?.string() ?: throw IOException("empty body")
+                }
+            } catch (e: Exception) {
+                last = e
+                if (i < attempts - 1) Thread.sleep(300L * (i + 1))
+            }
+        }
+        throw last ?: IOException("network error")
     }
 
     /** Retry 3 lần với backoff 400/800ms — lỗi transient là chuyện thường trên mạng TV. */

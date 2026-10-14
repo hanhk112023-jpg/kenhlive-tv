@@ -238,21 +238,28 @@ object SportsStreamResolver {
     private fun fetchColaOfficialApiMatches(): List<LiveMatchGroup> {
         return try {
             var raw = ""
-            // 1. Thử gọi trực tiếp API chính thức COLA_DEFAULT_API (cực nhanh, không qua gateway)
+            // 1. Thử gọi trực tiếp API chính thức COLA_DEFAULT_API không qua proxy (NO_PROXY)
             try {
-                raw = Http.getWithRetry("$COLA_DEFAULT_API/api/matches?t=${System.currentTimeMillis()}", attempts = 1)
+                raw = Http.getDirectWithRetry("$COLA_DEFAULT_API/api/matches?t=${System.currentTimeMillis()}", attempts = 2)
             } catch (e: Exception) {
-                android.util.Log.w("SportsStreamResolver", "Direct COLA_DEFAULT_API failed: ${e.message}, trying gateway resolve...")
+                android.util.Log.w("SportsStreamResolver", "Direct NO_PROXY failed: ${e.message}, trying default proxy client...")
+                try {
+                    raw = Http.getWithRetry("$COLA_DEFAULT_API/api/matches?t=${System.currentTimeMillis()}", attempts = 1)
+                } catch (e2: Exception) {
+                    android.util.Log.w("SportsStreamResolver", "Default proxy client failed: ${e2.message}")
+                }
             }
 
-            // 2. Nếu direct URL lỗi, phân giải gateway với attempts = 1
+            // 2. Nếu direct URL lỗi, phân giải gateway
             if (raw.isBlank()) {
                 val apiUrl = resolveColaApiBase()
                 if (apiUrl != COLA_DEFAULT_API) {
                     try {
-                        raw = Http.getWithRetry("$apiUrl/api/matches?t=${System.currentTimeMillis()}", attempts = 1)
+                        raw = Http.getDirectWithRetry("$apiUrl/api/matches?t=${System.currentTimeMillis()}", attempts = 1)
                     } catch (e: Exception) {
-                        android.util.Log.w("SportsStreamResolver", "Gateway resolved API failed: ${e.message}")
+                        try {
+                            raw = Http.getWithRetry("$apiUrl/api/matches?t=${System.currentTimeMillis()}", attempts = 1)
+                        } catch (_: Exception) {}
                     }
                 }
             }
