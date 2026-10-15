@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="5dp"
+    android:orientation="vertical"
+    android:background="@drawable/bg_netflix_card"
+    android:focusable="true"
+    android:clickable="true"
+    android:descendantFocusability="blocksDescendants"
+    android:clipToPadding="false"
+    android:padding="4dp">
+
+    <!-- Poster Container (2:3 Cinema Proportions) -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="215dp">
+
+        <ImageView
+            android:id="@+id/gridPhimPoster"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:background="@drawable/thumb_round_bg"
+            android:contentDescription="Poster phim" />
+
+        <!-- Top Left Rating Badge -->
+        <TextView
+            android:id="@+id/gridPhimRatingBadge"
+            style="@style/KL.Text.Meta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|left"
+            android:layout_margin="6dp"
+            android:background="@drawable/bg_badge_glass"
+            android:paddingLeft="6dp"
+            android:paddingRight="6dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:text="★ 8.8"
+            android:textSize="9.5sp"
+            android:textStyle="bold"
+            android:textColor="#FBBF24" />
+
+        <!-- Top Right Quality Badge (Netflix Red Accent) -->
+        <TextView
+            android:id="@+id/gridPhimQualityBadge"
+            style="@style/KL.Text.Meta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|right"
+            android:layout_margin="6dp"
+            android:background="@drawable/bg_netflix_top10_badge"
+            android:paddingLeft="6dp"
+            android:paddingRight="6dp"
+            android:paddingTop="2dp"
+            android:paddingBottom="2dp"
+            android:text="FHD"
+            android:textSize="9sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF" />
+
+        <!-- Bottom Left Episode / Status Badge -->
+        <TextView
+            android:id="@+id/gridPhimEpisodeBadge"
+            style="@style/KL.Text.Meta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|left"
+            android:layout_margin="6dp"
+            android:background="@drawable/bg_badge_glass"
+            android:paddingLeft="7dp"
+            android:paddingRight="7dp"
+            android:paddingTop="3dp"
+            android:paddingBottom="3dp"
+            android:text="Tập 1"
+            android:textSize="9.5sp"
+            android:textStyle="bold"
+            android:textColor="#FFFFFF" />
+    </FrameLayout>
+
+    <!-- Info Container below Poster -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingTop="6dp"
+        android:paddingBottom="4dp"
+        android:paddingLeft="4dp"
+        android:paddingRight="4dp">
+
+        <TextView
+            android:id="@+id/gridPhimTitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tên phim"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end" />
+
+        <TextView
+            android:id="@+id/gridPhimMeta"
+            style="@style/KL.Text.Meta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="2026 · Vietsub"
+            android:textColor="#94A3B8"
+            android:textSize="11sp"
+            android:maxLines="1"
+            android:ellipsize="end" />
+    </LinearLayout>
+</LinearLayout>

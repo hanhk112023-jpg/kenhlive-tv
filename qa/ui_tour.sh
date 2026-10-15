@@ -111,6 +111,27 @@ key 4; sleep 3
 adb exec-out screencap -p > $OUT/14_phim_saved_progress_view.png
 mark "KHO PHIM: Da luu tien do va thoi gian xem tap"
 
+# ================= 4b. KIỂM THỬ GIAO DIỆN TÌM KIẾM NETFLIX FULL-SCREEN GRID =================
+mark "TIM KIEM NETFLIX: Chuyen len thanh Filter Pills"
+key 19; sleep 1 # UP len filter bar
+key 19; sleep 1 # UP them mot nhip
+key 22; sleep 1 # RIGHT tu Tat Ca sang Lich Su Xem
+key 22; sleep 1 # RIGHT sang TIM KIEM
+mark "OK: MO MAN HINH TIM KIEM TOAN MAN HINH NETFLIX"
+key 23; sleep 2 # OK vao Tim Kiem
+adb exec-out screencap -p > $OUT/14b_phim_netflix_search_overlay.png
+
+# Thu bam chon chip Goi y Thinh Hanh
+mark "CHON CHIP GOI Y THINH HANH (ONE PIECE)"
+key 20; sleep 1 # DOWN xuong chip thinh hanh
+key 23; sleep 3 # OK chon chip dau tien
+adb exec-out screencap -p > $OUT/14c_phim_netflix_search_results_grid.png
+
+# Nhan BACK 1 lan de dong Search Overlay ve Kho Phim
+mark "BACK 1 LAN: DONG TIM KIEM VE LAI DUYET PHIM"
+key 4; sleep 2
+adb exec-out screencap -p > $OUT/14d_phim_search_closed_returned_home.png
+
 # Thoát mục Phim Truyện: Ấn 2 lần BACK về Menu Chọn
 mark "THOAT MUC PHIM TRUYEN: An 2 lan BACK"
 go "BACK lan 1 (hien Toast nhac nho)" 4 1
