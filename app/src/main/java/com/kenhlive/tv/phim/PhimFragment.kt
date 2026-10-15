@@ -231,6 +231,17 @@ class PhimFragment : Fragment() {
         return false
     }
 
+    private fun focusFilterListFromMain(): Boolean {
+        if (!::filterList.isInitialized || filterList.visibility != View.VISIBLE) return false
+        for (i in 0 until filterList.childCount) {
+            val child = filterList.getChildAt(i)
+            if (child.isFocusable && child.requestFocus()) return true
+            val inner = firstFocusableIn(child)
+            if (inner != null && inner.requestFocus()) return true
+        }
+        return false
+    }
+
     fun ensurePhimFocus(): Boolean {
         if (!isAdded || view == null || isHidden) return false
         (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
@@ -324,7 +335,8 @@ class PhimFragment : Fragment() {
                 },
                 onHeroPlay = { film -> openHeroPlay(film) },
                 onFavoriteToggle = { film -> toggleFilmFavorite(film) },
-                onHeroNext = { cycleHeroNext() }
+                onHeroNext = { cycleHeroNext() },
+                onUp = { focusFilterListFromMain() }
             )
             mainList.postDelayed({
                 ensurePhimFocus()
@@ -431,6 +443,7 @@ class PhimFragment : Fragment() {
 
     private fun openSearchOverlay(initialKeyword: String? = null) {
         phimSearchOverlay.visibility = View.VISIBLE
+        filterList.visibility = View.GONE
         mainList.visibility = View.GONE
         loadingView.visibility = View.GONE
         errorLayout.visibility = View.GONE
@@ -460,6 +473,7 @@ class PhimFragment : Fragment() {
 
     private fun closeSearchOverlay() {
         phimSearchOverlay.visibility = View.GONE
+        filterList.visibility = View.VISIBLE
         mainList.visibility = View.VISIBLE
         searchBackCallback.isEnabled = false
         (activity as? MainActivity)?.hideKeyboard()
@@ -698,7 +712,8 @@ class PhimFragment : Fragment() {
                     },
                     onHeroPlay = { film -> openHeroPlay(film) },
                     onFavoriteToggle = { film -> toggleFilmFavorite(film) },
-                    onHeroNext = { cycleHeroNext() }
+                    onHeroNext = { cycleHeroNext() },
+                    onUp = { focusFilterListFromMain() }
                 )
             } else {
                 mainList.visibility = View.GONE
@@ -916,7 +931,8 @@ class PhimFragment : Fragment() {
         private val onFilmClick: (NguoncFilm) -> Unit,
         private val onHeroPlay: (NguoncFilm) -> Unit,
         private val onFavoriteToggle: (NguoncFilm) -> Unit,
-        private val onHeroNext: () -> Unit = {}
+        private val onHeroNext: () -> Unit = {},
+        private val onUp: () -> Boolean = { false }
     ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         companion object {
@@ -940,7 +956,7 @@ class PhimFragment : Fragment() {
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             if (holder is HeroVH && hero != null) {
-                holder.bind(hero, heroIdx, totalHero, onFilmClick, onHeroPlay, onFavoriteToggle, onHeroNext)
+                holder.bind(hero, heroIdx, totalHero, onFilmClick, onHeroPlay, onFavoriteToggle, onHeroNext, onUp)
             } else if (holder is RowVH) {
                 val sectionIdx = if (hero != null) position - 1 else position
                 if (sectionIdx in sections.indices) {
@@ -974,8 +990,21 @@ class PhimFragment : Fragment() {
             onFilmClick: (NguoncFilm) -> Unit,
             onHeroPlay: (NguoncFilm) -> Unit,
             onFavoriteToggle: (NguoncFilm) -> Unit,
-            onHeroNext: () -> Unit
+            onHeroNext: () -> Unit,
+            onUp: () -> Boolean = { false }
         ) {
+            val upListener = View.OnKeyListener { _, keyCode, event ->
+                if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                    if (onUp()) return@OnKeyListener true
+                }
+                false
+            }
+            btnPlay.setOnKeyListener(upListener)
+            btnEpisodes.setOnKeyListener(upListener)
+            btnFavorite.setOnKeyListener(upListener)
+            btnNext?.setOnKeyListener(upListener)
+            btnBackHome?.setOnKeyListener(upListener)
+
             btnBackHome?.setOnClickListener {
                 (itemView.context as? MainActivity)?.openSection(MainActivity.TAB_HUB)
             }
