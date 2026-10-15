@@ -89,7 +89,8 @@ object SportsAggregator {
         }
 
         val allRooms = group.rooms + extraRooms
-        return group.copy(rooms = allRooms)
+        val merged = group.copy(rooms = allRooms)
+        return TeamLogoRegistry.enrich(merged)
     }
 
     /**

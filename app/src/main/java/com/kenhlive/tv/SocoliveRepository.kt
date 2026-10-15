@@ -200,8 +200,9 @@ object SocoliveRepository {
         }
     }
 
-    /** Gom phòng live theo trận — alias giữ compat, logic trong parser. */
-    fun groupRooms(rooms: List<LiveRoom>): List<LiveMatchGroup> = SocoliveParser.groupRooms(rooms)
+    /** Gom phòng live theo trận — tự động làm giàu logo từ TeamLogoRegistry */
+    fun groupRooms(rooms: List<LiveRoom>): List<LiveMatchGroup> =
+        SocoliveParser.groupRooms(rooms).map { com.kenhlive.tv.sports.TeamLogoRegistry.enrich(it) }
 
     // ---------- TAB LỊCH TRÌNH ----------
     suspend fun fetchSchedule(days: Int = 7, force: Boolean = false): List<DaySchedule> {
@@ -217,6 +218,10 @@ object SocoliveRepository {
                 val host = m.optString("hostName", "").trim()
                 val guest = m.optString("guestName", "").trim()
                 if (host.isBlank() && guest.isBlank()) return
+                val hIcon = m.optString("hostIcon", "")
+                val gIcon = m.optString("guestIcon", "")
+                if (host.isNotBlank() && hIcon.isNotBlank()) com.kenhlive.tv.sports.TeamLogoRegistry.register(host, hIcon)
+                if (guest.isNotBlank() && gIcon.isNotBlank()) com.kenhlive.tv.sports.TeamLogoRegistry.register(guest, gIcon)
                 val sid = m.optString("scheduleId", "")
                 val key = sid.ifBlank { "$host-$guest-${m.optLong("matchTime", 0)}" }
                 if (key in seen) return

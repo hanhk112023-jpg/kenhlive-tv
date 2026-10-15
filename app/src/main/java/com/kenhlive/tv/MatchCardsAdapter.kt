@@ -169,25 +169,27 @@ class MatchCardsAdapter(
 
         // 3. Logo 2 đội bóng cân đối đối xứng 100%
         h.hostIcon?.visibility = View.VISIBLE
-        if (g.hostIcon.isNotBlank()) {
-            h.hostIcon?.load(g.hostIcon) {
-                crossfade(0)
-                placeholder(R.drawable.ic_sports)
-                error(R.drawable.ic_sports)
+        val hostLogo = if (g.hostIcon.isNotBlank()) g.hostIcon else com.kenhlive.tv.sports.TeamLogoRegistry.findLogo(parsed.host).orEmpty()
+        if (hostLogo.isNotBlank()) {
+            h.hostIcon?.load(hostLogo) {
+                crossfade(false)
+                placeholder(R.drawable.bg_team_crest_placeholder)
+                error(R.drawable.bg_team_crest_placeholder)
             }
         } else {
-            h.hostIcon?.setImageResource(R.drawable.ic_sports)
+            h.hostIcon?.setImageResource(R.drawable.bg_team_crest_placeholder)
         }
 
         h.guestIcon?.visibility = View.VISIBLE
-        if (g.guestIcon.isNotBlank()) {
-            h.guestIcon?.load(g.guestIcon) {
-                crossfade(0)
-                placeholder(R.drawable.ic_sports)
-                error(R.drawable.ic_sports)
+        val guestLogo = if (g.guestIcon.isNotBlank()) g.guestIcon else com.kenhlive.tv.sports.TeamLogoRegistry.findLogo(parsed.guest).orEmpty()
+        if (guestLogo.isNotBlank()) {
+            h.guestIcon?.load(guestLogo) {
+                crossfade(false)
+                placeholder(R.drawable.bg_team_crest_placeholder)
+                error(R.drawable.bg_team_crest_placeholder)
             }
         } else {
-            h.guestIcon?.setImageResource(R.drawable.ic_sports)
+            h.guestIcon?.setImageResource(R.drawable.bg_team_crest_placeholder)
         }
 
         h.viewers.text = SocoliveRepository.fmtViewers(g.totalViewers) + " xem"

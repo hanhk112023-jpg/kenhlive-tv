@@ -36,8 +36,23 @@ class KenhLiveApp : Application(), ImageLoaderFactory {
         com.kenhlive.tv.phim.WatchHistoryManager.init(this)
     }
 
-    override fun newImageLoader(): ImageLoader =
-        ImageLoader.Builder(this)
+    override fun newImageLoader(): ImageLoader {
+        val okHttpClient = okhttp3.OkHttpClient.Builder()
+            .proxy(java.net.Proxy.NO_PROXY)
+            .addInterceptor { chain ->
+                val original = chain.request()
+                val req = original.newBuilder()
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
+                    .header("Referer", "https://colatv.org/")
+                    .build()
+                chain.proceed(req)
+            }
+            .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+            .readTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
+            .build()
+
+        return ImageLoader.Builder(this)
+            .okHttpClient(okHttpClient)
             .allowRgb565(true)
             .bitmapConfig(if (lowRam || DeviceMode.isTv) Bitmap.Config.RGB_565 else Bitmap.Config.ARGB_8888)
             .crossfade(if (lowRam || DeviceMode.isTv) false else true)
@@ -52,6 +67,7 @@ class KenhLiveApp : Application(), ImageLoaderFactory {
                     .build()
             }
             .build()
+    }
 
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)

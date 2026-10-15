@@ -110,8 +110,8 @@
                 android:layout_height="38dp"
                 android:layout_marginLeft="8dp"
                 android:padding="2dp"
-                android:src="@drawable/ic_sports"
-                android:visibility="gone"
+                android:src="@drawable/bg_team_crest_placeholder"
+                android:visibility="visible"
                 android:contentDescription="@null" />
         </LinearLayout>
 
@@ -152,8 +152,8 @@
                 android:layout_height="38dp"
                 android:layout_marginRight="8dp"
                 android:padding="2dp"
-                android:src="@drawable/ic_sports"
-                android:visibility="gone"
+                android:src="@drawable/bg_team_crest_placeholder"
+                android:visibility="visible"
                 android:contentDescription="@null" />
 
             <TextView

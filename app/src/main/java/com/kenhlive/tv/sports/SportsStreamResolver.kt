@@ -217,6 +217,9 @@ object SportsStreamResolver {
                     )
                 }
 
+                if (homeLogo.isNotBlank()) TeamLogoRegistry.register(homeName, homeLogo)
+                if (awayLogo.isNotBlank()) TeamLogoRegistry.register(awayName, awayLogo)
+
                 if (rooms.isNotEmpty()) {
                     val group = LiveMatchGroup(
                         league = league,
@@ -226,10 +229,11 @@ object SportsStreamResolver {
                         hostIcon = homeLogo,
                         guestIcon = awayLogo
                     )
+                    val enriched = TeamLogoRegistry.enrich(group)
                     if (isLive) {
-                        liveGroups.add(group)
+                        liveGroups.add(enriched)
                     } else {
-                        upcomingGroups.add(group)
+                        upcomingGroups.add(enriched)
                     }
                 }
             }
@@ -392,6 +396,9 @@ object SportsStreamResolver {
                     }
                 }
 
+                if (hLogo.isNotBlank()) TeamLogoRegistry.register(hName, hLogo)
+                if (aLogo.isNotBlank()) TeamLogoRegistry.register(aName, aLogo)
+
                 if (rooms.isNotEmpty()) {
                     val group = LiveMatchGroup(
                         league = league,
@@ -401,10 +408,11 @@ object SportsStreamResolver {
                         hostIcon = hLogo,
                         guestIcon = aLogo
                     )
+                    val enriched = TeamLogoRegistry.enrich(group)
                     if (isLive) {
-                        liveGroups.add(group)
+                        liveGroups.add(enriched)
                     } else {
-                        upcomingGroups.add(group)
+                        upcomingGroups.add(enriched)
                     }
                 }
             }
@@ -606,16 +614,18 @@ object SportsStreamResolver {
                     guestIcon = awayLogo
                 )
 
-                groups.add(
-                    LiveMatchGroup(
-                        league = league,
-                        matchTitle = matchTitle,
-                        rooms = listOf(room),
-                        category = cat,
-                        hostIcon = homeLogo,
-                        guestIcon = awayLogo
-                    )
+                if (homeLogo.isNotBlank()) TeamLogoRegistry.register(homeName, homeLogo)
+                if (awayLogo.isNotBlank()) TeamLogoRegistry.register(awayName, awayLogo)
+
+                val grp = LiveMatchGroup(
+                    league = league,
+                    matchTitle = matchTitle,
+                    rooms = listOf(room),
+                    category = cat,
+                    hostIcon = homeLogo,
+                    guestIcon = awayLogo
                 )
+                groups.add(TeamLogoRegistry.enrich(grp))
             }
 
             if (ids.isNotEmpty()) cachedGiovangIds = ids
