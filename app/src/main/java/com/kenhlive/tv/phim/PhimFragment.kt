@@ -431,7 +431,7 @@ class PhimFragment : Fragment() {
 
     private fun openSearchOverlay(initialKeyword: String? = null) {
         phimSearchOverlay.visibility = View.VISIBLE
-        phimMainList.visibility = View.GONE
+        mainList.visibility = View.GONE
         loadingView.visibility = View.GONE
         errorLayout.visibility = View.GONE
         searchBackCallback.isEnabled = true
@@ -460,7 +460,7 @@ class PhimFragment : Fragment() {
 
     private fun closeSearchOverlay() {
         phimSearchOverlay.visibility = View.GONE
-        phimMainList.visibility = View.VISIBLE
+        mainList.visibility = View.VISIBLE
         searchBackCallback.isEnabled = false
         (activity as? MainActivity)?.hideKeyboard()
 
