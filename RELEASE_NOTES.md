@@ -1,32 +1,28 @@
-# 🚀 KENHLIVE TV v7.4.8 (Build 124) — LƯU TẬP & THỜI GIAN XEM CHI TIẾT, BẢO TOÀN DỮ LIỆU BỀN VỮNG KHI CÀI BẢN MỚI
+# 🚀 KENHLIVE TV v7.4.9 (Build 125) — TÍCH HỢP TỈ SỐ TRỰC TIẾP REAL-TIME CHO 3 ĐÀI THỂ THAO & CÔNG NGHỆ DIRECT NO_PROXY SIÊU TỐC
 
-### 🛡️ 1. Khắc Phục Triệt Để Lỗi Mất Phim & Tập Khi Cài Bản Mới / Nâng Cấp APK
-- **Nâng cấp Database SQLite lên DB_VERSION 2:** Tự động tạo và kiểm tra schema (`ensureColumn`) cho bảng phim đã lưu (`favorite_films`), bảng lịch sử xem (`watch_history`) và bảng chi tiết từng tập (`watched_episodes`). Không bao giờ xảy ra lỗi thiếu bảng khi nâng cấp từ các bản cũ.
-- **Hệ Thống Sao Lưu Đa Tầng Bền Vững (Dual-Layer Persistent Vault):**
-  - Mọi thao tác lưu phim, đánh dấu tập hay cập nhật tiến độ xem đều được tự động đồng bộ tức thì sang **SharedPreferences** và tệp sao lưu JSON bền vững (`kenhlive_cinema_vault.json`) lưu tại bộ nhớ trong và bộ nhớ ngoài của thiết bị.
-  - **Tự động khôi phục 100%:** Khi cài bản mới, cập nhật APK hoặc sau khi xóa dữ liệu, ứng dụng tự động nhận diện và khôi phục toàn bộ danh sách phim yêu thích, các tập đã lưu và thời gian xem mà người dùng không bị mất bất kỳ dữ liệu nào.
-  - **Bảo vệ danh sách Đã Lưu:** Thuật toán dọn dẹp lịch sử thông minh không bao giờ xóa các bộ phim nằm trong mục Phim Đã Lưu.
-
----
-
-### ⏱️ 2. Lưu Chi Tiết Từng Tập Phim & Thời Gian Xem (Giờ:Phút:Giây)
-- **Lưu chính xác thời gian xem:** Ghi nhận chi tiết từng giây mili-giây, định dạng rõ ràng dạng `15:20 / 45:00 (34%)` hoặc `01:12:30 / 02:05:00` thay vì chỉ làm tròn phút.
-- **Hiển thị trực quan trên giao diện:**
-  - **Trên Poster phim:** Hiển thị nhãn tập và thời gian (ví dụ: `Tập 1 · 15:20/45:00`) kèm thanh tiến độ xem màu cam nổi bật.
-  - **Trong Hộp thoại Chọn Tập (Episode Picker):** Nút lưu hiển thị rõ ràng `Đã Lưu (Tập 1 · 15:20/45:00)`, và trên từng ô chip tập phim hiển thị thời gian đang xem dở.
-  - **Trên Billboard Hero:** Nút `✓ ĐÃ LƯU` tự động đính kèm tên tập và thời gian xem hiện tại.
-- **Tự động lưu tiến độ liên tục (Auto-Save):**
-  - Tự động lưu ngầm định kỳ mỗi 5 giây khi đang phát video.
-  - Tự động lưu ngay lập tức vị trí mới khi bấm phím D-pad Trái/Phải để tua nhanh/tua lùi 15s.
-  - Sử dụng tiến trình độc lập (`SupervisorJob`), đảm bảo dữ liệu ghi vào đĩa 100% thành công ngay cả khi người dùng bấm phím BACK thoát nhanh khỏi trình phát.
+### ⚽ 1. Tỉ Số Thời Gian Thực (Real-Time Live Scores) Đồng Bộ 3 Đài Thể Thao
+- **Tích hợp API chính thức của 3 đài lớn:**
+  - **ColaTV (`api.gvapi.cc/api/matches`):** Nạp toàn bộ hơn 85 trận đấu trực tiếp và sắp diễn ra, bóc tách mảng `homeScore` - `awayScore`.
+  - **Gà Vàng 33 (`gavangtv-api.adviceme.io/api/v1/matches`):** Bóc tách mảng `homeScores` - `awayScores` cho các trận đang diễn ra (`matchStatus = "live"`).
+  - **Giờ Vàng TV (`live-api.keonhacaitp.one/storage/livestream/live.json`):** Bóc tách đối tượng `score.fulltime.home` - `score.fulltime.away` và cả tỉ số các môn bóng rổ (EuroCup).
+- **Hiển thị tỉ số trực quan nổi bật trên thẻ TV:**
+  - Tỉ số hiển thị ngay tại ô điểm số trung tâm của thẻ trận (ví dụ: `0 : 1`, `1 : 2`, `22 : 18`) thay vì chữ `VS` mặc định.
+  - Phân tích và chuẩn hóa tên giải đấu (`Cúp C1 Châu Âu`, `UEFA Youth League`, `Cúp Nga`, `JPN D2`...).
+  - Đầy đủ huy hiệu trạng thái đỏ rực `• LIVE`, tên bình luận viên độc quyền (`[ColaTV] BLV POC`, `[Gà Vàng 33] Gà Ô Long`, `[Giờ Vàng] BLV MASON`...).
 
 ---
 
-### 🎬 3. Tự Động Tiếp Tục Phát (Resume Playback) Tức Thì
-- Khi bấm vào bất kỳ phim nào trong mục **TIẾP TỤC XEM** hoặc **BỘ PHIM ĐÃ LƯU**, trình phát native ExoPlayer sẽ tự động tua ngay đến chính xác vị trí phút/giây mà bạn đang xem dở.
-- Người dùng có thể chọn bất kỳ tập nào trong danh sách, ứng dụng ghi nhớ riêng tiến độ của từng tập độc lập.
+### ⚡ 2. Động Cơ Kết Nối Direct NO_PROXY — Tốc Độ Tải Tức Thì (< 200ms)
+- **Cơ chế Direct Connection Engine (`Http.getDirectWithRetry`):**
+  - Tự động bỏ qua proxy hệ thống (`Proxy.NO_PROXY`) đối với các API quốc tế của ColaTV, Gà Vàng 33 và Giờ Vàng TV.
+  - Khắc phục triệt để lỗi nghẽn mạng, `connection closed` hoặc timeout do proxy trung gian.
+- **Phân giải stream On-Demand:**
+  - Danh sách hàng chục trận đấu được nạp và dựng giao diện tức thì chỉ trong ~200ms.
+  - Luồng phát HLS m3u8 chất lượng cao (CDN `live05.zhwpg.app`, VCDN Cloud) được phân giải mượt mà khi người dùng bấm chọn xem trận đấu.
+- **Cơ chế Fallback thông minh:** Tự động chuyển đổi sang nguồn phụ và M3U feed nếu một endpoint gặp sự cố, đảm bảo người dùng luôn xem được trận đấu.
 
 ---
 
 ### 📦 Tải & Cài Đặt:
-- Tải trực tiếp file `KenhLive-v7.4.8.apk` bên dưới.
+- Tải trực tiếp file `KenhLive-v7.4.9.apk` bên dưới.
+- Bản Universal APK gộp chung cả 32-bit (`armeabi-v7a`) và 64-bit (`arm64-v8a`), tương thích 100% mọi dòng Android TV Box & Smart TV, cài đè giữ nguyên toàn bộ dữ liệu phim đã lưu và lịch sử xem.
