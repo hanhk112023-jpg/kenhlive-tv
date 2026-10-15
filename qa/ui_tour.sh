@@ -83,6 +83,26 @@ go "OK: vao muc Phim Truyen" 23 5; foc
 # Giao diện Phim Truyện Netflix Smart TV
 adb exec-out screencap -p > $OUT/08_phim_netflix_home.png
 mark "KHO PHIM NETFLIX: Billboard 4K & Apple Pills"
+
+# ================= 4b. KIỂM THỬ GIAO DIỆN TÌM KIẾM NETFLIX FULL-SCREEN GRID =================
+# Từ "Tất Cả", nhấn RIGHT sang "Lịch Sử Xem", nhấn tiếp RIGHT sang "Tìm Kiếm"
+go "RIGHT: tu Tat Ca sang Lich Su Xem" 22 1; foc
+go "RIGHT: sang TIM KIEM" 22 1; foc
+mark "OK: MO MAN HINH TIM KIEM TOAN MAN HINH NETFLIX"
+go "OK: mo Search Overlay" 23 3; foc
+adb exec-out screencap -p > $OUT/08b_phim_netflix_search_overlay.png
+
+# Thao tác chọn chip gợi ý thịnh hành (One Piece)
+mark "CHON CHIP GOI Y THINH HANH (ONE PIECE)"
+go "DOWN: xuong chip thinh hanh" 20 1; foc
+go "OK: chon chip One Piece" 23 4; foc
+adb exec-out screencap -p > $OUT/08c_phim_netflix_search_results_grid.png
+
+# Đóng Search Overlay bằng phím BACK quay lại kho phim
+mark "BACK 1 LAN: DONG TIM KIEM VE LAI DUYET PHIM"
+go "BACK: dong search overlay" 4 2; foc
+adb exec-out screencap -p > $OUT/08d_phim_search_closed_returned_home.png
+
 # Focus nút XEM NGAY trên Hero Banner
 go "DOWN: xuong hang nut Hero (focus nut XEM NGAY)" 20 2; foc
 adb exec-out screencap -p > $OUT/09_phim_hero_play_focused.png
@@ -110,27 +130,6 @@ key 4; sleep 1
 key 4; sleep 3
 adb exec-out screencap -p > $OUT/14_phim_saved_progress_view.png
 mark "KHO PHIM: Da luu tien do va thoi gian xem tap"
-
-# ================= 4b. KIỂM THỬ GIAO DIỆN TÌM KIẾM NETFLIX FULL-SCREEN GRID =================
-mark "TIM KIEM NETFLIX: Chuyen len thanh Filter Pills"
-key 19; sleep 1 # UP len filter bar
-key 19; sleep 1 # UP them mot nhip
-key 22; sleep 1 # RIGHT tu Tat Ca sang Lich Su Xem
-key 22; sleep 1 # RIGHT sang TIM KIEM
-mark "OK: MO MAN HINH TIM KIEM TOAN MAN HINH NETFLIX"
-key 23; sleep 3 # OK vao Tim Kiem
-adb exec-out screencap -p > $OUT/14b_phim_netflix_search_overlay.png
-
-# Thu bam chon chip Goi y Thinh Hanh
-mark "CHON CHIP GOI Y THINH HANH (ONE PIECE)"
-key 20; sleep 1 # DOWN xuong chip thinh hanh
-key 23; sleep 4 # OK chon chip dau tien
-adb exec-out screencap -p > $OUT/14c_phim_netflix_search_results_grid.png
-
-# Nhan BACK 1 lan de dong Search Overlay ve Kho Phim
-mark "BACK 1 LAN: DONG TIM KIEM VE LAI DUYET PHIM"
-key 4; sleep 2
-adb exec-out screencap -p > $OUT/14d_phim_search_closed_returned_home.png
 
 # Thoát mục Phim Truyện: Ấn 2 lần BACK về Menu Chọn
 mark "THOAT MUC PHIM TRUYEN: An 2 lan BACK"
