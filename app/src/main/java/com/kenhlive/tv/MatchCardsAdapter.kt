@@ -75,6 +75,7 @@ class MatchCardsAdapter(
         val matchTitle: TextView? = v.findViewById(R.id.cardMatchTitle)
         val hostIcon: ImageView? = v.findViewById(R.id.cardHostIcon)
         val guestIcon: ImageView? = v.findViewById(R.id.cardGuestIcon)
+        val provider: TextView? = v.findViewById(R.id.cardProvider)
     }
 
     inner class FixtureVH(v: View) : RecyclerView.ViewHolder(v) {
@@ -135,32 +136,58 @@ class MatchCardsAdapter(
         h.host.text = parsed.host
         h.guest.text = parsed.guest
         h.matchTitle?.text = parsed.cleanTitle
+
+        // 1. Tag đài phát sóng (Branded Source Badge)
+        val src = com.kenhlive.tv.sports.SportsSource.detectSource(g.top.roomNum, g.top.blvName)
+        if (h.provider != null) {
+            h.provider.text = src.shortTag
+            h.provider.visibility = View.VISIBLE
+            val badgeColor = when (src) {
+                com.kenhlive.tv.sports.SportsSource.COLATV -> android.graphics.Color.parseColor("#E11D48") // Đỏ Rose
+                com.kenhlive.tv.sports.SportsSource.GAVANG33 -> android.graphics.Color.parseColor("#D97706") // Hổ Phách
+                com.kenhlive.tv.sports.SportsSource.GIOVANG -> android.graphics.Color.parseColor("#2563EB") // Xanh Royal
+                com.kenhlive.tv.sports.SportsSource.SOCOLIVE -> android.graphics.Color.parseColor("#059669") // Xanh Ngọc
+            }
+            val grad = android.graphics.drawable.GradientDrawable().apply {
+                setColor(badgeColor)
+                cornerRadius = 10f * ctx.resources.displayMetrics.density
+            }
+            h.provider.background = grad
+            h.provider.setTextColor(android.graphics.Color.WHITE)
+        }
+
+        // 2. Ô tỉ số sân vận động (Stadium Scoreboard)
         if (parsed.hostScore != null && parsed.guestScore != null) {
+            h.score?.setBackgroundResource(R.drawable.bg_score_pill_live)
+            h.score?.setTextColor(android.graphics.Color.parseColor("#FFD700")) // Vàng Neon rực rỡ
             h.score?.text = "${parsed.hostScore} : ${parsed.guestScore}"
         } else {
+            h.score?.setBackgroundResource(R.drawable.bg_score_pill)
+            h.score?.setTextColor(android.graphics.Color.parseColor("#94A3B8")) // Xám Bạc
             h.score?.text = "VS"
         }
 
+        // 3. Logo 2 đội bóng cân đối đối xứng 100%
+        h.hostIcon?.visibility = View.VISIBLE
         if (g.hostIcon.isNotBlank()) {
-            h.hostIcon?.visibility = View.VISIBLE
             h.hostIcon?.load(g.hostIcon) {
                 crossfade(0)
                 placeholder(R.drawable.ic_sports)
                 error(R.drawable.ic_sports)
             }
         } else {
-            h.hostIcon?.visibility = View.GONE
+            h.hostIcon?.setImageResource(R.drawable.ic_sports)
         }
 
+        h.guestIcon?.visibility = View.VISIBLE
         if (g.guestIcon.isNotBlank()) {
-            h.guestIcon?.visibility = View.VISIBLE
             h.guestIcon?.load(g.guestIcon) {
                 crossfade(0)
                 placeholder(R.drawable.ic_sports)
                 error(R.drawable.ic_sports)
             }
         } else {
-            h.guestIcon?.visibility = View.GONE
+            h.guestIcon?.setImageResource(R.drawable.ic_sports)
         }
 
         h.viewers.text = SocoliveRepository.fmtViewers(g.totalViewers) + " xem"

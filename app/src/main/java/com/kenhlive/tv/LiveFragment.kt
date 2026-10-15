@@ -16,6 +16,11 @@ import com.kenhlive.tv.ui.RoomPickerDialog
 import com.kenhlive.tv.ui.StateBinder
 import com.kenhlive.tv.viewmodel.LiveViewModel
 import com.kenhlive.tv.viewmodel.ScheduleViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.async
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 
 /**
@@ -42,6 +47,7 @@ class LiveFragment : Fragment() {
     private var colaApiGroups: List<LiveMatchGroup> = listOf()
     private var gavang33ApiGroups: List<LiveMatchGroup> = listOf()
     private var giovangApiGroups: List<LiveMatchGroup> = listOf()
+    private var providersRefreshJob: Job? = null
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, s: Bundle?): View {
         val v = inflater.inflate(R.layout.fragment_live, container, false)
@@ -296,6 +302,7 @@ class LiveFragment : Fragment() {
         super.onResume()
         vm.startAutoRefresh()
         svm.startAutoRefresh()
+        startProvidersAutoRefresh()
         if (::adapter.isInitialized) {
             adapter.restoreFocus()
             if (DeviceMode.isTv) {
@@ -315,6 +322,59 @@ class LiveFragment : Fragment() {
         super.onPause()
         vm.stopAutoRefresh()
         svm.stopAutoRefresh()
+        stopProvidersAutoRefresh()
+    }
+
+    private fun startProvidersAutoRefresh() {
+        stopProvidersAutoRefresh()
+        providersRefreshJob = viewLifecycleOwner.lifecycleScope.launch {
+            while (isActive) {
+                delay(60_000L) // Quét ngầm tỉ số & trận mới mỗi 60 giây
+                refreshProvidersSilently()
+            }
+        }
+    }
+
+    private fun stopProvidersAutoRefresh() {
+        providersRefreshJob?.cancel()
+        providersRefreshJob = null
+    }
+
+    private suspend fun refreshProvidersSilently() {
+        try {
+            val colaDeferred = viewLifecycleOwner.lifecycleScope.async(Dispatchers.IO) {
+                try { com.kenhlive.tv.sports.SportsStreamResolver.fetchColaMatchGroups() } catch (_: Exception) { emptyList() }
+            }
+            val gavangDeferred = viewLifecycleOwner.lifecycleScope.async(Dispatchers.IO) {
+                try { com.kenhlive.tv.sports.SportsStreamResolver.fetchGavang33MatchGroups() } catch (_: Exception) { emptyList() }
+            }
+            val giovangDeferred = viewLifecycleOwner.lifecycleScope.async(Dispatchers.IO) {
+                try { com.kenhlive.tv.sports.SportsStreamResolver.fetchGiovangMatchGroups() } catch (_: Exception) { emptyList() }
+            }
+
+            val newCola = colaDeferred.await()
+            val newGavang = gavangDeferred.await()
+            val newGiovang = giovangDeferred.await()
+
+            var changed = false
+            if (newCola.isNotEmpty() && newCola != colaApiGroups) {
+                colaApiGroups = newCola
+                changed = true
+            }
+            if (newGavang.isNotEmpty() && newGavang != gavang33ApiGroups) {
+                gavang33ApiGroups = newGavang
+                changed = true
+            }
+            if (newGiovang.isNotEmpty() && newGiovang != giovangApiGroups) {
+                giovangApiGroups = newGiovang
+                changed = true
+            }
+
+            if (changed) {
+                android.util.Log.i("LiveFragment", "Auto-refresh: sports data/scores updated, rebuilding via DiffUtil...")
+                rebuild()
+            }
+        } catch (_: Exception) {}
     }
 
     fun debugForceRefresh() { if (isAdded) { vm.silentRefresh(); svm.load(force = true) } }
@@ -400,6 +460,7 @@ class LiveFragment : Fragment() {
     }
 
     override fun onDestroyView() {
+        stopProvidersAutoRefresh()
         dialog?.dismiss()
         dialog = null
         super.onDestroyView()

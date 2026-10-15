@@ -1,5 +1,5 @@
 #!/bin/bash
-# UI TOUR V4: Quay toàn bộ giao diện KenhLive TV v7.4.9
+# UI TOUR V4: Quay toàn bộ giao diện KenhLive TV v7.5.0
 # Luồng chi tiết:
 # 1. Home Hub 3 card (Canva 3D logos)
 # 2. Vào mục Truyền Hình (xem kênh TV, chuyển nhóm kênh, 2 lần BACK về Hub)
