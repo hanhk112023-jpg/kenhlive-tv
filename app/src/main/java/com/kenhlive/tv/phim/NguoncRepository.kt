@@ -134,7 +134,7 @@ object NguoncRepository {
 
             // 1. Thử KKPhim theo danh mục v1/api/danh-sach/{slug}
             try {
-                val kkUrl = "$KKPHIM_API/v1/api/danh-sach/$typeSlug?page=$page&limit=24"
+                val kkUrl = "$KKPHIM_API/v1/api/danh-sach/$typeSlug?page=$page&limit=36"
                 val kkFilms = fetchKkphimList(kkUrl)
                 if (kkFilms.isNotEmpty()) {
                     listCache[cacheKey] = System.currentTimeMillis() to kkFilms
@@ -179,7 +179,7 @@ object NguoncRepository {
 
             // 1. Thử KKPhim v1/api/the-loai/{slug}
             try {
-                val kkUrl = "$KKPHIM_API/v1/api/the-loai/$categorySlug?page=$page&limit=24"
+                val kkUrl = "$KKPHIM_API/v1/api/the-loai/$categorySlug?page=$page&limit=36"
                 val kkFilms = fetchKkphimList(kkUrl)
                 if (kkFilms.isNotEmpty()) {
                     listCache[cacheKey] = System.currentTimeMillis() to kkFilms
@@ -265,7 +265,7 @@ object NguoncRepository {
 
             // 1. Thử KKPhim v1/api/quoc-gia/{slug}
             try {
-                val kkUrl = "$KKPHIM_API/v1/api/quoc-gia/$countrySlug?page=$page&limit=24"
+                val kkUrl = "$KKPHIM_API/v1/api/quoc-gia/$countrySlug?page=$page&limit=36"
                 val kkFilms = fetchKkphimList(kkUrl)
                 if (kkFilms.isNotEmpty()) {
                     listCache[cacheKey] = System.currentTimeMillis() to kkFilms

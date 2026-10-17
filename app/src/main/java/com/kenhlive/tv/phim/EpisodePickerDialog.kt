@@ -113,9 +113,9 @@ object EpisodePickerDialog {
         val posterUrl = film.posterUrl.ifBlank { film.thumbUrl }
         if (posterUrl.isNotBlank()) {
             ivPoster.load(posterUrl) {
-                crossfade(false)
-                placeholder(R.drawable.hero_fallback)
-                error(R.drawable.hero_fallback)
+                crossfade(100)
+                placeholder(R.drawable.thumb_round_bg)
+                error(R.drawable.thumb_round_bg)
             }
         }
 

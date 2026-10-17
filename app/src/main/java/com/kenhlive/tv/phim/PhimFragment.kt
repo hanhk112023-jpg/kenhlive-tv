@@ -1150,9 +1150,9 @@ class PhimFragment : Fragment() {
 
             val posterUrl = film.thumbUrl.ifBlank { film.posterUrl }
             holder.poster.load(posterUrl) {
-                crossfade(if (DeviceMode.lowRam) false else true)
-                placeholder(R.drawable.hero_fallback)
-                error(R.drawable.hero_fallback)
+                crossfade(140)
+                placeholder(R.drawable.thumb_round_bg)
+                error(R.drawable.thumb_round_bg)
             }
 
             holder.itemView.setOnClickListener {
@@ -1212,9 +1212,9 @@ class PhimFragment : Fragment() {
 
             val posterUrl = film.thumbUrl.ifBlank { film.posterUrl }
             holder.poster.load(posterUrl) {
-                crossfade(if (DeviceMode.lowRam) false else true)
-                placeholder(R.drawable.hero_fallback)
-                error(R.drawable.hero_fallback)
+                crossfade(140)
+                placeholder(R.drawable.thumb_round_bg)
+                error(R.drawable.thumb_round_bg)
             }
 
             holder.itemView.setOnClickListener {

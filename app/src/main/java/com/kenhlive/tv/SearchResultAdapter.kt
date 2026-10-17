@@ -87,8 +87,8 @@ class SearchResultAdapter(
                 h.avatar.load(posterUrl) {
                     crossfade(if (DeviceMode.lowRam) 0 else 80)
                     transformations(RoundedCornersTransformation(12f))
-                    placeholder(R.drawable.hero_fallback)
-                    error(R.drawable.hero_fallback)
+                    placeholder(R.drawable.thumb_round_bg)
+                    error(R.drawable.thumb_round_bg)
                 }
                 h.itemView.setOnClickListener { onFilmClick(film) }
                 h.itemView.contentDescription = film.name
