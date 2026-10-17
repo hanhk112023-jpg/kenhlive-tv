@@ -51,10 +51,7 @@
         <!-- 1. Home / Live Sports Icon (active) -->
         <include layout="@layout/item_nav_slim" android:id="@+id/nav_live" />
 
-        <!-- 2. IPTV / Truyền hình Icon -->
-        <include layout="@layout/item_nav_slim" android:id="@+id/nav_iptv" />
-
-        <!-- 3. Kho Phim VOD Cinema Icon -->
+        <!-- 2. Kho Phim VOD Cinema Icon -->
         <include layout="@layout/item_nav_slim" android:id="@+id/nav_phim" />
 
         <!-- 4. Sports / Soccer Ball Icon -->

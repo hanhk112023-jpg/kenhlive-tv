@@ -107,7 +107,8 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_marginRight="14dp"
+            android:layout_marginRight="12dp"
+            android:nextFocusRight="@+id/cardPhim"
             android:background="@drawable/bg_hub_card_sports"
             android:focusable="true"
             android:clickable="true"
@@ -200,17 +201,16 @@
             </LinearLayout>
         </FrameLayout>
 
-        <!-- CARD 2: TRUYỀN HÌNH -->
+        <!-- CARD 2: TRUYỀN HÌNH (ẨN ĐỂ TẬP TRUNG 100% PHIM & THỂ THAO) -->
         <FrameLayout
             android:id="@+id/cardIptv"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:layout_marginLeft="7dp"
-            android:layout_marginRight="7dp"
+            android:layout_weight="0"
+            android:visibility="gone"
             android:background="@drawable/bg_hub_card_iptv"
-            android:focusable="true"
-            android:clickable="true"
+            android:focusable="false"
+            android:clickable="false"
             android:descendantFocusability="blocksDescendants"
             android:padding="24dp">
 
@@ -307,7 +307,8 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_marginLeft="14dp"
+            android:layout_marginLeft="12dp"
+            android:nextFocusLeft="@+id/cardSports"
             android:background="@drawable/bg_hub_card_phim"
             android:focusable="true"
             android:clickable="true"

@@ -130,7 +130,6 @@ class MainActivity : AppCompatActivity() {
     private fun setupNav() {
         val defs = listOf(
             Triple(R.id.nav_live, 0, Pair(R.drawable.ic_nav_live, R.string.nav_live)),
-            Triple(R.id.nav_iptv, 2, Pair(R.drawable.ic_nav_tv, R.string.nav_iptv)),
             Triple(R.id.nav_phim, 5, Pair(R.drawable.ic_nav_phim, R.string.nav_phim)),
             Triple(R.id.nav_schedule, 1, Pair(R.drawable.ic_nav_schedule, R.string.nav_schedule)),
             Triple(R.id.nav_search, 3, Pair(R.drawable.ic_nav_search, R.string.nav_search)),

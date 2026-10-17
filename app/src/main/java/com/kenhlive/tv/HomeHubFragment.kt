@@ -49,10 +49,9 @@ class HomeHubFragment : Fragment() {
         val btnSearch = view.findViewById<View>(R.id.btnHubSearch)
         val tvClock = view.findViewById<TextView>(R.id.tvHubClock)
 
-        // Setup focus animations & click listeners for 3 main portal cards
+        // Setup focus animations & click listeners for 2 main grand portal cards: THỂ THAO & PHIM TRUYỆN
         val mainCards = listOf(
             cardSports to 0, // Thể thao
-            cardIptv to 2,   // Truyền hình
             cardPhim to 5    // Phim truyện
         )
 
