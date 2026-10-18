@@ -58,12 +58,12 @@ class KenhLiveApp : Application(), ImageLoaderFactory {
             .crossfade(if (lowRam || DeviceMode.isTv) false else true)
             .respectCacheHeaders(false)
             .memoryCache {
-                MemoryCache.Builder(this).maxSizePercent(if (lowRam) 0.08 else 0.15).build()
+                MemoryCache.Builder(this).maxSizePercent(if (lowRam) 0.08 else 0.10).build()
             }
             .diskCache {
                 DiskCache.Builder()
                     .directory(cacheDir.resolve("img_cache"))
-                    .maxSizeBytes(150L * 1024 * 1024)
+                    .maxSizeBytes(45L * 1024 * 1024)
                     .build()
             }
             .build()
@@ -71,7 +71,7 @@ class KenhLiveApp : Application(), ImageLoaderFactory {
 
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
-        if (level >= TRIM_MEMORY_MODERATE) {
+        if (level >= TRIM_MEMORY_BACKGROUND || level >= TRIM_MEMORY_RUNNING_LOW || level >= TRIM_MEMORY_UI_HIDDEN) {
             coil.Coil.imageLoader(this).memoryCache?.clear()
         }
     }

@@ -1539,6 +1539,8 @@ class PlayerActivity : AppCompatActivity() {
         try { loudnessEnhancer?.release() } catch (_: Exception) {}
         loudnessEnhancer = null
         audioFx.detach()
+        player?.stop()
+        player?.clearMediaItems()
         player?.release()
         player = null
     }
@@ -1556,6 +1558,8 @@ class PlayerActivity : AppCompatActivity() {
         try { loudnessEnhancer?.release() } catch (_: Exception) {}
         loudnessEnhancer = null
         if (Build.VERSION.SDK_INT >= 26 && isInPictureInPictureMode) return
+        player?.stop()
+        player?.clearMediaItems()
         player?.release()
         player = null
     }

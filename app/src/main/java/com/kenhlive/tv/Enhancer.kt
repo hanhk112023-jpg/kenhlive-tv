@@ -96,22 +96,23 @@ object Enhancer {
         if (KenhLiveApp.isLowRam(ctx)) {
             b.setBufferDurationsMs(
                 1_500,  // minBufferMs: đủ 1.5s là bắt đầu ổn định
-                5_000,  // maxBufferMs: tối đa 5s
+                4_000,  // maxBufferMs: tối đa 4s
                 600,    // bufferForPlaybackMs: nạp 0.6s là phát ngay, không lag
                 1_000   // bufferForPlaybackAfterRebufferMs: rebuffer 1s là chạy tiếp
             )
-            b.setTargetBufferBytes(4 * 1024 * 1024) // 4MB/decoder
-            b.setBackBuffer(3_000, false)
+            b.setTargetBufferBytes(3 * 1024 * 1024) // 3MB/decoder
+            b.setBackBuffer(1_500, false)
             return b.setPrioritizeTimeOverSizeThresholds(false).build()
         }
         b.setBufferDurationsMs(
             2_000,  // minBufferMs
-            10_000, // maxBufferMs
+            8_000,  // maxBufferMs (chuẩn FPT Play: tối đa 8s)
             800,    // bufferForPlaybackMs
             1_500   // bufferForPlaybackAfterRebufferMs
         )
-        b.setBackBuffer(5_000, false)
-        return b.setPrioritizeTimeOverSizeThresholds(true).build()
+        b.setTargetBufferBytes(6 * 1024 * 1024) // Cap cứng 6MB buffer RAM cho 1080p
+        b.setBackBuffer(2_000, false)
+        return b.setPrioritizeTimeOverSizeThresholds(false).build()
     }
 
     fun buildMediaSourceFactory(ctx: Context): DefaultMediaSourceFactory {

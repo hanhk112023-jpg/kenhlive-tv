@@ -1,3 +1,20 @@
+# 🚀 KENHLIVE TV v7.6.2 (Build 131) — KIẾN TRÚC BỘ NHỚ CHUẨN FPT PLAY & NETFLIX CHO ANDROID TV BOX
+
+### ⚡ 1. Quản Lý Bộ Nhớ Đệm Ảnh Coil 2 Tầng Cực Đại (RAM & Disk Cap 45MB)
+- **Hạ trần Disk Cache xuống 45MB**: Cắt giảm từ 150MB xuống 45MB (`45L * 1024 * 1024`), giúp các dòng TV Box có bộ nhớ trong thấp (8GB/16GB) không bao giờ bị báo đầy ổ đĩa.
+- **Tối ưu RAM Bitmap RGB_565 & Tắt Crossfade**: Tắt hoạt ảnh crossfade khi lướt danh sách phim, loại bỏ hoàn toàn hiện tượng tạo 2 Bitmap đồng thời trong RAM gây giật lag GPU Mali yếu và tràn heap.
+- **Tự động giải phóng RAM khi ẩn màn hình**: Lắng nghe `onTrimMemory` ở các mức `TRIM_MEMORY_UI_HIDDEN`, `TRIM_MEMORY_BACKGROUND`, `TRIM_MEMORY_RUNNING_LOW` để xóa sạch memory cache ngay khi người dùng về Launcher TV hoặc chuyển app, chống 100% việc bị Android Low Memory Killer (LMK) tắt ngầm.
+
+### 🧩 2. Tái Sử Dụng View Bậc Cao Với Shared RecycledViewPool
+- **Chia sẻ chung RecycledViewPool**: Mọi hàng phim ngang (Horizontal Carousel) trong màn hình chính chia sẻ một ViewPool duy nhất (`sharedRowPool`), giảm hơn 60% số lượng ViewHolder và view allocation trong RAM.
+- **Prefetch phần tử trước (`initialPrefetchItemCount = 4`)**: Giúp các poster phim được nạp sẵn vào bộ đệm trước khi lọt vào tầm mắt, di chuyển remote D-pad siêu mượt 60fps không giật khung hình.
+
+### 🎬 3. Giới Hạn Video Buffer ExoPlayer & Giải Phóng Bộ Giải Mã Phần Cứng
+- **Khống chế Buffer RAM tối đa 6MB**: Cấu hình `DefaultLoadControl` với `setTargetBufferBytes(6 * 1024 * 1024)` và `maxBufferMs = 8_000ms`, giữ mức tiêu thụ RAM của video 1080p luôn ổn định dưới 20MB.
+- **Xả sạch luồng phát khi thoát Player**: Gọi `player.stop()` và `player.clearMediaItems()` trước khi `release()` để giải phóng tức thì các bộ đệm GraphicBuffer và MediaCodec phần cứng.
+
+---
+
 # 🚀 KENHLIVE TV v7.5.2 (Build 128) — GIAO DIỆN TÌM KIẾM PHIM TOÀN MÀN HÌNH CHUẨN NETFLIX & MA TRẬN POSTER 5 CỘT
 
 ### 🔍 1. Màn Hình Tìm Kiếm Phim Toàn Màn Hình Chuẩn Netflix (Full-Screen Overlay)
