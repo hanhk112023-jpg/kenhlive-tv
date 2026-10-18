@@ -177,9 +177,7 @@ object EpisodePickerDialog {
 
                         scope.launch {
                             val watchedSlugs = withContext(Dispatchers.IO) {
-                                chunkItems.filter { ep ->
-                                    WatchHistoryManager.isEpisodeWatched(film.slug, ep.slug)
-                                }.map { it.slug }.toSet()
+                                WatchHistoryManager.getWatchedEpisodeSlugs(film.slug)
                             }
 
                             rvEpisodes.visibility = View.VISIBLE
@@ -392,7 +390,7 @@ object EpisodePickerDialog {
             val baseName = if (item.name.all { it.isDigit() }) "Tập ${item.name}" else item.name
 
             val isCurrent = item.slug == currentEpSlug
-            val isWatched = watchedEpSlugs.contains(item.slug)
+            val isPastWatched = !isCurrent && watchedEpSlugs.contains(item.slug)
 
             holder.tv.text = if (isCurrent && currentEpTimeLabel.isNotBlank()) {
                 "$baseName ($currentEpTimeLabel)"
@@ -402,7 +400,7 @@ object EpisodePickerDialog {
 
             val iconRes = when {
                 isCurrent -> R.drawable.ic_play_arrow
-                isWatched -> R.drawable.ic_check
+                isPastWatched -> R.drawable.ic_check
                 else -> 0
             }
             if (iconRes != 0) {
@@ -413,11 +411,14 @@ object EpisodePickerDialog {
             }
 
             if (isCurrent) {
-                holder.tv.setTextColor(0xFFFF334B.toInt()) // Crimson Red active
-            } else if (isWatched) {
-                holder.tv.setTextColor(0xFF3DDC97.toInt()) // Green checked
+                holder.tv.setBackgroundResource(R.drawable.bg_badge_hd)
+                holder.tv.setTextColor(Color.WHITE)
+            } else if (isPastWatched) {
+                holder.tv.setBackgroundResource(R.drawable.bg_badge_glass)
+                holder.tv.setTextColor(0xFF71717A.toInt()) // Dimmed grey
             } else {
-                holder.tv.setTextColor(0xFFE2E8F0.toInt())
+                holder.tv.setBackgroundResource(R.drawable.bg_badge_glass)
+                holder.tv.setTextColor(0xFFE2E8F0.toInt()) // Clean white
             }
 
             holder.tv.setOnClickListener {
@@ -435,9 +436,9 @@ object EpisodePickerDialog {
                 if (hasFocus) {
                     holder.tv.setTextColor(Color.WHITE)
                 } else if (isCurrent) {
-                    holder.tv.setTextColor(0xFFFF334B.toInt())
-                } else if (isWatched) {
-                    holder.tv.setTextColor(0xFF3DDC97.toInt())
+                    holder.tv.setTextColor(Color.WHITE)
+                } else if (isPastWatched) {
+                    holder.tv.setTextColor(0xFF71717A.toInt())
                 } else {
                     holder.tv.setTextColor(0xFFE2E8F0.toInt())
                 }

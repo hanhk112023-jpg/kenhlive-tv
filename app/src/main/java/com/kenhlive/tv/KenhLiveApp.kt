@@ -58,12 +58,12 @@ class KenhLiveApp : Application(), ImageLoaderFactory {
             .crossfade(if (lowRam || DeviceMode.isTv) false else true)
             .respectCacheHeaders(false)
             .memoryCache {
-                MemoryCache.Builder(this).maxSizePercent(if (lowRam) 0.08 else 0.10).build()
+                MemoryCache.Builder(this).maxSizePercent(if (lowRam) 0.12 else 0.18).build()
             }
             .diskCache {
                 DiskCache.Builder()
                     .directory(cacheDir.resolve("img_cache"))
-                    .maxSizeBytes(45L * 1024 * 1024)
+                    .maxSizeBytes(80L * 1024 * 1024)
                     .build()
             }
             .build()

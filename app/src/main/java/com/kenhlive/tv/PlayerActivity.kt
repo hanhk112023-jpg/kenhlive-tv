@@ -187,11 +187,19 @@ class PlayerActivity : AppCompatActivity() {
     private val autoRecoveryRunnable = Runnable {
         val p = player ?: return@Runnable
         if (p.playbackState == Player.STATE_BUFFERING) {
-            Toast.makeText(this@PlayerActivity, "Mạng chập chờn: Đang tự kết nối lại luồng...", Toast.LENGTH_SHORT).show()
-            // Reset về Live edge (đầu luồng phát mới nhất) và nạp lại
-            p.seekToDefaultPosition()
-            p.prepare()
-            p.play()
+            if (isVodMode) {
+                // Với phim VOD: Giữ nguyên vị trí hiện tại, chuẩn bị lại luồng, TUYỆT ĐỐI không reset về 00:00!
+                val curPos = p.currentPosition
+                p.prepare()
+                p.seekTo(curPos)
+                p.play()
+            } else {
+                Toast.makeText(this@PlayerActivity, "Mạng chập chờn: Đang tự kết nối lại luồng...", Toast.LENGTH_SHORT).show()
+                // Reset về Live edge (đầu luồng phát mới nhất) và nạp lại
+                p.seekToDefaultPosition()
+                p.prepare()
+                p.play()
+            }
         }
     }
 
@@ -1046,7 +1054,7 @@ class PlayerActivity : AppCompatActivity() {
                             }
                         } else if (state == Player.STATE_BUFFERING) {
                             handler.removeCallbacks(autoRecoveryRunnable)
-                            handler.postDelayed(autoRecoveryRunnable, 4000L)
+                            handler.postDelayed(autoRecoveryRunnable, if (isVodMode) 8000L else 4000L)
                             if (findViewById<View>(R.id.playerErrorBox)?.visibility != View.VISIBLE) {
                                 findViewById<View>(R.id.bufferBox)?.visibility = View.VISIBLE
                             }

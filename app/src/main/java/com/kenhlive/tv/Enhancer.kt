@@ -95,24 +95,24 @@ object Enhancer {
         val b = DefaultLoadControl.Builder()
         if (KenhLiveApp.isLowRam(ctx)) {
             b.setBufferDurationsMs(
-                1_500,  // minBufferMs: đủ 1.5s là bắt đầu ổn định
-                4_000,  // maxBufferMs: tối đa 4s
-                600,    // bufferForPlaybackMs: nạp 0.6s là phát ngay, không lag
-                1_000   // bufferForPlaybackAfterRebufferMs: rebuffer 1s là chạy tiếp
+                2_000,  // minBufferMs: đủ 2.0s là phát mượt
+                12_000, // maxBufferMs: tối đa 12s
+                800,    // bufferForPlaybackMs: nạp 0.8s là phát ngay tức thì
+                1_500   // bufferForPlaybackAfterRebufferMs: rebuffer 1.5s là chạy tiếp
             )
-            b.setTargetBufferBytes(3 * 1024 * 1024) // 3MB/decoder
-            b.setBackBuffer(1_500, false)
-            return b.setPrioritizeTimeOverSizeThresholds(false).build()
+            b.setTargetBufferBytes(8 * 1024 * 1024) // 8MB buffer RAM cho low RAM
+            b.setBackBuffer(2_000, false)
+            return b.setPrioritizeTimeOverSizeThresholds(true).build()
         }
         b.setBufferDurationsMs(
-            2_000,  // minBufferMs
-            8_000,  // maxBufferMs (chuẩn FPT Play: tối đa 8s)
-            800,    // bufferForPlaybackMs
+            2_500,  // minBufferMs
+            25_000, // maxBufferMs: 25s buffer window tránh giật lag khi mạng dao động
+            800,    // bufferForPlaybackMs: nạp 0.8s là phát ngay tức thì
             1_500   // bufferForPlaybackAfterRebufferMs
         )
-        b.setTargetBufferBytes(6 * 1024 * 1024) // Cap cứng 6MB buffer RAM cho 1080p
-        b.setBackBuffer(2_000, false)
-        return b.setPrioritizeTimeOverSizeThresholds(false).build()
+        b.setTargetBufferBytes(16 * 1024 * 1024) // 16MB buffer RAM cho 1080p
+        b.setBackBuffer(3_000, false)
+        return b.setPrioritizeTimeOverSizeThresholds(true).build()
     }
 
     fun buildMediaSourceFactory(ctx: Context): DefaultMediaSourceFactory {

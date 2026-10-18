@@ -556,6 +556,37 @@ object WatchHistoryManager {
         }
 
     /**
+     * Lấy toàn bộ danh sách slug tập phim đã từng xem của một bộ phim (Single Query, siêu tốc).
+     */
+    suspend fun getWatchedEpisodeSlugs(filmSlug: String): Set<String> = withContext(Dispatchers.IO) {
+        val helper = dbHelper ?: return@withContext emptySet()
+        try {
+            val db = helper.readableDatabase
+            val cursor = db.query(
+                TABLE_EPISODES,
+                arrayOf(COL_EP_SLUG),
+                "$COL_EP_FILM_SLUG = ?",
+                arrayOf(filmSlug),
+                null,
+                null,
+                null
+            )
+            val set = mutableSetOf<String>()
+            cursor.use { c ->
+                val slugIdx = c.getColumnIndex(COL_EP_SLUG)
+                while (c.moveToNext()) {
+                    if (slugIdx >= 0) {
+                        set.add(c.getString(slugIdx))
+                    }
+                }
+            }
+            set
+        } catch (e: Exception) {
+            emptySet()
+        }
+    }
+
+    /**
      * Kiểm tra một tập phim đã từng được xem chưa.
      */
     suspend fun isEpisodeWatched(filmSlug: String, episodeSlug: String): Boolean =
