@@ -38,6 +38,12 @@ object NguoncRepository {
     @Volatile
     private var fallbackCache: List<NguoncFilmDetail>? = null
 
+    fun clearCache() {
+        detailCache.clear()
+        listCache.clear()
+        fallbackCache = null
+    }
+
     // Danh sách thể loại phổ biến
     val POPULAR_GENRES = listOf(
         "tat-ca" to "Tất Cả",

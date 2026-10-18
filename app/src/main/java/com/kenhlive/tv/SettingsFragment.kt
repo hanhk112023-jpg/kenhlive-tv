@@ -215,6 +215,7 @@ class SettingsFragment : Fragment() {
         coil.Coil.imageLoader(ctx).memoryCache?.clear()
         coil.Coil.imageLoader(ctx).diskCache?.clear()
         Http.get().cache?.evictAll()
+        com.kenhlive.tv.phim.NguoncRepository.clearCache()
         Toast.makeText(ctx, getString(R.string.settings_clear_cache_done), Toast.LENGTH_SHORT).show()
     }
 

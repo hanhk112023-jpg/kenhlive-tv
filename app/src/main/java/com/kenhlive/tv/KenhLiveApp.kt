@@ -73,11 +73,13 @@ class KenhLiveApp : Application(), ImageLoaderFactory {
         super.onTrimMemory(level)
         if (level >= TRIM_MEMORY_BACKGROUND || level >= TRIM_MEMORY_RUNNING_LOW || level >= TRIM_MEMORY_UI_HIDDEN) {
             coil.Coil.imageLoader(this).memoryCache?.clear()
+            com.kenhlive.tv.phim.NguoncRepository.clearCache()
         }
     }
 
     override fun onLowMemory() {
         super.onLowMemory()
         coil.Coil.imageLoader(this).memoryCache?.clear()
+        com.kenhlive.tv.phim.NguoncRepository.clearCache()
     }
 }

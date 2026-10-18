@@ -1,3 +1,12 @@
+# 🚀 KENHLIVE TV v7.6.3 (Build 132) — TỐI ƯU HÓA TOÀN DIỆN BỘ NHỚ ĐỆM API & DỌN DẸP CACHE TRIỆT ĐỂ
+
+### ⚡ 1. Quản Lý Bộ Nhớ Đệm NguonC & KKPhim Có Cơ Chế Dọn Sạch
+- **Tích hợp `clearCache()` cho Kho phim**: Cho phép dọn sạch toàn bộ `detailCache`, `listCache` và `fallbackCache` của `NguoncRepository` khi nhận tín hiệu dọn dẹp hoặc khi hệ thống Android TV thiếu bộ nhớ.
+- **Tự động giải phóng khi ẩn ứng dụng**: Kết nối `onTrimMemory` và `onLowMemory` từ Application cấp hệ thống tới toàn bộ các tầng Cache (Coil ImageLoader + NguoncRepository) giúp app chạy êm ái, không bao giờ bị Android TV tắt ngầm.
+- **Nút Dọn bộ nhớ đệm trong Cài Đặt**: Dọn dẹp sạch sẽ cùng lúc cả 4 tầng: Coil Memory, Coil Disk, OkHttp Network Cache và NguoncRepository InMemory Cache.
+
+---
+
 # 🚀 KENHLIVE TV v7.6.2 (Build 131) — KIẾN TRÚC BỘ NHỚ CHUẨN FPT PLAY & NETFLIX CHO ANDROID TV BOX
 
 ### ⚡ 1. Quản Lý Bộ Nhớ Đệm Ảnh Coil 2 Tầng Cực Đại (RAM & Disk Cap 45MB)
