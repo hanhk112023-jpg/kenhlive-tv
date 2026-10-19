@@ -63,7 +63,7 @@ class KenhLiveApp : Application(), ImageLoaderFactory {
             .diskCache {
                 DiskCache.Builder()
                     .directory(cacheDir.resolve("img_cache"))
-                    .maxSizeBytes(80L * 1024 * 1024)
+                    .maxSizeBytes(45L * 1024 * 1024)
                     .build()
             }
             .build()

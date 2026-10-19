@@ -30,10 +30,22 @@ object NguoncRepository {
     const val NGUONC_API = "https://phim.nguonc.com/api"
     const val REFERER_NGUONC = "https://phim.nguonc.com/"
 
-    // In-memory Cache với TTL (10 phút)
+    // In-memory Cache với TTL (10 phút), giới hạn trần tối đa 40 phim tránh phình RAM
     private val detailCache = ConcurrentHashMap<String, Pair<Long, NguoncFilmDetail>>()
     private val listCache = ConcurrentHashMap<String, Pair<Long, List<NguoncFilm>>>()
     private const val CACHE_TTL_MS = 10 * 60 * 1000L
+    private const val MAX_DETAIL_CACHE_SIZE = 40
+
+    private fun pruneDetailCacheIfNeeded() {
+        if (detailCache.size >= MAX_DETAIL_CACHE_SIZE) {
+            val now = System.currentTimeMillis()
+            detailCache.entries.removeIf { now - it.value.first > CACHE_TTL_MS }
+            if (detailCache.size >= MAX_DETAIL_CACHE_SIZE) {
+                val oldest = detailCache.entries.minByOrNull { it.value.first }?.key
+                if (oldest != null) detailCache.remove(oldest)
+            }
+        }
+    }
 
     @Volatile
     private var fallbackCache: List<NguoncFilmDetail>? = null
@@ -314,6 +326,7 @@ object NguoncRepository {
                 if (jsonStr.isNotBlank()) {
                     val detail = parseKkphimDetail(jsonStr)
                     if (detail != null && detail.episodes.isNotEmpty()) {
+                        pruneDetailCacheIfNeeded()
                         detailCache[slug] = System.currentTimeMillis() to detail
                         return@withContext detail
                     }
@@ -333,6 +346,7 @@ object NguoncRepository {
                 }
                 val detail = parseFilmDetail(jsonStr)
                 if (detail != null) {
+                    pruneDetailCacheIfNeeded()
                     detailCache[slug] = System.currentTimeMillis() to detail
                     return@withContext detail
                 }

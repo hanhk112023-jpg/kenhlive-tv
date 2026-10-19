@@ -1,3 +1,13 @@
+# 🚀 KENHLIVE TV v7.7.1 (Build 134) — KHỐNG CHẾ TRẦN BỘ NHỚ ĐỆM 45MB & TỰ ĐỘNG THU DỌN CACHE CHI TIẾT PHIM
+
+### ⚡ 1. Khống Chế Trần Cứng Disk Cache Coil 45MB
+- Giới hạn cứng trần bộ nhớ đệm hình ảnh của Coil ở mức **45MB** (`maxSizeBytes(45L * 1024 * 1024)`). Khi người dùng lướt hàng nghìn phim hoặc giải đấu, Coil tự động loại bỏ các ảnh cũ nhất (LRU), giữ cho ổ cứng TV Box luôn thông thoáng và an toàn tuyệt đối.
+
+### 🎯 2. Tự Động Thu Dọn Cache Chi Tiết Phim RAM (`MAX_DETAIL_CACHE_SIZE = 40`)
+- Bổ sung cơ chế `pruneDetailCacheIfNeeded()` khống chế tối đa 40 phim trong RAM. Khi người dùng bấm xem liên tục nhiều bộ phim, hệ thống tự động loại bỏ các phim hết hạn TTL hoặc cũ nhất, triệt tiêu hoàn toàn hiện tượng phình RAM bộ nhớ đệm.
+
+---
+
 # 🚀 KENHLIVE TV v7.7.0 (Build 133) — ĐẠI CẬP NHẬT TOÀN DIỆN (BIG UPDATE): SỬA TOÀN BỘ LỖI PHÁT PHIM, TIẾN ĐỘ TẬP CHUẨN XÁC & CHỐNG STUTTER 60FPS
 
 ### ⚡ 1. Sửa Triệt Để Lỗi Giật Lag & Đứng Hình Khi Xem Phim VOD
