@@ -61,12 +61,12 @@ class MainActivity : AppCompatActivity() {
         showTab(if (tabX in 0..6) tabX else TAB_HUB, animate = false)
 
         // BACK:
-        // - Đang ở mục con (Thể thao / Truyền hình / Phim truyện / ...): Ấn 2 lần BACK liên tiếp (trong 2s) để thoát ra Menu Chọn (TAB_HUB)
+        // - Đang ở mục con (Thể thao / Truyền hình / Phim truyện / ...): Ấn 2 lần BACK liên tiếp để thoát ra Menu Chọn (TAB_HUB)
         // - Đang ở Menu Chọn (TAB_HUB): Hiện hộp thoại xác nhận thoát ứng dụng
         onBackPressedDispatcher.addCallback(this) {
             if (current != TAB_HUB) {
                 val now = System.currentTimeMillis()
-                if (now - lastBackPressTime < 2200L) {
+                if (now - lastBackPressTime < 3500L) {
                     backToast?.cancel()
                     lastBackPressTime = 0L
                     showTab(TAB_HUB)

@@ -159,7 +159,7 @@ NGUYÊN TẮC BỘ NHỚ PHIÊN & SĂN LỖI SÂU (Deep Bug Hunting & Session Me
 {
   "thought": "Quan sát thấy gì trên màn hình hiện tại, liên hệ với các bước trước trong phiên kiểm thử và lý do chọn hành động này",
   "action_type": "KEY" | "LONG_PRESS" | "KEYPAD" | "SWITCH_TAB" | "OPEN_MULTIVIEW" | "TEXT" | "WAIT" | "VERIFY_STREAM" | "COMPLETE_MISSION",
-  "action_param": "DPAD_DOWN" | "OK" | "1" | "2" | "ENTER" | "BACK" | "uefa" | "2.0" | "",
+  "action_param": "DPAD_DOWN" | "OK" | "1" | "2" | "ENTER" | "BACK" | "DOUBLE_BACK" | "uefa" | "2.0" | "",
   "expected_result": "Kỳ vọng gì sau khi thực hiện hành động này?",
   "defect_detected": null hoặc {
      "area": "Tên màn hình/tính năng",
@@ -1472,8 +1472,25 @@ class AutonomousQASuite:
 
                 # 3. ACTION: Thực thi hành động trên TV
                 if act_type == "KEY":
-                    self.device.send_key(act_param or "DPAD_DOWN")
-                    time.sleep(0.7)
+                    key_upper = (act_param or "DPAD_DOWN").upper()
+                    if key_upper in ("DOUBLE_BACK", "BACK_DOUBLE", "BACK2"):
+                        self.device.send_key("BACK")
+                        time.sleep(0.25)
+                        self.device.send_key("BACK")
+                        time.sleep(1.2)
+                    elif key_upper == "BACK" and (self.action_history and self.action_history[-1].upper() == "BACK"):
+                        # AI đã bấm BACK ở bước trước và bước này bấm tiếp BACK để thoát mục:
+                        # Gửi cú nhấn BACK đúp để đảm bảo nằm trong khung thời gian double-back của TV
+                        self.device.send_key("BACK")
+                        time.sleep(0.25)
+                        self.device.send_key("BACK")
+                        time.sleep(1.2)
+                    elif key_upper in ("ENTER", "OK") and ("heroplay" in (ui_state.get("focused_sig") or "").lower() or "btnplay" in (ui_state.get("focused_sig") or "").lower()):
+                        self.device.send_key(act_param or "OK")
+                        time.sleep(2.2)
+                    else:
+                        self.device.send_key(act_param or "DPAD_DOWN")
+                        time.sleep(0.7)
                 elif act_type == "LONG_PRESS":
                     self.device.send_long_press(act_param or "OK")
                     time.sleep(1.0)

@@ -767,6 +767,9 @@ class PhimFragment : Fragment() {
 
     private fun openHeroPlay(film: NguoncFilm) {
         val ctx = context ?: return
+        try {
+            android.widget.Toast.makeText(ctx, "Đang mở: ${film.name}...", android.widget.Toast.LENGTH_SHORT).show()
+        } catch (_: Throwable) {}
         viewLifecycleOwner.lifecycleScope.launch {
             try {
                 val progress = withContext(Dispatchers.IO) {
@@ -797,6 +800,7 @@ class PhimFragment : Fragment() {
                 }
             } catch (t: Throwable) {
                 android.util.Log.e("PhimFragment", "openHeroPlay error", t)
+                openFilmDialog(film)
             }
         }
     }

@@ -121,6 +121,12 @@ object Enhancer {
             .setReadTimeoutMs(10000)
             .setAllowCrossProtocolRedirects(true)
             .setUserAgent("Mozilla/5.0 (Linux; Android 12; BRAVIA 4K Build/MMB29M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
+            .setDefaultRequestProperties(
+                mapOf(
+                    "Referer" to "https://phim.nguonc.com/",
+                    "Origin" to "https://phim.nguonc.com"
+                )
+            )
         return DefaultMediaSourceFactory(ctx).setDataSourceFactory(httpSource)
     }
 

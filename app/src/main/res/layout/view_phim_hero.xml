@@ -283,6 +283,7 @@
                 android:textColor="#000000"
                 android:textSize="13sp"
                 android:textStyle="bold"
+                android:nextFocusRight="@+id/btnHeroEpisodes"
                 android:focusable="true" />
 
             <!-- Secondary Episodes / Details Button (Translucent Dark Gray) -->
@@ -298,6 +299,8 @@
                 android:textColor="#FFFFFF"
                 android:textSize="12.5sp"
                 android:textStyle="bold"
+                android:nextFocusLeft="@+id/btnHeroPlay"
+                android:nextFocusRight="@+id/btnHeroFavorite"
                 android:focusable="true" />
 
             <!-- Add to Favorites Button -->
@@ -313,6 +316,8 @@
                 android:textColor="#FFFFFF"
                 android:textSize="12.5sp"
                 android:textStyle="bold"
+                android:nextFocusLeft="@+id/btnHeroEpisodes"
+                android:nextFocusRight="@+id/btnHeroNext"
                 android:focusable="true" />
 
             <!-- Next Movie Button -->
@@ -328,6 +333,7 @@
                 android:textColor="#E2E8F0"
                 android:textSize="12.5sp"
                 android:textStyle="bold"
+                android:nextFocusLeft="@+id/btnHeroFavorite"
                 android:focusable="true" />
         </LinearLayout>
     </LinearLayout>
