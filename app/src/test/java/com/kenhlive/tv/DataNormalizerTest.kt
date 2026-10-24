@@ -82,4 +82,36 @@ class DataNormalizerTest {
         assertEquals("htv7", DataNormalizer.normalizeChannelKey("HTV7 FHD"))
         assertEquals("thvl1", DataNormalizer.normalizeChannelKey("Truyền hình Vĩnh Long 1"))
     }
+
+    @Test
+    fun testIsMatchLiveDetection() {
+        val dummyRoom = LiveRoom("101", "BLV Batman", "", 10, "Arsenal vs Chelsea", "Ngoại Hạng Anh", notice = "")
+        
+        // 1. Explicit upcoming markers -> Must be FALSE (Upcoming)
+        val groupUpcoming1 = LiveMatchGroup("[SẮP ĐÁ] 21:00 Arsenal vs Chelsea", "Ngoại Hạng Anh", dummyRoom, 5, 1)
+        val parsed1 = DataNormalizer.parseMatch(groupUpcoming1.matchTitle, groupUpcoming1.league)
+        assertFalse(MatchCardsAdapter.isMatchLive(groupUpcoming1, parsed1))
+
+        val groupUpcoming2 = LiveMatchGroup("Man City vs Liverpool", "Ngoại Hạng Anh", dummyRoom.copy(notice = "Trận đấu chưa bắt đầu"), 5, 1)
+        val parsed2 = DataNormalizer.parseMatch(groupUpcoming2.matchTitle, groupUpcoming2.league)
+        assertFalse(MatchCardsAdapter.isMatchLive(groupUpcoming2, parsed2))
+
+        // 2. Score available -> Must be TRUE (Live)
+        val groupLiveWithScore = LiveMatchGroup("Real Madrid 2 - 1 Barcelona", "La Liga", dummyRoom, 1500, 1)
+        val parsedScore = DataNormalizer.parseMatch(groupLiveWithScore.matchTitle, groupLiveWithScore.league)
+        assertTrue(MatchCardsAdapter.isMatchLive(groupLiveWithScore, parsedScore))
+
+        // 3. Explicit Live tag -> Must be TRUE (Live)
+        val groupExplicitLive = LiveMatchGroup("[LIVE] Bayern Munich vs Dortmund", "Bundesliga", dummyRoom, 800, 1)
+        val parsedLive = DataNormalizer.parseMatch(groupExplicitLive.matchTitle, groupExplicitLive.league)
+        assertTrue(MatchCardsAdapter.isMatchLive(groupExplicitLive, parsedLive))
+    }
+
+    @Test
+    fun testExtractKickoffTime() {
+        assertEquals("21:00", MatchCardsAdapter.extractKickoffTime("[SẮP ĐÁ] 21:00 Arsenal vs Chelsea", ""))
+        assertEquals("19:30", MatchCardsAdapter.extractKickoffTime("Man City vs Liverpool", "Lên sóng lúc 19:30"))
+        assertEquals("02:45", MatchCardsAdapter.extractKickoffTime("02:45 Real Madrid vs AC Milan", ""))
+        assertEquals("", MatchCardsAdapter.extractKickoffTime("Hà Nội vs HAGL", "Đang trực tiếp"))
+    }
 }

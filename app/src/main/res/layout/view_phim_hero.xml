@@ -121,10 +121,11 @@
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/heroBrandTag"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="6dp"
-                android:text="B O M   T Ấ N   Đ I Ệ N   Ả N H"
+                android:text="Đ I Ệ N   Ả N H   Đ Ặ C   S Ắ C"
                 android:textColor="#E2E8F0"
                 android:textSize="10sp"
                 android:textStyle="bold"
@@ -147,7 +148,7 @@
             android:shadowDy="3"
             android:shadowRadius="14" />
 
-        <!-- Netflix Metadata & Badges Strip -->
+        <!-- Film Metadata & Badges Strip -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -156,27 +157,18 @@
             android:layout_marginTop="8dp"
             android:layout_marginBottom="8dp">
 
-            <!-- Netflix Match Score (98% Phù Hợp in Green) -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="98% Phù Hợp"
-                android:textColor="#46D369"
-                android:textSize="12.5sp"
-                android:textStyle="bold" />
-
             <TextView
                 android:id="@+id/heroYear"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="10dp"
                 android:text="2026"
                 android:textColor="#CBD5E1"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
-            <!-- Maturity Badge (16+) -->
+            <!-- Episode / Duration Badge -->
             <TextView
+                android:id="@+id/heroEpisodeCount"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="10dp"
@@ -185,7 +177,7 @@
                 android:paddingRight="6dp"
                 android:paddingTop="2dp"
                 android:paddingBottom="2dp"
-                android:text="16+"
+                android:text="Trọn Bộ"
                 android:textColor="#FFFFFF"
                 android:textSize="10sp"
                 android:textStyle="bold" />
@@ -206,22 +198,6 @@
                 android:textSize="10sp"
                 android:textStyle="bold" />
 
-            <!-- IMDb Badge -->
-            <TextView
-                android:id="@+id/heroImdb"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="10dp"
-                android:background="@drawable/bg_badge_glass"
-                android:paddingLeft="8dp"
-                android:paddingRight="8dp"
-                android:paddingTop="3dp"
-                android:paddingBottom="3dp"
-                android:text="★ 8.8 IMDb"
-                android:textColor="#FBBF24"
-                android:textSize="11sp"
-                android:textStyle="bold" />
-
             <!-- Genre Badge -->
             <TextView
                 android:id="@+id/heroGenre"
@@ -239,8 +215,9 @@
                 android:textStyle="bold" />
         </LinearLayout>
 
-        <!-- Top 10 Callout Tag -->
+        <!-- Spotlight Callout Tag -->
         <LinearLayout
+            android:id="@+id/heroTrendingTag"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -255,16 +232,17 @@
                 android:paddingRight="5dp"
                 android:paddingTop="2dp"
                 android:paddingBottom="2dp"
-                android:text="TOP 10"
+                android:text="NỔI BẬT"
                 android:textColor="#FFFFFF"
                 android:textSize="9sp"
                 android:textStyle="bold" />
 
             <TextView
+                android:id="@+id/heroTrendingTitle"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginLeft="8dp"
-                android:text="Số 1 trong Danh mục Phim Thịnh Hành Hôm Nay"
+                android:text="Tác phẩm điện ảnh được xem nhiều nhất hôm nay"
                 android:textColor="#FFFFFF"
                 android:textSize="12sp"
                 android:textStyle="bold" />

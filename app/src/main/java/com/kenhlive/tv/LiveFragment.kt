@@ -188,67 +188,100 @@ class LiveFragment : Fragment() {
 
         val items = mutableListOf<Any>()
 
+        // Phân tách rạch ròi trận đang LIVE và trận SẮP DIỄN RA
+        val allLiveMatches = enrichedLiveGroups.filter {
+            MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league))
+        }.sortedByDescending { it.totalViewers }
+
+        val allUpcomingMatches = enrichedLiveGroups.filter {
+            !MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league))
+        }
+
         when {
             selLeague == 0 -> {
-                // 1. Hero banner ở đầu tiên
-                items.add(SportAdapter.HeroItem(socoGroups.ifEmpty { enrichedLiveGroups }))
+                // 1. Hero banner: Trận đấu tâm điểm đang trực tiếp (hoặc hot nhất)
+                items.add(SportAdapter.HeroItem(allLiveMatches.ifEmpty { enrichedLiveGroups }))
 
                 // Phone layout: thêm chips lọc môn trên cùng
                 if (!DeviceMode.isTv) {
                     items.add(0, SportAdapter.ChipsItem(leagueLabels, selLeague))
                 }
 
-                // 2. Từng đài phát sóng thành từng dòng riêng biệt (không gộp chung)
-                if (socoGroups.isNotEmpty() || upFiltered.isNotEmpty()) {
-                    items.add(SportAdapter.RailItem(socoGroups, upFiltered, title = "Trực Tiếp Socolive"))
+                // 2. Dòng 1: TÂM ĐIỂM TRỰC TIẾP (Toàn bộ trận đang diễn ra của mọi đài, sắp xếp theo người xem)
+                if (allLiveMatches.isNotEmpty()) {
+                    items.add(SportAdapter.RailItem(allLiveMatches, emptyList(), title = "🔥 Trận Đấu Đang Trực Tiếp"))
                 }
-                if (colaGroups.isNotEmpty()) {
-                    items.add(SportAdapter.RailItem(colaGroups, emptyList(), title = "Trực Tiếp ColaTV"))
+
+                // 3. Dòng 2: LỊCH THI ĐẤU & SẮP LÊN SÓNG HÔM NAY (Phân biệt rõ ràng với trận đang live)
+                if (allUpcomingMatches.isNotEmpty() || upFiltered.isNotEmpty()) {
+                    items.add(SportAdapter.RailItem(allUpcomingMatches, upFiltered, title = "⏳ Lịch Thi Đấu & Sắp Lên Sóng Hôm Nay"))
                 }
-                if (gavang33Groups.isNotEmpty()) {
-                    items.add(SportAdapter.RailItem(gavang33Groups, emptyList(), title = "Trực Tiếp Gà Vàng 33"))
+
+                // 4. Dòng 3: NGOẠI HẠNG ANH & CÚP CHÂU ÂU (Tuyển tập các giải đấu đỉnh cao)
+                val euroKeywords = listOf("Ngoại Hạng", "Premier League", "Cúp C1", "Champions League", "La Liga", "Serie A", "Bundesliga", "Ligue 1", "Europa", "V-League")
+                val euroMatches = enrichedLiveGroups.filter { g ->
+                    euroKeywords.any { g.league.contains(it, ignoreCase = true) || g.matchTitle.contains(it, ignoreCase = true) }
                 }
-                if (giovangGroups.isNotEmpty()) {
-                    items.add(SportAdapter.RailItem(giovangGroups, emptyList(), title = "Trực Tiếp Giờ Vàng TV"))
+                if (euroMatches.isNotEmpty()) {
+                    items.add(SportAdapter.RailItem(euroMatches, emptyList(), title = "⚽ Ngoại Hạng Anh & Cúp Châu Âu"))
+                }
+
+                // 5. Dòng 4: BÌNH LUẬN VIÊN SÔI ĐỘNG
+                val allRooms = enrichedLiveGroups.flatMap { it.rooms }.sortedByDescending { it.viewers }
+                if (allRooms.isNotEmpty()) {
+                    items.add(SportAdapter.BlvRowItem(allRooms))
+                }
+
+                // 6. Dòng 5: BÓNG RỔ NBA & MÔN THỂ THAO KHÁC
+                val otherSports = enrichedLiveGroups.filter {
+                    it.category == "Bóng rổ" || it.league.contains("NBA", ignoreCase = true) ||
+                    it.category == "Quần vợt" || it.league.contains("Tennis", ignoreCase = true) ||
+                    it.category == "Bóng chuyền"
+                }
+                if (otherSports.isNotEmpty()) {
+                    items.add(SportAdapter.RailItem(otherSports, emptyList(), title = "🏀 Bóng Rổ NBA & Môn Thể Thao Khác"))
                 }
             }
             leagueLabels[selLeague] == "ColaTV" -> {
+                val cLive = colaGroups.filter { MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }.sortedByDescending { it.totalViewers }
+                val cUp = colaGroups.filter { !MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }
                 items.add(SportAdapter.HeroItem(colaGroups))
                 if (!DeviceMode.isTv) items.add(0, SportAdapter.ChipsItem(leagueLabels, selLeague))
-                items.add(SportAdapter.RailItem(colaGroups, upFiltered, title = "Trực Tiếp ColaTV"))
+                if (cLive.isNotEmpty()) items.add(SportAdapter.RailItem(cLive, emptyList(), title = "🔥 Đang Trực Tiếp · ColaTV"))
+                if (cUp.isNotEmpty() || upFiltered.isNotEmpty()) items.add(SportAdapter.RailItem(cUp, upFiltered, title = "⏳ Sắp Lên Sóng · ColaTV"))
             }
             leagueLabels[selLeague] == "Gà Vàng 33" -> {
+                val gLive = gavang33Groups.filter { MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }.sortedByDescending { it.totalViewers }
+                val gUp = gavang33Groups.filter { !MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }
                 items.add(SportAdapter.HeroItem(gavang33Groups))
                 if (!DeviceMode.isTv) items.add(0, SportAdapter.ChipsItem(leagueLabels, selLeague))
-                items.add(SportAdapter.RailItem(gavang33Groups, upFiltered, title = "Trực Tiếp Gà Vàng 33"))
+                if (gLive.isNotEmpty()) items.add(SportAdapter.RailItem(gLive, emptyList(), title = "🔥 Đang Trực Tiếp · Gà Vàng 33"))
+                if (gUp.isNotEmpty() || upFiltered.isNotEmpty()) items.add(SportAdapter.RailItem(gUp, upFiltered, title = "⏳ Sắp Lên Sóng · Gà Vàng 33"))
             }
             leagueLabels[selLeague] == "Giờ Vàng" -> {
+                val gvLive = giovangGroups.filter { MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }.sortedByDescending { it.totalViewers }
+                val gvUp = giovangGroups.filter { !MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }
                 items.add(SportAdapter.HeroItem(giovangGroups))
                 if (!DeviceMode.isTv) items.add(0, SportAdapter.ChipsItem(leagueLabels, selLeague))
-                items.add(SportAdapter.RailItem(giovangGroups, upFiltered, title = "Trực Tiếp Giờ Vàng TV"))
+                if (gvLive.isNotEmpty()) items.add(SportAdapter.RailItem(gvLive, emptyList(), title = "🔥 Đang Trực Tiếp · Giờ Vàng TV"))
+                if (gvUp.isNotEmpty() || upFiltered.isNotEmpty()) items.add(SportAdapter.RailItem(gvUp, upFiltered, title = "⏳ Sắp Lên Sóng · Giờ Vàng TV"))
             }
             else -> {
                 val target = leagueLabels[selLeague]
-                val socoF = socoGroups.filter { it.category.equals(target, ignoreCase = true) || it.league.contains(target, ignoreCase = true) }
-                val colaF = colaGroups.filter { it.category.equals(target, ignoreCase = true) || it.league.contains(target, ignoreCase = true) }
-                val gavang33F = gavang33Groups.filter { it.category.equals(target, ignoreCase = true) || it.league.contains(target, ignoreCase = true) }
-                val giovangF = giovangGroups.filter { it.category.equals(target, ignoreCase = true) || it.league.contains(target, ignoreCase = true) }
-                val allF = socoF + colaF + gavang33F + giovangF
+                val filtered = enrichedLiveGroups.filter {
+                    it.category.equals(target, ignoreCase = true) || it.league.contains(target, ignoreCase = true)
+                }
+                val fLive = filtered.filter { MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }.sortedByDescending { it.totalViewers }
+                val fUp = filtered.filter { !MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }
 
-                items.add(SportAdapter.HeroItem(allF.ifEmpty { socoGroups }))
+                items.add(SportAdapter.HeroItem(filtered.ifEmpty { enrichedLiveGroups }))
                 if (!DeviceMode.isTv) items.add(0, SportAdapter.ChipsItem(leagueLabels, selLeague))
 
-                if (socoF.isNotEmpty() || upFiltered.isNotEmpty()) {
-                    items.add(SportAdapter.RailItem(socoF, upFiltered, title = "Trực Tiếp Socolive · $target"))
+                if (fLive.isNotEmpty()) {
+                    items.add(SportAdapter.RailItem(fLive, emptyList(), title = "🔥 Trực Tiếp · $target"))
                 }
-                if (colaF.isNotEmpty()) {
-                    items.add(SportAdapter.RailItem(colaF, emptyList(), title = "Trực Tiếp ColaTV · $target"))
-                }
-                if (gavang33F.isNotEmpty()) {
-                    items.add(SportAdapter.RailItem(gavang33F, emptyList(), title = "Trực Tiếp Gà Vàng 33 · $target"))
-                }
-                if (giovangF.isNotEmpty()) {
-                    items.add(SportAdapter.RailItem(giovangF, emptyList(), title = "Trực Tiếp Giờ Vàng TV · $target"))
+                if (fUp.isNotEmpty() || upFiltered.isNotEmpty()) {
+                    items.add(SportAdapter.RailItem(fUp, upFiltered, title = "⏳ Sắp Diễn Ra · $target"))
                 }
             }
         }

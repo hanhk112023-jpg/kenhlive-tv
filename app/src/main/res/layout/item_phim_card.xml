@@ -25,7 +25,7 @@
             android:background="@drawable/thumb_round_bg"
             android:contentDescription="Poster phim" />
 
-        <!-- Top Left Rating Badge -->
+        <!-- Top Left Rating Badge (Hidden to keep poster clean & authentic) -->
         <TextView
             android:id="@+id/phimRatingBadge"
             style="@style/KL.Text.Meta"
@@ -38,7 +38,7 @@
             android:paddingRight="6dp"
             android:paddingTop="2dp"
             android:paddingBottom="2dp"
-            android:text="★ 8.8"
+            android:visibility="gone"
             android:textSize="9.5sp"
             android:textStyle="bold"
             android:textColor="#FBBF24" />

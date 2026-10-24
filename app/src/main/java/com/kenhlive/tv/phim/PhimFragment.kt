@@ -623,17 +623,17 @@ class PhimFragment : Fragment() {
                         val defHorror = async { NguoncRepository.fetchFilmsBatch("kinh-di", pages = 1..4, isCategory = true, context = requireContext()) }
 
                         listOf(
-                            "PHIM MỚI CẬP NHẬT (HLS 4K)" to defNew.await(),
-                            "PHIM BỘ ĐẶC SẮC" to defBo.await(),
-                            "PHIM LẺ CHIẾU RẠP" to defLe.await(),
-                            "HOẠT HÌNH & ANIME" to defAnime.await(),
-                            "PHIM HÀN QUỐC THỊNH HÀNH" to defKorea.await(),
-                            "PHIM TRUNG QUỐC HOT" to defChina.await(),
-                            "ĐIỆN ẢNH ÂU MỸ BOM TẤN" to defWestern.await(),
-                            "HÀNH ĐỘNG KỊCH TÍNH" to defAction.await(),
-                            "TÌNH CẢM LÃNG MẠN" to defRomance.await(),
-                            "CỔ TRANG ĐẶC SẮC" to defHistorical.await(),
-                            "KINH DỊ & GIẬT GÂN" to defHorror.await()
+                            "Phim Mới Cập Nhật" to defNew.await(),
+                            "Phim Bộ Hot Đang Chiếu" to defBo.await(),
+                            "Điện Ảnh Chiếu Rạp Đặc Sắc" to defLe.await(),
+                            "Anime & Hoạt Hình Tuyển Chọn" to defAnime.await(),
+                            "Phim Truyền Hình Hàn Quốc" to defKorea.await(),
+                            "Phim Cổ Trang & Hoa Ngữ" to defChina.await(),
+                            "Điện Ảnh Âu Mỹ & Hollywood" to defWestern.await(),
+                            "Phim Hành Động Kịch Tính" to defAction.await(),
+                            "Phim Tình Cảm & Lãng Mạn" to defRomance.await(),
+                            "Cổ Trang & Tiên Hiệp" to defHistorical.await(),
+                            "Kinh Dị & Giật Gân" to defHorror.await()
                         )
                     }
                 }
@@ -982,6 +982,10 @@ class PhimFragment : Fragment() {
         val imdb: TextView? = v.findViewById(R.id.heroImdb)
         val genre: TextView? = v.findViewById(R.id.heroGenre)
         val spotlightCounter: TextView? = v.findViewById(R.id.heroSpotlightCounter)
+        val brandTag: TextView? = v.findViewById(R.id.heroBrandTag)
+        val episodeCount: TextView? = v.findViewById(R.id.heroEpisodeCount)
+        val trendingTag: View? = v.findViewById(R.id.heroTrendingTag)
+        val trendingTitle: TextView? = v.findViewById(R.id.heroTrendingTitle)
         val btnPlay: Button = v.findViewById(R.id.btnHeroPlay)
         val btnEpisodes: Button = v.findViewById(R.id.btnHeroEpisodes)
         val btnFavorite: Button = v.findViewById(R.id.btnHeroFavorite)
@@ -1017,17 +1021,42 @@ class PhimFragment : Fragment() {
             title.text = film.name
             year.text = film.year.ifBlank { "2026" }
             quality.text = "${film.quality.ifBlank { "FHD" }} · ${film.language.ifBlank { "Vietsub" }}"
-            val score = 8.4 + (Math.abs(film.name.hashCode()) % 13) / 10.0
-            imdb?.text = String.format(Locale.US, "★ %.1f IMDb", score)
-            genre?.text = when {
+
+            val epLabel = when {
+                film.currentEpisode.isNotBlank() && film.totalEpisodes.isNotBlank() && film.currentEpisode != film.totalEpisodes ->
+                    "${film.currentEpisode} / ${film.totalEpisodes} Tập"
+                film.currentEpisode.isNotBlank() -> film.currentEpisode
+                film.totalEpisodes.isNotBlank() -> "${film.totalEpisodes} Tập"
+                film.time.isNotBlank() -> film.time
+                else -> "Bản Đẹp"
+            }
+            episodeCount?.text = epLabel
+
+            val categoriesText = when {
                 film.categories.isNotEmpty() -> film.categories.take(2).joinToString(" · ")
                 film.name.contains("Tập", ignoreCase = true) || film.totalEpisodes.isNotBlank() -> "Phim Bộ Đặc Sắc"
                 else -> "Điện Ảnh Chiếu Rạp"
             }
-            if (totalHero > 1) {
-                spotlightCounter?.text = "${heroIdx + 1}/$totalHero · RẠP PHIM TẠI GIA · 4K VIETSUB"
+            genre?.text = categoriesText
+
+            brandTag?.text = when {
+                film.categories.any { it.contains("hoạt hình", true) || it.contains("anime", true) } -> "A N I M E   T U Y Ể N   C H Ọ N"
+                film.totalEpisodes.isNotBlank() || film.currentEpisode.contains("Tập", true) -> "P H I M   B Ộ   Đ Ặ C   S Ắ C"
+                film.categories.any { it.contains("chiếu rạp", true) } -> "C H I Ế U   R Ạ P   Đ Ặ C   S Ắ C"
+                else -> "Đ I Ệ N   Ả N H   Đ Ặ C   S Ắ C"
+            }
+
+            if (heroIdx == 0) {
+                trendingTag?.visibility = View.VISIBLE
+                trendingTitle?.text = "Tác phẩm điện ảnh nổi bật hôm nay"
             } else {
-                spotlightCounter?.text = "RẠP PHIM TẠI GIA · 4K VIETSUB"
+                trendingTag?.visibility = View.GONE
+            }
+
+            if (totalHero > 1) {
+                spotlightCounter?.text = "${heroIdx + 1}/$totalHero · RẠP PHIM TẠI GIA · 4K"
+            } else {
+                spotlightCounter?.text = "RẠP PHIM TẠI GIA · 4K"
             }
             desc.text = film.description.ifBlank {
                 "${film.originalName.ifBlank { film.name }} — Siêu phẩm điện ảnh hấp dẫn chất lượng cao, trọn bộ vietsub và thuyết minh sắc nét trên KenhLive TV."
@@ -1136,8 +1165,8 @@ class PhimFragment : Fragment() {
             val film = films[position]
             holder.title.text = film.name
 
-            val score = 8.2 + (Math.abs(film.name.hashCode()) % 15) / 10.0
-            holder.ratingBadge?.text = String.format(Locale.US, "★ %.1f", score)
+            // Loại bỏ rating giả tạo từ hashCode - giữ card sạch sẽ chuẩn điện ảnh
+            holder.ratingBadge?.visibility = View.GONE
 
             // Xử lý hiển thị tiến độ xem (Continue Watching hoặc Phim Đã Lưu có tiến độ)
             val progress = film.watchProgress

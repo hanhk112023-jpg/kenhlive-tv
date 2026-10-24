@@ -108,6 +108,8 @@ class HeroPagerAdapter(
         val clockText: TextView? = v.findViewById(R.id.heroClockText)
         val solarDate: TextView? = v.findViewById(R.id.heroSolarDate)
         val lunarDate: TextView? = v.findViewById(R.id.heroLunarDate)
+        val liveBadge: TextView? = v.findViewById(R.id.heroLiveBadge)
+        val playText: TextView? = v.findViewById(R.id.heroPlayText)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HV =
@@ -121,8 +123,28 @@ class HeroPagerAdapter(
         val parsed = DataNormalizer.parseMatch(g.matchTitle, g.league)
         h.title.text = parsed.cleanTitle
         h.league.text = "• ${parsed.league}"
+
+        val isTrulyLive = MatchCardsAdapter.isMatchLive(g, parsed)
+        val kickoff = MatchCardsAdapter.extractKickoffTime(g.matchTitle, top.notice)
+
+        if (isTrulyLive) {
+            h.liveBadge?.text = "● TRỰC TIẾP"
+            h.liveBadge?.setBackgroundResource(R.drawable.bg_badge_live_red)
+            h.liveBadge?.setTextColor(android.graphics.Color.WHITE)
+            h.playText?.text = "[OK] Xem ngay"
+        } else {
+            h.liveBadge?.text = if (kickoff.isNotBlank()) "SẮP DIỄN RA • $kickoff" else "SẮP DIỄN RA"
+            h.liveBadge?.setBackgroundResource(R.drawable.bg_badge_countdown)
+            h.liveBadge?.setTextColor(android.graphics.Color.parseColor("#F59E0B"))
+            h.playText?.text = "[OK] Đặt lịch / Xem trước"
+        }
+
         val desc = buildString {
-            append("Trực tiếp ")
+            if (isTrulyLive) {
+                append("Trực tiếp ")
+            } else {
+                if (kickoff.isNotBlank()) append("Lên sóng lúc $kickoff • ") else append("Sắp lên sóng • ")
+            }
             if (parsed.league.isNotBlank()) append("${parsed.league} • ")
             val rawBlv = top.blvName.trim()
             val formattedBlv = if (rawBlv.startsWith("BLV ", ignoreCase = true)) rawBlv else "BLV $rawBlv"

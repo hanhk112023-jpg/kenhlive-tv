@@ -57,6 +57,33 @@ class MatchCardsAdapter(
             return if (mins < 60) "Còn ${mins}p"
             else "Còn ${mins / 60}h ${mins % 60}p"
         }
+
+        fun isMatchLive(g: LiveMatchGroup, parsed: DataNormalizer.ParsedMatch): Boolean {
+            val title = (g.matchTitle + " " + g.top.notice).lowercase(Locale.ROOT)
+            if (title.contains("[sắp đá]") || title.contains("[sắp diễn ra]") ||
+                title.contains("[chưa đá]") || title.contains("[sắp]") ||
+                title.contains("[upcoming]") || title.contains("[chờ]") ||
+                title.contains("chưa bắt đầu")) {
+                return false
+            }
+            if (parsed.hostScore != null && parsed.guestScore != null) {
+                return true
+            }
+            if (title.contains("[live]") || title.contains("[trực tiếp]") || title.contains("[đang đá]")) {
+                return true
+            }
+            val timeRegex = Regex("""^\s*(\d{1,2}):(\d{2})""")
+            if (timeRegex.containsMatchIn(g.matchTitle.trim()) && parsed.hostScore == null) {
+                if (g.totalViewers < 25) return false
+            }
+            return true
+        }
+
+        fun extractKickoffTime(matchTitle: String, notice: String): String {
+            val timeRegex = Regex("""\b(\d{1,2}:\d{2})\b""")
+            val m = timeRegex.find(matchTitle) ?: timeRegex.find(notice)
+            return m?.value?.trim().orEmpty()
+        }
     }
 
     var rowPos: Int = 0
@@ -76,6 +103,7 @@ class MatchCardsAdapter(
         val hostIcon: ImageView? = v.findViewById(R.id.cardHostIcon)
         val guestIcon: ImageView? = v.findViewById(R.id.cardGuestIcon)
         val provider: TextView? = v.findViewById(R.id.cardProvider)
+        val liveBadge: TextView? = v.findViewById(R.id.cardLive)
     }
 
     inner class FixtureVH(v: View) : RecyclerView.ViewHolder(v) {
@@ -156,15 +184,34 @@ class MatchCardsAdapter(
             h.provider.setTextColor(android.graphics.Color.WHITE)
         }
 
-        // 2. Ô tỉ số sân vận động (Stadium Scoreboard)
-        if (parsed.hostScore != null && parsed.guestScore != null) {
-            h.score?.setBackgroundResource(R.drawable.bg_score_pill_live)
-            h.score?.setTextColor(android.graphics.Color.parseColor("#FFD700")) // Vàng Neon rực rỡ
-            h.score?.text = "${parsed.hostScore} : ${parsed.guestScore}"
+        // 2. Phân biệt rõ Trực Tiếp (LIVE) và Sắp Diễn Ra (UPCOMING)
+        val isTrulyLive = isMatchLive(g, parsed)
+        val kickoff = extractKickoffTime(g.matchTitle, g.top.notice)
+
+        if (isTrulyLive) {
+            h.liveBadge?.visibility = View.VISIBLE
+            h.liveBadge?.text = "● TRỰC TIẾP"
+            h.liveBadge?.setBackgroundResource(R.drawable.bg_badge_live_red)
+            h.liveBadge?.setTextColor(android.graphics.Color.WHITE)
+
+            if (parsed.hostScore != null && parsed.guestScore != null) {
+                h.score?.setBackgroundResource(R.drawable.bg_score_pill_live)
+                h.score?.setTextColor(android.graphics.Color.parseColor("#FFD700")) // Vàng Neon rực rỡ
+                h.score?.text = "${parsed.hostScore} : ${parsed.guestScore}"
+            } else {
+                h.score?.setBackgroundResource(R.drawable.bg_score_pill)
+                h.score?.setTextColor(android.graphics.Color.parseColor("#94A3B8")) // Xám Bạc
+                h.score?.text = "VS"
+            }
         } else {
+            h.liveBadge?.visibility = View.VISIBLE
+            h.liveBadge?.text = if (kickoff.isNotBlank()) "SẮP ĐÁ • $kickoff" else "SẮP DIỄN RA"
+            h.liveBadge?.setBackgroundResource(R.drawable.bg_badge_countdown)
+            h.liveBadge?.setTextColor(android.graphics.Color.parseColor("#F59E0B")) // Hổ Phách Amber
+
             h.score?.setBackgroundResource(R.drawable.bg_score_pill)
-            h.score?.setTextColor(android.graphics.Color.parseColor("#94A3B8")) // Xám Bạc
-            h.score?.text = "VS"
+            h.score?.setTextColor(android.graphics.Color.parseColor("#94A3B8"))
+            h.score?.text = if (kickoff.isNotBlank()) kickoff else "VS"
         }
 
         // 3. Logo 2 đội bóng cân đối đối xứng 100%
@@ -195,7 +242,12 @@ class MatchCardsAdapter(
         h.viewers.text = SocoliveRepository.fmtViewers(g.totalViewers) + " xem"
         val rawBlv = g.top.blvName.trim()
         val formattedBlv = if (rawBlv.startsWith("BLV ", ignoreCase = true)) rawBlv else "BLV $rawBlv"
-        h.blv.text = "Đang trực tiếp • $formattedBlv" + if (g.count > 1) " +${g.count - 1}" else ""
+        val countSuffix = if (g.count > 1) " +${g.count - 1}" else ""
+        if (isTrulyLive) {
+            h.blv.text = "Đang trực tiếp • $formattedBlv$countSuffix"
+        } else {
+            h.blv.text = if (kickoff.isNotBlank()) "Lên sóng lúc $kickoff • $formattedBlv$countSuffix" else "Sắp lên sóng • $formattedBlv$countSuffix"
+        }
         if (g.count > 1) {
             h.rooms.text = ctx.getString(R.string.live_rooms_badge, g.count)
             h.rooms.visibility = View.VISIBLE
@@ -209,7 +261,7 @@ class MatchCardsAdapter(
         }
         h.itemView.setOnClickListener { onLiveClick(g) }
         h.itemView.setOnLongClickListener { onLiveLong(g); true }
-        h.itemView.contentDescription = "${g.matchTitle}, LIVE, ${g.top.blvName}"
+        h.itemView.contentDescription = "${g.matchTitle}, ${if (isTrulyLive) "TRỰC TIẾP" else "SẮP DIỄN RA"}, ${g.top.blvName}"
     }
 
     private fun bindFixture(h: FixtureVH, m: ScheduleMatch) {
