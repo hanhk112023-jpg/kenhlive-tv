@@ -1,3 +1,23 @@
+# 🚀 KENHLIVE TV v7.7.3 (Build 136) — ĐẠI TU BẢNG ĐIỂM SÂN VẬN ĐỘNG & NÂNG CẤP ĐIỆN ẢNH VOD CHUẨN TRUYỀN HÌNH
+
+### ⚽ 1. Bảng Điểm Sân Vận Động Kỹ Thuật Số (Arena Stadium Scoreboard) Trên Hero Thể Thao
+- **Scoreboard trực quan chuẩn truyền hình**: Bổ sung khu vực thi đấu đối xứng với 2 logo câu lạc bộ kích thước lớn 44x44dp, tên đội bóng nổi bật và bảng tỉ số kỹ thuật số rực rỡ (`heroArenaContainer`).
+- **Tỉ số & Trạng thái thời gian thực**: Trận đang trực tiếp hiển thị tỉ số vàng neon rực rỡ (`2 : 1`), trận sắp đá hiển thị giờ khởi tranh (`20:30` hoặc `VS`).
+- **Phụ đề biên tập tinh gọn, loại bỏ rác thông tin**: Loại bỏ hoàn toàn các ký tự gây rối mắt như cấp độ BLV `(Lv.3)`, số phòng live hay tên nguồn phát lặp lại. Thay bằng định dạng phát thanh chuẩn: `"Trực tiếp • Ngoại Hạng Anh • BLV Giàng A Pháo • Tín hiệu HD"`.
+
+### 🛡️ 2. Khắc Phục Triệt Để Lỗi Tràn & Ngắt Từ Tên Đội Bóng Trên Thẻ Trận Đấu
+- **Ràng buộc dòng đơn chống bẻ từ (`singleLine="true"`, `maxLines="1"`, `ellipsize="end"`)**: Xóa bỏ lỗi ngắt dòng gãy đôi từ ngớ ngẩn (như `Tokushi / ma Vortis`). Tên câu lạc bộ dài luôn được hiển thị trọn vẹn hoặc rút gọn dấu 3 chấm tinh tế.
+- **Mở rộng chiều rộng thẻ trên Android TV (`card_w = 338dp`)**: Tăng không gian hiển thị thẻ trận, đảm bảo hiển thị cân đối cả logo 36dp, tên đội và bảng điểm trung tâm 54dp.
+- **Tự động đối soát Logo câu lạc bộ (`TeamLogoRegistry`) cho Lịch Thi Đấu**: Khi API không trả về icon hoặc icon rỗng, hệ thống tự động tra cứu kho logo chính thức ESPN CDN 500x500 PNG sắc nét.
+- **Thay thế vòng tròn xám bằng khiên bảo vệ tinh tế (`bg_team_crest_placeholder`)**: Loại bỏ hoàn toàn các đốm tròn xám đơn điệu.
+
+### 🎬 3. Nâng Cấp Điện Ảnh VOD Chuẩn Netflix & Apple TV+
+- **Hình nền dự phòng điện ảnh chuyên biệt (`hero_fallback_phim.xml`)**: Chấm dứt hoàn toàn tình trạng hiện ảnh sân bóng đá trên tab Phim Truyện. Thay thế bằng hình nền gradient tím than / xanh đêm điện ảnh với biểu tượng clapperboard chìm sang trọng.
+- **Huy hiệu chất lượng kính mờ (`bg_quality_glass`)**: Chuyển đổi huy hiệu chất lượng (FHD / 4K) trên thẻ poster từ khối đỏ rực sang khung kính mờ viền sáng thanh thoát, tập trung trọn vẹn thị giác vào poster phim.
+- **Đồng bộ màu sắc nút hành động Hero**: Chuẩn hóa toàn bộ nút hành động phụ (Chọn tập, Lưu phim, Phim khác) sang tông chữ trắng sáng đồng nhất, tạo chiều sâu thị giác chuyên nghiệp.
+
+---
+
 # 🚀 KENHLIVE TV v7.7.2 (Build 135) — ĐẠI TU GIAO DIỆN THỂ THAO & PHIM TRUYỆN BIÊN TẬP THỦ CÔNG (HUMAN-CURATED EDITORIAL)
 
 ### ⚽ 1. Phân Biệt Rạch Ròi Trận Trực Tiếp & Lịch Thi Đấu / Sắp Diễn Ra
