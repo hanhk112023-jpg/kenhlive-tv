@@ -1,3 +1,25 @@
+# 🚀 KENHLIVE TV v7.7.2 (Build 135) — ĐẠI TU GIAO DIỆN THỂ THAO & PHIM TRUYỆN BIÊN TẬP THỦ CÔNG (HUMAN-CURATED EDITORIAL)
+
+### ⚽ 1. Phân Biệt Rạch Ròi Trận Trực Tiếp & Lịch Thi Đấu / Sắp Diễn Ra
+- **Phát hiện trận Live chuẩn xác (`isMatchLive`)**: Loại bỏ tình trạng gán nhãn `LIVE` bừa bãi. Chỉ những trận đấu thực sự đang diễn ra (có tỉ số, chứa thẻ `[LIVE]`/`[TRỰC TIẾP]`, hoặc trong khung giờ phát sóng) mới được hiển thị huy hiệu đỏ rực `● TRỰC TIẾP`.
+- **Huy hiệu Sắp Diễn Ra hổ phách (`SẮP ĐÁ • 21:00`)**: Các trận đấu chưa đến giờ bóng lăn hiển thị rõ giờ khởi tranh hoặc đếm ngược với nền hổ phách sang trọng, tỉ số hiển thị giờ đá hoặc `VS` thay vì điểm số giả mạo.
+- **Hero Carousel Banner thông minh**: Phân biệt nút bấm hành động — trận đang trực tiếp hiển thị `[OK] Xem ngay`, trận sắp diễn ra hiển thị `[OK] Đặt lịch / Xem trước`.
+
+### 🎯 2. Sắp Xếp Bố Cục Thể Thao Chuẩn Biên Tập Viên (Editorial TV Layout)
+- **Hàng 1: "🔥 Trận Đấu Đang Trực Tiếp"**: Gom toàn bộ các trận đấu đang phát sóng trực tiếp trên tất cả các nguồn (Socolive, ColaTV, Gà Vàng, Giờ Vàng), sắp xếp theo lượng người xem đông nhất lên đầu tiên.
+- **Hàng 2: "⏳ Lịch Thi Đấu & Sắp Lên Sóng Hôm Nay"**: Tách riêng lịch thi đấu và các trận chuẩn bị lên sóng trong ngày với mốc giờ rõ ràng.
+- **Hàng 3: "⚽ Ngoại Hạng Anh & Cúp Châu Âu"**: Tuyển tập các giải đấu hàng đầu thế giới (Premier League, Cúp C1, La Liga, Serie A, Bundesliga, V-League...).
+- **Hàng 4: "🎙️ Bình Luận Viên Sôi Động"**: Danh sách các phòng bình luận viên được yêu thích nhất.
+- **Hàng 5: "🏀 Bóng Rổ NBA & Môn Thể Thao Khác"**: Phân loại riêng bóng rổ NBA, quần vợt, bóng chuyền.
+
+### 🎬 3. Loại Bỏ Hoàn Toàn Template AI Ảo & Chuẩn Hóa Phim Truyện
+- **Xóa bỏ rating giả tạo từ hashCode**: Loại bỏ công thức tính điểm ảo ngẫu nhiên `val score = 8.2 + (Math.abs(film.name.hashCode()) % 15) / 10.0`, ẩn badge rating ảo để poster phim sạch đẹp, thoáng mắt chuẩn Netflix / Apple TV.
+- **Loại bỏ nhãn hardcoded**: Xóa các nhãn cứng nhắc như `98% Phù Hợp`, `★ 8.8 IMDb`, `16+`, `BOM TẤN ĐIỆN ẢNH` trên mọi phim.
+- **Dữ liệu thật từ Nguồn C**: Hiển thị chính xác năm phát hành thật (`2024`, `2026`), số tập thật (`Tập 12 / 24 Tập`), chất lượng và ngôn ngữ (`FHD · Vietsub`), thể loại thật (`Hành Động · Viễn Tưởng`).
+- **Tiêu đề danh mục tự nhiên, ấm áp**: Chuyển đổi tên các hàng phim thành ngôn ngữ biên tập chuẩn: "Phim Mới Cập Nhật", "Phim Bộ Hot Đang Chiếu", "Điện Ảnh Chiếu Rạp Đặc Sắc", "Anime & Hoạt Hình Tuyển Chọn", v.v.
+
+---
+
 # 🚀 KENHLIVE TV v7.7.1 (Build 134) — KHỐNG CHẾ TRẦN BỘ NHỚ ĐỆM 45MB & TỰ ĐỘNG THU DỌN CACHE CHI TIẾT PHIM
 
 ### ⚡ 1. Khống Chế Trần Cứng Disk Cache Coil 45MB
