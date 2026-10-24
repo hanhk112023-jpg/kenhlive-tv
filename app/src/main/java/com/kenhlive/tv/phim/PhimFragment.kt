@@ -979,7 +979,6 @@ class PhimFragment : Fragment() {
         val year: TextView = v.findViewById(R.id.heroYear)
         val quality: TextView = v.findViewById(R.id.heroQuality)
         val desc: TextView = v.findViewById(R.id.heroDesc)
-        val imdb: TextView? = v.findViewById(R.id.heroImdb)
         val genre: TextView? = v.findViewById(R.id.heroGenre)
         val spotlightCounter: TextView? = v.findViewById(R.id.heroSpotlightCounter)
         val brandTag: TextView? = v.findViewById(R.id.heroBrandTag)
