@@ -110,6 +110,12 @@ class HeroPagerAdapter(
         val lunarDate: TextView? = v.findViewById(R.id.heroLunarDate)
         val liveBadge: TextView? = v.findViewById(R.id.heroLiveBadge)
         val playText: TextView? = v.findViewById(R.id.heroPlayText)
+        val arenaContainer: View? = v.findViewById(R.id.heroArenaContainer)
+        val hostIcon: ImageView? = v.findViewById(R.id.heroHostIcon)
+        val hostName: TextView? = v.findViewById(R.id.heroHostName)
+        val scoreText: TextView? = v.findViewById(R.id.heroScoreText)
+        val guestName: TextView? = v.findViewById(R.id.heroGuestName)
+        val guestIcon: ImageView? = v.findViewById(R.id.heroGuestIcon)
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HV =
@@ -121,11 +127,66 @@ class HeroPagerAdapter(
         val g = groups[pos]
         val top = g.top
         val parsed = DataNormalizer.parseMatch(g.matchTitle, g.league)
-        h.title.text = parsed.cleanTitle
         h.league.text = "• ${parsed.league}"
 
         val isTrulyLive = MatchCardsAdapter.isMatchLive(g, parsed)
         val kickoff = MatchCardsAdapter.extractKickoffTime(g.matchTitle, top.notice)
+
+        val hasArenaTeams = parsed.host.isNotBlank() && parsed.guest.isNotBlank()
+        if (hasArenaTeams) {
+            h.arenaContainer?.visibility = View.VISIBLE
+            h.title.visibility = View.GONE
+            h.hostName?.text = parsed.host
+            h.guestName?.text = parsed.guest
+
+            val hostLogo = if (g.hostIcon.isNotBlank()) g.hostIcon else com.kenhlive.tv.sports.TeamLogoRegistry.findLogo(parsed.host).orEmpty()
+            if (hostLogo.isNotBlank()) {
+                h.hostIcon?.load(hostLogo) {
+                    crossfade(false)
+                    placeholder(R.drawable.bg_team_crest_placeholder)
+                    error(R.drawable.bg_team_crest_placeholder)
+                }
+            } else {
+                h.hostIcon?.setImageResource(R.drawable.bg_team_crest_placeholder)
+            }
+
+            val guestLogo = if (g.guestIcon.isNotBlank()) g.guestIcon else com.kenhlive.tv.sports.TeamLogoRegistry.findLogo(parsed.guest).orEmpty()
+            if (guestLogo.isNotBlank()) {
+                h.guestIcon?.load(guestLogo) {
+                    crossfade(false)
+                    placeholder(R.drawable.bg_team_crest_placeholder)
+                    error(R.drawable.bg_team_crest_placeholder)
+                }
+            } else {
+                h.guestIcon?.setImageResource(R.drawable.bg_team_crest_placeholder)
+            }
+
+            if (isTrulyLive) {
+                if (parsed.hostScore != null && parsed.guestScore != null) {
+                    h.scoreText?.text = "${parsed.hostScore} : ${parsed.guestScore}"
+                    h.scoreText?.setBackgroundResource(R.drawable.bg_score_pill_live)
+                    h.scoreText?.setTextColor(android.graphics.Color.parseColor("#FFD700"))
+                } else {
+                    h.scoreText?.text = "VS"
+                    h.scoreText?.setBackgroundResource(R.drawable.bg_score_pill)
+                    h.scoreText?.setTextColor(android.graphics.Color.parseColor("#94A3B8"))
+                }
+            } else {
+                if (kickoff.isNotBlank()) {
+                    h.scoreText?.text = kickoff
+                    h.scoreText?.setBackgroundResource(R.drawable.bg_score_pill)
+                    h.scoreText?.setTextColor(android.graphics.Color.parseColor("#F59E0B"))
+                } else {
+                    h.scoreText?.text = "VS"
+                    h.scoreText?.setBackgroundResource(R.drawable.bg_score_pill)
+                    h.scoreText?.setTextColor(android.graphics.Color.parseColor("#94A3B8"))
+                }
+            }
+        } else {
+            h.arenaContainer?.visibility = View.GONE
+            h.title.visibility = View.VISIBLE
+            h.title.text = parsed.cleanTitle
+        }
 
         if (isTrulyLive) {
             h.liveBadge?.text = "● TRỰC TIẾP"
@@ -141,21 +202,15 @@ class HeroPagerAdapter(
 
         val desc = buildString {
             if (isTrulyLive) {
-                append("Trực tiếp ")
+                append("Trực tiếp")
             } else {
-                if (kickoff.isNotBlank()) append("Lên sóng lúc $kickoff • ") else append("Sắp lên sóng • ")
+                if (kickoff.isNotBlank()) append("Sắp diễn ra lúc $kickoff") else append("Sắp diễn ra")
             }
-            if (parsed.league.isNotBlank()) append("${parsed.league} • ")
+            if (parsed.league.isNotBlank()) append(" • ${parsed.league}")
             val rawBlv = top.blvName.trim()
             val formattedBlv = if (rawBlv.startsWith("BLV ", ignoreCase = true)) rawBlv else "BLV $rawBlv"
-            append(formattedBlv)
-            if (top.blvLevel.isNotBlank()) append(" (${top.blvLevel})")
-            if (g.count > 1) append(" • ${g.count} phòng live")
-            val cleanNotice = top.notice.trim()
-            val spamRegex = Regex("(nhóm|nhom|vip|zalo|tele|liên hệ|lien he|trợ lý|tro ly|lộc|loc|code|km|cược|nhà cái|@|\\d{8,})", RegexOption.IGNORE_CASE)
-            if (cleanNotice.isNotBlank() && !spamRegex.containsMatchIn(cleanNotice)) {
-                append(" • $cleanNotice")
-            }
+            append(" • $formattedBlv")
+            append(" • Tín hiệu HD")
         }
         h.blv.text = desc
         h.viewers.text = SocoliveRepository.fmtViewers(g.totalViewers)

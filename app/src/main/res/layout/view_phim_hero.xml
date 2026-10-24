@@ -310,7 +310,7 @@
                 android:paddingLeft="16dp"
                 android:paddingRight="16dp"
                 android:text="+  LƯU PHIM"
-                android:textColor="#FFD700"
+                android:textColor="#FFFFFF"
                 android:textSize="12.5sp"
                 android:textStyle="bold"
                 android:focusable="true" />

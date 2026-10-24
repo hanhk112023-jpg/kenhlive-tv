@@ -430,14 +430,24 @@ class SportAdapter(
                     vh.badge.setTextColor(ContextCompat.getColor(ctx, R.color.kl_text_3))
                     vh.time.setTextColor(ContextCompat.getColor(ctx, R.color.kl_text_1))
                 }
-                vh.hostIcon.load(item.hostIcon) { crossfade(0); placeholder(R.drawable.logo_placeholder); error(null) }
-                vh.guestIcon.load(item.guestIcon) { crossfade(0); placeholder(R.drawable.logo_placeholder); error(null) }
-                vh.crest.load(item.leagueCrest.ifBlank { item.hostIcon }) { crossfade(0); error(null) }
+                val hLogo = if (item.hostIcon.isNotBlank()) item.hostIcon else com.kenhlive.tv.sports.TeamLogoRegistry.findLogo(item.host).orEmpty()
+                val gLogo = if (item.guestIcon.isNotBlank()) item.guestIcon else com.kenhlive.tv.sports.TeamLogoRegistry.findLogo(item.guest).orEmpty()
+                if (hLogo.isNotBlank()) {
+                    vh.hostIcon.load(hLogo) { crossfade(0); placeholder(R.drawable.bg_team_crest_placeholder); error(R.drawable.bg_team_crest_placeholder) }
+                } else {
+                    vh.hostIcon.setImageResource(R.drawable.bg_team_crest_placeholder)
+                }
+                if (gLogo.isNotBlank()) {
+                    vh.guestIcon.load(gLogo) { crossfade(0); placeholder(R.drawable.bg_team_crest_placeholder); error(R.drawable.bg_team_crest_placeholder) }
+                } else {
+                    vh.guestIcon.setImageResource(R.drawable.bg_team_crest_placeholder)
+                }
+                vh.crest.load(item.leagueCrest.ifBlank { hLogo }) { crossfade(0); error(null) }
                 vh.anchorRow.removeAllViews()
                 val inf = LayoutInflater.from(ctx)
                 item.anchors.filter { it.roomNum.isNotBlank() }.take(4).forEach { a ->
                     val iv = inf.inflate(R.layout.item_anchor_avatar, vh.anchorRow, false) as android.widget.ImageView
-                    iv.load(a.icon) { crossfade(0); placeholder(R.drawable.logo_placeholder); error(null) }
+                    iv.load(a.icon) { crossfade(0); placeholder(R.drawable.bg_circle); error(R.drawable.bg_circle) }
                     vh.anchorRow.addView(iv)
                 }
             }

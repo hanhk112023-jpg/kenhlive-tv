@@ -1080,9 +1080,11 @@ class PhimFragment : Fragment() {
             if (imgUrl.isNotBlank()) {
                 backdrop.load(imgUrl) {
                     crossfade(if (DeviceMode.lowRam) false else true)
-                    placeholder(R.drawable.hero_fallback)
-                    error(R.drawable.hero_fallback)
+                    placeholder(R.drawable.hero_fallback_phim)
+                    error(R.drawable.hero_fallback_phim)
                 }
+            } else {
+                backdrop.setImageResource(R.drawable.hero_fallback_phim)
             }
 
             (itemView.context as? androidx.appcompat.app.AppCompatActivity)?.lifecycleScope?.launch {

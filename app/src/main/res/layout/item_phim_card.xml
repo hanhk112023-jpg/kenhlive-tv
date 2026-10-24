@@ -43,7 +43,7 @@
             android:textStyle="bold"
             android:textColor="#FBBF24" />
 
-        <!-- Top Right Quality Badge (Netflix Red Accent) -->
+        <!-- Top Right Quality Badge (Sleek Glass Border) -->
         <TextView
             android:id="@+id/phimQualityBadge"
             style="@style/KL.Text.Meta"
@@ -51,15 +51,15 @@
             android:layout_height="wrap_content"
             android:layout_gravity="top|right"
             android:layout_margin="6dp"
-            android:background="@drawable/bg_netflix_top10_badge"
+            android:background="@drawable/bg_quality_glass"
             android:paddingLeft="6dp"
             android:paddingRight="6dp"
             android:paddingTop="2dp"
             android:paddingBottom="2dp"
             android:text="FHD"
-            android:textSize="9sp"
+            android:textSize="9.5sp"
             android:textStyle="bold"
-            android:textColor="#FFFFFF" />
+            android:textColor="#E2E8F0" />
 
         <!-- Bottom Left Episode / Status Badge -->
         <TextView
