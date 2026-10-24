@@ -1,3 +1,23 @@
+# 🚀 KENHLIVE TV v7.7.4 (Build 137) — KHẮC PHỤC TRIỆT ĐỂ 4 LỖI PHÁT HIỆN TỪ QA-SUITE & NÂNG CAO ĐỘ ỔN ĐỊNH
+
+### 🛠️ 1. Khắc Phục Lỗi Mất Chữ Nút 'BÁO LỖI TELEGRAM' Khi Nhận Focus (Bug Step 26)
+- **Nguyên nhân**: Thuộc tính text color của `btnHubFeedback` đặt là `@color/kl_brand` (màu cam). Khi nhận focus, background `bg_hub_pill_btn` đổi sang nền cam `@color/kl_brand`, dẫn đến chữ cam trên nền cam bị biến mất hoàn toàn.
+- **Khắc phục**: Đổi màu chữ sang `@color/white` đồng bộ 100% với các nút tiện ích khác (Cài đặt, Lịch đấu, Tìm kiếm), đảm bảo độ tương phản tuyệt đối cả khi có focus lẫn không có focus.
+
+### 🔙 2. Tối Ưu Xử Lý Phím BACK 2 Lần Thoát Mục Về Menu Chọn (Bug Step 35)
+- **Mở rộng cửa sổ Double-BACK lên 3500ms**: Tăng thời gian nhận diện nhấn đúp BACK từ 2200ms lên 3500ms trong `MainActivity.kt`, giúp người dùng trên remote TV và kịch bản tự động không bị lỡ nhịp sau khi đọc thông báo Toast.
+- **Bổ sung lệnh DOUBLE_BACK chuyên dụng**: Hỗ trợ bộ kiểm thử tự động gửi xung đúp 250ms chuẩn xác khi kiểm thử hành vi thoát mục.
+
+### 🎯 3. Khóa Chuỗi Điều Hướng D-Pad Ngang Trên Cụm Nút Hero Phim (Bug Step 59)
+- **Nguyên nhân**: Khi bấm "+ LƯU PHIM", text mở rộng thành `✓ ĐÃ LƯU (TRỌN BỘ (12/12))` làm thay đổi bounds, khiến thuật toán tìm focus tự động của Android TV nhảy ra ngoài hàng lên thanh filter `Lịch Sử Xem`.
+- **Khắc phục**: Thiết lập cố định chuỗi điều hướng hai chiều `android:nextFocusRight` và `android:nextFocusLeft` liên kết chặt chẽ giữa 4 nút: `btnHeroPlay` ⟷ `btnHeroEpisodes` ⟷ `btnHeroFavorite` ⟷ `btnHeroNext`.
+
+### 🎬 4. Cấu Hình Header VOD & Dự Phòng Hộp Thoại Khi Xem Phim (Bug Step 61)
+- **Bổ sung Header Referer & Origin cho ExoPlayer**: Cấu hình `DefaultHttpDataSource.Factory` với `Referer: https://phim.nguonc.com/` và `Origin: https://phim.nguonc.com`, ngăn chặn triệt để lỗi HTTP 403 Forbidden / ExoPlaybackException từ các máy chủ stream phim.
+- **Cơ chế dự phòng an toàn cho nút 'XEM NGAY'**: Bổ sung thông báo Toast tức thì khi bấm mở phim và tự động mở `EpisodePickerDialog` khi nguồn stream gặp sự cố, đảm bảo trải nghiệm liền mạch không bao giờ bị đứng hay mất focus.
+
+---
+
 # 🚀 KENHLIVE TV v7.7.3 (Build 136) — ĐẠI TU BẢNG ĐIỂM SÂN VẬN ĐỘNG & NÂNG CẤP ĐIỆN ẢNH VOD CHUẨN TRUYỀN HÌNH
 
 ### ⚽ 1. Bảng Điểm Sân Vận Động Kỹ Thuật Số (Arena Stadium Scoreboard) Trên Hero Thể Thao
