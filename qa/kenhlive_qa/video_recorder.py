@@ -44,8 +44,8 @@ class VideoRecorder:
             idx += 1
             remote_path = f"/sdcard/qa_rec_{idx:02d}.mp4"
             self.remote_chunks.append(remote_path)
-            # adb screenrecord tối đa 175s mỗi chunk, full HD 1920x1080, bitrate 4Mbps (sắc nét mà dung lượng gọn nhẹ)
-            cmd = f"{self.adb} shell screenrecord --time-limit 175 --bit-rate 4000000 --size 1920x1080 {remote_path}"
+            # adb screenrecord trên emulator Android TV: 1280x720 2.5Mbps (tránh tràn buffer phần mềm OMX err=-10005)
+            cmd = f"{self.adb} shell screenrecord --time-limit 175 --bit-rate 2500000 --size 1280x720 {remote_path}"
             p = subprocess.Popen(cmd, shell=True)
             while p.poll() is None:
                 if self.stop_event.is_set():
@@ -83,8 +83,19 @@ class VideoRecorder:
             subprocess.run(f"{self.adb} shell rm -f {remote}", shell=True, capture_output=True)
 
         if not self.local_chunks:
-            print("⚠️ [VIDEO RECORDER] Không kéo được chunk video hợp lệ nào từ thiết bị.", flush=True)
-            return None
+            print("⚠️ [VIDEO RECORDER] Không kéo được chunk video từ thiết bị, kích hoạt cơ chế ghép video từ ảnh chụp màn hình (Screenshot Stitching)...", flush=True)
+            shots_dir = os.path.join(self.out_dir, "shots")
+            shot_files = sorted(glob.glob(os.path.join(shots_dir, "*.jpg")) + glob.glob(os.path.join(shots_dir, "*.png")))
+            if shot_files:
+                img_list = os.path.join(self.out_dir, "img_list.txt")
+                with open(img_list, "w") as f:
+                    for s in shot_files:
+                        f.write(f"file '{s}'\nduration 1.8\n")
+                    f.write(f"file '{shot_files[-1]}'\n")
+                cmd_img = f"ffmpeg -y -f concat -safe 0 -i {img_list} -vf 'scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2' -c:v libx264 -preset veryfast -r 25 -pix_fmt yuv420p -movflags +faststart {self.final_mp4}"
+                subprocess.run(cmd_img, shell=True, capture_output=True)
+            if not os.path.exists(self.final_mp4) or os.path.getsize(self.final_mp4) < 2000:
+                return None
 
         # Ghép video hoặc đóng gói có +faststart
         raw_full = os.path.join(self.out_dir, "raw_full.mp4")

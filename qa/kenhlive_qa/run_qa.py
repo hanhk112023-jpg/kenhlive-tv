@@ -39,7 +39,10 @@ if not args.legacy:
         suite.run()
         sys.exit(0)
     except Exception as e:
-        print(f"⚠️ [Autonomous QA Agent] Gặp sự cố ({e}), chuyển sang kịch bản fallback...", flush=True)
+        import traceback
+        print(f"⚠️ [Autonomous QA Agent] Gặp sự cố ({e}), chi tiết stacktrace:", flush=True)
+        traceback.print_exc()
+        print("Chuyển sang kịch bản fallback...", flush=True)
 
 os.makedirs(args.out + '/shots', exist_ok=True)
 P = Probes(PKG, args.serial)

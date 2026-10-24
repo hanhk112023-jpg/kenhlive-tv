@@ -154,6 +154,7 @@ NGUYÊN TẮC BỘ NHỚ PHIÊN & SĂN LỖI SÂU (Deep Bug Hunting & Session Me
 2. Chủ động khám phá toàn bộ các tính năng, di chuyển qua các tab bằng SWITCH_TAB, OPEN_MULTIVIEW hoặc DPAD_LEFT mở rail navigation.
 3. Khi phát hiện lỗi thực sự (Mất dấu focus, Kẹt nút Focus Trap, Rò rỉ focus vào view ẩn/ngoài màn hình, Tràn viền text, Chữ hiển thị 'null'/'undefined', Dialog không trap focus, App crash, Video đứng hình), hãy báo ngay vào trường 'defect_detected'.
 4. Tính năng tự phục hồi (Failover & Self-Healing): Nếu app tự đổi sang server dự phòng thành công, đây là tính năng bảo vệ hoạt động đúng, KHÔNG coi là lỗi.
+5. KIỂM THỬ KỸ LƯỠNG, TOÀN DIỆN & KHÔNG ĐƯỢC LÀM QUA LOA: Mỗi nhiệm vụ phải thực hiện tối thiểu 4-6 thao tác kiểm thử sâu (duyệt D-pad qua lại, bấm vào các nút chi tiết, kiểm tra các trạng thái biên, đổi tab) trước khi bấm COMPLETE_MISSION. Tuyệt đối KHÔNG bấm COMPLETE_MISSION khi chỉ mới bấm 1-2 phím!
 
 ĐỊNH DẠNG TRẢ VỀ DUY NHẤT: Trả về một khối JSON hợp lệ:
 {
@@ -1215,6 +1216,8 @@ class AutonomousQASuite:
         except Exception as e:
             print(f"⚠️ [VideoRecorder] Không thể nạp module video recorder: {e}", flush=True)
 
+        self.action_history = self.device.action_history
+
         self.ALL_TABS = {
             0: "Tab 0: Trực tiếp (Live - ColaTV/Gà Vàng/Khán Đài/Socolive)",
             1: "Tab 1: Lịch đấu (Schedule - Lịch phát sóng các ngày)",
@@ -1478,7 +1481,7 @@ class AutonomousQASuite:
                         time.sleep(0.25)
                         self.device.send_key("BACK")
                         time.sleep(1.2)
-                    elif key_upper == "BACK" and (self.action_history and self.action_history[-1].upper() == "BACK"):
+                    elif key_upper == "BACK" and (self.device.action_history and self.device.action_history[-1].upper() == "BACK"):
                         # AI đã bấm BACK ở bước trước và bước này bấm tiếp BACK để thoát mục:
                         # Gửi cú nhấn BACK đúp để đảm bảo nằm trong khung thời gian double-back của TV
                         self.device.send_key("BACK")
@@ -1531,9 +1534,14 @@ class AutonomousQASuite:
                             "suggestion": "Kiểm tra cơ chế failover sang nguồn dự phòng hoặc proxy CDN"
                         })
                 elif act_type == "COMPLETE_MISSION":
-                    print(f"   ✅ [Mission Complete] Hoàn thành mục tiêu nhiệm vụ!", flush=True)
-                    mission.passed = True
-                    break
+                    if mission.steps_executed < min(4, mission.max_steps):
+                        print(f"   ℹ️ [Mission In-Progress] Nhiệm vụ chưa đủ số bước tối thiểu ({mission.steps_executed}/4), AI tiếp tục khảo sát sâu...", flush=True)
+                        self.device.send_key("DPAD_RIGHT")
+                        time.sleep(0.7)
+                    else:
+                        print(f"   ✅ [Mission Complete] Hoàn thành mục tiêu nhiệm vụ!", flush=True)
+                        mission.passed = True
+                        break
 
                 # Ghi nhận phản hồi kết quả thao tác vào bộ nhớ phiên cho lượt tiếp theo
                 post_ui = self.device.dump_ui_state()
