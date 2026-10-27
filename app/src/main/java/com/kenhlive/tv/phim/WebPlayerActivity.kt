@@ -142,40 +142,40 @@ class WebPlayerActivity : AppCompatActivity() {
                     wv.loadUrl(embedUrl, extraHeaders)
                     handler.postDelayed(progressTrackerRunnable, 4000L)
                 } else if (m3u8Url.isNotBlank()) {
-                    val pIntent = Intent(this, com.kenhlive.tv.PlayerActivity::class.java).apply {
-                        putExtra("url", m3u8Url)
-                        putExtra("name", "$filmTitle · $episodeTitle")
-                    }
-                    startActivity(pIntent)
-                    finish()
+                    launchNativePlayerAndFinish(m3u8Url)
                 } else {
                     finish()
                 }
             } catch (t: Throwable) {
                 android.util.Log.e("WebPlayerActivity", "WebView setup/load failed", t)
                 if (m3u8Url.isNotBlank()) {
-                    val pIntent = Intent(this, com.kenhlive.tv.PlayerActivity::class.java).apply {
-                        putExtra("url", m3u8Url)
-                        putExtra("name", "$filmTitle · $episodeTitle")
-                    }
-                    startActivity(pIntent)
-                    finish()
+                    launchNativePlayerAndFinish(m3u8Url)
                 } else {
                     showFallbackError(host)
                 }
             }
         } else {
             if (m3u8Url.isNotBlank()) {
-                val pIntent = Intent(this, com.kenhlive.tv.PlayerActivity::class.java).apply {
-                    putExtra("url", m3u8Url)
-                    putExtra("name", "$filmTitle · $episodeTitle")
-                }
-                startActivity(pIntent)
-                finish()
+                launchNativePlayerAndFinish(m3u8Url)
             } else {
                 showFallbackError(host)
             }
         }
+    }
+
+    private fun launchNativePlayerAndFinish(m3u8: String) {
+        val pIntent = Intent(this, com.kenhlive.tv.PlayerActivity::class.java).apply {
+            putExtra("url", m3u8)
+            putExtra("name", "$filmTitle · $episodeTitle")
+            putExtra("film_slug", filmSlug)
+            putExtra("film_title", filmTitle)
+            putExtra("episode_slug", episodeSlug)
+            putExtra("episode_title", episodeTitle)
+            putExtra("poster_url", posterUrl)
+            putExtra("start_position_ms", startPositionMs)
+        }
+        startActivity(pIntent)
+        finish()
     }
 
     private fun showFallbackError(host: FrameLayout) {

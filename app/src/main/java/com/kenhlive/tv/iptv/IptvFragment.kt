@@ -277,7 +277,7 @@ class IptvFragment : Fragment() {
             emptyText.visibility = View.GONE
         }
 
-        lifecycleScope.launch {
+        viewLifecycleOwner.lifecycleScope.launch {
             val fresh = IptvRepository.loadChannels(requireContext())
             loadingView.visibility = View.GONE
 

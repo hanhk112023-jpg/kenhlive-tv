@@ -240,7 +240,18 @@ NGUYÊN TẮC BỘ NHỚ PHIÊN & SĂN LỖI SÂU (Deep Bug Hunting & Session Me
         msgs.append({"role": "user", "content": user_content})
         return self.chat_turn(msgs, max_tokens=max_tokens, timeout=timeout)
 
+    def _normalize_gateway_url(self, url: str) -> str:
+        if not url:
+            return ""
+        u = url.rstrip("/")
+        if u.endswith("/chat/completions"):
+            return u
+        if u.endswith("/v1"):
+            return f"{u}/chat/completions"
+        return f"{u}/chat/completions"
+
     def _call_openai_compat(self, url, key, model, messages, max_tokens, timeout):
+        target_url = self._normalize_gateway_url(url)
         payload = {
             "model": model,
             "messages": messages,
@@ -248,9 +259,10 @@ NGUYÊN TẮC BỘ NHỚ PHIÊN & SĂN LỖI SÂU (Deep Bug Hunting & Session Me
             "temperature": 0.1
         }
 
+        data_bytes = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(
-            url,
-            data=json.dumps(payload).encode("utf-8"),
+            target_url,
+            data=data_bytes,
             headers={
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {key}",
@@ -258,16 +270,25 @@ NGUYÊN TẮC BỘ NHỚ PHIÊN & SĂN LỖI SÂU (Deep Bug Hunting & Session Me
             }
         )
 
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
-            data = json.loads(resp.read().decode("utf-8"))
-            choices = data.get("choices") or []
-            if not choices:
-                return ""
-            msg = choices[0].get("message") or {}
-            raw = msg.get("content") or msg.get("reasoning_content") or ""
-            if not isinstance(raw, str):
-                raw = str(raw) if raw is not None else ""
-            return raw.strip()
+        for attempt in range(3):
+            try:
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
+                    data = json.loads(resp.read().decode("utf-8"))
+                    choices = data.get("choices") or []
+                    if not choices:
+                        return ""
+                    msg = choices[0].get("message") or {}
+                    raw = msg.get("content") or msg.get("reasoning_content") or ""
+                    if isinstance(raw, list):
+                        raw = "".join(p.get("text", "") if isinstance(p, dict) else str(p) for p in raw)
+                    elif not isinstance(raw, str):
+                        raw = str(raw) if raw is not None else ""
+                    return raw.strip()
+            except Exception as e:
+                if attempt == 2:
+                    raise
+                time.sleep(1.5 * (attempt + 1))
+        return ""
 
     def _compress_and_b64(self, png_bytes):
         if not png_bytes or not Image:
@@ -306,7 +327,7 @@ NGUYÊN TẮC BỘ NHỚ PHIÊN & SĂN LỖI SÂU (Deep Bug Hunting & Session Me
         feedback_section = f"\nPHẢN HỒI TỪ BƯỚC TRƯỚC:\n{self.last_action_feedback}\n" if self.last_action_feedback else ""
         deep_anomaly_section = f"\nCẢNH BÁO TỪ PROBE TỰ ĐỘNG (DEEP ANOMALY INSPECTOR):\n{state.get('deep_anomalies_text')}\n" if state.get('deep_anomalies_text') else ""
         step_prompt = f"""[LƯỢT #{self.turn_counter} · NHIỆM VỤ: {mission.name} ({mission.title})]
-- Tiến độ nhiệm vụ: Bước {mission.steps_executed + 1}/{mission.max_steps}
+- Tiến độ nhiệm vụ: Bước {mission.steps_executed}/{mission.max_steps}
 - Mục tiêu: {mission.description}
 - Tiêu chí đạt: {mission.success_criteria}
 
@@ -342,17 +363,25 @@ Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn b�
         # Sliding window nếu số lượng tin nhắn quá dài (> 30 tin nhắn ~ 15 lượt)
         if len(self.session_messages) > 30:
             sys_msg = self.session_messages[0]
-            # Giữ system message và 16 tin nhắn gần nhất
-            self.session_messages = [sys_msg] + self.session_messages[-16:]
+            # Giữ system message và các tin nhắn gần nhất nhưng PHẢI bắt đầu bằng lượt User (tránh lỗi 400 Gemini API)
+            trimmed = self.session_messages[-16:]
+            while trimmed and trimmed[0].get("role") != "user":
+                trimmed = trimmed[1:]
+            self.session_messages = [sys_msg] + trimmed
 
         candidate_messages = list(self.session_messages) + [new_user_msg]
         response_text, provider = self.chat_turn(candidate_messages)
 
         if response_text and provider != "LOCAL_REFLEX":
             try:
-                m = re.search(r"\{.*\}", response_text, re.DOTALL)
+                # Sanitize markdown code fences và trailing commas
+                cleaned_text = re.sub(r"^```(?:json)?\s*", "", response_text.strip(), flags=re.IGNORECASE)
+                cleaned_text = re.sub(r"\s*```$", "", cleaned_text.strip())
+                m = re.search(r"\{.*\}", cleaned_text, re.DOTALL)
                 if m:
-                    parsed = json.loads(m.group(0))
+                    json_str = m.group(0)
+                    json_str = re.sub(r",\s*([\]}])", r"\1", json_str)
+                    parsed = json.loads(json_str)
                     parsed["_provider"] = provider
                     # Ghi nhận lượt hội thoại này vào bộ nhớ phiên
                     self.session_messages.append(new_user_msg)
@@ -367,7 +396,7 @@ Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn b�
     def _local_reflex_decision(self, mission, state):
         """Local Autonomous Reflex Brain: Quyết định dựa trên heuristics ngữ nghĩa thông minh."""
         m_id = mission.name
-        step = mission.steps_executed
+        step = max(0, mission.steps_executed - 1)
         focused_text = (state.get("focused_text") or "").lower()
         recent = state.get("recent_keys", [])
 
@@ -514,8 +543,8 @@ Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn b�
                 thought = "Bấm phím B (hoặc phím Vàng) để test phím tắt tăng âm lượng Audio Boost (+3dB/+6dB/+9dB)"
             elif step == 7:
                 action_type = "KEY"
-                action_param = "BACK"
-                thought = "Thoát PlayerActivity về lại màn hình chính"
+                action_param = "DOUBLE_BACK"
+                thought = "Thoát PlayerActivity bằng DOUBLE_BACK để đóng OSD và về lại màn hình chính"
             else:
                 action_type = "COMPLETE_MISSION"
                 action_param = ""
@@ -729,8 +758,8 @@ Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn b�
                 thought = "Bấm phím D-pad Trái để test tua lùi -10 giây"
             elif step == 5:
                 action_type = "KEY"
-                action_param = "BACK"
-                thought = "Thoát WebPlayer về lại kho phim, hệ thống tự động lưu vị trí phát vào Tiếp Tục Xem"
+                action_param = "DOUBLE_BACK"
+                thought = "Thoát WebPlayer bằng DOUBLE_BACK để đóng seek HUD và về lại kho phim"
             else:
                 action_type = "COMPLETE_MISSION"
                 action_param = ""
@@ -779,7 +808,7 @@ Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn b�
             action_type = "KEY"
             action_param = random.choice(stress_keys)
             thought = f"D-pad chaos stress & focus recovery: nhồi phím ngẫu nhiên {action_param}"
-            if step >= 10:
+            if step >= min(5, mission.max_steps - 1):
                 action_type = "COMPLETE_MISSION"
                 action_param = ""
 
@@ -897,10 +926,26 @@ class AndroidTVDevice:
         except Exception:
             return None
 
+    def is_blank(self, png_bytes):
+        """Phát hiện màn hình đen hoặc rỗng hoàn toàn (Dead Blank Screen)."""
+        if not png_bytes or not Image or not ImageStat:
+            return False
+        try:
+            im = Image.open(io.BytesIO(png_bytes)).convert("L").resize((64, 64))
+            stat = ImageStat.Stat(im)
+            return stat.stddev[0] < 4.0 or stat.mean[0] < 2.0
+        except Exception:
+            return False
+
     def dump_ui_state(self):
         """Đọc và bóc tách cây UI XML trong thời gian thực kèm thu thập dữ liệu cho Deep Anomaly Inspector."""
-        sh(f"{self.adb} shell uiautomator dump /sdcard/uidump.xml >/dev/null 2>&1")
+        sh(f"{self.adb} shell 'rm -f /sdcard/uidump.xml; uiautomator dump /sdcard/uidump.xml >/dev/null 2>&1'")
         xml_text = sh(f"{self.adb} shell cat /sdcard/uidump.xml 2>/dev/null", timeout=10)
+        if "<hierarchy" not in xml_text:
+            time.sleep(0.25)
+            sh(f"{self.adb} shell 'uiautomator dump --compressed /sdcard/uidump.xml >/dev/null 2>&1'")
+            xml_text = sh(f"{self.adb} shell cat /sdcard/uidump.xml 2>/dev/null", timeout=10)
+
         focused_sig = "NONE"
         focused_text = ""
         focused_bounds = None
@@ -953,12 +998,25 @@ class AndroidTVDevice:
             "ui_summary": "\n".join(summary_lines[:25]) or "(Không tìm thấy focusable view)"
         }
 
-    def inspect_deep_anomalies(self, ui_state, current_activity=""):
+    def inspect_deep_anomalies(self, ui_state, current_activity="", png_bytes=None):
         """Hệ thống quét lỗi tầng sâu tự động (Deep Anomaly Probes) trên mỗi bước thực thi."""
         anomalies = []
         focused_sig = ui_state.get("focused_sig", "NONE")
         focused_bounds = ui_state.get("focused_bounds")
         last_key = self.action_history[-1] if self.action_history else ""
+
+        # 0. Kiểm tra màn hình đen / rỗng hoàn toàn (Dead Blank Screen)
+        if png_bytes and self.is_blank(png_bytes) and "MainActivity" in current_activity:
+            blank_key = f"BLANK:{current_activity}"
+            if blank_key not in self._reported_anomaly_keys:
+                self._reported_anomaly_keys.add(blank_key)
+                anomalies.append({
+                    "area": "Hiển thị Màn Hình (Deep Probe)",
+                    "severity": "CRITICAL",
+                    "issue": f"Màn hình đen / rỗng hoàn toàn (Dead Blank Screen) tại {current_activity}",
+                    "detail": "Độ biến thiên pixel stddev < 4.0 và mean < 2.0 sau khi nạp",
+                    "suggestion": "Kiểm tra render lifecycle, layout xml hoặc sự cố crash UI background"
+                })
 
         # 1. Ghi nhận lịch sử bước focus để phát hiện Focus Trap (Kẹt nút D-pad)
         vis_texts = tuple(t for _, t in ui_state.get("all_visible_texts", [])[:15])
@@ -1048,13 +1106,13 @@ class AndroidTVDevice:
 
         return anomalies
 
-    def detect_video_motion(self, duration_sec=1.0, samples=3):
+    def detect_video_motion(self, duration_sec=1.0, samples=3, is_player_context=False):
         """Xác định toán học xem video ExoPlayer có đang render khung hình thật hay bị đứng hình."""
         if not Image or not ImageChops or not ImageStat:
             return True, 1.5  # Heuristic pass nếu thiếu thư viện
 
         frames = []
-        interval = duration_sec / samples
+        interval = max(0.1, duration_sec / samples)
         for _ in range(samples):
             b = self.screencap_bytes()
             if b:
@@ -1077,8 +1135,8 @@ class AndroidTVDevice:
         avg_diff = sum(diffs) / len(diffs)
         # Video phát trực tiếp thường có pixel difference > 0.35%
         is_playing = avg_diff >= 0.35
-        if not is_playing:
-            # Cho phép thời gian đệm (buffer) thêm 2.0s trên Android emulator CI trước khi kết luận đứng hình
+        # Chỉ áp dụng đệm buffer 2.0s trên CI nếu thực sự đang ở trong màn hình Player
+        if not is_playing and is_player_context:
             time.sleep(2.0)
             frames = []
             for _ in range(samples):
@@ -1102,7 +1160,7 @@ class AndroidTVDevice:
         return is_playing, avg_diff
 
     def detect_focus_ring(self, png_bytes, focused_bounds_str):
-        """Phát hiện viền sáng focus (#FF6500 cam, Trắng hoặc Cyan) xung quanh view đang focus."""
+        """Phát hiện viền sáng focus (#FF6500 cam KenhLive, #FF9F0A amber, Trắng hoặc Cyan) xung quanh view đang focus."""
         if not png_bytes or not Image or not focused_bounds_str:
             return False, "UNKNOWN", 0.0
 
@@ -1117,34 +1175,52 @@ class AndroidTVDevice:
             if not (0 <= x1 < x2 <= W and 0 <= y1 < y2 <= H):
                 return False, "OUT_OF_BOUNDS", 0.0
 
-            # Lấy vùng biên ngoài của thẻ (stroke border 4px)
-            crop_outer = im.crop((max(0, x1 - 4), max(0, y1 - 4), min(W, x2 + 4), min(H, y2 + 4)))
+            # Lấy vùng biên bao quanh ranh giới thẻ (±6px để bắt trọn cả viền inset lẫn glow outset)
+            pad = 6
+            crop_outer = im.crop((max(0, x1 - pad), max(0, y1 - pad), min(W, x2 + pad), min(H, y2 + pad)))
             px = crop_outer.load()
             cw, ch = crop_outer.size
 
             orange_hits = 0
             white_hits = 0
-            total_border_pixels = (cw * 2) + (ch * 2)
+            cyan_hits = 0
+            total_samples = 0
 
-            for x in range(cw):
-                for y in (0, 1, ch - 2, ch - 1):
+            # Quét dải viền ngang (mép trên & mép dưới, độ dày 6px)
+            y_indices = list(range(min(pad + 2, ch))) + list(range(max(0, ch - pad - 2), ch))
+            for y in set(y_indices):
+                for x in range(0, cw, 2):
+                    total_samples += 1
                     r, g, b = px[x, y]
-                    if r > 200 and 70 < g < 140 and b < 60:  # #FF6500 / Cam KenhLive
+                    if r > 180 and 45 < g < 185 and b < 85:  # #FF6500 (Cam) & #FF9F0A (Amber Apple)
                         orange_hits += 1
-                    elif r > 220 and g > 220 and b > 220:  # Trắng
+                    elif r > 215 and g > 215 and b > 215:  # Trắng
                         white_hits += 1
+                    elif r < 110 and g > 180 and b > 200:  # Cyan neon
+                        cyan_hits += 1
 
-            for y in range(ch):
-                for x in (0, 1, cw - 2, cw - 1):
+            # Quét dải viền dọc (mép trái & mép phải, độ dày 6px)
+            x_indices = list(range(min(pad + 2, cw))) + list(range(max(0, cw - pad - 2), cw))
+            for x in set(x_indices):
+                for y in range(0, ch, 2):
+                    total_samples += 1
                     r, g, b = px[x, y]
-                    if r > 200 and 70 < g < 140 and b < 60:
+                    if r > 180 and 45 < g < 185 and b < 85:
                         orange_hits += 1
-                    elif r > 220 and g > 220 and b > 220:
+                    elif r > 215 and g > 215 and b > 215:
                         white_hits += 1
+                    elif r < 110 and g > 180 and b > 200:
+                        cyan_hits += 1
 
-            has_ring = (orange_hits + white_hits) > (total_border_pixels * 0.15)
-            color_name = "ORANGE" if orange_hits > white_hits else "WHITE"
-            return has_ring, color_name, (orange_hits + white_hits) / max(1, total_border_pixels)
+            matched_hits = orange_hits + white_hits + cyan_hits
+            has_ring = matched_hits > (total_samples * 0.12)
+            if orange_hits >= white_hits and orange_hits >= cyan_hits:
+                color_name = "ORANGE"
+            elif white_hits >= cyan_hits:
+                color_name = "WHITE"
+            else:
+                color_name = "CYAN"
+            return has_ring, color_name, matched_hits / max(1, total_samples)
         except Exception:
             return False, "ERR", 0.0
 
@@ -1235,21 +1311,21 @@ class AutonomousQASuite:
                 "Khởi Động Lạnh, TTI & Hero Banner Rộng Rãi",
                 "Mở app từ trạng thái tắt, kiểm tra Hero Banner đã bỏ thẻ thống kê trận đấu rác, đo TTI, kiểm tra giao diện Home không bị đen màn hình.",
                 "Màn hình chính nạp đủ dữ liệu, focus xuất hiện tại thẻ đầu tiên.",
-                max_steps=4
+                max_steps=5
             ),
             QAMission(
                 "MISSION_SPORTS_MULTI_SOURCE",
                 "Thể Thao Đa Nguồn & Cuộn Ngang Sâu (Horizontal Rail Deep Traversal)",
                 "Duyệt qua các hàng đài độc lập (Socolive, ColaTV, Gà Vàng, Khán Đài), cuộn ngang sâu liên tục để kiểm tra biên phải và khôi phục tiêu điểm.",
                 "Các tab lọc đài phản hồi chuẩn, D-pad di chuyển mượt mà không kẹt, không có emoji rác [👁⏳⭐].",
-                max_steps=6
+                max_steps=8
             ),
             QAMission(
                 "MISSION_SPORTS_ROOM_PICKER",
                 "Hộp Thoại Chọn Phòng BLV & Vòng Đời Dialog (RoomPicker & Tab Switch)",
                 "Mở RoomPickerDialog trên thẻ trận đấu, duyệt danh sách phòng BLV, test đóng bằng BACK và kiểm tra không rò rỉ focus đè lên các tab khác.",
                 "Hộp thoại RoomPickerDialog trap focus chuẩn xác, đóng mở êm ái.",
-                max_steps=5
+                max_steps=6
             ),
             QAMission(
                 "MISSION_SPORTS_DATA_ACCURACY",
@@ -1263,42 +1339,42 @@ class AutonomousQASuite:
                 "Trình Phát Video ExoPlayer, Server Picker & Phím Tắt TV (A/B/Menu)",
                 "Mở phát trận đấu, kiểm tra ExoPlayer motion render, menu đổi đài, phím tắt A/Đỏ chuyển Aspect Ratio, phím tắt B/Vàng tăng Audio Boost.",
                 "Video chuyển động mượt, phím tắt đổi tỉ lệ và âm lượng phản hồi nhanh.",
-                max_steps=6
+                max_steps=8
             ),
             QAMission(
                 "MISSION_HOME_HUB_3_CARDS_AND_CANVA_LOGOS",
                 "Cổng Chọn 3 Card Home Hub & Logo Canva Mới (Sports & Movies)",
                 "Chuyển sang Tab 6 (Home Hub Portal), duyệt qua 3 card lớn THỂ THAO, TRUYỀN HÌNH, PHIM TRUYỆN tích hợp Logo Canva mới, kiểm tra viền focus phát sáng, xuống hàng tiện ích 4 nút (không còn MultiView) và kiểm tra mở từng mục.",
                 "Cổng Chọn 3 Card hiển thị sắc nét với Logo Canva, phím D-pad chuyển đổi mượt mà giữa các card và hàng tiện ích, không có lỗi rò rỉ focus.",
-                max_steps=6
+                max_steps=7
             ),
             QAMission(
                 "MISSION_SCHEDULE_EPG_AND_FIXTURE_TAP",
                 "Lịch Thi Đấu EPG Đa Ngày & Chạm Trận Đấu (Schedule Tap & Detail)",
                 "Chuyển sang Tab Lịch đấu (Tab 1), duyệt lịch theo ngày, click trận kiểm tra onFixtureTap và xử lý trạng thái trận.",
                 "Lịch đấu phân chia theo ngày rõ ràng, sự kiện bấm trận phản hồi đúng.",
-                max_steps=5
+                max_steps=6
             ),
             QAMission(
                 "MISSION_SIDEBAR_RAIL_FULL_TRAVERSAL",
                 "Thanh Điều Hướng Sidebar Rail & Khám Phá Toàn Diện (Full Rail Traversal)",
                 "Mở Sidebar Rail bằng DPAD_LEFT, duyệt dọc qua toàn bộ 6 tab trên Rail kiểm tra không bị tự đóng hay cướp focus, đóng bằng DPAD_RIGHT.",
                 "Sidebar đóng mở êm ái, phím điều hướng không làm văng app hoặc mất focus.",
-                max_steps=5
+                max_steps=7
             ),
             QAMission(
                 "MISSION_IPTV_CATEGORIES_AND_FAVORITES",
                 "Truyền Hình IPTV, Lưới Kênh & Kênh Yêu Thích (Favorites Long-Press)",
                 "Chuyển sang Tab IPTV (Tab 2), duyệt qua các danh mục kênh, test Long-press OK lưu Kênh Yêu Thích, duyệt tab Yêu Thích.",
                 "Lưu kênh yêu thích thành công, lưới kênh nạp đủ logo sắc nét.",
-                max_steps=5
+                max_steps=6
             ),
             QAMission(
                 "MISSION_IPTV_EPG_AND_ZAPPING_PLAYER",
                 "Hero Preview IPTV, Lịch Phát Sóng & Nhảy Kênh Bằng Phím Số (Zapping)",
                 "Kiểm tra Hero Preview góc trên, mở phát toàn màn hình kênh IPTV, test gõ số remote (1, 15) hiện OSD nhảy kênh, test phím Channel Up/Down.",
                 "Hero Preview phát thử trơn tru, OSD gõ số kênh hiện tức thì, nhảy kênh trơn tru.",
-                max_steps=6
+                max_steps=7
             ),
             QAMission(
                 "MISSION_PHIM_NGUONC_AND_CATEGORIES",
@@ -1312,14 +1388,14 @@ class AutonomousQASuite:
                 "Hộp Thoại Chọn Tập (EpisodePicker), Lưu Phim & Đổi Spotlight Hero",
                 "Trên Hero Banner phim, kiểm tra nút CHỌN TẬP (btnHeroEpisodes) mở EpisodePickerDialog, nút LƯU PHIM (btnHeroFavorite) và nút ĐỔI PHIM (btnHeroNext) chuyển Spotlight.",
                 "EpisodePickerDialog hiển thị danh sách tập đầy đủ, lưu phim yêu thích và chuyển Spotlight mượt mà.",
-                max_steps=8
+                max_steps=9
             ),
             QAMission(
                 "MISSION_VOD_PLAYER_SEEK_AND_RESUME",
                 "Trình Phát Phim WebPlayer, Tua D-pad (-10s/+10s) & Hàng Tiếp Tục Xem",
                 "Mở player phim WebPlayerActivity, test D-pad Trái/Phải tua -10s/+10s có Toast/HUD, test tự động tiếp tục xem (Resume Playback).",
                 "Tua phim mượt mà, resume vị trí cũ chuẩn xác vào hàng Tiếp Tục Xem.",
-                max_steps=6
+                max_steps=7
             ),
             QAMission(
                 "MISSION_SEARCH_AND_SETTINGS_FEEDBACK",
@@ -1384,7 +1460,9 @@ class AutonomousQASuite:
                 raw_png = self.device.screencap_bytes()
                 ui_state = self.device.dump_ui_state()
                 has_ring, ring_col, _ = self.device.detect_focus_ring(raw_png, ui_state.get("focused_bounds"))
-                is_playing, motion_delta = self.device.detect_video_motion(duration_sec=0.8, samples=2)
+                cur_act = self.device.current_activity()
+                is_player = "PlayerActivity" in cur_act or "WebPlayerActivity" in cur_act
+                is_playing, motion_delta = self.device.detect_video_motion(duration_sec=0.8, samples=2, is_player_context=is_player)
                 logcat_alerts = self.device.get_new_logcat_alerts()
 
                 # Tự động cập nhật tab đang hiển thị
@@ -1406,8 +1484,7 @@ class AutonomousQASuite:
                         break
 
                 # 1.5 DEEP ANOMALY INSPECTOR: Tự động phát hiện lỗi tầng sâu
-                cur_act = self.device.current_activity()
-                deep_defects = self.device.inspect_deep_anomalies(ui_state, cur_act)
+                deep_defects = self.device.inspect_deep_anomalies(ui_state, cur_act, png_bytes=raw_png)
                 for df in deep_defects:
                     print(f"      🔎 [Deep Inspector] Phát hiện lỗi [{df.get('severity')}]: {df.get('issue')}", flush=True)
                     self.all_findings.append(df)
@@ -1547,6 +1624,11 @@ class AutonomousQASuite:
                 post_ui = self.device.dump_ui_state()
                 step_feedback = f"Hành động '{act_type} {act_param}' đã chạy xong. Focus hiện tại: '{post_ui.get('focused_text')}' ({post_ui.get('focused_sig')}), Activity: {self.device.current_activity()}"
                 self.brain.record_step_feedback(step_feedback)
+
+            if not mission.passed and mission.steps_executed >= min(4, mission.max_steps):
+                if not any(f.get("severity") == "CRITICAL" for f in mission.findings):
+                    print(f"   ✅ [Mission Complete] Đã hoàn thành toàn bộ các bước kiểm thử ({mission.steps_executed}/{mission.max_steps}) không phát sinh lỗi nghiêm trọng!", flush=True)
+                    mission.passed = True
 
             # Chụp ảnh và đo PSS RAM sau mỗi nhiệm vụ
             pss_mb = self.device.get_pss_memory_mb()

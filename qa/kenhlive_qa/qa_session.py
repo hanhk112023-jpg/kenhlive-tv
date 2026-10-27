@@ -76,7 +76,7 @@ class QASession:
         # Trạng thái theo dõi
         self.global_step_counter = 0
         self.steps = []
-        self.tab_visits = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+        self.tab_visits = {0: 0, 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0}
         self.dpad_key_counts = {}
         self.action_counts = {}
         self.video_motion_checks = []
@@ -335,7 +335,7 @@ class QASession:
             f"- **Phiên bản ứng dụng:** KenhLive TV `{app['version_name']}` (code `{app['version_code']}`)",
             f"- **Git Commit:** `{git['commit']}` ({git['branch']}) | **AI Brain:** {m['ai_brain']['provider']}",
             f"- **Thời gian chạy:** `{m['duration_sec']}s` | **Điểm QA:** **{m['final_score']}/100**",
-            f"- **Độ bao phủ Tab:** **{st['tabs_explored']}/6 Tabs ({st['tab_coverage_pct']}%)**",
+            f"- **Độ bao phủ Tab:** **{st['tabs_explored']}/{st['tabs_total']} Tabs ({st['tab_coverage_pct']}%)**",
             f"- **Tổng số bước AI:** `{st['total_steps']}` | **Lượt bấm D-pad:** `{st['dpad_keypresses_total']}` | **Kiểm tra Video:** `{st['video_motion_checks']}`",
         ]
         if m.get("video_tour"):
@@ -375,7 +375,8 @@ class QASession:
         """Tạo đoạn mã HTML phong phú cho phân hệ Session Replay & Dashboard."""
         esc = html.escape
         explored_tabs = sum(1 for c in self.tab_visits.values() if c > 0)
-        coverage_pct = round(explored_tabs / 6 * 100)
+        total_tabs = len(self.tab_visits)
+        coverage_pct = round(explored_tabs / max(1, total_tabs) * 100)
 
         # Tab cards HTML
         tab_cards_html = ""
@@ -491,8 +492,8 @@ class QASession:
           <div style="font-size:11px;color:#64748b;">bước hành động tự trị</div>
         </div>
         <div style="background:#10131c;border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px;text-align:center;">
-          <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;">Độ Phủ 6 Tab Đa Năng</div>
-          <div style="font-size:26px;font-weight:800;color:#3ddc97;margin-top:4px;">{explored_tabs}/6 <span style="font-size:15px;">({coverage_pct}%)</span></div>
+          <div style="font-size:11px;color:#94a3b8;text-transform:uppercase;">Độ Phủ Tab Toàn Ứng Dụng</div>
+          <div style="font-size:26px;font-weight:800;color:#3ddc97;margin-top:4px;">{explored_tabs}/{total_tabs} <span style="font-size:15px;">({coverage_pct}%)</span></div>
           <div style="font-size:11px;color:#64748b;">bao phủ toàn diện app</div>
         </div>
         <div style="background:#10131c;border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:12px;text-align:center;">

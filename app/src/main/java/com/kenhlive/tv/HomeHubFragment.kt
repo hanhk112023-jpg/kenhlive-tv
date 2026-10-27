@@ -78,7 +78,11 @@ class HomeHubFragment : Fragment() {
 
             card?.setOnKeyListener { _, keyCode, event ->
                 if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-                    btnSettings?.requestFocus()
+                    when (card.id) {
+                        R.id.cardPhim -> btnSearch?.requestFocus() ?: btnSettings?.requestFocus()
+                        R.id.cardIptv -> btnSchedule?.requestFocus() ?: btnSettings?.requestFocus()
+                        else -> btnSettings?.requestFocus()
+                    }
                     true
                 } else {
                     false
@@ -118,7 +122,7 @@ class HomeHubFragment : Fragment() {
                 if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_UP) {
                     when (btn.id) {
                         R.id.btnHubSettings, R.id.btnHubMultiview -> cardSports?.requestFocus()
-                        R.id.btnHubSchedule -> cardIptv?.requestFocus()
+                        R.id.btnHubSchedule -> (if (cardIptv?.visibility == View.VISIBLE) cardIptv else cardSports)?.requestFocus()
                         R.id.btnHubSearch -> cardPhim?.requestFocus()
                         else -> cardSports?.requestFocus()
                     }

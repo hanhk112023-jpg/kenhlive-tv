@@ -1,3 +1,25 @@
+# 🚀 KENHLIVE TV v7.7.5 (Build 138) — KHẮC PHỤC TRIỆT ĐỂ BẪY FOCUS D-PAD, ĐỒNG BỘ VOD & NÂNG CẤP BỘ KIỂM THỬ AI QA
+
+### 🎯 1. Khắc Phục Bẫy Focus D-Pad Nút 'LỊCH THI ĐẤU' Trên Menu Chọn (Home Hub)
+- **Nguyên nhân**: Khi người dùng nhấn phím `DPAD_UP` tại nút `btnHubSchedule` (Lịch đấu), code cố gắng nhảy lên `cardIptv`. Do thẻ này bị ẩn (`visibility = GONE`), sự kiện phím vẫn bị nuốt (`return true`), dẫn đến con trỏ D-Pad bị kẹt cứng tại nút Lịch đấu.
+- **Khắc phục**: Thêm cơ chế chuyển hướng thông minh: Khi `cardIptv` bị ẩn, phím UP tự động đưa focus lên thẻ `cardSports` (Thể Thao), loại bỏ 100% bẫy focus. Đồng thời điều hướng phím DOWN từ `cardPhim` rơi chuẩn xác xuống nút `btnSearch` thay vì nhảy chéo sang nút Cài đặt.
+
+### 🎬 2. Đồng Bộ Hóa Siêu Dữ Liệu VOD & Tiếp Tục Xem Phim (Resume Playback)
+- **Truyền đầy đủ Extras từ WebPlayerActivity sang PlayerActivity**: Khi luồng m3u8 được chuyển giao sang trình phát ExoPlayer gốc, truyền trọn vẹn `film_slug`, `film_title`, `episode_slug`, `episode_title`, `poster_url`, và `start_position_ms`.
+- **Kích hoạt chế độ VOD chuẩn**: Đảm bảo `PlayerActivity` luôn kích hoạt `isVodMode = true`, tiếp tục phát đúng giây đã xem dở và tự động lưu lịch sử xem phim vào cơ sở dữ liệu.
+
+### 🛡️ 3. Ngăn Ngừa Rò Rỉ Hardware Decoder & Coroutine Lifecycle
+- **Giải phóng triệt để ExoPlayer trong `onDestroy()`**: Loại bỏ lệnh kiểm tra PiP bỏ qua giải phóng player, đảm bảo mọi phiên phát phim/live luôn thu hồi 100% bộ giải mã phần cứng khi Activity bị hủy.
+- **Gắn Coroutine vào `viewLifecycleOwner` trong `IptvFragment`**: Chuyển từ `lifecycleScope` sang `viewLifecycleOwner.lifecycleScope` ngăn chặn crash và rò rỉ view khi chuyển tab nhanh.
+
+### 🤖 4. Đại Tu Hệ Thống Autonomous AI QA Vision & CI Pipeline
+- **Sửa lỗi lệch bước (Off-by-One)**: Đảm bảo Bước 0 khởi tạo chuyển Tab được thực thi đúng trên toàn bộ 15 kịch bản kiểm thử.
+- **Hỗ trợ viền Focus màu Cam (`#FFFF6500`) & Vàng hổ phách (`#FF9F0A`)**: Nâng cấp bộ nhận diện thị giác `ai_judge.py` và thuật toán quét viền 6px.
+- **Phát hiện Màn hình đen chết (`is_blank`)**: Bổ sung đầu dò an toàn bắt lỗi sập luồng.
+- **Tối ưu mã hóa video 720p 2.5Mbps trên CI**: Chống tràn bộ đệm phần mềm và bổ sung cơ chế ghép ảnh screenshot dự phòng bằng `ffmpeg`.
+
+---
+
 # 🚀 KENHLIVE TV v7.7.4 (Build 137) — KHẮC PHỤC TRIỆT ĐỂ 4 LỖI PHÁT HIỆN TỪ QA-SUITE & NÂNG CAO ĐỘ ỔN ĐỊNH
 
 ### 🛠️ 1. Khắc Phục Lỗi Mất Chữ Nút 'BÁO LỖI TELEGRAM' Khi Nhận Focus (Bug Step 26)

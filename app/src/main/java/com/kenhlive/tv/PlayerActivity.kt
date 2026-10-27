@@ -1565,7 +1565,6 @@ class PlayerActivity : AppCompatActivity() {
         handler.removeCallbacks(hideCarouselRunnable)
         try { loudnessEnhancer?.release() } catch (_: Exception) {}
         loudnessEnhancer = null
-        if (Build.VERSION.SDK_INT >= 26 && isInPictureInPictureMode) return
         player?.stop()
         player?.clearMediaItems()
         player?.release()

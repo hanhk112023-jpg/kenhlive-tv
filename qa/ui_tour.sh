@@ -27,9 +27,9 @@ key()   { adb shell input keyevent $1; }
 foc()   { local X=$(adb shell "uiautomator dump /sdcard/f.xml >/dev/null 2>&1; cat /sdcard/f.xml" 2>/dev/null | tr '>' '\n' | grep 'focused="true"' | grep -o 'bounds="[^"]*"' | head -1); echo "$(($(date +%s)-T0))s|FOCU $X" >> $TL; }
 go()    { local n="$1" c="$2" w="$3"; key "$c"; sleep "$w"; mark "$n"; }
 
-# 1. KHỞI CHẠY QUAY VIDEO DUY NHẤT (Single-pass continuous 1080p recording)
+# 1. KHỞI CHẠY QUAY VIDEO DUY NHẤT (Single-pass continuous 720p 2.5Mbps recording chuẩn CI Android TV)
 adb shell rm -f /sdcard/rec.mp4
-adb shell screenrecord --bit-rate 6000000 --time-limit 180 /sdcard/rec.mp4 &
+adb shell screenrecord --size 1280x720 --bit-rate 2500000 --time-limit 175 /sdcard/rec.mp4 &
 REC_PID=$!
 sleep 2
 
@@ -172,13 +172,34 @@ go "BACK huy dialog o lai app" 4 1
 # KẾT THÚC QUÁ TRÌNH GHI HÌNH
 sleep 2
 adb logcat -d -s SportsStreamResolver:V Http:V KenhLive:V AndroidRuntime:E > $OUT/logcat.txt 2>/dev/null || true
-adb shell screenrecord --stop >/dev/null 2>&1
+adb shell "pkill -2 screenrecord 2>/dev/null || kill -2 \$(pidof screenrecord) 2>/dev/null || true"
 wait $REC_PID 2>/dev/null || true
-sleep 2
+sleep 3
 adb pull /sdcard/rec.mp4 $OUT/rec.mp4 >/dev/null 2>&1 || true
 
-# Burn phụ đề timeline vào video
-if [ -s "$OUT/rec.mp4" ] && [ -s "$TL" ]; then
+# Fallback: Nếu adb screenrecord gặp lỗi encoder trên CI emulator (<100KB), ghép video từ ảnh chụp màn hình
+SZ_RAW=$(stat -c%s $OUT/rec.mp4 2>/dev/null || echo 0)
+if [ "$SZ_RAW" -le 100000 ]; then
+  echo "⚠️ screenrecord không xuất được video hợp lệ ($SZ_RAW bytes), kích hoạt cơ chế ghép video từ screenshots..."
+  python3 - <<'PY'
+import glob, os
+OUT = '/tmp/tour'
+shots = sorted(glob.glob(f"{OUT}/*.png"))
+if shots:
+    with open(f"{OUT}/img_list.txt", "w") as f:
+        for s in shots:
+            f.write(f"file '{s}'\nduration 2.0\n")
+        f.write(f"file '{shots[-1]}'\n")
+PY
+  if [ -s "$OUT/img_list.txt" ]; then
+    ffmpeg -y -f concat -safe 0 -i $OUT/img_list.txt \
+      -vf "scale=1280:720:force_original_aspect_ratio=decrease,pad=1280:720:(ow-iw)/2:(oh-ih)/2" \
+      -c:v libx264 -preset veryfast -r 25 -pix_fmt yuv420p -movflags +faststart $OUT/rec.mp4 >/dev/null 2>&1 || true
+  fi
+fi
+
+# Burn phụ đề timeline vào video nếu có rec.mp4 hợp lệ
+if [ -s "$OUT/rec.mp4" ] && [ -s "$TL" ] && [ "$(stat -c%s $OUT/rec.mp4 2>/dev/null || echo 0)" -gt 100000 ]; then
   python3 - <<'PY'
 import os
 OUT='/tmp/tour'

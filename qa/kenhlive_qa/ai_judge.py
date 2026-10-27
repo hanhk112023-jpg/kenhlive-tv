@@ -70,16 +70,20 @@ def _chat(prompt, imgs=None, max_tokens=1500, temperature=0.1, timeout=30):
 
 def detail_imgs(jpeg):
     """Mô phỏng Python-tool: tự crop+zoom vùng chi tiết mảnh
-    (viền focus đỏ/trắng) trước khi gửi model đọc đúng độ dày/màu thay vì suy đoán."""
+    (viền focus cam KenhLive/amber/trắng/cyan) trước khi gửi model đọc đúng độ dày/màu thay vì suy đoán."""
     try:
         import io
         from PIL import Image
         im = Image.open(io.BytesIO(jpeg)).convert('RGB')
         W, H = im.size; px = im.load()
-        def isred(q): return q[0] > 170 and q[1] < 110 and q[2] < 120 and q[0] - max(q[1], q[2]) > 70
-        def iswhite(q): return q[0] > 225 and q[1] > 225 and q[2] > 225
-        rows = [y for y in range(0, H, 2) if sum(isred(px[x, y]) for x in range(0, W, 3)) > (W//3) * 0.10]
-        cols = [x for x in range(0, W, 2) if sum(isred(px[x, y]) for y in range(0, H, 3)) > (H//3) * 0.10]
+        def ishighlight(q):
+            # Viền Cam KenhLive (#FF6500), Amber (#FF9F0A), Đỏ, hoặc Cyan Neon
+            is_orange_red = q[0] > 180 and 40 < q[1] < 185 and q[2] < 90
+            is_cyan = q[0] < 100 and q[1] > 180 and q[2] > 200
+            return is_orange_red or is_cyan
+        def iswhite(q): return q[0] > 220 and q[1] > 220 and q[2] > 220
+        rows = [y for y in range(0, H, 2) if sum(ishighlight(px[x, y]) for x in range(0, W, 3)) > (W//3) * 0.10]
+        cols = [x for x in range(0, W, 2) if sum(ishighlight(px[x, y]) for y in range(0, H, 3)) > (H//3) * 0.10]
         wrows = [y for y in range(0, H, 1) if sum(iswhite(px[x, y]) for x in range(0, W, 2)) > (W//2) * 0.80 and (y == 0 or not iswhite(px[0, y-1]))]
         if not rows and not cols and wrows: rows = wrows[:6]
         out = []
@@ -101,8 +105,8 @@ RUBRIC = """Đóng vai Senior QA Engineer chuyên về Android TV 10-foot UI.
 
 QUY TẮC PHÁN QUYẾT:
 # 1. FOCUS D-PAD:
-#    - Ô đang focus trên TV được chỉ báo bằng viền TRẮNG (stroke ~2dp + glow 6dp) hoặc viền CYAN NEON và PHÓNG TO nhẹ (scale ~1.05x).
-#    - Thấy viền trắng hoặc cyan hoặc phóng to rõ = HỢP LỆ.
+#    - Ô đang focus trên TV được chỉ báo bằng viền CAM KenhLive (#FF6500) hoặc viền AMBER (#FF9F0A) hoặc viền TRẮNG (stroke ~2dp + glow 6dp) hoặc viền CYAN NEON và PHÓNG TO nhẹ (scale ~1.05x).
+#    - Thấy viền cam, amber, trắng hoặc cyan hoặc phóng to rõ = HỢP LỆ.
 #    - Nếu không thấy viền nổi bật hoặc nghi ngờ mất focus -> Kiểm tra kỹ.
 # 2. NỀN & BỐ CỤC:
 #    - Nền app là đen thuần (#000000) hoặc tối sâu.

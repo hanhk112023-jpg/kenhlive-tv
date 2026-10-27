@@ -96,39 +96,40 @@ class VideoRecorder:
                 subprocess.run(cmd_img, shell=True, capture_output=True)
             if not os.path.exists(self.final_mp4) or os.path.getsize(self.final_mp4) < 2000:
                 return None
-
-        # Ghép video hoặc đóng gói có +faststart
-        raw_full = os.path.join(self.out_dir, "raw_full.mp4")
-        if len(self.local_chunks) == 1:
-            raw_full = self.local_chunks[0]
+            raw_full = self.final_mp4
         else:
-            concat_list = os.path.join(self.out_dir, "concat.txt")
-            with open(concat_list, "w") as f:
-                for c in self.local_chunks:
-                    f.write(f"file '{c}'\n")
-            cmd_concat = f"ffmpeg -y -f concat -safe 0 -i {concat_list} -c copy {raw_full}"
-            subprocess.run(cmd_concat, shell=True, capture_output=True)
-            if not os.path.exists(raw_full) or os.path.getsize(raw_full) < 2000:
+            # Ghép video hoặc đóng gói có +faststart
+            raw_full = os.path.join(self.out_dir, "raw_full.mp4")
+            if len(self.local_chunks) == 1:
                 raw_full = self.local_chunks[0]
+            else:
+                concat_list = os.path.join(self.out_dir, "concat.txt")
+                with open(concat_list, "w") as f:
+                    for c in self.local_chunks:
+                        f.write(f"file '{c}'\n")
+                cmd_concat = f"ffmpeg -y -f concat -safe 0 -i {concat_list} -c copy {raw_full}"
+                subprocess.run(cmd_concat, shell=True, capture_output=True)
+                if not os.path.exists(raw_full) or os.path.getsize(raw_full) < 2000:
+                    raw_full = self.local_chunks[0]
 
-        # Kiểm tra kích thước file; nếu > 45MB thì re-encode CRF 27 để đảm bảo giới hạn tải 50MB
-        raw_size = os.path.getsize(raw_full) if os.path.exists(raw_full) else 0
-        if raw_size > 45 * 1024 * 1024:
-            print(f"🎬 [VIDEO] File raw ({raw_size//(1024*1024)}MB) vượt 45MB, đang nén tối ưu CRF 27...", flush=True)
-            cmd_opt = f"ffmpeg -y -i {raw_full} -c:v libx264 -preset veryfast -crf 27 -pix_fmt yuv420p -movflags +faststart {self.final_mp4}"
-            subprocess.run(cmd_opt, shell=True, capture_output=True)
-        else:
-            # Stream-copy nhanh kèm di chuyển moov atom lên đầu (+faststart) để xem online không cần đợi tải hết
-            cmd_fast = f"ffmpeg -y -i {raw_full} -c copy -movflags +faststart {self.final_mp4}"
-            res_fast = subprocess.run(cmd_fast, shell=True, capture_output=True)
-            if not os.path.exists(self.final_mp4) or os.path.getsize(self.final_mp4) < 2000:
-                # Nếu -c copy gặp lỗi bitstream, fallback re-encode veryfast
-                cmd_reencode = f"ffmpeg -y -i {raw_full} -c:v libx264 -preset veryfast -crf 26 -pix_fmt yuv420p -movflags +faststart {self.final_mp4}"
-                subprocess.run(cmd_reencode, shell=True, capture_output=True)
+            # Kiểm tra kích thước file; nếu > 45MB thì re-encode CRF 27 để đảm bảo giới hạn tải 50MB
+            raw_size = os.path.getsize(raw_full) if os.path.exists(raw_full) else 0
+            if raw_size > 45 * 1024 * 1024:
+                print(f"🎬 [VIDEO] File raw ({raw_size//(1024*1024)}MB) vượt 45MB, đang nén tối ưu CRF 27...", flush=True)
+                cmd_opt = f"ffmpeg -y -i {raw_full} -c:v libx264 -preset veryfast -crf 27 -pix_fmt yuv420p -movflags +faststart {self.final_mp4}"
+                subprocess.run(cmd_opt, shell=True, capture_output=True)
+            else:
+                # Stream-copy nhanh kèm di chuyển moov atom lên đầu (+faststart) để xem online không cần đợi tải hết
+                cmd_fast = f"ffmpeg -y -i {raw_full} -c copy -movflags +faststart {self.final_mp4}"
+                res_fast = subprocess.run(cmd_fast, shell=True, capture_output=True)
+                if not os.path.exists(self.final_mp4) or os.path.getsize(self.final_mp4) < 2000:
+                    # Nếu -c copy gặp lỗi bitstream, fallback re-encode veryfast
+                    cmd_reencode = f"ffmpeg -y -i {raw_full} -c:v libx264 -preset veryfast -crf 26 -pix_fmt yuv420p -movflags +faststart {self.final_mp4}"
+                    subprocess.run(cmd_reencode, shell=True, capture_output=True)
 
-        if not os.path.exists(self.final_mp4):
-            if os.path.exists(raw_full):
-                os.rename(raw_full, self.final_mp4)
+            if not os.path.exists(self.final_mp4):
+                if os.path.exists(raw_full):
+                    os.rename(raw_full, self.final_mp4)
 
         # Tạo bản tua nhanh 10x Timelapse Preview (chuẩn android-tv-qa)
         if os.path.exists(self.final_mp4) and os.path.getsize(self.final_mp4) > 2000:
