@@ -208,6 +208,10 @@ class ScheduleFragment : Fragment() {
         }
     }
 
+    fun refresh() {
+        if (isAdded) vm.load(force = true)
+    }
+
     override fun onDestroyView() {
         dialog?.dismiss()
         dialog = null

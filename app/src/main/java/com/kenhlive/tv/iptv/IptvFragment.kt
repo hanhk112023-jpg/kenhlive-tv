@@ -265,6 +265,11 @@ class IptvFragment : Fragment() {
         scheduleHeroPreview(ch)
     }
 
+    fun refresh() {
+        if (!isAdded) return
+        loadData()
+    }
+
     private fun loadData() {
         val cached = IptvRepository.getCachedChannelsDisk(requireContext())
         if (!cached.isNullOrEmpty()) {

@@ -359,6 +359,15 @@
             android:layout_weight="1" />
 
         <ImageButton
+            android:id="@+id/phoneLockBtn"
+            style="@style/KL.IconButton"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginRight="8dp"
+            android:src="@drawable/ic_lock"
+            android:contentDescription="Khóa màn hình" />
+
+        <ImageButton
             android:id="@+id/phoneAspectBtn"
             style="@style/KL.IconButton"
             android:layout_width="40dp"
@@ -374,6 +383,42 @@
             android:layout_height="40dp"
             android:src="@drawable/ic_fullscreen"
             android:contentDescription="Xoay toàn màn hình" />
+    </LinearLayout>
+
+    <!-- FLOATING UNLOCK BUTTON (WHEN SCREEN IS LOCKED ON MOBILE) -->
+    <LinearLayout
+        android:id="@+id/phoneUnlockContainer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="left|top"
+        android:layout_marginLeft="24dp"
+        android:layout_marginTop="24dp"
+        android:background="@drawable/bg_badge_glass"
+        android:paddingLeft="14dp"
+        android:paddingRight="16dp"
+        android:paddingTop="9dp"
+        android:paddingBottom="9dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:clickable="true"
+        android:focusable="false"
+        android:visibility="gone">
+
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:src="@drawable/ic_unlock"
+            android:contentDescription="@null" />
+
+        <TextView
+            style="@style/KL.Text.Meta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="8dp"
+            android:text="MỞ KHÓA"
+            android:textColor="@color/white"
+            android:textSize="12sp"
+            android:textStyle="bold" />
     </LinearLayout>
 
     <!-- SIDE PANEL: DANH SÁCH KÊNH PURE BLACK TRƯỢT TỪ BÊN PHẢI -->

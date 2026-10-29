@@ -68,6 +68,15 @@
             android:visibility="gone" />
 
         <ImageButton
+            android:id="@+id/btnTopRefresh"
+            style="@style/KL.IconButton"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_marginLeft="8dp"
+            android:src="@drawable/ic_refresh"
+            android:contentDescription="Làm mới" />
+
+        <ImageButton
             android:id="@+id/btnTopSettings"
             style="@style/KL.IconButton"
             android:layout_width="36dp"

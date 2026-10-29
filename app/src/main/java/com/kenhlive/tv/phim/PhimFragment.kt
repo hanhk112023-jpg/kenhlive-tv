@@ -748,6 +748,11 @@ class PhimFragment : Fragment() {
         }
     }
 
+    fun refresh() {
+        if (!isAdded) return
+        loadFilmsByCategory(selectedCategorySlug)
+    }
+
     private fun openFilmDialog(film: NguoncFilm) {
         val ctx = context ?: return
         try {

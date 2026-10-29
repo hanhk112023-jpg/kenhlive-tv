@@ -70,6 +70,11 @@ class PlayerActivity : AppCompatActivity() {
         gestureFeedbackBox?.visibility = View.GONE
     }
     private var phoneBottomBar: View? = null
+    private var phoneUnlockContainer: View? = null
+    private var isScreenLocked: Boolean = false
+    private val hideUnlockBtnTask = Runnable {
+        phoneUnlockContainer?.visibility = View.GONE
+    }
     private val hideOverlay = Runnable {
         topOverlay?.visibility = View.GONE
         hint?.visibility = View.GONE
@@ -301,6 +306,9 @@ class PlayerActivity : AppCompatActivity() {
             centerPlayPauseBtn?.setOnClickListener { togglePlayPause() }
             findViewById<ImageButton>(R.id.phoneAspectBtn)?.setOnClickListener { cycleAspectRatio() }
             findViewById<ImageButton>(R.id.phoneRotateBtn)?.setOnClickListener { toggleScreenOrientation() }
+            phoneUnlockContainer = findViewById(R.id.phoneUnlockContainer)
+            findViewById<ImageButton>(R.id.phoneLockBtn)?.setOnClickListener { setScreenLock(true) }
+            phoneUnlockContainer?.setOnClickListener { setScreenLock(false) }
         } else {
             // Trên TV: Giữ nguyên bố cục đầy đủ cho remote
             phoneMenuBtn?.visibility = View.GONE
@@ -360,6 +368,19 @@ class PlayerActivity : AppCompatActivity() {
         val pv = findViewById<PlayerView>(R.id.playerView) ?: return
         gestureDetector = GestureDetector(this, object : GestureDetector.SimpleOnGestureListener() {
             override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
+                if (isScreenLocked) {
+                    val unlock = phoneUnlockContainer ?: return true
+                    if (unlock.visibility == View.VISIBLE) {
+                        unlock.visibility = View.GONE
+                        handler.removeCallbacks(hideUnlockBtnTask)
+                    } else {
+                        unlock.visibility = View.VISIBLE
+                        unlock.alpha = 1f
+                        handler.removeCallbacks(hideUnlockBtnTask)
+                        handler.postDelayed(hideUnlockBtnTask, 3000L)
+                    }
+                    return true
+                }
                 if (topOverlay?.visibility == View.VISIBLE) {
                     hideOverlay.run()
                 } else {
@@ -369,6 +390,7 @@ class PlayerActivity : AppCompatActivity() {
             }
 
             override fun onDoubleTap(e: MotionEvent): Boolean {
+                if (isScreenLocked) return true
                 val screenW = resources.displayMetrics.widthPixels
                 val p = player ?: return false
                 if (e.x < screenW / 2f) {
@@ -390,7 +412,7 @@ class PlayerActivity : AppCompatActivity() {
                 distanceX: Float,
                 distanceY: Float
             ): Boolean {
-                if (e1 == null) return false
+                if (isScreenLocked || e1 == null) return false
                 val screenW = resources.displayMetrics.widthPixels
                 val screenH = resources.displayMetrics.heightPixels
 
@@ -419,6 +441,23 @@ class PlayerActivity : AppCompatActivity() {
                 isDraggingGesture = false
             }
             handled
+        }
+    }
+
+    private fun setScreenLock(locked: Boolean) {
+        isScreenLocked = locked
+        if (locked) {
+            hideOverlay.run()
+            phoneUnlockContainer?.visibility = View.VISIBLE
+            phoneUnlockContainer?.alpha = 1f
+            handler.removeCallbacks(hideUnlockBtnTask)
+            handler.postDelayed(hideUnlockBtnTask, 3000L)
+            Toast.makeText(this, "Đã khóa màn hình cảm ứng", Toast.LENGTH_SHORT).show()
+        } else {
+            phoneUnlockContainer?.visibility = View.GONE
+            handler.removeCallbacks(hideUnlockBtnTask)
+            Toast.makeText(this, "Đã mở khóa màn hình", Toast.LENGTH_SHORT).show()
+            showOverlay()
         }
     }
 
@@ -1288,6 +1327,7 @@ class PlayerActivity : AppCompatActivity() {
     }
 
     private fun showOverlay() {
+        if (isScreenLocked) return
         if (channelSidebar?.visibility == View.VISIBLE) return
         quickChannelOsd?.visibility = View.GONE
         topOverlay?.visibility = View.VISIBLE
@@ -1484,6 +1524,10 @@ class PlayerActivity : AppCompatActivity() {
 
         // 7. Phím BACK: Luôn xử lý đóng dialog / HUD / overlay / thoát player
         if (e.keyCode == KeyEvent.KEYCODE_BACK && isDown) {
+            if (isScreenLocked) {
+                setScreenLock(false)
+                return true
+            }
             if (dialog?.isShowing == true) {
                 dialog?.dismiss()
                 dialog = null

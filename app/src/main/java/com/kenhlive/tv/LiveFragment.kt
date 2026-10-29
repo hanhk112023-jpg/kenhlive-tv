@@ -410,6 +410,15 @@ class LiveFragment : Fragment() {
         } catch (_: Exception) {}
     }
 
+    fun refresh() {
+        if (!isAdded) return
+        vm.load(force = true)
+        svm.load(force = true)
+        viewLifecycleOwner.lifecycleScope.launch {
+            refreshProvidersSilently()
+        }
+    }
+
     fun debugForceRefresh() { if (isAdded) { vm.silentRefresh(); svm.load(force = true) } }
 
     fun openMultiView(initial: LiveMatchGroup? = null) {

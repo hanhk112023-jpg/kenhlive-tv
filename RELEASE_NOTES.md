@@ -1,3 +1,23 @@
+# 🚀 KENHLIVE v7.7.7 (Build 140) — KHÓA MÀN HÌNH CHỐNG CHẠM NHẦM (SCREEN LOCK) & NÚT LÀM MỚI NHANH TOP BAR
+
+### 🔒 1. Khóa Màn Hình Cảm Ứng Chống Chạm Nhầm (Mobile Screen Lock)
+- **Nút Khóa Chạm Trên Thanh Điều Khiển (`phoneLockBtn`)**:
+  - Bổ sung nút Khóa chuyên dụng trên thanh điều khiển đáy khi xem phim/thể thao trên điện thoại.
+  - Khi kích hoạt chế độ Khóa: toàn bộ thanh OSD, nút tua, thanh tiến trình và cử chỉ vuốt (độ sáng / âm lượng) sẽ được vô hiệu hóa 100%, bảo vệ người dùng không bị chạm nhầm khi nằm xem hoặc cầm máy.
+  - Hiển thị viên con nhộng Mở Khóa nổi (`phoneUnlockContainer`): Chạm vào màn hình để hiện/ẩn nút Mở Khóa với cơ chế tự ẩn thông minh sau 3 giây.
+  - Nút BACK bảo vệ: Khi màn hình đang khóa, bấm phím BACK vật lý/cử chỉ sẽ mở khóa thay vì thoát màn hình xem.
+
+### 🔄 2. Nút Làm Mới Nhanh Top Bar (Quick Refresh)
+- **Tải lại tức thì với hiệu ứng xoay 360° (`btnTopRefresh`)**:
+  - Bổ sung nút Làm mới trên thanh Top Bar ở chế độ Mobile.
+  - Tự động nhận diện tab hiện tại để reload dữ liệu ngay lập tức:
+    - **Tab 0 (Thể Thao)**: Cập nhật tỷ số mới nhất và danh sách phòng phát sóng từ 4 nhà đài (Socolive, ColaTV, Gà Vàng, Giờ Vàng).
+    - **Tab 1 (Lịch Đấu)**: Tải lại lịch thi đấu 7 ngày tới.
+    - **Tab 5 (Phim)**: Làm mới danh sách phim và cập nhật lại tiến độ xem dở.
+    - **Tab 2 (IPTV)**: Tải lại danh sách 150+ kênh truyền hình HD.
+
+---
+
 # 🚀 KENHLIVE v7.7.6 (Build 139) — HỖ TRỢ TOÀN DIỆN MOBILE & ANDROID TV (DUAL-MODE NATIVE)
 
 ### 📱 1. Hỗ Trợ Toàn Diện Điện Thoại Android (Mobile Native)

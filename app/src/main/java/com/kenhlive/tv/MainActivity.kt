@@ -184,6 +184,34 @@ class MainActivity : AppCompatActivity() {
             showTab(4)
         }
 
+        findViewById<View>(R.id.btnTopRefresh)?.setOnClickListener { v ->
+            v.animate().rotationBy(360f).setDuration(500).start()
+            val activeTag = tabTags.getOrNull(current)
+            val f = supportFragmentManager.findFragmentByTag(activeTag)
+            when (current) {
+                0 -> {
+                    (f as? LiveFragment)?.refresh() ?: vm.load(force = true)
+                    android.widget.Toast.makeText(this, "Đang làm mới trận đấu trực tiếp...", android.widget.Toast.LENGTH_SHORT).show()
+                }
+                1 -> {
+                    (f as? ScheduleFragment)?.refresh()
+                    android.widget.Toast.makeText(this, "Đang làm mới lịch thi đấu...", android.widget.Toast.LENGTH_SHORT).show()
+                }
+                5 -> {
+                    (f as? com.kenhlive.tv.phim.PhimFragment)?.refresh()
+                    android.widget.Toast.makeText(this, "Đang làm mới kho phim...", android.widget.Toast.LENGTH_SHORT).show()
+                }
+                2 -> {
+                    (f as? com.kenhlive.tv.iptv.IptvFragment)?.refresh()
+                    android.widget.Toast.makeText(this, "Đang làm mới danh sách kênh...", android.widget.Toast.LENGTH_SHORT).show()
+                }
+                else -> {
+                    vm.load(force = true)
+                    android.widget.Toast.makeText(this, "Đang làm mới dữ liệu...", android.widget.Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
         if (DeviceMode.isTv) {
             findViewById<View>(R.id.nav_profile)?.setOnClickListener {
                 com.kenhlive.tv.ui.FeedbackDialog.show(this)
