@@ -45,11 +45,12 @@
                 android:resource="@xml/file_paths" />
         </provider>
 
-        <!-- Main: channel list + player -->
+        <!-- Main: channel list + player (TV: Landscape lock, Phone: Portrait & Sensor Auto-Rotate) -->
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTask"
-            android:screenOrientation="landscape"
+            android:screenOrientation="unspecified"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|density"
             android:icon="@mipmap/ic_launcher"
             android:roundIcon="@mipmap/ic_launcher_round"
             android:banner="@drawable/banner"
@@ -73,7 +74,7 @@
         <activity
             android:name=".phim.WebPlayerActivity"
             android:exported="true"
-            android:screenOrientation="landscape"
+            android:screenOrientation="sensorLandscape"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|density" />
 
         <!-- Multiview (TV 2x2) -->

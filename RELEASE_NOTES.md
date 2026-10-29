@@ -1,3 +1,20 @@
+# 🚀 KENHLIVE v7.7.6 (Build 139) — HỖ TRỢ TOÀN DIỆN MOBILE & ANDROID TV (DUAL-MODE NATIVE)
+
+### 📱 1. Hỗ Trợ Toàn Diện Điện Thoại Android (Mobile Native)
+- **Tự do xoay màn hình (Portrait & Auto-Rotate)**:
+  - Gỡ bỏ giới hạn ép cứng xoay ngang `android:screenOrientation="landscape"`.
+  - Trên điện thoại: ứng dụng hiển thị dọc tự nhiên (`PORTRAIT`), tự động xoay ngang khi quay máy hoặc xem video toàn màn hình.
+  - Trên Android TV / Box: ứng dụng tự động nhận diện phần cứng và khóa xoay ngang (`SENSOR_LANDSCAPE`) chuẩn 10-foot UI.
+- **Thanh điều hướng công thái học đáy màn hình (Bottom Navigation Bar - 5 Tabs)**:
+  - Tự động kích hoạt Bottom Navigation Bar trên Mobile với đầy đủ 5 mục chính: **Thể Thao, Phim Truyện, Lịch Thi Đấu, Tìm Kiếm, Cài Đặt**.
+  - Kích hoạt Top Bar hiển thị Logo KenhLive cùng số phòng phát sóng trực tiếp.
+  - Tối ưu cử chỉ phím BACK: Khi đang ở bất kỳ tab nào, nhấn BACK đưa người dùng về Tab 0 (Thể Thao); nhấn BACK tại Tab 0 sẽ hiển thị hộp thoại xác nhận thoát app.
+- **Khởi động thông minh theo thiết bị**:
+  - Điện thoại mở thẳng danh sách Live Thể Thao nóng hổi cùng thanh điều hướng dưới ngón tay cái.
+  - Android TV vẫn mở Menu Chọn 3 Mục (Home Hub) tối ưu cho remote D-Pad.
+
+---
+
 # 🚀 KENHLIVE TV v7.7.5 (Build 138) — KHẮC PHỤC TRIỆT ĐỂ BẪY FOCUS D-PAD, ĐỒNG BỘ VOD & NÂNG CẤP BỘ KIỂM THỬ AI QA
 
 ### 🎯 1. Khắc Phục Bẫy Focus D-Pad Nút 'LỊCH THI ĐẤU' Trên Menu Chọn (Home Hub)

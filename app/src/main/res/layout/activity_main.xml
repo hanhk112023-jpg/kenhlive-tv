@@ -99,5 +99,6 @@
         <include layout="@layout/item_nav_phone" android:id="@+id/nav_phim" />
         <include layout="@layout/item_nav_phone" android:id="@+id/nav_schedule" />
         <include layout="@layout/item_nav_phone" android:id="@+id/nav_search" />
+        <include layout="@layout/item_nav_phone" android:id="@+id/nav_settings" />
     </LinearLayout>
 </LinearLayout>
