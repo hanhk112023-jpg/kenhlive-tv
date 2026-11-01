@@ -173,7 +173,7 @@ object SportsStreamResolver {
                 } else if (isLive) {
                     "$homeName vs $awayName"
                 } else {
-                    if (kickoffTime.isNotBlank()) "[$kickoffTime] $homeName vs $awayName" else "[SẮP ĐÁ] $homeName vs $awayName"
+                    "[SẮP ĐÁ] $homeName vs $awayName"
                 }
                 val defaultLink = m.optString("defaultLink")
                 val anchors: JSONArray? = m.optJSONArray("anchorAppointmentVoList")
@@ -354,7 +354,7 @@ object SportsStreamResolver {
                 } else if (isLive) {
                     "$hName vs $aName"
                 } else {
-                    if (kickoffTime.isNotBlank()) "[$kickoffTime] $hName vs $aName" else "[SẮP ĐÁ] $hName vs $aName"
+                    "[SẮP ĐÁ] $hName vs $aName"
                 }
 
                 val anchors = m.optJSONArray("anchorAppointmentVoList")
@@ -616,7 +616,7 @@ object SportsStreamResolver {
                 } else if (isLive) {
                     "$homeName vs $awayName"
                 } else {
-                    if (kickoffTime.isNotBlank()) "[$kickoffTime] $homeName vs $awayName" else "[SẮP ĐÁ] $homeName vs $awayName"
+                    "[SẮP ĐÁ] $homeName vs $awayName"
                 }
                 val cat = when (m.optString("type")) {
                     "football" -> "Bóng đá"

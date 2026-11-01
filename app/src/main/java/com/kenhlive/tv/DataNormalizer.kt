@@ -104,15 +104,36 @@ object DataNormalizer {
         val bracketMatch = Regex("""^\[(.*?)\]\s*(.*)$""").find(text)
         if (bracketMatch != null) {
             val l = bracketMatch.groupValues[1].trim()
-            if (l.isNotBlank()) detectedLeague = l
+            val isTime = Regex("""^\d{1,2}:\d{2}$""").matches(l)
+            val isStatus = l.equals("SẮP ĐÁ", ignoreCase = true) ||
+                           l.equals("SẮP DIỄN RA", ignoreCase = true) ||
+                           l.equals("CHƯA ĐÁ", ignoreCase = true) ||
+                           l.equals("LIVE", ignoreCase = true) ||
+                           l.equals("TRỰC TIẾP", ignoreCase = true) ||
+                           l.equals("HOT", ignoreCase = true) ||
+                           l.equals("VIP", ignoreCase = true)
+            if (l.isNotBlank() && !isTime && !isStatus) {
+                detectedLeague = l
+            }
             text = bracketMatch.groupValues[2].trim()
         } else {
-            val colonIdx = text.indexOf(':')
-            if (colonIdx in 1..25) {
-                val l = text.substring(0, colonIdx).trim()
-                if (l.isNotBlank() && !l.equals("Live", ignoreCase = true)) {
-                    detectedLeague = l
-                    text = text.substring(colonIdx + 1).trim()
+            val timePrefixMatch = Regex("""^\s*(\d{1,2}:\d{2})\s*(.*)$""").find(text)
+            if (timePrefixMatch != null) {
+                // Tiền tố giờ đá "17:00 Arsenal vs Chelsea" -> bỏ tiền tố giờ khỏi text phân tích đội
+                text = timePrefixMatch.groupValues[2].trim()
+            } else {
+                val colonIdx = text.indexOf(':')
+                if (colonIdx in 1..25) {
+                    val beforeChar = text.getOrNull(colonIdx - 1)
+                    val afterChar = text.getOrNull(colonIdx + 1)
+                    val isTimeOrRatioColon = beforeChar?.isDigit() == true && afterChar?.isDigit() == true
+                    if (!isTimeOrRatioColon) {
+                        val l = text.substring(0, colonIdx).trim()
+                        if (l.isNotBlank() && !l.equals("Live", ignoreCase = true) && !Regex("""^\d{1,2}$""").matches(l)) {
+                            detectedLeague = l
+                            text = text.substring(colonIdx + 1).trim()
+                        }
+                    }
                 }
             }
         }
@@ -122,11 +143,21 @@ object DataNormalizer {
         // 3. Tìm tỉ số (ví dụ: Arsenal 2 - 1 Chelsea hoặc Real Madrid 0:0 Barca)
         var hostScore: Int? = null
         var guestScore: Int? = null
-        val scoreRegex = Regex("""\b(\d+)\s*[-:]\s*(\d+)\b""")
-        val scoreMatch = scoreRegex.find(text)
-        if (scoreMatch != null) {
-            hostScore = scoreMatch.groupValues[1].toIntOrNull()
-            guestScore = scoreMatch.groupValues[2].toIntOrNull()
+        val scoreRegex = Regex("""\b(\d{1,2})\s*[-:]\s*(\d{1,2})\b""")
+        val scoreMatches = scoreRegex.findAll(text)
+        for (m in scoreMatches) {
+            val fullMatch = m.value.trim()
+            val s1 = m.groupValues[1].toIntOrNull()
+            val s2 = m.groupValues[2].toIntOrNull()
+            if (s1 != null && s2 != null) {
+                // Loại trừ nếu trùng khớp định dạng giờ thi đấu (ví dụ: 17:00, 19:30, 20:45)
+                val isClockTime = fullMatch.contains(":") && s1 in 0..23 && s2 in 0..59 && m.groupValues[2].length == 2 && (s1 >= 10 || s2 > 10)
+                if (!isClockTime) {
+                    hostScore = s1
+                    guestScore = s2
+                    break
+                }
+            }
         }
 
         // 4. Tách đội nhà và đội khách

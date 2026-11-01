@@ -63,7 +63,7 @@ class MatchCardsAdapter(
             if (title.contains("[sắp đá]") || title.contains("[sắp diễn ra]") ||
                 title.contains("[chưa đá]") || title.contains("[sắp]") ||
                 title.contains("[upcoming]") || title.contains("[chờ]") ||
-                title.contains("chưa bắt đầu")) {
+                title.contains("chưa bắt đầu") || title.contains("chưa đến giờ")) {
                 return false
             }
             if (parsed.hostScore != null && parsed.guestScore != null) {
@@ -71,6 +71,25 @@ class MatchCardsAdapter(
             }
             if (title.contains("[live]") || title.contains("[trực tiếp]") || title.contains("[đang đá]")) {
                 return true
+            }
+            val kickoff = g.kickoffTime.ifBlank { extractKickoffTime(g.matchTitle, g.top.notice) }
+            if (kickoff.isNotBlank() && parsed.hostScore == null) {
+                try {
+                    val parts = kickoff.split(":")
+                    if (parts.size == 2) {
+                        val kh = parts[0].toIntOrNull() ?: 0
+                        val km = parts[1].toIntOrNull() ?: 0
+                        val cal = java.util.Calendar.getInstance(java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh"))
+                        val curH = cal.get(java.util.Calendar.HOUR_OF_DAY)
+                        val curM = cal.get(java.util.Calendar.MINUTE)
+                        val curTotalMin = curH * 60 + curM
+                        val kickTotalMin = kh * 60 + km
+                        if (kickTotalMin - curTotalMin > 15) {
+                            return false
+                        }
+                    }
+                } catch (_: Exception) {}
+                if (g.totalViewers < 25) return false
             }
             val timeRegex = Regex("""^\s*(\d{1,2}):(\d{2})""")
             if (timeRegex.containsMatchIn(g.matchTitle.trim()) && parsed.hostScore == null) {

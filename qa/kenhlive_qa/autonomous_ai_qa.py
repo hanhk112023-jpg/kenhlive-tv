@@ -1104,6 +1104,51 @@ class AndroidTVDevice:
                         "suggestion": "Gọi requestFocus() vào nút mặc định của Dialog trong setOnShowListener"
                     })
 
+        # 5. Kiểm tra tính toàn vẹn dữ liệu giờ thi đấu & tỷ số thể thao (Kickoff Time & Score Integrity Probe)
+        for r_id, txt in ui_state.get("all_visible_texts", []):
+            clean_txt = txt.strip()
+            # 5a. Rò rỉ giờ thi đấu hoặc tag trạng thái vào tên giải đấu cardLeague
+            if "cardLeague" in r_id:
+                if re.match(r"^\d{1,2}:\d{2}$", clean_txt) or re.search(r"\[(SẮP ĐÁ|LIVE|TRỰC TIẾP|\d{1,2}:\d{2})\]", clean_txt, re.IGNORECASE):
+                    leak_key = f"TIME_LEAK_LEAGUE:{r_id}:{clean_txt}"
+                    if leak_key not in self._reported_anomaly_keys:
+                        self._reported_anomaly_keys.add(leak_key)
+                        anomalies.append({
+                            "area": "Chuẩn hóa dữ liệu thể thao (Deep Probe)",
+                            "severity": "HIGH",
+                            "issue": f"Giờ thi đấu hoặc nhãn trạng thái bị gán nhầm vào tên giải đấu: '{clean_txt}'",
+                            "detail": f"View {r_id} hiển thị '{clean_txt}' thay vì tên giải đấu hợp lệ",
+                            "suggestion": "Lọc sạch bracket thời gian trong DataNormalizer.parseMatch"
+                        })
+            # 5b. Bị gán nhầm giờ thi đấu thành tỷ số ảo (ví dụ 17:00 thành tỷ số 17 - 0 hoặc 17:00)
+            if "cardScore" in r_id or "score" in r_id.lower():
+                m_score = re.match(r"^(\d{1,2})\s*[-:]\s*(\d{1,2})$", clean_txt)
+                if m_score:
+                    s1, s2 = int(m_score.group(1)), int(m_score.group(2))
+                    if (s1 >= 10 and s2 == 0) or (s1 in (17, 18, 19, 20, 21, 22, 23) and s2 in (0, 15, 30, 45)):
+                        fake_key = f"FAKE_SCORE_FROM_TIME:{r_id}:{clean_txt}"
+                        if fake_key not in self._reported_anomaly_keys:
+                            self._reported_anomaly_keys.add(fake_key)
+                            anomalies.append({
+                                "area": "Toàn vẹn tỷ số thể thao (Deep Probe)",
+                                "severity": "HIGH",
+                                "issue": f"Nghi vấn giờ thi đấu bị chuyển đổi thành tỷ số ảo: '{clean_txt}'",
+                                "detail": f"View {r_id} hiển thị tỷ số '{clean_txt}' khớp với khung giờ phát sóng",
+                                "suggestion": "Bổ sung kiểm tra loại trừ giờ thi đấu trong DataNormalizer regex"
+                            })
+            # 5c. Rò rỉ placeholder raw
+            if "[$kickoffTime]" in clean_txt or "luc-" in clean_txt:
+                raw_key = f"RAW_TIME_PLACEHOLDER:{r_id}:{clean_txt[:20]}"
+                if raw_key not in self._reported_anomaly_keys:
+                    self._reported_anomaly_keys.add(raw_key)
+                    anomalies.append({
+                        "area": "Hiển thị giờ thi đấu (Deep Probe)",
+                        "severity": "HIGH",
+                        "issue": f"Rò rỉ placeholder mã nguồn giờ thi đấu chưa format: '{clean_txt}'",
+                        "detail": f"View {r_id} hiển thị chuỗi kỹ thuật chưa qua xử lý",
+                        "suggestion": "Định dạng giờ thi đấu qua formatTimestampToTime trước khi truyền vào view"
+                    })
+
         return anomalies
 
     def detect_video_motion(self, duration_sec=1.0, samples=3, is_player_context=False):
