@@ -166,7 +166,7 @@ object DataNormalizer {
         val vsSplit = when {
             text.contains(" vs ", ignoreCase = true) -> text.split(Regex("""\s+vs\s+""", RegexOption.IGNORE_CASE), 2)
             text.contains(" vs. ", ignoreCase = true) -> text.split(Regex("""\s+vs\.\s+""", RegexOption.IGNORE_CASE), 2)
-            scoreMatch != null -> text.split(scoreRegex, 2)
+            hostScore != null && guestScore != null -> text.split(Regex("""\b\d{1,2}\s*[-:]\s*\d{1,2}\b"""), 2)
             text.contains(" - ") -> text.split(Regex("""\s+-\s+"""), 2)
             else -> null
         }
