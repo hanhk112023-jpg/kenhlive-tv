@@ -1,3 +1,20 @@
+# 🚀 KENHLIVE v7.7.8 (Build 141) — BỔ SUNG TÍNH NĂNG XÓA LỊCH SỬ & TIẾN ĐỘ XEM PHIM (WATCH HISTORY MANAGER)
+
+### 🗑️ 1. Xóa Lịch Sử & Tiến Độ Xem Phim (Continue Watching & History Erase)
+- **Nút "Xóa Lịch Sử" chuyên dụng trong Hộp Thoại Tập Phim (`EpisodePickerDialog`)**:
+  - Tự động hiển thị nút màu đỏ "Xóa Lịch Sử" khi phim đang có tiến độ xem dở hoặc nằm trong danh sách đã lưu.
+  - Khi bấm xóa, hệ thống dọn dẹp sạch toàn diện: bản ghi trong `TABLE_HISTORY`, các tập đã xem trong `TABLE_EPISODES`, xóa trắng tiến độ trong `TABLE_FAVORITES`, và đồng bộ tức thì sang bộ nhớ SharedPreferences và JSON backup vault.
+  - Giao diện tự động làm mới ngay lập tức danh mục "Tiếp Tục Xem" / "Phim Đã Lưu" khi đóng dialog.
+- **Menu tùy chọn nhanh khi Nhấn Giữ Thẻ Phim (Long-Press Context Menu)**:
+  - Trên cả danh sách cuộn ngang "Tiếp Tục Xem" và lưới tìm kiếm Netflix Full-Screen, người dùng remote TV chỉ cần nhấn giữ phím OK (hoặc nhấn giữ trên màn hình cảm ứng) vào bất kỳ thẻ phim nào để hiển thị Menu tùy chọn:
+    1. *Xem danh sách tập*
+    2. *Lưu / Bỏ lưu Phim Yêu Thích*
+    3. *Xóa khỏi Lịch Sử & Tiến Độ Xem* (tự động hiện khi phim có tiến độ)
+- **Hỗ trợ tối ưu cho cả Android TV Remote D-Pad và Mobile Touch**:
+  - Điều hướng focus chuẩn điện ảnh, Toast phản hồi trực quan, giải phóng bộ nhớ xem dở triệt để.
+
+---
+
 # 🚀 KENHLIVE v7.7.7 (Build 140) — KHÓA MÀN HÌNH CHỐNG CHẠM NHẦM (SCREEN LOCK) & NÚT LÀM MỚI NHANH TOP BAR
 
 ### 🔒 1. Khóa Màn Hình Cảm Ứng Chống Chạm Nhầm (Mobile Screen Lock)
