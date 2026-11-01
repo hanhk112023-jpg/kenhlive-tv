@@ -334,13 +334,65 @@ class PhimFragment : Fragment() {
                     }
                 },
                 onHeroPlay = { film -> openHeroPlay(film) },
-                onFavoriteToggle = { film -> toggleFilmFavorite(film) },
+                onFavoriteToggle = { film -> showFilmOptionDialog(film) },
                 onHeroNext = { cycleHeroNext() },
                 onUp = { focusFilterListFromMain() }
             )
             mainList.postDelayed({
                 ensurePhimFocus()
             }, 100L)
+        }
+    }
+
+    private fun showFilmOptionDialog(film: NguoncFilm) {
+        val ctx = context ?: return
+        viewLifecycleOwner.lifecycleScope.launch {
+            val isFav = withContext(Dispatchers.IO) { WatchHistoryManager.isFavorite(film.slug) }
+            val progress = withContext(Dispatchers.IO) {
+                film.watchProgress ?: WatchHistoryManager.getProgressForFilm(film.slug)
+            }
+            val hasProg = progress != null || withContext(Dispatchers.IO) { WatchHistoryManager.hasProgress(film.slug) }
+
+            val options = mutableListOf<String>()
+            val actions = mutableListOf<() -> Unit>()
+
+            // 1. Mở danh sách tập phim
+            options.add("Xem danh sách tập")
+            actions.add { openFilmDialog(film) }
+
+            // 2. Lưu / Bỏ lưu yêu thích
+            val favText = if (isFav) "Bỏ lưu khỏi Phim Yêu Thích" else "Lưu vào Phim Yêu Thích"
+            options.add(favText)
+            actions.add { toggleFilmFavorite(film) }
+
+            // 3. Xóa khỏi lịch sử / tiếp tục xem nếu có tiến độ
+            if (hasProg || isFav) {
+                options.add("Xóa khỏi Lịch Sử & Tiến Độ Xem")
+                actions.add {
+                    viewLifecycleOwner.lifecycleScope.launch {
+                        withContext(Dispatchers.IO) {
+                            WatchHistoryManager.deleteProgress(film.slug)
+                        }
+                        android.widget.Toast.makeText(
+                            ctx,
+                            "Đã xóa \"${film.name}\" khỏi lịch sử xem",
+                            android.widget.Toast.LENGTH_SHORT
+                        ).show()
+                        loadFilmsByCategory(selectedCategorySlug)
+                    }
+                }
+            }
+
+            android.app.AlertDialog.Builder(ctx, R.style.Theme_KenhLive_Dialog)
+                .setTitle(film.name)
+                .setItems(options.toTypedArray()) { d, which ->
+                    d.dismiss()
+                    if (which in actions.indices) {
+                        actions[which].invoke()
+                    }
+                }
+                .setNegativeButton("Đóng", null)
+                .show()
         }
     }
 
@@ -464,7 +516,7 @@ class PhimFragment : Fragment() {
                 rvSearchGrid.adapter = NetflixSearchGridAdapter(
                     films = initialList,
                     onFilmClick = { film -> openFilmDialog(film) },
-                    onFilmLongClick = { film -> toggleFilmFavorite(film) }
+                    onFilmLongClick = { film -> showFilmOptionDialog(film) }
                 )
             }
         }
@@ -506,7 +558,7 @@ class PhimFragment : Fragment() {
                 rvSearchGrid.adapter = NetflixSearchGridAdapter(
                     films = results,
                     onFilmClick = { film -> openFilmDialog(film) },
-                    onFilmLongClick = { film -> toggleFilmFavorite(film) }
+                    onFilmLongClick = { film -> showFilmOptionDialog(film) }
                 )
                 rvSearchGrid.scrollToPosition(0)
             } else {
@@ -761,6 +813,12 @@ class PhimFragment : Fragment() {
                 context = ctx,
                 scope = viewLifecycleOwner.lifecycleScope,
                 film = film,
+                onDismissCallback = {
+                    // Tự động làm mới danh sách phim đang xem / đã lưu khi người dùng đóng dialog (sau khi xóa hoặc lưu)
+                    if (isAdded) {
+                        loadFilmsByCategory(selectedCategorySlug)
+                    }
+                },
                 onSelectEpisode = { f, ep, startPos ->
                     playEpisode(f, ep, startPos)
                 }
@@ -1107,6 +1165,10 @@ class PhimFragment : Fragment() {
             btnPlay.setOnClickListener { onHeroPlay(film) }
             btnEpisodes.setOnClickListener { onFilmClick(film) }
             btnFavorite.setOnClickListener { onFavoriteToggle(film) }
+            btnFavorite.setOnLongClickListener {
+                onFavoriteToggle(film)
+                true
+            }
             btnNext?.setOnClickListener { onHeroNext() }
 
             setupFocusAnimation(btnPlay)

@@ -173,6 +173,20 @@
         android:gravity="right">
 
         <Button
+            android:id="@+id/dialogBtnDeleteHistory"
+            style="@style/KL.Button.Ghost"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:layout_marginRight="10dp"
+            android:text="Xóa Lịch Sử"
+            android:drawableStart="@drawable/ic_trash"
+            android:drawablePadding="6dp"
+            android:drawableTint="#EF4444"
+            android:textColor="#EF4444"
+            android:visibility="gone"
+            android:focusable="true" />
+
+        <Button
             android:id="@+id/dialogBtnFavorite"
             style="@style/KL.Button.Ghost"
             android:layout_width="wrap_content"

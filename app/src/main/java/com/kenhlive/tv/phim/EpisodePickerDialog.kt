@@ -45,6 +45,7 @@ object EpisodePickerDialog {
         context: Context,
         scope: CoroutineScope,
         film: NguoncFilm,
+        onDismissCallback: (() -> Unit)? = null,
         onSelectEpisode: (film: NguoncFilm, episode: NguoncEpisodeItem, startPosMs: Long) -> Unit
     ): AlertDialog {
         val view = LayoutInflater.from(context).inflate(R.layout.dialog_film_episodes, null)
@@ -62,16 +63,38 @@ object EpisodePickerDialog {
         val tvNoEpisodes = view.findViewById<TextView>(R.id.dialogNoEpisodes)
         val btnClose = view.findViewById<Button>(R.id.dialogBtnClose)
         val btnFavorite = view.findViewById<Button>(R.id.dialogBtnFavorite)
+        val btnDeleteHistory = view.findViewById<Button>(R.id.dialogBtnDeleteHistory)
 
-        scope.launch {
-            val isFav = withContext(Dispatchers.IO) { WatchHistoryManager.isFavorite(film.slug) }
-            val progress = withContext(Dispatchers.IO) { WatchHistoryManager.getProgressForFilm(film.slug) }
-            val timePart = progress?.formattedTimeOnly()?.let { if (it.isNotBlank()) " · $it" else "" } ?: ""
-            val epSuffix = if (progress != null) " (${progress.episodeName}$timePart)" else ""
-            btnFavorite.text = if (isFav) "Đã Lưu$epSuffix" else "Lưu Phim$epSuffix"
-            btnFavorite.setCompoundDrawablesWithIntrinsicBounds(
-                if (isFav) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark, 0, 0, 0
-            )
+        fun refreshHistoryState() {
+            scope.launch {
+                val isFav = withContext(Dispatchers.IO) { WatchHistoryManager.isFavorite(film.slug) }
+                val progress = withContext(Dispatchers.IO) { WatchHistoryManager.getProgressForFilm(film.slug) }
+                val hasProg = progress != null || withContext(Dispatchers.IO) { WatchHistoryManager.hasProgress(film.slug) }
+                val timePart = progress?.formattedTimeOnly()?.let { if (it.isNotBlank()) " · $it" else "" } ?: ""
+                val epSuffix = if (progress != null) " (${progress.episodeName}$timePart)" else ""
+                btnFavorite.text = if (isFav) "Đã Lưu$epSuffix" else "Lưu Phim$epSuffix"
+                btnFavorite.setCompoundDrawablesWithIntrinsicBounds(
+                    if (isFav) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark, 0, 0, 0
+                )
+                // Hiển thị nút Xóa Lịch Sử nếu phim có tiến độ xem hoặc đang lưu
+                btnDeleteHistory.visibility = if (hasProg || isFav) View.VISIBLE else View.GONE
+            }
+        }
+
+        refreshHistoryState()
+
+        btnDeleteHistory.setOnClickListener {
+            scope.launch {
+                withContext(Dispatchers.IO) {
+                    WatchHistoryManager.deleteProgress(film.slug)
+                }
+                android.widget.Toast.makeText(
+                    context,
+                    "Đã xóa lịch sử xem của phim \"${film.name}\"",
+                    android.widget.Toast.LENGTH_SHORT
+                ).show()
+                refreshHistoryState()
+            }
         }
 
         btnFavorite.setOnClickListener {
@@ -87,12 +110,9 @@ object EpisodePickerDialog {
                         durationMs = progress?.durationMs
                     )
                 }
+                refreshHistoryState()
                 val timePart = progress?.formattedTimeOnly()?.let { if (it.isNotBlank()) " · $it" else "" } ?: ""
                 val epSuffix = if (progress != null) " (${progress.episodeName}$timePart)" else ""
-                btnFavorite.text = if (nowFav) "Đã Lưu$epSuffix" else "Lưu Phim$epSuffix"
-                btnFavorite.setCompoundDrawablesWithIntrinsicBounds(
-                    if (nowFav) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark, 0, 0, 0
-                )
                 android.widget.Toast.makeText(
                     context,
                     if (nowFav) "Đã lưu bộ phim \"${film.name}\"$epSuffix vào Lịch Sử Xem" else "Đã bỏ lưu \"${film.name}\"",
@@ -122,6 +142,10 @@ object EpisodePickerDialog {
         val dialog = AlertDialog.Builder(context, R.style.Theme_KenhLive_Dialog)
             .setView(view)
             .create()
+
+        dialog.setOnDismissListener {
+            onDismissCallback?.invoke()
+        }
 
         btnClose.setOnClickListener {
             dialog.dismiss()

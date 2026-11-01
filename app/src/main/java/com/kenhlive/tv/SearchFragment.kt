@@ -259,6 +259,7 @@ class SearchFragment : Fragment() {
             context = requireContext(),
             scope = viewLifecycleOwner.lifecycleScope,
             film = film,
+            onDismissCallback = null,
             onSelectEpisode = { f, ep, startPos ->
                 val intent = Intent(requireContext(), WebPlayerActivity::class.java)
                     .putExtra("embed_url", ep.embed)

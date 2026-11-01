@@ -611,15 +611,58 @@ object WatchHistoryManager {
         }
 
     /**
-     * Xóa tiến độ của một phim.
+     * Xóa hoàn toàn lịch sử và tiến độ xem của một phim (cả DB history, episodes, favorites và backup vault).
      */
     suspend fun deleteProgress(slug: String) = withContext(Dispatchers.IO) {
         val helper = dbHelper ?: return@withContext
         try {
             val db = helper.writableDatabase
+            // 1. Xóa khỏi TABLE_HISTORY (tiến độ xem dở & hoàn thành)
             db.delete(TABLE_HISTORY, "$COL_SLUG = ?", arrayOf(slug))
+            // 2. Xóa khỏi TABLE_EPISODES (danh sách các tập đã xem của phim)
+            db.delete(TABLE_EPISODES, "$COL_EP_FILM_SLUG = ?", arrayOf(slug))
+            // 3. Xóa sạch tiến độ tập xem trong TABLE_FAVORITES nếu phim đã lưu
+            val cv = ContentValues().apply {
+                putNull(COL_EPISODE_NAME)
+                putNull(COL_EPISODE_SLUG)
+                putNull(COL_EMBED_URL)
+                put(COL_POSITION_MS, 0L)
+                put(COL_DURATION_MS, 0L)
+                put(COL_PROGRESS_PCT, 0)
+            }
+            db.update(TABLE_FAVORITES, cv, "$COL_SLUG = ?", arrayOf(slug))
+            // 4. Đồng bộ lại sang SharedPreferences & JSON vault
             triggerBackupAsync()
-        } catch (_: Exception) {}
+            Log.d(TAG, "Đã xóa hoàn tất lịch sử xem của phim: $slug")
+        } catch (e: Exception) {
+            Log.e(TAG, "deleteProgress error: ${e.message}")
+        }
+    }
+
+    /**
+     * Xóa bất đồng bộ tiến độ phim với callback tùy chọn.
+     */
+    fun deleteProgressAsync(slug: String, onDone: (() -> Unit)? = null) {
+        ioScope.launch {
+            deleteProgress(slug)
+            withContext(Dispatchers.Main) {
+                onDone?.invoke()
+            }
+        }
+    }
+
+    /**
+     * Kiểm tra phim có tiến độ xem trong lịch sử không.
+     */
+    suspend fun hasProgress(slug: String): Boolean = withContext(Dispatchers.IO) {
+        val helper = dbHelper ?: return@withContext false
+        try {
+            val db = helper.readableDatabase
+            val cursor = db.query(TABLE_HISTORY, arrayOf(COL_SLUG), "$COL_SLUG = ?", arrayOf(slug), null, null, null, "1")
+            cursor.use { it.count > 0 }
+        } catch (_: Exception) {
+            false
+        }
     }
 
     // ================= PHIM YÊU THÍCH / ĐÃ LƯU (FAVORITES) =================
