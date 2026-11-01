@@ -1,3 +1,29 @@
+# 🚀 KENHLIVE v7.7.9 (Build 142) — TÁCH 4 HÀNG THỂ THAO RIÊNG BIỆT, HIỂN THỊ THỜI GIAN ĐÁ & NHÓM HỖ TRỢ TELEGRAM
+
+### ⚽ 1. Tách Biệt 4 Hàng Thể Thao Độc Lập Cho 4 Nhà Đài (4 Dedicated Sports Rails)
+- **Không còn gộp chung vào 1 hàng**: Trên Tab Trực Tiếp ("Tất cả"), danh sách trận đấu được tách biệt thành 4 hàng cuộn ngang riêng tương ứng 4 nhà đài:
+  - **Hàng 1 — Socolive TV**: `🟢 Socolive TV · Trực Tiếp & Lịch Đấu`
+  - **Hàng 2 — ColaTV**: `🔴 ColaTV · Trực Tiếp & Lịch Đấu`
+  - **Hàng 3 — Gà Vàng 33**: `🟡 Gà Vàng 33 · Trực Tiếp & Lịch Đấu`
+  - **Hàng 4 — Giờ Vàng TV**: `🔵 Giờ Vàng TV · Trực Tiếp & Lịch Đấu`
+- **Sắp xếp khoa học**: Các trận đang diễn ra trực tiếp (`LIVE`) tự động được đẩy lên đầu mỗi hàng, theo sau là các trận đấu sắp lên sóng trong ngày của chính nhà đài đó.
+- **Chip lọc Socolive**: Bổ sung Chip lọc riêng cho `Socolive` vào thanh lọc thể thao cùng với `ColaTV`, `Gà Vàng 33`, `Giờ Vàng`.
+
+### ⏰ 2. Bổ Sung Hiển Thị Thời Gian Bắt Đầu Trận Đấu (Kick-off Time)
+- **Tự động bóc tách & đồng bộ giờ thi đấu chuẩn Việt Nam (HH:mm)**:
+  - Tích hợp bộ chuyển đổi thời gian thông minh cho API của cả 4 nhà đài, hỗ trợ cả timestamp Unix lẫn chuỗi thời gian trận.
+  - Đồng bộ thời gian bắt đầu từ lịch thi đấu Socolive sang các phòng live đang phát.
+- **Huy hiệu giờ thi đấu chuyên biệt (`cardTimeBadge`)**:
+  - Thẻ trận đấu hiển thị huy hiệu giờ đá nền kính mờ (`bg_badge_time.xml`) chữ xanh Cyan (`#38BDF8`) nổi bật ngay cạnh badge trạng thái.
+  - Phân biệt rõ ràng giữa trận `● LIVE` (badge đỏ rực) và trận `SẮP ĐÁ` (badge vàng hổ phách).
+  - Dòng thông tin BLV hiển thị rõ giờ đá: `Trực tiếp (19:30) • BLV ...` hoặc `Lên sóng lúc 21:00 • BLV ...`.
+  - Banner tâm điểm (Hero Banner) tự động cập nhật thời gian bắt đầu trận đấu.
+
+### 💬 3. Chuyển Đổi Kênh Hỗ Trợ Sang Nhóm Telegram (@kenhlivetv)
+- Toàn bộ liên kết, thông báo hỗ trợ và mã QR quét nhanh được cập nhật dẫn thẳng tới Nhóm Thảo Luận & Hỗ Trợ Trực Tuyến: `https://t.me/kenhlivetv` (`@kenhlivetv`).
+
+---
+
 # 🚀 KENHLIVE v7.7.8 (Build 141) — BỔ SUNG TÍNH NĂNG XÓA LỊCH SỬ & TIẾN ĐỘ XEM PHIM (WATCH HISTORY MANAGER)
 
 ### 🗑️ 1. Xóa Lịch Sử & Tiến Độ Xem Phim (Continue Watching & History Erase)
