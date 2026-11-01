@@ -8,6 +8,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+import java.util.TimeZone
 
 /**
  * Phân giải luồng stream và tải danh sách trận đấu thể thao độc lập cho từng nguồn:
@@ -28,6 +32,14 @@ object SportsStreamResolver {
     @Volatile private var lastFeedFetchAt: Long = 0L
 
     private fun stamp(): String = (System.currentTimeMillis() / 1000).toString()
+
+    fun formatTimestampToTime(ts: Long): String {
+        if (ts <= 0L) return ""
+        val ms = if (ts < 100_000_000_000L) ts * 1000L else ts
+        val sdf = SimpleDateFormat("HH:mm", Locale.US)
+        sdf.timeZone = TimeZone.getTimeZone("Asia/Ho_Chi_Minh")
+        return sdf.format(Date(ms))
+    }
 
     suspend fun resolveStream(roomNum: String): String? = withContext(Dispatchers.IO) {
         if (roomNum.isBlank()) return@withContext null
@@ -150,6 +162,10 @@ object SportsStreamResolver {
 
                 val hs = m.optJSONArray("homeScores")
                 val as_ = m.optJSONArray("awayScores")
+                val rawMatchTime = m.optLong("matchTime").takeIf { it > 0 } ?: m.optLong("match_time")
+                val normTime = m.optString("matchNormalizedTime").trim()
+                val kickoffTime = formatTimestampToTime(rawMatchTime)
+
                 val matchTitle = if (isLive && hs != null && as_ != null && hs.length() > 0 && as_.length() > 0) {
                     val hScore = hs.optInt(0, 0)
                     val aScore = as_.optInt(0, 0)
@@ -157,12 +173,14 @@ object SportsStreamResolver {
                 } else if (isLive) {
                     "$homeName vs $awayName"
                 } else {
-                    "[SẮP ĐÁ] $homeName vs $awayName"
+                    if (kickoffTime.isNotBlank()) "[$kickoffTime] $homeName vs $awayName" else "[SẮP ĐÁ] $homeName vs $awayName"
                 }
                 val defaultLink = m.optString("defaultLink")
                 val anchors: JSONArray? = m.optJSONArray("anchorAppointmentVoList")
 
                 val rooms = mutableListOf<LiveRoom>()
+                val gavangNotice = if (normTime.isNotBlank()) normTime else if (kickoffTime.isNotBlank()) "Đá lúc $kickoffTime · Gà Vàng 33" else if (isLive) "Kênh trực tiếp Gà Vàng 33" else "Chưa đến giờ thi đấu · Sắp diễn ra"
+
                 if (anchors != null && anchors.length() > 0) {
                     for (i in 0 until anchors.length()) {
                         val a = anchors.optJSONObject(i) ?: continue
@@ -192,9 +210,10 @@ object SportsStreamResolver {
                                 league = league,
                                 category = "Bóng đá",
                                 blvLevel = "Gà Vàng HD",
-                                notice = if (isLive) "Kênh trực tiếp Gà Vàng 33 · Luồng phát độc quyền" else "Chưa đến giờ thi đấu · Sắp diễn ra",
+                                notice = gavangNotice,
                                 hostIcon = homeLogo,
-                                guestIcon = awayLogo
+                                guestIcon = awayLogo,
+                                kickoffTime = kickoffTime
                             )
                         )
                     }
@@ -210,9 +229,10 @@ object SportsStreamResolver {
                             league = league,
                             category = "Bóng đá",
                             blvLevel = "Full HD",
-                            notice = "Kênh trực tiếp Gà Vàng 33 · Không bình luận",
+                            notice = gavangNotice,
                             hostIcon = homeLogo,
-                            guestIcon = awayLogo
+                            guestIcon = awayLogo,
+                            kickoffTime = kickoffTime
                         )
                     )
                 }
@@ -227,7 +247,8 @@ object SportsStreamResolver {
                         rooms = rooms,
                         category = "Bóng đá",
                         hostIcon = homeLogo,
-                        guestIcon = awayLogo
+                        guestIcon = awayLogo,
+                        kickoffTime = kickoffTime
                     )
                     val enriched = TeamLogoRegistry.enrich(group)
                     if (isLive) {
@@ -316,6 +337,14 @@ object SportsStreamResolver {
 
                 val hs = m.optJSONArray("homeScore")
                 val as_ = m.optJSONArray("awayScore")
+                val rawMatchTime = m.optLong("matchTime").takeIf { it > 0 } ?: m.optLong("match_time")
+                var kickoffTime = formatTimestampToTime(rawMatchTime)
+                if (kickoffTime.isBlank()) {
+                    val keyTimeMatch = Regex("""luc-(\d{2})(\d{2})""").find(k)
+                    if (keyTimeMatch != null) {
+                        kickoffTime = "${keyTimeMatch.groupValues[1]}:${keyTimeMatch.groupValues[2]}"
+                    }
+                }
 
                 // Bóc tách tỉ số real-time nếu trận đấu đang diễn ra hoặc đã có bàn thắng
                 val matchTitle = if (isLive && hs != null && as_ != null && hs.length() > 0 && as_.length() > 0) {
@@ -325,11 +354,12 @@ object SportsStreamResolver {
                 } else if (isLive) {
                     "$hName vs $aName"
                 } else {
-                    "[SẮP ĐÁ] $hName vs $aName"
+                    if (kickoffTime.isNotBlank()) "[$kickoffTime] $hName vs $aName" else "[SẮP ĐÁ] $hName vs $aName"
                 }
 
                 val anchors = m.optJSONArray("anchorAppointmentVoList")
                 val rooms = mutableListOf<LiveRoom>()
+                val colaNotice = if (kickoffTime.isNotBlank()) "Đá lúc $kickoffTime · Kênh trực tiếp ColaTV · Luồng phát gốc zhwpg.app" else "Kênh trực tiếp ColaTV · Luồng phát gốc zhwpg.app"
 
                 if (anchors != null && anchors.length() > 0) {
                     for (i in 0 until anchors.length()) {
@@ -364,9 +394,10 @@ object SportsStreamResolver {
                                     league = league,
                                     category = "Bóng đá",
                                     blvLevel = "Cola HD",
-                                    notice = "Kênh trực tiếp ColaTV · Luồng phát gốc zhwpg.app",
+                                    notice = colaNotice,
                                     hostIcon = hLogo,
-                                    guestIcon = aLogo
+                                    guestIcon = aLogo,
+                                    kickoffTime = kickoffTime
                                 )
                             )
                         }
@@ -388,9 +419,10 @@ object SportsStreamResolver {
                                 league = league,
                                 category = "Bóng đá",
                                 blvLevel = "Cola Live",
-                                notice = "Kênh trực tiếp ColaTV · Luồng phát gốc",
+                                notice = colaNotice,
                                 hostIcon = hLogo,
-                                guestIcon = aLogo
+                                guestIcon = aLogo,
+                                kickoffTime = kickoffTime
                             )
                         )
                     }
@@ -406,7 +438,8 @@ object SportsStreamResolver {
                         rooms = rooms,
                         category = "Bóng đá",
                         hostIcon = hLogo,
-                        guestIcon = aLogo
+                        guestIcon = aLogo,
+                        kickoffTime = kickoffTime
                     )
                     val enriched = TeamLogoRegistry.enrich(group)
                     if (isLive) {
@@ -575,13 +608,15 @@ object SportsStreamResolver {
 
                 val statusCode = m.optString("status_code", "").uppercase()
                 val isLive = statusCode == "LIVE" || m.optString("status").contains("diễn ra", ignoreCase = true)
+                val rawTime = m.optString("time").ifBlank { m.optString("time_start") }.trim()
+                val kickoffTime = if (rawTime.length >= 5 && rawTime.contains(":")) rawTime.substring(0, 5) else ""
 
                 val matchTitle = if (isLive && hScore != null && aScore != null) {
                     "$homeName $hScore - $aScore $awayName"
                 } else if (isLive) {
                     "$homeName vs $awayName"
                 } else {
-                    "[SẮP ĐÁ] $homeName vs $awayName"
+                    if (kickoffTime.isNotBlank()) "[$kickoffTime] $homeName vs $awayName" else "[SẮP ĐÁ] $homeName vs $awayName"
                 }
                 val cat = when (m.optString("type")) {
                     "football" -> "Bóng đá"
@@ -609,9 +644,10 @@ object SportsStreamResolver {
                     league = league,
                     category = cat,
                     blvLevel = "720p HD",
-                    notice = "Kênh trực tiếp Giờ Vàng TV · Hạ tầng VCDN Cloud",
+                    notice = if (kickoffTime.isNotBlank()) "Đá lúc $kickoffTime · Giờ Vàng TV" else "Kênh trực tiếp Giờ Vàng TV · Hạ tầng VCDN Cloud",
                     hostIcon = homeLogo,
-                    guestIcon = awayLogo
+                    guestIcon = awayLogo,
+                    kickoffTime = kickoffTime
                 )
 
                 if (homeLogo.isNotBlank()) TeamLogoRegistry.register(homeName, homeLogo)
@@ -623,7 +659,8 @@ object SportsStreamResolver {
                     rooms = listOf(room),
                     category = cat,
                     hostIcon = homeLogo,
-                    guestIcon = awayLogo
+                    guestIcon = awayLogo,
+                    kickoffTime = kickoffTime
                 )
                 groups.add(TeamLogoRegistry.enrich(grp))
             }

@@ -104,6 +104,7 @@ class MatchCardsAdapter(
         val guestIcon: ImageView? = v.findViewById(R.id.cardGuestIcon)
         val provider: TextView? = v.findViewById(R.id.cardProvider)
         val liveBadge: TextView? = v.findViewById(R.id.cardLive)
+        val timeBadge: TextView? = v.findViewById(R.id.cardTimeBadge)
     }
 
     inner class FixtureVH(v: View) : RecyclerView.ViewHolder(v) {
@@ -184,13 +185,22 @@ class MatchCardsAdapter(
             h.provider.setTextColor(android.graphics.Color.WHITE)
         }
 
-        // 2. Phân biệt rõ Trực Tiếp (LIVE) và Sắp Diễn Ra (UPCOMING)
+        // 2. Phân biệt rõ Trực Tiếp (LIVE) và Sắp Diễn Ra (UPCOMING) kèm giờ thi đấu
         val isTrulyLive = isMatchLive(g, parsed)
-        val kickoff = extractKickoffTime(g.matchTitle, g.top.notice)
+        val kickoff = if (g.kickoffTime.isNotBlank()) g.kickoffTime else extractKickoffTime(g.matchTitle, g.top.notice)
+
+        if (h.timeBadge != null) {
+            if (kickoff.isNotBlank()) {
+                h.timeBadge.text = kickoff
+                h.timeBadge.visibility = View.VISIBLE
+            } else {
+                h.timeBadge.visibility = View.GONE
+            }
+        }
 
         if (isTrulyLive) {
             h.liveBadge?.visibility = View.VISIBLE
-            h.liveBadge?.text = "● TRỰC TIẾP"
+            h.liveBadge?.text = "● LIVE"
             h.liveBadge?.setBackgroundResource(R.drawable.bg_badge_live_red)
             h.liveBadge?.setTextColor(android.graphics.Color.WHITE)
 
@@ -205,7 +215,7 @@ class MatchCardsAdapter(
             }
         } else {
             h.liveBadge?.visibility = View.VISIBLE
-            h.liveBadge?.text = if (kickoff.isNotBlank()) "SẮP ĐÁ • $kickoff" else "SẮP DIỄN RA"
+            h.liveBadge?.text = "SẮP ĐÁ"
             h.liveBadge?.setBackgroundResource(R.drawable.bg_badge_countdown)
             h.liveBadge?.setTextColor(android.graphics.Color.parseColor("#F59E0B")) // Hổ Phách Amber
 
@@ -244,7 +254,7 @@ class MatchCardsAdapter(
         val formattedBlv = if (rawBlv.startsWith("BLV ", ignoreCase = true)) rawBlv else "BLV $rawBlv"
         val countSuffix = if (g.count > 1) " +${g.count - 1}" else ""
         if (isTrulyLive) {
-            h.blv.text = "Đang trực tiếp • $formattedBlv$countSuffix"
+            h.blv.text = if (kickoff.isNotBlank()) "Trực tiếp ($kickoff) • $formattedBlv$countSuffix" else "Đang trực tiếp • $formattedBlv$countSuffix"
         } else {
             h.blv.text = if (kickoff.isNotBlank()) "Lên sóng lúc $kickoff • $formattedBlv$countSuffix" else "Sắp lên sóng • $formattedBlv$countSuffix"
         }

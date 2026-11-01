@@ -172,15 +172,17 @@ class ScheduleFragment : Fragment() {
             return
         }
         val matchTitle = "${match.host} vs ${match.guest}"
+        val kickoffTime = if (match.matchTimeMs > 0) SocoliveRepository.formatTime(match.matchTimeMs) else ""
         val rooms = live.map { a ->
             LiveRoom(
                 roomNum = a.roomNum, blvName = a.nickName, avatar = a.icon,
                 viewers = 0, matchTitle = matchTitle, league = match.league,
-                category = match.category, hostIcon = match.hostIcon, guestIcon = match.guestIcon
+                category = match.category, hostIcon = match.hostIcon, guestIcon = match.guestIcon,
+                kickoffTime = kickoffTime
             )
         }
         val group = com.kenhlive.tv.sports.SportsAggregator.enrichMatchGroup(
-            LiveMatchGroup(league = match.league, matchTitle = matchTitle, rooms = rooms, category = match.category, hostIcon = match.hostIcon, guestIcon = match.guestIcon)
+            LiveMatchGroup(league = match.league, matchTitle = matchTitle, rooms = rooms, category = match.category, hostIcon = match.hostIcon, guestIcon = match.guestIcon, kickoffTime = kickoffTime)
         )
         dialog?.dismiss()
         dialog = RoomPickerDialog.show(

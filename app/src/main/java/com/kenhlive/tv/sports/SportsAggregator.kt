@@ -136,9 +136,10 @@ object SportsAggregator {
                         focusCount = top.focusCount,
                         notice = "Kênh thể thao trực tiếp ColaTV · Luồng phát tốc độ cao",
                         hostIcon = g.hostIcon,
-                        guestIcon = g.guestIcon
+                        guestIcon = g.guestIcon,
+                        kickoffTime = g.kickoffTime
                     )
-                    g.copy(rooms = listOf(colaRoom))
+                    g.copy(rooms = listOf(colaRoom), kickoffTime = g.kickoffTime)
                 }
                 SportsSource.GAVANG33 -> {
                     val gavangRoom = LiveRoom(
@@ -155,9 +156,10 @@ object SportsAggregator {
                         focusCount = top.focusCount,
                         notice = "Kênh trực tiếp Gà Vàng 33 · Âm thanh vòm sống động",
                         hostIcon = g.hostIcon,
-                        guestIcon = g.guestIcon
+                        guestIcon = g.guestIcon,
+                        kickoffTime = g.kickoffTime
                     )
-                    g.copy(rooms = listOf(gavangRoom))
+                    g.copy(rooms = listOf(gavangRoom), kickoffTime = g.kickoffTime)
                 }
                 SportsSource.GIOVANG -> {
                     val giovangRoom = LiveRoom(
@@ -174,9 +176,10 @@ object SportsAggregator {
                         focusCount = top.focusCount,
                         notice = "Kênh trực tiếp Giờ Vàng TV · Đường truyền tốc độ cao",
                         hostIcon = g.hostIcon,
-                        guestIcon = g.guestIcon
+                        guestIcon = g.guestIcon,
+                        kickoffTime = g.kickoffTime
                     )
-                    g.copy(rooms = listOf(giovangRoom))
+                    g.copy(rooms = listOf(giovangRoom), kickoffTime = g.kickoffTime)
                 }
             }
         }

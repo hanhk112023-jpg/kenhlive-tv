@@ -130,7 +130,7 @@ class HeroPagerAdapter(
         h.league.text = "• ${parsed.league}"
 
         val isTrulyLive = MatchCardsAdapter.isMatchLive(g, parsed)
-        val kickoff = MatchCardsAdapter.extractKickoffTime(g.matchTitle, top.notice)
+        val kickoff = if (g.kickoffTime.isNotBlank()) g.kickoffTime else MatchCardsAdapter.extractKickoffTime(g.matchTitle, top.notice)
 
         val hasArenaTeams = parsed.host.isNotBlank() && parsed.guest.isNotBlank()
         if (hasArenaTeams) {

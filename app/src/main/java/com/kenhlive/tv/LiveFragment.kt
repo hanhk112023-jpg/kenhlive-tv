@@ -140,20 +140,29 @@ class LiveFragment : Fragment() {
             }
         }
 
+        val timeMap = allScheduleMatches.associate {
+            val key = "${it.host} vs ${it.guest}".lowercase().trim()
+            val timeStr = if (it.matchTimeMs > 0) SocoliveRepository.formatTime(it.matchTimeMs) else ""
+            key to timeStr
+        }
+
         val enrichedLiveGroups = com.kenhlive.tv.sports.SportsAggregator.enrichMatchGroups(liveGroups.map { g ->
-            if (g.hostIcon.isNotBlank() && g.guestIcon.isNotBlank()) g
+            val key = g.matchTitle.lowercase().trim()
+            val found = iconMap[key] ?: iconMap.entries.firstOrNull { (k, _) ->
+                k in key || key in k
+            }?.value
+            val timeFound = if (g.kickoffTime.isNotBlank()) g.kickoffTime
             else {
-                val key = g.matchTitle.lowercase().trim()
-                val found = iconMap[key] ?: iconMap.entries.firstOrNull { (k, _) ->
-                    k in key || key in k
-                }?.value
-                if (found != null) {
-                    g.copy(hostIcon = found.first, guestIcon = found.second)
-                } else g
+                timeMap[key] ?: timeMap.entries.firstOrNull { (k, _) -> k in key || key in k }?.value ?: MatchCardsAdapter.extractKickoffTime(g.matchTitle, g.top.notice)
             }
+            g.copy(
+                hostIcon = found?.first ?: g.hostIcon,
+                guestIcon = found?.second ?: g.guestIcon,
+                kickoffTime = timeFound
+            )
         })
 
-        val baseCategories = listOf("Tất cả", "Bóng đá", "Bóng rổ", "ColaTV", "Gà Vàng 33", "Giờ Vàng")
+        val baseCategories = listOf("Tất cả", "Socolive", "ColaTV", "Gà Vàng 33", "Giờ Vàng", "Bóng đá", "Bóng rổ")
         val activeLeagues = enrichedLiveGroups.map { it.league }
             .filter { it.isNotBlank() && it !in baseCategories }
             .distinct()
@@ -207,12 +216,52 @@ class LiveFragment : Fragment() {
                     items.add(0, SportAdapter.ChipsItem(leagueLabels, selLeague))
                 }
 
-                // 2. Dòng 1: TÂM ĐIỂM TRỰC TIẾP (Toàn bộ trận đang diễn ra của mọi đài, sắp xếp theo người xem)
-                if (allLiveMatches.isNotEmpty()) {
-                    items.add(SportAdapter.RailItem(allLiveMatches, emptyList(), title = "🔥 Trận Đấu Đang Trực Tiếp"))
+                // 2. TÁCH BIỆT THÀNH 4 HÀNG RIÊNG CHO 4 NHÀ ĐÀI (KHÔNG GỘP CHUNG 1 HÀNG)
+                // Hàng 1: Socolive TV
+                val sMatches = socoGroups.sortedWith(
+                    compareByDescending<LiveMatchGroup> { MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }
+                        .thenByDescending { it.totalViewers }
+                )
+                if (sMatches.isNotEmpty()) {
+                    val sHasLive = sMatches.any { MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }
+                    val sTitle = if (sHasLive) "🟢 Socolive TV · Trực Tiếp & Lịch Đấu" else "🟢 Socolive TV · Lịch Thi Đấu"
+                    items.add(SportAdapter.RailItem(sMatches, emptyList(), title = sTitle))
                 }
 
-                // 3. Dòng 2: LỊCH THI ĐẤU & SẮP LÊN SÓNG HÔM NAY (Phân biệt rõ ràng với trận đang live)
+                // Hàng 2: ColaTV
+                val cMatches = colaGroups.sortedWith(
+                    compareByDescending<LiveMatchGroup> { MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }
+                        .thenByDescending { it.totalViewers }
+                )
+                if (cMatches.isNotEmpty()) {
+                    val cHasLive = cMatches.any { MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }
+                    val cTitle = if (cHasLive) "🔴 ColaTV · Trực Tiếp & Lịch Đấu" else "🔴 ColaTV · Lịch Thi Đấu"
+                    items.add(SportAdapter.RailItem(cMatches, emptyList(), title = cTitle))
+                }
+
+                // Hàng 3: Gà Vàng 33
+                val gMatches = gavang33Groups.sortedWith(
+                    compareByDescending<LiveMatchGroup> { MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }
+                        .thenByDescending { it.totalViewers }
+                )
+                if (gMatches.isNotEmpty()) {
+                    val gHasLive = gMatches.any { MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }
+                    val gTitle = if (gHasLive) "🟡 Gà Vàng 33 · Trực Tiếp & Lịch Đấu" else "🟡 Gà Vàng 33 · Lịch Thi Đấu"
+                    items.add(SportAdapter.RailItem(gMatches, emptyList(), title = gTitle))
+                }
+
+                // Hàng 4: Giờ Vàng TV
+                val gvMatches = giovangGroups.sortedWith(
+                    compareByDescending<LiveMatchGroup> { MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }
+                        .thenByDescending { it.totalViewers }
+                )
+                if (gvMatches.isNotEmpty()) {
+                    val gvHasLive = gvMatches.any { MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }
+                    val gvTitle = if (gvHasLive) "🔵 Giờ Vàng TV · Trực Tiếp & Lịch Đấu" else "🔵 Giờ Vàng TV · Lịch Thi Đấu"
+                    items.add(SportAdapter.RailItem(gvMatches, emptyList(), title = gvTitle))
+                }
+
+                // 3. Dòng 5: LỊCH THI ĐẤU & SẮP LÊN SÓNG HÔM NAY (Phân biệt rõ ràng với trận đang live)
                 if (allUpcomingMatches.isNotEmpty() || upFiltered.isNotEmpty()) {
                     items.add(SportAdapter.RailItem(allUpcomingMatches, upFiltered, title = "⏳ Lịch Thi Đấu & Sắp Lên Sóng Hôm Nay"))
                 }
@@ -241,6 +290,14 @@ class LiveFragment : Fragment() {
                 if (otherSports.isNotEmpty()) {
                     items.add(SportAdapter.RailItem(otherSports, emptyList(), title = "🏀 Bóng Rổ NBA & Môn Thể Thao Khác"))
                 }
+            }
+            leagueLabels[selLeague] == "Socolive" -> {
+                val sLive = socoGroups.filter { MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }.sortedByDescending { it.totalViewers }
+                val sUp = socoGroups.filter { !MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }
+                items.add(SportAdapter.HeroItem(socoGroups))
+                if (!DeviceMode.isTv) items.add(0, SportAdapter.ChipsItem(leagueLabels, selLeague))
+                if (sLive.isNotEmpty()) items.add(SportAdapter.RailItem(sLive, emptyList(), title = "🔥 Đang Trực Tiếp · Socolive"))
+                if (sUp.isNotEmpty() || upFiltered.isNotEmpty()) items.add(SportAdapter.RailItem(sUp, upFiltered, title = "⏳ Sắp Lên Sóng · Socolive"))
             }
             leagueLabels[selLeague] == "ColaTV" -> {
                 val cLive = colaGroups.filter { MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }.sortedByDescending { it.totalViewers }
@@ -457,15 +514,17 @@ class LiveFragment : Fragment() {
             return
         }
         val matchTitle = "${m.host} vs ${m.guest}"
+        val kickoffTime = if (m.matchTimeMs > 0) SocoliveRepository.formatTime(m.matchTimeMs) else ""
         val rooms = live.map { a ->
             LiveRoom(
                 roomNum = a.roomNum, blvName = a.nickName, avatar = a.icon,
                 viewers = 0, matchTitle = matchTitle, league = m.league,
-                category = m.category, hostIcon = m.hostIcon, guestIcon = m.guestIcon
+                category = m.category, hostIcon = m.hostIcon, guestIcon = m.guestIcon,
+                kickoffTime = kickoffTime
             )
         }
         val group = com.kenhlive.tv.sports.SportsAggregator.enrichMatchGroup(
-            LiveMatchGroup(league = m.league, matchTitle = matchTitle, rooms = rooms, category = m.category, hostIcon = m.hostIcon, guestIcon = m.guestIcon)
+            LiveMatchGroup(league = m.league, matchTitle = matchTitle, rooms = rooms, category = m.category, hostIcon = m.hostIcon, guestIcon = m.guestIcon, kickoffTime = kickoffTime)
         )
         dialog?.dismiss()
         dialog = RoomPickerDialog.show(requireContext(), group, onPickRoom = { r -> openRoom(r) })

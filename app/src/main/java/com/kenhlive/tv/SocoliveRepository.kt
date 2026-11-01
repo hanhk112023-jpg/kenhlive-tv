@@ -28,7 +28,8 @@ data class LiveRoom(
     val focusCount: Int = 0,  // follower count
     val notice: String = "",  // commentator announcement/notice
     val hostIcon: String = "",// cờ/logo đội nhà
-    val guestIcon: String = ""// cờ/logo đội khách
+    val guestIcon: String = "",// cờ/logo đội khách
+    val kickoffTime: String = "" // Giờ thi đấu (VD: "19:30", "21:00")
 )
 
 /** Gộp nhiều phòng cùng 1 trận (cùng giải + tên trận). */
@@ -38,7 +39,8 @@ data class LiveMatchGroup(
     val rooms: List<LiveRoom>,  // sorted by viewers desc
     val category: String = rooms.firstOrNull()?.category ?: "",
     val hostIcon: String = rooms.firstOrNull()?.hostIcon ?: "",
-    val guestIcon: String = rooms.firstOrNull()?.guestIcon ?: ""
+    val guestIcon: String = rooms.firstOrNull()?.guestIcon ?: "",
+    val kickoffTime: String = rooms.firstOrNull { it.kickoffTime.isNotBlank() }?.kickoffTime ?: ""
 ) {
     val totalViewers: Int get() = rooms.sumOf { it.viewers }
     val top: LiveRoom get() = rooms.first()
