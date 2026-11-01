@@ -142,10 +142,10 @@ BẢN ĐỒ TOÀN BỘ 6 TAB VÀ CÁC MÀN HÌNH CỦA APP KENHLIVE TV:
 - [Tab 1 - Lịch đấu (Schedule)]: Lịch thi đấu theo ngày (Hôm nay, Ngày mai, Giải đấu). Trận > 180p có badge KẾT THÚC. Chạm trận đấu (onFixtureTap) mở RoomPicker hoặc thông báo nếu chưa có phòng.
 - [Tab 2 - Truyền hình (IPTV)]: Danh mục Kênh Yêu Thích (bấm giữ OK để lưu), TV360, VTV, HTV. Hero Preview góc trên. Lưới kênh. OSD gõ số trực tiếp từ remote (0-9). Phím tắt đổi kênh CHANNEL_UP/DOWN, PAGE_UP/DOWN. Phím tắt Aspect Ratio (A/Đỏ) & Audio Boost (B/Vàng).
 - [Tab 3 - Tìm kiếm (Search)]: Ô nhập tìm kiếm (searchInput), gõ từ khóa không dấu, chuyển D-pad xuống danh sách kết quả (resultList), nút xóa nhanh clearBtn.
-- [Tab 4 - Cài đặt (Settings)]: Thông tin phiên bản, kiểm tra cập nhật, liên hệ & báo lỗi Telegram (@T990512S) có mã QR ngoại tuyến, cài đặt video và audio.
+- [Tab 4 - Cài đặt (Settings)]: Thông tin phiên bản, kiểm tra cập nhật, liên hệ & báo lỗi Telegram (@kenhlivetv) có mã QR ngoại tuyến, cài đặt video và audio.
 - [Tab 5 - Kho Phim (KKPhim & NguonC)]: Apple Pills thể loại & quốc gia, nút XEM NGAY (btnHeroPlay), nút CHỌN TẬP (btnHeroEpisodes), nút LƯU PHIM (btnHeroFavorite), hộp thoại EpisodePickerDialog hỗ trợ chọn Server (Vietsub/Thuyết Minh) và phân nhóm 30 tập. Trình phát phim hỗ trợ HLS 4K native ExoPlayer, tua D-pad Trái/Phải (-15s / +15s) và tự động lưu/tiếp tục xem (Resume Playback).
 - [Sidebar Rail]: Mở bằng DPAD_LEFT từ mép trái, duyệt dọc qua 6 tab, đóng bằng DPAD_RIGHT hoặc BACK.
-- [PlayerActivity]: Trình phát video Live & VOD, phím MENU mở Server Picker, phím A/Đỏ xoay vòng tỉ lệ khung hình (Fit/Fill/Zoom/Fixed), phím B/Vàng tăng âm lượng, gõ số kênh hiện OSD nhảy kênh ngay khi bấm OK. Khung báo lỗi có nút Báo Lỗi Telegram @T990512S.
+- [PlayerActivity]: Trình phát video Live & VOD, phím MENU mở Server Picker, phím A/Đỏ xoay vòng tỉ lệ khung hình (Fit/Fill/Zoom/Fixed), phím B/Vàng tăng âm lượng, gõ số kênh hiện OSD nhảy kênh ngay khi bấm OK. Khung báo lỗi có nút Báo Lỗi Telegram @kenhlivetv.
 - [Home Hub Portal (Tab 6)]: Cổng chọn 3 card lớn (THỂ THAO, TRUYỀN HÌNH, PHIM TRUYỆN) tích hợp Logo Canva 3D (Bóng Đá & Phim Ảnh), kèm 4 nút tiện ích thanh đáy (Cài đặt, Báo lỗi Telegram, Lịch thi đấu, Tìm kiếm). Mỗi mục khi vào sẽ có GIAO DIỆN RIÊNG BIỆT toàn màn hình, không bị lẫn các tab của mục khác.
 - [Thoát mục về Menu Chọn]: Khi đang ở bất kỳ mục nào (current != TAB_HUB), nhấn BACK 2 lần liên tiếp trong 2 giây sẽ thoát mục quay lại Menu Chọn (Home Hub). Nhấn BACK tại Menu Chọn sẽ hiện dialog xác nhận thoát app.
 
@@ -780,19 +780,19 @@ Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn b�
             elif step == 3:
                 action_type = "KEY"
                 action_param = "DPAD_DOWN"
-                thought = "Di chuyển xuống mục 'Liên hệ & Báo lỗi' Telegram @T990512S"
+                thought = "Di chuyển xuống mục 'Liên hệ & Báo lỗi' Telegram @kenhlivetv"
             elif step == 4:
                 action_type = "KEY"
                 action_param = "DPAD_DOWN"
-                thought = "Di chuyển tiếp xuống mục 'Liên hệ & Báo lỗi' Telegram @T990512S"
+                thought = "Di chuyển tiếp xuống mục 'Liên hệ & Báo lỗi' Telegram @kenhlivetv"
             elif step == 5:
                 action_type = "KEY"
                 action_param = "DPAD_DOWN"
-                thought = "Focus vào dòng 'Liên hệ & Báo lỗi' Telegram @T990512S"
+                thought = "Focus vào dòng 'Liên hệ & Báo lỗi' Telegram @kenhlivetv"
             elif step == 6:
                 action_type = "KEY"
                 action_param = "ENTER"
-                thought = "Bấm OK mở hộp thoại FeedbackDialog kiểm tra mã QR và liên kết t.me/T990512S"
+                thought = "Bấm OK mở hộp thoại FeedbackDialog kiểm tra mã QR và liên kết t.me/kenhlivetv"
             elif step == 7:
                 action_type = "KEY"
                 action_param = "BACK"
@@ -800,7 +800,7 @@ Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn b�
             else:
                 action_type = "COMPLETE_MISSION"
                 action_param = ""
-                thought = "Đã kiểm tra hoàn tất Tab Tìm kiếm và hộp thoại Báo lỗi Telegram @T990512S"
+                thought = "Đã kiểm tra hoàn tất Tab Tìm kiếm và hộp thoại Báo lỗi Telegram @kenhlivetv"
 
         elif m_id == "MISSION_DPAD_CHAOS_STRESS_AND_RECOVERY":
             # Nhồi phím ngẫu nhiên 4 hướng để stress-test
@@ -1399,8 +1399,8 @@ class AutonomousQASuite:
             ),
             QAMission(
                 "MISSION_SEARCH_AND_SETTINGS_FEEDBACK",
-                "Tìm Kiếm Thông Minh & Cài Đặt (Hộp Thoại Báo Lỗi Telegram QR @T990512S)",
-                "Duyệt Tab Tìm kiếm (Tab 3), nhập từ khóa; chuyển sang Tab Cài đặt (Tab 4), mở mục 'Liên hệ & Báo lỗi', kiểm tra FeedbackDialog hiển thị mã QR Telegram và thông tin @T990512S.",
+                "Tìm Kiếm Thông Minh & Cài Đặt (Hộp Thoại Báo Lỗi Telegram QR @kenhlivetv)",
+                "Duyệt Tab Tìm kiếm (Tab 3), nhập từ khóa; chuyển sang Tab Cài đặt (Tab 4), mở mục 'Liên hệ & Báo lỗi', kiểm tra FeedbackDialog hiển thị mã QR Telegram và thông tin @kenhlivetv.",
                 "Tìm kiếm hiển thị kết quả, FeedbackDialog mở chuẩn xác có mã QR và đóng bằng phím BACK/OK êm ái.",
                 max_steps=10
             ),

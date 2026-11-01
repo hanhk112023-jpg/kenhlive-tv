@@ -10,15 +10,14 @@ import androidx.appcompat.app.AlertDialog
 import com.kenhlive.tv.R
 
 /**
- * Bảng Thông Báo Mới & Báo Lỗi qua Telegram (@T990512S):
- * - Giới thiệu giao diện Cổng Chọn mới v7.4.0 (3 mục Thể thao, Truyền hình, Phim truyện).
- * - Thông báo sửa lỗi nguồn phát độc lập Gà Vàng, Khán Đài, ColaTV.
- * - Mã QR Telegram rõ nét để người dùng quét điện thoại báo lỗi, yêu cầu kênh.
+ * Bảng Thông Báo Mới & Nhóm Thảo Luận Telegram (@kenhlivetv):
+ * - Giới thiệu các tính năng mới và thông báo cập nhật hệ thống.
+ * - Mã QR Telegram rõ nét để người dùng quét điện thoại tham gia nhóm thảo luận, báo lỗi và yêu cầu kênh.
  */
 object FeedbackDialog {
 
-    const val TELEGRAM_URL = "https://t.me/T990512S"
-    const val TELEGRAM_HANDLE = "@T990512S"
+    const val TELEGRAM_URL = "https://t.me/kenhlivetv"
+    const val TELEGRAM_HANDLE = "@kenhlivetv"
     private const val PREF_KEY_SEEN = "seen_notice_v740"
 
     fun show(context: Context): AlertDialog {
@@ -39,7 +38,7 @@ object FeedbackDialog {
             } catch (e: Exception) {
                 Toast.makeText(
                     context,
-                    "Telegram: $TELEGRAM_HANDLE ($TELEGRAM_URL)",
+                    "Nhóm Telegram: $TELEGRAM_HANDLE ($TELEGRAM_URL)",
                     Toast.LENGTH_LONG
                 ).show()
             }

@@ -41,7 +41,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="HỖ TRỢ &amp; XỬ LÝ SỰ CỐ TRỰC TUYẾN"
+                android:text="NHÓM THẢO LUẬN &amp; HỖ TRỢ TRỰC TUYẾN"
                 android:textColor="@color/kl_brand"
                 android:textSize="11sp"
                 android:textStyle="bold"
@@ -94,7 +94,7 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Nếu bạn gặp lỗi, sự cố hoặc bất kỳ vấn đề nào trong quá trình sử dụng, vui lòng liên hệ với chúng tôi để được hỗ trợ và xử lý sớm nhất."
+                android:text="Chào mừng bạn đến với cộng đồng KenhLive TV! Vui lòng tham gia nhóm Telegram để cùng thảo luận, chia sẻ trải nghiệm, nhận lịch thi đấu nóng hổi và được hỗ trợ nhanh chóng nhất."
                 android:textColor="#FFFFFF"
                 android:textSize="14sp"
                 android:lineSpacingExtra="4dp" />
@@ -103,7 +103,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
-                android:text="Vui lòng cung cấp: mô tả lỗi, ảnh/video hoặc thông tin liên quan nếu có."
+                android:text="Tại nhóm Telegram, bạn có thể: báo lỗi kênh, yêu cầu thêm giải đấu/phim truyện hoặc nhận file cập nhật mới nhất."
                 android:textColor="@color/kl_brand"
                 android:textSize="13.5sp"
                 android:textStyle="bold"
@@ -113,7 +113,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="14dp"
-                android:text="Cảm ơn bạn đã thông báo và đóng góp để hệ thống ngày càng hoàn thiện."
+                android:text="Cảm ơn bạn đã luôn đồng hành và ủng hộ KenhLive TV."
                 android:textColor="#CBD5E1"
                 android:textSize="13sp"
                 android:lineSpacingExtra="4dp" />
@@ -142,7 +142,7 @@
                     android:layout_height="145dp"
                     android:src="@drawable/qr_telegram_feedback"
                     android:scaleType="fitCenter"
-                    android:contentDescription="Mã QR Telegram Báo Lỗi" />
+                    android:contentDescription="Mã QR Nhóm Telegram KenhLive TV" />
             </LinearLayout>
 
             <TextView
@@ -151,7 +151,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:text="Telegram: @T990512S"
+                android:text="Nhóm Telegram: @kenhlivetv"
                 android:textColor="@color/kl_brand"
                 android:textSize="13.5sp"
                 android:textStyle="bold" />
@@ -162,7 +162,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:text="https://t.me/T990512S"
+                android:text="https://t.me/kenhlivetv"
                 android:textColor="#94A3B8"
                 android:textSize="11sp" />
 
@@ -170,7 +170,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
-                android:text="Quét mã QR bằng điện thoại"
+                android:text="Quét mã QR để vào nhóm"
                 android:textColor="#64748B"
                 android:textSize="10.5sp" />
         </LinearLayout>
@@ -204,7 +204,7 @@
             android:layout_height="44dp"
             android:layout_marginLeft="16dp"
             android:background="@drawable/bg_button_ghost"
-            android:text="MỞ TELEGRAM"
+            android:text="VÀO NHÓM TELEGRAM"
             android:textColor="#CBD5E1"
             android:textSize="13sp"
             android:textStyle="bold"
