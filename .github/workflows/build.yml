@@ -90,3 +90,32 @@ jobs:
           generate_release_notes: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Send APK & Update to Telegram
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          python3 -c "
+          import os, subprocess
+          token = os.environ.get('TELEGRAM_BOT_TOKEN', '').strip()
+          chat_id = os.environ.get('TELEGRAM_CHAT_ID', '').strip() or '@kenhlivetv'
+          if not token:
+              print('TELEGRAM_BOT_TOKEN not configured yet in GitHub Secrets, skipping Telegram broadcast.')
+              exit(0)
+          version = '${{ github.ref_name }}'
+          apk_file = f'KenhLive-{version}.apk'
+          if not os.path.exists(apk_file):
+              apk_file = 'app/build/outputs/apk/release/app-release.apk'
+          caption = f'🚀 <b>KenhLive TV {version} Đã Sẵn Sàng!</b>\n\n• Tự động cập nhật trực tiếp trên TV: <b>Cài đặt ➔ Kiểm tra cập nhật</b>\n• Link tải trực tiếp: https://kenhlive-dl.htuananh153.workers.dev/apk'
+          subprocess.run([
+              'curl', '-s', '-S',
+              '-F', f'chat_id={chat_id}',
+              '-F', 'parse_mode=HTML',
+              '-F', f'caption={caption}',
+              '-F', f'document=@{apk_file}',
+              f'https://api.telegram.org/bot{token}/sendDocument'
+          ])
+          print('Successfully sent APK broadcast to Telegram!')
+          "
