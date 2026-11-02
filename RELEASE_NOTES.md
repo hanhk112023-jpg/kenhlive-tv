@@ -1,3 +1,22 @@
+# 🚀 KENHLIVE v7.8.0 (Build 143) — CHUẨN HOÁ THẺ TRẬN ĐẤU ĐA NGUỒN (TỈ SỐ THỰC, ĐỒNG HỒ TRẬN, GIỜ ĐÁ & LOGO CLB HD)
+
+### ⚽ 1. Chuẩn Hoá Thẻ Trận Đấu & Tỉ Số Thời Gian Thực (Live Score & Minute Clock)
+- **Tỉ số thực tế 100%**: Chỉ hiển thị tỉ số khi trận đấu đang thực sự diễn ra (`LIVE`), loại bỏ hoàn toàn hiện tượng hiển thị tỉ số ảo `0 : 0` vàng neon đối với các trận sắp đá.
+- **Đồng hồ phút thi đấu thực tế**: Tích hợp trường `matchNormalizedTime` từ Gà Vàng 33 & ColaTV (`● 58'`, `● HT`, `● 90+2'`) hiển thị sinh động trên góc thẻ và huy hiệu thời gian.
+- **Phân định LIVE vs SẮP ĐÁ chuẩn xác tuyệt đối**: Chuyển đổi toàn bộ sang so sánh mốc Unix Timestamp epoch kết hợp trạng thái API của cả 4 nguồn (`Socolive`, `ColaTV`, `Gà Vàng 33`, `Giờ Vàng TV`), sửa dứt điểm lỗi lệch múi giờ qua nửa đêm.
+
+### 🛡️ 2. Đồng Bộ Logo Đội Bóng Đa Nguồn (Cross-Enrichment Team Logos)
+- **Cung cấp logo chính thức**: Đăng ký và nạp toàn bộ logo PNG sắc nét từ CDN `img.cltvap.cc` và ESPN CDN vào `TeamLogoRegistry`.
+- **Làm giàu dữ liệu chéo cho Socolive**: Tự động nhận diện tên hai đội bóng và đắp logo chính thức, giờ đá và tỉ số trực tiếp từ ColaTV / Gà Vàng sang các phòng bình luận tiếng Việt của Socolive (BLV Tomia, Enzo, Boss...).
+- **Cân đối thẻ trận đấu**: Logo đội nhà bên trái, logo đội khách bên phải đối xứng, viền mờ cao cấp chuẩn Apple Leanback.
+
+### 🕒 3. Hiển Thị Giờ Thi Đấu Thông Minh (Smart Kickoff Time)
+- Trận đá trong ngày: Hiển thị định dạng giờ `HH:mm` (VD: `19:30`).
+- Trận đá ngày mai / ngày kế tiếp: Tự động gắn kèm nhãn ngày `19:30 · Ngày mai` hoặc `19:30 · 03/11`.
+- Lọc sạch tiền tố giải đấu (`Tường thuật: `, `ENG PR - ` ➔ `Ngoại Hạng Anh`).
+
+---
+
 # 🚀 KENHLIVE v7.7.9 (Build 142) — TÁCH 4 HÀNG THỂ THAO RIÊNG BIỆT, HIỂN THỊ THỜI GIAN ĐÁ & NHÓM HỖ TRỢ TELEGRAM
 
 ### ⚽ 1. Tách Biệt 4 Hàng Thể Thao Độc Lập Cho 4 Nhà Đài (4 Dedicated Sports Rails)
