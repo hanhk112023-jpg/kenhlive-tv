@@ -59,6 +59,11 @@ class MatchCardsAdapter(
         }
 
         fun isMatchLive(g: LiveMatchGroup, parsed: DataNormalizer.ParsedMatch): Boolean {
+            // 1. Trạng thái từ API chính thức (ColaTV, Gà Vàng 33, Giờ Vàng TV)
+            if (g.isLiveGame != null) {
+                return g.isLiveGame == true
+            }
+
             val title = (g.matchTitle + " " + g.top.notice).lowercase(Locale.ROOT)
             if (title.contains("[sắp đá]") || title.contains("[sắp diễn ra]") ||
                 title.contains("[chưa đá]") || title.contains("[sắp]") ||
@@ -66,16 +71,40 @@ class MatchCardsAdapter(
                 title.contains("chưa bắt đầu") || title.contains("chưa đến giờ")) {
                 return false
             }
-            if (parsed.hostScore != null && parsed.guestScore != null) {
+
+            val effectiveHostScore = g.hostScore ?: parsed.hostScore
+            val effectiveGuestScore = g.guestScore ?: parsed.guestScore
+            if (effectiveHostScore != null && effectiveGuestScore != null) {
                 return true
             }
+
             if (title.contains("[live]") || title.contains("[trực tiếp]") || title.contains("[đang đá]")) {
                 return true
             }
+
+            // 2. Kiểm tra theo mốc thời gian đá chuẩn (Epoch Timestamp)
+            if (g.matchTimeMs > 0L) {
+                val now = System.currentTimeMillis()
+                val ms = if (g.matchTimeMs in 1..100_000_000_000L) g.matchTimeMs * 1000L else g.matchTimeMs
+                if (ms > now + 10 * 60_000L) {
+                    return false
+                }
+                if (ms in (now - 140 * 60_000L)..(now + 10 * 60_000L)) {
+                    return true
+                }
+                if (now > ms + 140 * 60_000L) {
+                    return false
+                }
+            }
+
             val kickoff = g.kickoffTime.ifBlank { extractKickoffTime(g.matchTitle, g.top.notice) }
-            if (kickoff.isNotBlank() && parsed.hostScore == null) {
+            if (kickoff.isNotBlank() && effectiveHostScore == null) {
+                if (kickoff.contains("Ngày mai") || kickoff.contains("/")) {
+                    return false
+                }
                 try {
-                    val parts = kickoff.split(":")
+                    val timePart = kickoff.split(" ")[0].trim()
+                    val parts = timePart.split(":")
                     if (parts.size == 2) {
                         val kh = parts[0].toIntOrNull() ?: 0
                         val km = parts[1].toIntOrNull() ?: 0
@@ -92,7 +121,7 @@ class MatchCardsAdapter(
                 if (g.totalViewers < 25) return false
             }
             val timeRegex = Regex("""^\s*(\d{1,2}):(\d{2})""")
-            if (timeRegex.containsMatchIn(g.matchTitle.trim()) && parsed.hostScore == null) {
+            if (timeRegex.containsMatchIn(g.matchTitle.trim()) && effectiveHostScore == null) {
                 if (g.totalViewers < 25) return false
             }
             return true
@@ -207,30 +236,36 @@ class MatchCardsAdapter(
         // 2. Phân biệt rõ Trực Tiếp (LIVE) và Sắp Diễn Ra (UPCOMING) kèm giờ thi đấu
         val isTrulyLive = isMatchLive(g, parsed)
         val kickoff = if (g.kickoffTime.isNotBlank()) g.kickoffTime else extractKickoffTime(g.matchTitle, g.top.notice)
-
-        if (h.timeBadge != null) {
-            if (kickoff.isNotBlank()) {
-                h.timeBadge.text = kickoff
-                h.timeBadge.visibility = View.VISIBLE
-            } else {
-                h.timeBadge.visibility = View.GONE
-            }
-        }
+        val effectiveHostScore = g.hostScore ?: parsed.hostScore
+        val effectiveGuestScore = g.guestScore ?: parsed.guestScore
 
         if (isTrulyLive) {
             h.liveBadge?.visibility = View.VISIBLE
-            h.liveBadge?.text = "● LIVE"
+            if (g.liveClock.isNotBlank()) {
+                h.liveBadge?.text = "● ${g.liveClock}"
+            } else {
+                h.liveBadge?.text = "● LIVE"
+            }
             h.liveBadge?.setBackgroundResource(R.drawable.bg_badge_live_red)
             h.liveBadge?.setTextColor(android.graphics.Color.WHITE)
 
-            if (parsed.hostScore != null && parsed.guestScore != null) {
+            if (effectiveHostScore != null && effectiveGuestScore != null) {
                 h.score?.setBackgroundResource(R.drawable.bg_score_pill_live)
                 h.score?.setTextColor(android.graphics.Color.parseColor("#FFD700")) // Vàng Neon rực rỡ
-                h.score?.text = "${parsed.hostScore} : ${parsed.guestScore}"
+                h.score?.text = "$effectiveHostScore : $effectiveGuestScore"
             } else {
                 h.score?.setBackgroundResource(R.drawable.bg_score_pill)
                 h.score?.setTextColor(android.graphics.Color.parseColor("#94A3B8")) // Xám Bạc
                 h.score?.text = "VS"
+            }
+
+            if (h.timeBadge != null) {
+                if (g.liveClock.isNotBlank()) {
+                    h.timeBadge.text = g.liveClock
+                    h.timeBadge.visibility = View.VISIBLE
+                } else {
+                    h.timeBadge.visibility = View.GONE
+                }
             }
         } else {
             h.liveBadge?.visibility = View.VISIBLE
@@ -241,11 +276,25 @@ class MatchCardsAdapter(
             h.score?.setBackgroundResource(R.drawable.bg_score_pill)
             h.score?.setTextColor(android.graphics.Color.parseColor("#94A3B8"))
             h.score?.text = if (kickoff.isNotBlank()) kickoff else "VS"
+
+            if (h.timeBadge != null) {
+                if (kickoff.isNotBlank()) {
+                    h.timeBadge.text = kickoff
+                    h.timeBadge.visibility = View.VISIBLE
+                } else {
+                    h.timeBadge.visibility = View.GONE
+                }
+            }
         }
 
         // 3. Logo 2 đội bóng cân đối đối xứng 100%
+        val teamA = if (parsed.host.isNotBlank()) parsed.host else g.matchTitle
+        val teamB = parsed.guest
+        h.host.text = teamA
+        h.guest.text = teamB
+
         h.hostIcon?.visibility = View.VISIBLE
-        val hostLogo = if (g.hostIcon.isNotBlank()) g.hostIcon else com.kenhlive.tv.sports.TeamLogoRegistry.findLogo(parsed.host).orEmpty()
+        val hostLogo = if (g.hostIcon.isNotBlank()) g.hostIcon else com.kenhlive.tv.sports.TeamLogoRegistry.findLogo(teamA).orEmpty()
         if (hostLogo.isNotBlank()) {
             h.hostIcon?.load(hostLogo) {
                 crossfade(false)
@@ -257,7 +306,7 @@ class MatchCardsAdapter(
         }
 
         h.guestIcon?.visibility = View.VISIBLE
-        val guestLogo = if (g.guestIcon.isNotBlank()) g.guestIcon else com.kenhlive.tv.sports.TeamLogoRegistry.findLogo(parsed.guest).orEmpty()
+        val guestLogo = if (g.guestIcon.isNotBlank()) g.guestIcon else com.kenhlive.tv.sports.TeamLogoRegistry.findLogo(teamB).orEmpty()
         if (guestLogo.isNotBlank()) {
             h.guestIcon?.load(guestLogo) {
                 crossfade(false)

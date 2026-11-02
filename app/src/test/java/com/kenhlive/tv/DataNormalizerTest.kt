@@ -114,4 +114,24 @@ class DataNormalizerTest {
         assertEquals("02:45", MatchCardsAdapter.extractKickoffTime("02:45 Real Madrid vs AC Milan", ""))
         assertEquals("", MatchCardsAdapter.extractKickoffTime("Hà Nội vs HAGL", "Đang trực tiếp"))
     }
+
+    @Test
+    fun testAdvancedLeagueAndNoiseStripping() {
+        val parsed = DataNormalizer.parseMatch("Tường thuật: ENG PR - Brentford vs Nottingham Forest")
+        assertEquals("Ngoại Hạng Anh", parsed.league)
+        assertEquals("Brentford", parsed.host)
+        assertEquals("Nottingham Forest", parsed.guest)
+        assertEquals("Brentford vs Nottingham Forest", parsed.cleanTitle)
+    }
+
+    @Test
+    fun testFormatKickoffTime() {
+        val now = System.currentTimeMillis()
+        val formattedToday = DataNormalizer.formatKickoffTime(now)
+        assertTrue(Regex("""^\d{2}:\d{2}$""").matches(formattedToday))
+
+        val tomorrow = now + 24 * 3600_000L
+        val formattedTomorrow = DataNormalizer.formatKickoffTime(tomorrow)
+        assertTrue(formattedTomorrow.contains("Ngày mai"))
+    }
 }

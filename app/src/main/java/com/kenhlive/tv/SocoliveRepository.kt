@@ -29,7 +29,12 @@ data class LiveRoom(
     val notice: String = "",  // commentator announcement/notice
     val hostIcon: String = "",// cờ/logo đội nhà
     val guestIcon: String = "",// cờ/logo đội khách
-    val kickoffTime: String = "" // Giờ thi đấu (VD: "19:30", "21:00")
+    val kickoffTime: String = "", // Giờ thi đấu (VD: "19:30", "21:00")
+    val matchTimeMs: Long = 0L,  // Timestamp thời gian đá chính xác (epoch ms)
+    val isLiveGame: Boolean? = null, // Trạng thái live chính xác từ API (null = suy luận)
+    val hostScore: Int? = null,  // Tỉ số thực tế đội nhà
+    val guestScore: Int? = null, // Tỉ số thực tế đội khách
+    val liveClock: String = ""   // Đồng hồ trận đấu (VD: "58'", "HT", "90+2'")
 )
 
 /** Gộp nhiều phòng cùng 1 trận (cùng giải + tên trận). */
@@ -40,8 +45,19 @@ data class LiveMatchGroup(
     val category: String = rooms.firstOrNull()?.category ?: "",
     val hostIcon: String = rooms.firstOrNull()?.hostIcon ?: "",
     val guestIcon: String = rooms.firstOrNull()?.guestIcon ?: "",
-    val kickoffTime: String = rooms.firstOrNull { it.kickoffTime.isNotBlank() }?.kickoffTime ?: ""
+    val kickoffTime: String = rooms.firstOrNull { it.kickoffTime.isNotBlank() }?.kickoffTime ?: "",
+    val matchTimeMs: Long = rooms.firstOrNull { it.matchTimeMs > 0L }?.matchTimeMs ?: 0L,
+    val isLiveGame: Boolean? = rooms.firstOrNull { it.isLiveGame != null }?.isLiveGame,
+    val hostScore: Int? = rooms.firstOrNull { it.hostScore != null }?.hostScore,
+    val guestScore: Int? = rooms.firstOrNull { it.guestScore != null }?.guestScore,
+    val liveClock: String = rooms.firstOrNull { it.liveClock.isNotBlank() }?.liveClock ?: ""
 ) {
+    constructor(matchTitle: String, league: String, topRoom: LiveRoom, viewers: Int, count: Int) : this(
+        league = league,
+        matchTitle = matchTitle,
+        rooms = listOf(topRoom.copy(viewers = viewers))
+    )
+
     val totalViewers: Int get() = rooms.sumOf { it.viewers }
     val top: LiveRoom get() = rooms.first()
     val count: Int get() = rooms.size

@@ -18,6 +18,7 @@ object DataNormalizer {
 
     private val MARKS = "\\p{Mn}+".toRegex()
     private val NOISE_PATTERNS = listOf(
+        Regex("""^(Tường\s*thuật|Bình\s*luận|Trực\s*tiếp)\s*:\s*""", RegexOption.IGNORE_CASE),
         Regex("""\[HOT\]""", RegexOption.IGNORE_CASE),
         Regex("""\[VIP\]""", RegexOption.IGNORE_CASE),
         Regex("""\[FULL\s*HD\]""", RegexOption.IGNORE_CASE),
@@ -32,19 +33,20 @@ object DataNormalizer {
 
     // Bảng chuẩn hóa giải đấu phổ biến
     private val LEAGUE_MAPPING = listOf(
-        listOf("ngoai hang anh", "premier league", "epl") to "Ngoại Hạng Anh",
+        listOf("ngoai hang anh", "premier league", "epl", "eng pr") to "Ngoại Hạng Anh",
         listOf("cup c1", "champions league", "ucl") to "Cúp C1 Châu Âu",
         listOf("cup c2", "europa league", "uel") to "Cúp C2 Châu Âu",
         listOf("cup c3", "conference league", "uecl") to "Cúp C3 Châu Âu",
-        listOf("la liga", "laliga", "vdqg tay ban nha") to "La Liga",
-        listOf("serie a", "vdqg y", "vdqg italia") to "Serie A",
-        listOf("bundesliga", "vdqg duc") to "Bundesliga",
-        listOf("ligue 1", "vdqg phap") to "Ligue 1",
+        listOf("la liga", "laliga", "vdqg tay ban nha", "esp d1") to "La Liga",
+        listOf("serie a", "vdqg y", "vdqg italia", "ita d1") to "Serie A",
+        listOf("bundesliga", "vdqg duc", "ger d1") to "Bundesliga",
+        listOf("ligue 1", "vdqg phap", "fra d1") to "Ligue 1",
         listOf("v-league", "vleague", "v league", "vdqg viet nam") to "V-League 1",
         listOf("saudi pro league", "spl", "a rap") to "Saudi Pro League",
         listOf("world cup") to "World Cup",
         listOf("euro") to "Euro",
         listOf("afc champions league", "cup c1 chau a") to "AFC Champions League",
+        listOf("mongolia premier league", "mgl d1") to "Giải VĐQG Mông Cổ",
         listOf("nba", "bong ro my") to "Bóng Rổ NBA",
         listOf("tennis", "quan vot") to "Quần Vợt",
         listOf("f1", "cong thuc 1", "formula 1") to "Công Thức 1"
@@ -138,6 +140,19 @@ object DataNormalizer {
             }
         }
 
+        // Tách giải đấu nếu có dạng "ENG PR - Brentford vs Nottingham"
+        if (text.contains(" - ") && text.contains(" vs ", ignoreCase = true)) {
+            val dashIdx = text.indexOf(" - ")
+            val vsIdx = text.indexOf(" vs ", ignoreCase = true)
+            if (vsIdx > dashIdx) {
+                val candidateLeague = text.substring(0, dashIdx).trim()
+                if (candidateLeague.isNotBlank() && (detectedLeague.isBlank() || detectedLeague == "Trực Tiếp Thể Thao")) {
+                    detectedLeague = candidateLeague
+                }
+                text = text.substring(dashIdx + 3).trim()
+            }
+        }
+
         detectedLeague = normalizeLeague(detectedLeague)
 
         // 3. Tìm tỉ số (ví dụ: Arsenal 2 - 1 Chelsea hoặc Real Madrid 0:0 Barca)
@@ -212,6 +227,36 @@ object DataNormalizer {
         if (matchTimeMs <= 0) return false
         val now = System.currentTimeMillis()
         return matchTimeMs > now
+    }
+
+    /**
+     * Định dạng giờ đá trận đấu hiển thị trên thẻ trận (VD: "19:30", "19:30 · Ngày mai", "19:30 · 04/11")
+     */
+    fun formatKickoffTime(matchTimeMs: Long): String {
+        if (matchTimeMs <= 0L) return ""
+        val ms = if (matchTimeMs in 1..100_000_000_000L) matchTimeMs * 1000L else matchTimeMs
+        val tz = TZ_VN
+        val calMatch = Calendar.getInstance(tz).apply { timeInMillis = ms }
+        val calNow = Calendar.getInstance(tz)
+
+        val timeFmt = SimpleDateFormat("HH:mm", Locale.US).apply { timeZone = tz }
+        val timeStr = timeFmt.format(Date(ms))
+
+        val isSameDay = calMatch.get(Calendar.YEAR) == calNow.get(Calendar.YEAR) &&
+                calMatch.get(Calendar.DAY_OF_YEAR) == calNow.get(Calendar.DAY_OF_YEAR)
+
+        calNow.add(Calendar.DAY_OF_YEAR, 1)
+        val isTomorrow = calMatch.get(Calendar.YEAR) == calNow.get(Calendar.YEAR) &&
+                calMatch.get(Calendar.DAY_OF_YEAR) == calNow.get(Calendar.DAY_OF_YEAR)
+
+        return when {
+            isSameDay -> timeStr
+            isTomorrow -> "$timeStr · Ngày mai"
+            else -> {
+                val dateFmt = SimpleDateFormat("dd/MM", Locale.US).apply { timeZone = tz }
+                "$timeStr · ${dateFmt.format(Date(ms))}"
+            }
+        }
     }
 
     /**

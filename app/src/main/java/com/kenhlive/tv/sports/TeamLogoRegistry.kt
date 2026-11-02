@@ -80,20 +80,137 @@ object TeamLogoRegistry {
         return null
     }
 
+    data class MatchMetadata(
+        val homeName: String,
+        val awayName: String,
+        val homeLogo: String = "",
+        val awayLogo: String = "",
+        val homeScore: Int? = null,
+        val awayScore: Int? = null,
+        val isLive: Boolean = false,
+        val matchTimeMs: Long = 0L,
+        val kickoffTime: String = "",
+        val liveClock: String = ""
+    )
+
+    private val matchMetaRegistry = ConcurrentHashMap<String, MatchMetadata>()
+
+    fun registerMatchMeta(
+        homeName: String,
+        awayName: String,
+        homeLogo: String = "",
+        awayLogo: String = "",
+        homeScore: Int? = null,
+        awayScore: Int? = null,
+        isLive: Boolean = false,
+        matchTimeMs: Long = 0L,
+        kickoffTime: String = "",
+        liveClock: String = ""
+    ) {
+        if (homeName.isBlank() || awayName.isBlank()) return
+        val key = "${simplify(homeName)}_vs_${simplify(awayName)}"
+        val meta = MatchMetadata(
+            homeName = homeName,
+            awayName = awayName,
+            homeLogo = homeLogo,
+            awayLogo = awayLogo,
+            homeScore = homeScore,
+            awayScore = awayScore,
+            isLive = isLive,
+            matchTimeMs = matchTimeMs,
+            kickoffTime = kickoffTime,
+            liveClock = liveClock
+        )
+        matchMetaRegistry[key] = meta
+        if (homeLogo.isNotBlank()) register(homeName, homeLogo)
+        if (awayLogo.isNotBlank()) register(awayName, awayLogo)
+    }
+
+    fun findMatchMeta(homeName: String, awayName: String): MatchMetadata? {
+        if (homeName.isBlank() || awayName.isBlank()) return null
+        val hSimp = simplify(homeName)
+        val aSimp = simplify(awayName)
+        val directKey = "${hSimp}_vs_${aSimp}"
+        matchMetaRegistry[directKey]?.let { return it }
+
+        for ((_, meta) in matchMetaRegistry) {
+            val metaH = simplify(meta.homeName)
+            val metaA = simplify(meta.awayName)
+            val matchH = (hSimp.isNotBlank() && metaH.isNotBlank()) && (hSimp.contains(metaH) || metaH.contains(hSimp))
+            val matchA = (aSimp.isNotBlank() && metaA.isNotBlank()) && (aSimp.contains(metaA) || metaA.contains(aSimp))
+            if (matchH && matchA) {
+                return meta
+            }
+        }
+        return null
+    }
+
     /**
-     * Tự động bổ sung logo đội nhà & đội khách nếu nhóm trận chưa có
+     * Tự động bổ sung logo đội nhà & đội khách, thời gian, tỉ số và đồng hồ trận
      */
     fun enrich(group: LiveMatchGroup): LiveMatchGroup {
         val parsed = DataNormalizer.parseMatch(group.matchTitle, group.league)
-        val hIcon = if (group.hostIcon.isNotBlank()) group.hostIcon else findLogo(parsed.host).orEmpty()
-        val gIcon = if (group.guestIcon.isNotBlank()) group.guestIcon else findLogo(parsed.guest).orEmpty()
+        val meta = findMatchMeta(parsed.host, parsed.guest)
 
-        if (hIcon == group.hostIcon && gIcon == group.guestIcon) {
-            return group
+        val hIcon = when {
+            group.hostIcon.isNotBlank() -> group.hostIcon
+            meta != null && meta.homeLogo.isNotBlank() -> meta.homeLogo
+            else -> findLogo(parsed.host).orEmpty()
         }
+        val gIcon = when {
+            group.guestIcon.isNotBlank() -> group.guestIcon
+            meta != null && meta.awayLogo.isNotBlank() -> meta.awayLogo
+            else -> findLogo(parsed.guest).orEmpty()
+        }
+
+        val matchTime = when {
+            group.matchTimeMs > 0L -> group.matchTimeMs
+            meta != null && meta.matchTimeMs > 0L -> meta.matchTimeMs
+            else -> 0L
+        }
+
+        val kickoff = when {
+            group.kickoffTime.isNotBlank() -> group.kickoffTime
+            meta != null && meta.kickoffTime.isNotBlank() -> meta.kickoffTime
+            matchTime > 0L -> DataNormalizer.formatKickoffTime(matchTime)
+            else -> ""
+        }
+
+        val isLive = when {
+            group.isLiveGame != null -> group.isLiveGame
+            meta != null -> meta.isLive
+            else -> null
+        }
+
+        val hScore = when {
+            group.hostScore != null -> group.hostScore
+            meta != null && meta.homeScore != null -> meta.homeScore
+            parsed.hostScore != null -> parsed.hostScore
+            else -> null
+        }
+
+        val gScore = when {
+            group.guestScore != null -> group.guestScore
+            meta != null && meta.awayScore != null -> meta.awayScore
+            parsed.guestScore != null -> parsed.guestScore
+            else -> null
+        }
+
+        val clock = when {
+            group.liveClock.isNotBlank() -> group.liveClock
+            meta != null && meta.liveClock.isNotBlank() -> meta.liveClock
+            else -> ""
+        }
+
         return group.copy(
             hostIcon = hIcon,
-            guestIcon = gIcon
+            guestIcon = gIcon,
+            kickoffTime = kickoff,
+            matchTimeMs = matchTime,
+            isLiveGame = isLive,
+            hostScore = hScore,
+            guestScore = gScore,
+            liveClock = clock
         )
     }
 
@@ -161,7 +278,21 @@ object TeamLogoRegistry {
             "lazio" to "111",
             "rbleipzig" to "125",
             "marseille" to "164",
-            "monaco" to "174"
+            "monaco" to "174",
+            "brentford" to "337",
+            "nottinghamforest" to "393",
+            "nottingham" to "393",
+            "brighton" to "331",
+            "westham" to "371",
+            "wolves" to "380",
+            "wolverhampton" to "380",
+            "everton" to "368",
+            "crystalpalace" to "384",
+            "fulham" to "370",
+            "bournemouth" to "349",
+            "leicester" to "375",
+            "southampton" to "376",
+            "ipswich" to "374"
         )
         for ((name, id) in espnSoccer) {
             register(name, "https://a.espncdn.com/i/teamlogos/soccer/500/$id.png")

@@ -35,10 +35,7 @@ object SportsStreamResolver {
 
     fun formatTimestampToTime(ts: Long): String {
         if (ts <= 0L) return ""
-        val ms = if (ts < 100_000_000_000L) ts * 1000L else ts
-        val sdf = SimpleDateFormat("HH:mm", Locale.US)
-        sdf.timeZone = TimeZone.getTimeZone("Asia/Ho_Chi_Minh")
-        return sdf.format(Date(ms))
+        return com.kenhlive.tv.DataNormalizer.formatKickoffTime(ts)
     }
 
     suspend fun resolveStream(roomNum: String): String? = withContext(Dispatchers.IO) {
@@ -163,12 +160,14 @@ object SportsStreamResolver {
                 val hs = m.optJSONArray("homeScores")
                 val as_ = m.optJSONArray("awayScores")
                 val rawMatchTime = m.optLong("matchTime").takeIf { it > 0 } ?: m.optLong("match_time")
+                val matchTimeMs = if (rawMatchTime in 1..100_000_000_000L) rawMatchTime * 1000L else rawMatchTime
                 val normTime = m.optString("matchNormalizedTime").trim()
-                val kickoffTime = formatTimestampToTime(rawMatchTime)
+                val kickoffTime = formatTimestampToTime(matchTimeMs)
 
-                val matchTitle = if (isLive && hs != null && as_ != null && hs.length() > 0 && as_.length() > 0) {
-                    val hScore = hs.optInt(0, 0)
-                    val aScore = as_.optInt(0, 0)
+                val hScore = if (isLive && hs != null && hs.length() > 0) hs.optInt(0, 0) else null
+                val aScore = if (isLive && as_ != null && as_.length() > 0) as_.optInt(0, 0) else null
+
+                val matchTitle = if (isLive && hScore != null && aScore != null) {
                     "$homeName $hScore - $aScore $awayName"
                 } else if (isLive) {
                     "$homeName vs $awayName"
@@ -177,6 +176,19 @@ object SportsStreamResolver {
                 }
                 val defaultLink = m.optString("defaultLink")
                 val anchors: JSONArray? = m.optJSONArray("anchorAppointmentVoList")
+
+                TeamLogoRegistry.registerMatchMeta(
+                    homeName = homeName,
+                    awayName = awayName,
+                    homeLogo = homeLogo,
+                    awayLogo = awayLogo,
+                    homeScore = hScore,
+                    awayScore = aScore,
+                    isLive = isLive,
+                    matchTimeMs = matchTimeMs,
+                    kickoffTime = kickoffTime,
+                    liveClock = normTime
+                )
 
                 val rooms = mutableListOf<LiveRoom>()
                 val gavangNotice = if (normTime.isNotBlank()) normTime else if (kickoffTime.isNotBlank()) "Đá lúc $kickoffTime · Gà Vàng 33" else if (isLive) "Kênh trực tiếp Gà Vàng 33" else "Chưa đến giờ thi đấu · Sắp diễn ra"
@@ -213,7 +225,12 @@ object SportsStreamResolver {
                                 notice = gavangNotice,
                                 hostIcon = homeLogo,
                                 guestIcon = awayLogo,
-                                kickoffTime = kickoffTime
+                                kickoffTime = kickoffTime,
+                                matchTimeMs = matchTimeMs,
+                                isLiveGame = isLive,
+                                hostScore = hScore,
+                                guestScore = aScore,
+                                liveClock = normTime
                             )
                         )
                     }
@@ -232,7 +249,12 @@ object SportsStreamResolver {
                             notice = gavangNotice,
                             hostIcon = homeLogo,
                             guestIcon = awayLogo,
-                            kickoffTime = kickoffTime
+                            kickoffTime = kickoffTime,
+                            matchTimeMs = matchTimeMs,
+                            isLiveGame = isLive,
+                            hostScore = hScore,
+                            guestScore = aScore,
+                            liveClock = normTime
                         )
                     )
                 }
@@ -248,7 +270,12 @@ object SportsStreamResolver {
                         category = "Bóng đá",
                         hostIcon = homeLogo,
                         guestIcon = awayLogo,
-                        kickoffTime = kickoffTime
+                        kickoffTime = kickoffTime,
+                        matchTimeMs = matchTimeMs,
+                        isLiveGame = isLive,
+                        hostScore = hScore,
+                        guestScore = aScore,
+                        liveClock = normTime
                     )
                     val enriched = TeamLogoRegistry.enrich(group)
                     if (isLive) {
@@ -333,12 +360,13 @@ object SportsStreamResolver {
                 val league = m.optString("competitionName").ifBlank { m.optJSONObject("competition")?.optString("name") ?: "ColaTV Thể Thao" }.trim()
 
                 val status = m.optInt("matchStatus", 0)
-                val isLive = status == 2 || m.optString("match_status") == "live"
+                val isLive = status == 2 || status == 3 || m.optString("match_status") == "live"
 
                 val hs = m.optJSONArray("homeScore")
                 val as_ = m.optJSONArray("awayScore")
                 val rawMatchTime = m.optLong("matchTime").takeIf { it > 0 } ?: m.optLong("match_time")
-                var kickoffTime = formatTimestampToTime(rawMatchTime)
+                val matchTimeMs = if (rawMatchTime in 1..100_000_000_000L) rawMatchTime * 1000L else rawMatchTime
+                var kickoffTime = formatTimestampToTime(matchTimeMs)
                 if (kickoffTime.isBlank()) {
                     val keyTimeMatch = Regex("""luc-(\d{2})(\d{2})""").find(k)
                     if (keyTimeMatch != null) {
@@ -346,16 +374,31 @@ object SportsStreamResolver {
                     }
                 }
 
+                val hScore = if (isLive && hs != null && hs.length() > 0) hs.optInt(0, 0) else null
+                val aScore = if (isLive && as_ != null && as_.length() > 0) as_.optInt(0, 0) else null
+                val liveClock = if (status == 3) "HT" else ""
+
                 // Bóc tách tỉ số real-time nếu trận đấu đang diễn ra hoặc đã có bàn thắng
-                val matchTitle = if (isLive && hs != null && as_ != null && hs.length() > 0 && as_.length() > 0) {
-                    val hScore = hs.optInt(0, 0)
-                    val aScore = as_.optInt(0, 0)
+                val matchTitle = if (isLive && hScore != null && aScore != null) {
                     "$hName $hScore - $aScore $aName"
                 } else if (isLive) {
                     "$hName vs $aName"
                 } else {
                     "[SẮP ĐÁ] $hName vs $aName"
                 }
+
+                TeamLogoRegistry.registerMatchMeta(
+                    homeName = hName,
+                    awayName = aName,
+                    homeLogo = hLogo,
+                    awayLogo = aLogo,
+                    homeScore = hScore,
+                    awayScore = aScore,
+                    isLive = isLive,
+                    matchTimeMs = matchTimeMs,
+                    kickoffTime = kickoffTime,
+                    liveClock = liveClock
+                )
 
                 val anchors = m.optJSONArray("anchorAppointmentVoList")
                 val rooms = mutableListOf<LiveRoom>()
@@ -397,7 +440,12 @@ object SportsStreamResolver {
                                     notice = colaNotice,
                                     hostIcon = hLogo,
                                     guestIcon = aLogo,
-                                    kickoffTime = kickoffTime
+                                    kickoffTime = kickoffTime,
+                                    matchTimeMs = matchTimeMs,
+                                    isLiveGame = isLive,
+                                    hostScore = hScore,
+                                    guestScore = aScore,
+                                    liveClock = liveClock
                                 )
                             )
                         }
@@ -422,7 +470,12 @@ object SportsStreamResolver {
                                 notice = colaNotice,
                                 hostIcon = hLogo,
                                 guestIcon = aLogo,
-                                kickoffTime = kickoffTime
+                                kickoffTime = kickoffTime,
+                                matchTimeMs = matchTimeMs,
+                                isLiveGame = isLive,
+                                hostScore = hScore,
+                                guestScore = aScore,
+                                liveClock = liveClock
                             )
                         )
                     }
@@ -439,7 +492,12 @@ object SportsStreamResolver {
                         category = "Bóng đá",
                         hostIcon = hLogo,
                         guestIcon = aLogo,
-                        kickoffTime = kickoffTime
+                        kickoffTime = kickoffTime,
+                        matchTimeMs = matchTimeMs,
+                        isLiveGame = isLive,
+                        hostScore = hScore,
+                        guestScore = aScore,
+                        liveClock = liveClock
                     )
                     val enriched = TeamLogoRegistry.enrich(group)
                     if (isLive) {
@@ -608,8 +666,26 @@ object SportsStreamResolver {
 
                 val statusCode = m.optString("status_code", "").uppercase()
                 val isLive = statusCode == "LIVE" || m.optString("status").contains("diễn ra", ignoreCase = true)
-                val rawTime = m.optString("time").ifBlank { m.optString("time_start") }.trim()
-                val kickoffTime = if (rawTime.length >= 5 && rawTime.contains(":")) rawTime.substring(0, 5) else ""
+                val timeStart = m.optLong("time_start")
+                val matchTimeMs = if (timeStart in 1..100_000_000_000L) timeStart * 1000L else timeStart
+                val kickoffTime = if (matchTimeMs > 0L) formatTimestampToTime(matchTimeMs) else {
+                    val rawTime = m.optString("time").trim()
+                    if (rawTime.length >= 5 && rawTime.contains(":")) rawTime.substring(0, 5) else ""
+                }
+                val liveMinute = m.optString("live_time").trim()
+
+                TeamLogoRegistry.registerMatchMeta(
+                    homeName = homeName,
+                    awayName = awayName,
+                    homeLogo = homeLogo,
+                    awayLogo = awayLogo,
+                    homeScore = hScore,
+                    awayScore = aScore,
+                    isLive = isLive,
+                    matchTimeMs = matchTimeMs,
+                    kickoffTime = kickoffTime,
+                    liveClock = liveMinute
+                )
 
                 val matchTitle = if (isLive && hScore != null && aScore != null) {
                     "$homeName $hScore - $aScore $awayName"
@@ -647,7 +723,12 @@ object SportsStreamResolver {
                     notice = if (kickoffTime.isNotBlank()) "Đá lúc $kickoffTime · Giờ Vàng TV" else "Kênh trực tiếp Giờ Vàng TV · Hạ tầng VCDN Cloud",
                     hostIcon = homeLogo,
                     guestIcon = awayLogo,
-                    kickoffTime = kickoffTime
+                    kickoffTime = kickoffTime,
+                    matchTimeMs = matchTimeMs,
+                    isLiveGame = isLive,
+                    hostScore = hScore,
+                    guestScore = aScore,
+                    liveClock = liveMinute
                 )
 
                 if (homeLogo.isNotBlank()) TeamLogoRegistry.register(homeName, homeLogo)
@@ -660,7 +741,12 @@ object SportsStreamResolver {
                     category = cat,
                     hostIcon = homeLogo,
                     guestIcon = awayLogo,
-                    kickoffTime = kickoffTime
+                    kickoffTime = kickoffTime,
+                    matchTimeMs = matchTimeMs,
+                    isLiveGame = isLive,
+                    hostScore = hScore,
+                    guestScore = aScore,
+                    liveClock = liveMinute
                 )
                 groups.add(TeamLogoRegistry.enrich(grp))
             }
