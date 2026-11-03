@@ -72,33 +72,52 @@ jobs:
           sudo apt-get update -qq && sudo apt-get install -y -qq tesseract-ocr tesseract-ocr-vie ffmpeg nodejs npm
           pip install --quiet pillow pytesseract
 
-      - name: Set up FreeDeepseekAPI (Local Proxy cho AI QA)
+      # AI Brain chính: Meteor gateway (OpenAI-compatible). Key nằm trong secret METEOR_API_KEY.
+      # Preflight chạy trên runner (mạng mở): liệt kê model, tự chọn model vision tốt nhất
+      # và bắn thử 1 chat completion để fail-fast trước khi tốn thời gian dựng emulator.
+      - name: Preflight Meteor AI (chọn model + kiểm tra key)
         env:
-          DEEPSEEK_AUTH_JSON: ${{ secrets.DEEPSEEK_AUTH_JSON }}
+          METEOR_API_KEY: ${{ secrets.METEOR_API_KEY }}
+          METEOR_API_BASE: http://meteor.pikamc.vn:25155/v1
         run: |
-          if [ -n "$DEEPSEEK_AUTH_JSON" ]; then
-            echo "Khởi tạo FreeDeepseekAPI proxy cho AI QA..."
-            git clone --depth 1 https://github.com/dekrezz/FreeDeepseekAPI.git /tmp/FreeDeepseekAPI
-            cd /tmp/FreeDeepseekAPI
-            echo "$DEEPSEEK_AUTH_JSON" > deepseek-auth.json
-            NON_INTERACTIVE=1 PORT=9655 node server.js > /tmp/ds_proxy.log 2>&1 &
-            sleep 4
-            curl -s http://127.0.0.1:9655/health || echo "FreeDeepseekAPI start warning"
-          else
-            echo "Không có DEEPSEEK_AUTH_JSON secret, sử dụng fallback engine"
-          fi
+          set -euo pipefail
+          echo "Lấy danh sách model từ Meteor..."
+          curl -sS -m 30 -H "Authorization: Bearer $METEOR_API_KEY" "$METEOR_API_BASE/models" -o /tmp/models.json
+          head -c 2000 /tmp/models.json; echo
+          MODEL=$(python3 - << 'PYEOF'
+          import json, sys
+          try:
+              ids = [m.get("id", "") for m in json.load(open("/tmp/models.json")).get("data", [])]
+          except Exception as e:
+              print(f"models parse error: {e}", file=sys.stderr); ids = []
+          print("MODELS: " + ", ".join(ids), file=sys.stderr)
+          pref = ["gpt-4o", "gpt-4o-mini", "gemini-2.5-flash", "gemini-2.0-flash", "claude-sonnet-4-5", "deepseek-chat"]
+          picked = next((p for p in pref if p in ids), "")
+          if not picked:
+              vis = [i for i in ids if "gpt-4o" in i or "gemini" in i or "claude" in i]
+              picked = vis[0] if vis else (ids[0] if ids else "")
+          print(picked)
+          PYEOF
+          )
+          [ -n "$MODEL" ] || { echo "::error::Không chọn được model từ Meteor"; exit 1; }
+          echo "AI_MODEL=$MODEL" >> "$GITHUB_ENV"
+          echo "Model AI QA được chọn: $MODEL"
+          echo "Kiểm tra chat completion..."
+          curl -sS -m 40 -H "Authorization: Bearer $METEOR_API_KEY" -H "Content-Type: application/json" \
+            -d "{\"model\":\"$MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"Tra loi dung mot tu: OK\"}],\"max_tokens\":8}" \
+            "$METEOR_API_BASE/chat/completions" | head -c 600; echo
 
       - name: Chạy QA Suite trên Android TV emulator
         env:
-          DEEPSEEK_API_BASE: http://127.0.0.1:9655/v1
-          DEEPSEEK_MODEL: deepseek-v4-flash
-          KILO_API_KEY: ${{ secrets.KILO_API_KEY }}
-          KILO_MODEL: kilo-auto/free
-          TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
-          TYPESAFE_MODEL: jev-latest
-          ANTIGRAVITY_API_BASE: ${{ secrets.ANTIGRAVITY_API_BASE }}
-          ANTIGRAVITY_API_KEY: ${{ secrets.ANTIGRAVITY_API_KEY }}
-          ANTIGRAVITY_MODEL: gemini-3.8-flash
+          # Meteor là AI Brain DUY NHẤT: các gateway cũ để trống có chủ đích để
+          # AIBrain._detect_provider chọn OPENAI (Meteor) làm engine chính.
+          DEEPSEEK_API_BASE: ""
+          ANTIGRAVITY_API_BASE: ""
+          ANTIGRAVITY_API_KEY: ""
+          KILO_API_KEY: ""
+          OPENAI_API_BASE: http://meteor.pikamc.vn:25155/v1
+          OPENAI_API_KEY: ${{ secrets.METEOR_API_KEY }}
+          OPENAI_MODEL: ${{ env.AI_MODEL }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
