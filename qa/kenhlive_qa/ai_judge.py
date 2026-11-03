@@ -17,15 +17,22 @@ ANTIGRAVITY_BASE = os.environ.get('ANTIGRAVITY_API_BASE', '')
 ANTIGRAVITY_KEY  = os.environ.get('ANTIGRAVITY_API_KEY', '')
 ANTIGRAVITY_MODEL = os.environ.get("ANTIGRAVITY_MODEL", "gemini-3.8-flash")
 
+DEEPSEEK_BASE = os.environ.get('DEEPSEEK_API_BASE', os.environ.get('FREEDEEPSEEK_API_BASE', ''))
+DEEPSEEK_KEY  = os.environ.get('DEEPSEEK_API_KEY', 'free')
+DEEPSEEK_MODEL = os.environ.get('DEEPSEEK_MODEL', 'deepseek-v4-flash')
+
 def _msgs(prompt, imgs):
     content = [{"type": "text", "text": prompt}]
     for b in (imgs or []):
         content.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64.b64encode(b).decode()}"}})
     return [{"role": "user", "content": content}]
 
-def _post(url, key, payload, timeout):
-    req = urllib.request.Request(url, data=json.dumps(payload).encode(),
-        headers={"Content-Type": "application/json", "Authorization": "Bearer " + key, "User-Agent": UA})
+def _post(url, key, payload, timeout, user=None):
+    headers = {"Content-Type": "application/json", "Authorization": "Bearer " + key, "User-Agent": UA}
+    if user:
+        headers["x-agent-session"] = user
+        payload["user"] = user
+    req = urllib.request.Request(url, data=json.dumps(payload).encode(), headers=headers)
     for attempt in range(3):
         try:
             r = json.loads(urllib.request.urlopen(req, timeout=timeout).read().decode())
@@ -39,8 +46,24 @@ def _post(url, key, payload, timeout):
         return str(raw).strip()
     return ''
 
-def _chat(prompt, imgs=None, max_tokens=1500, temperature=0.1, timeout=30):
-    """Ưu tiên Antigravity Gateway (gemini-3.8-flash-high), fallback Kilo."""
+def _chat(prompt, imgs=None, max_tokens=1500, temperature=0.1, timeout=45):
+    """Ưu tiên DeepSeek Web (FreeDeepseekAPI), Antigravity Gateway (gemini-3.8-flash), fallback Kilo."""
+    if DEEPSEEK_BASE:
+        try:
+            base_url = DEEPSEEK_BASE.rstrip('/')
+            if not base_url.endswith('/chat/completions'):
+                base_url = f"{base_url}/chat/completions" if base_url.endswith('/v1') else f"{base_url}/v1/chat/completions"
+            payload = {
+                "model": DEEPSEEK_MODEL,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+                "messages": _msgs(prompt, imgs)
+            }
+            res = _post(base_url, DEEPSEEK_KEY, payload, timeout, user="qa_judge_screen")
+            if res: return res
+        except Exception:
+            pass
+
     if ANTIGRAVITY_KEY and ANTIGRAVITY_BASE:
         try:
             payload = {
@@ -216,12 +239,12 @@ def judge_logcat(logcat_text):
         except Exception as e:
             pass
 
-    if KILO_KEY:
+    if DEEPSEEK_BASE or KILO_KEY:
         try:
             prompt = f"Phân tích logcat app Android com.kenhlive.tv sau và cho biết có crash FATAL hay ANR không:\n{sample}\nTrả về JSON: {{\"has_crash\": bool, \"findings\": [{{...}}]}}"
             raw = _chat(prompt, timeout=30)
             parsed = _parse_json(raw)
-            parsed["source"] = "kilo_ling"
+            parsed["source"] = "deepseek_web" if DEEPSEEK_BASE else "kilo_ling"
             return parsed
         except Exception:
             pass

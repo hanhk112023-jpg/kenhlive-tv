@@ -70,6 +70,10 @@ KEY_MAP = {
 }
 
 # AI Gateways Configuration (100% loaded from environment/secrets)
+DEEPSEEK_BASE = os.environ.get("DEEPSEEK_API_BASE", os.environ.get("FREEDEEPSEEK_API_BASE", ""))
+DEEPSEEK_KEY = os.environ.get("DEEPSEEK_API_KEY", "free")
+DEEPSEEK_MODEL = os.environ.get("DEEPSEEK_MODEL", "deepseek-v4-flash")
+
 ANTIGRAVITY_BASE = os.environ.get("ANTIGRAVITY_API_BASE", "")
 ANTIGRAVITY_KEY = os.environ.get("ANTIGRAVITY_API_KEY", "")
 ANTIGRAVITY_MODEL = os.environ.get("ANTIGRAVITY_MODEL", "gemini-3.8-flash")
@@ -106,8 +110,10 @@ class AIBrain:
         self.last_action_feedback = ""
 
     def _detect_provider(self):
-        # Ưu tiên Antigravity Gateway (nội bộ, tốc độ cao, hỗ trợ vision & reasoning)
-        if ANTIGRAVITY_KEY and ANTIGRAVITY_BASE:
+        # Ưu tiên DeepSeek Web (nếu có base URL từ FreeDeepseekAPI nội bộ) hoặc Antigravity Gateway
+        if DEEPSEEK_BASE:
+            self.provider_active = "DEEPSEEK_WEB"
+        elif ANTIGRAVITY_KEY and ANTIGRAVITY_BASE:
             self.provider_active = "ANTIGRAVITY"
         elif KILO_KEY and KILO_BASE:
             self.provider_active = "KILO"
@@ -173,8 +179,25 @@ NGUYÊN TẮC BỘ NHỚ PHIÊN & SĂN LỖI SÂU (Deep Bug Hunting & Session Me
 
     def chat_turn(self, messages, max_tokens=3000, timeout=45):
         """Gửi chuỗi hội thoại của phiên đến model AI và nhận câu trả lời."""
-        # 1. Thử Antigravity Gateway
-        if self.provider_active == "ANTIGRAVITY":
+        # 1. Thử DeepSeek Web nếu có cấu hình
+        if self.provider_active == "DEEPSEEK_WEB" or DEEPSEEK_BASE:
+            try:
+                res = self._call_openai_compat(
+                    url=DEEPSEEK_BASE,
+                    key=DEEPSEEK_KEY,
+                    model=DEEPSEEK_MODEL,
+                    messages=messages,
+                    max_tokens=max_tokens,
+                    timeout=timeout,
+                    user=f"qa_brain_{self.session_id or 'auto'}"
+                )
+                if res:
+                    return res, "DEEPSEEK_WEB"
+            except Exception as e:
+                print(f"⚠️ [AI Brain] DeepSeek Web gateway lỗi ({e}), chuyển fallback...", flush=True)
+
+        # 2. Thử Antigravity Gateway
+        if self.provider_active == "ANTIGRAVITY" or (ANTIGRAVITY_KEY and ANTIGRAVITY_BASE):
             try:
                 res = self._call_openai_compat(
                     url=ANTIGRAVITY_BASE,
@@ -189,7 +212,7 @@ NGUYÊN TẮC BỘ NHỚ PHIÊN & SĂN LỖI SÂU (Deep Bug Hunting & Session Me
             except Exception as e:
                 print(f"⚠️ [AI Brain] Antigravity gateway lỗi ({e}), chuyển fallback...", flush=True)
 
-        # 2. Thử Kilo Gateway
+        # 3. Thử Kilo Gateway
         if KILO_KEY and KILO_BASE:
             try:
                 res = self._call_openai_compat(
@@ -250,7 +273,7 @@ NGUYÊN TẮC BỘ NHỚ PHIÊN & SĂN LỖI SÂU (Deep Bug Hunting & Session Me
             return f"{u}/chat/completions"
         return f"{u}/chat/completions"
 
-    def _call_openai_compat(self, url, key, model, messages, max_tokens, timeout):
+    def _call_openai_compat(self, url, key, model, messages, max_tokens, timeout, user=None):
         target_url = self._normalize_gateway_url(url)
         payload = {
             "model": model,
@@ -258,16 +281,22 @@ NGUYÊN TẮC BỘ NHỚ PHIÊN & SĂN LỖI SÂU (Deep Bug Hunting & Session Me
             "max_tokens": max_tokens,
             "temperature": 0.1
         }
+        if user:
+            payload["user"] = user
+
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {key}",
+            "User-Agent": UA
+        }
+        if user:
+            headers["x-agent-session"] = user
 
         data_bytes = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(
             target_url,
             data=data_bytes,
-            headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {key}",
-                "User-Agent": UA
-            }
+            headers=headers
         )
 
         for attempt in range(3):

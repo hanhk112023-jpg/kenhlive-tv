@@ -69,11 +69,29 @@ jobs:
 
       - name: Install deps
         run: |
-          sudo apt-get update -qq && sudo apt-get install -y -qq tesseract-ocr tesseract-ocr-vie ffmpeg
+          sudo apt-get update -qq && sudo apt-get install -y -qq tesseract-ocr tesseract-ocr-vie ffmpeg nodejs npm
           pip install --quiet pillow pytesseract
+
+      - name: Set up FreeDeepseekAPI (Local Proxy cho AI QA)
+        env:
+          DEEPSEEK_AUTH_JSON: ${{ secrets.DEEPSEEK_AUTH_JSON }}
+        run: |
+          if [ -n "$DEEPSEEK_AUTH_JSON" ]; then
+            echo "Khởi tạo FreeDeepseekAPI proxy cho AI QA..."
+            git clone --depth 1 https://github.com/dekrezz/FreeDeepseekAPI.git /tmp/FreeDeepseekAPI
+            cd /tmp/FreeDeepseekAPI
+            echo "$DEEPSEEK_AUTH_JSON" > deepseek-auth.json
+            NON_INTERACTIVE=1 PORT=9655 node server.js > /tmp/ds_proxy.log 2>&1 &
+            sleep 4
+            curl -s http://127.0.0.1:9655/health || echo "FreeDeepseekAPI start warning"
+          else
+            echo "Không có DEEPSEEK_AUTH_JSON secret, sử dụng fallback engine"
+          fi
 
       - name: Chạy QA Suite trên Android TV emulator
         env:
+          DEEPSEEK_API_BASE: http://127.0.0.1:9655/v1
+          DEEPSEEK_MODEL: deepseek-v4-flash
           KILO_API_KEY: ${{ secrets.KILO_API_KEY }}
           KILO_MODEL: kilo-auto/free
           TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
