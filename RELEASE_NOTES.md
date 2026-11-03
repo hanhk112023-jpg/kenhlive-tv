@@ -24,6 +24,13 @@
 - **Sao lưu lịch sử đầy đủ**: bản sao lưu lịch sử xem không còn giới hạn 100 phim / 200 tập — khôi phục không mất phim cũ.
 - **Khử trùng phim theo slug chuẩn hoá** (bỏ khoảng trắng/chữ hoa/'/' cuối) khi gộp và hiển thị danh sách, tránh một phim hiện hai lần vì slug lệch nhau giữa các nguồn.
 
+### 🖼️ 5. Hình ảnh AI & tiếp tục giảm dung lượng (bản bổ sung)
+- **Ảnh hero mới vẽ bằng AI**: sân vận động đêm cho mục Thể thao và rạp phim cho mục Phim — thay ảnh dự phòng cũ, hợp tông màu tối của app và còn nhẹ hơn bản cũ.
+- **Icon app mới**: khung TV phát sáng cam + nút Play trắng, nổi bật trên màn hình chính TV.
+- **Banner TV mới**: KENHLIVE TV trên nền sân vận động (hiện ở hàng app trên Android TV).
+- **Minh hoạ trạng thái trống mới** cho mục Phim (ghế rạp + bắp rang vẽ phẳng, nhẹ hơn 6 lần).
+- **Thu gọn dữ liệu phim dự phòng**: fallback_nguonc_films.json giảm từ 2,45MB xuống ~0,19MB (giữ 100 phim, tối đa 12 tập/server) — APK nhẹ hơn mà chế độ xem khi mất mạng vẫn đầy đủ.
+
 ### 📝 Ghi chú
 - Thu gọn file fallback_nguonc_films.json (2,45MB) sẽ làm ở bước riêng bằng checkout local (file vượt giới hạn đọc của connector GitHub).
 
