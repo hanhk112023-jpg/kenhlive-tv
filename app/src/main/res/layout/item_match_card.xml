@@ -5,8 +5,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:layout_marginRight="@dimen/sp_card_gap"
-    android:background="@drawable/bg_card_match"
-    android:foreground="@drawable/fg_card_focus_cyan"
+    android:background="@drawable/sl_apple_card"
     android:padding="14dp"
     android:descendantFocusability="blocksDescendants"
     android:focusable="true"
@@ -119,6 +118,8 @@
                 android:fontFamily="sans-serif-medium"
                 android:maxLines="1"
                 android:singleLine="true"
+                android:breakStrategy="simple"
+                android:hyphenationFrequency="none"
                 android:ellipsize="end" />
 
             <ImageView
@@ -150,7 +151,7 @@
                 android:textColor="#FFFFFF"
                 android:text="VS"
                 android:fontFamily="@font/oswald"
-                android:textSize="14sp"
+                android:textSize="16sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.05" />
         </LinearLayout>
@@ -184,6 +185,8 @@
                 android:fontFamily="sans-serif-medium"
                 android:maxLines="1"
                 android:singleLine="true"
+                android:breakStrategy="simple"
+                android:hyphenationFrequency="none"
                 android:ellipsize="end" />
         </LinearLayout>
     </LinearLayout>
@@ -194,7 +197,7 @@
         android:layout_height="1dp"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="8dp"
-        android:background="#151A24" />
+        android:background="#22FFFFFF" />
 
     <!-- Row 3: Meta info chuẩn: Avatar BLV tròn + Tên BLV + Lượt xem + Phòng -->
     <LinearLayout
