@@ -5,8 +5,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:layout_marginRight="@dimen/sp_card_gap"
-    android:background="@drawable/bg_card_match"
-    android:foreground="@drawable/fg_card_focus_cyan"
+    android:background="@drawable/sl_apple_card"
     android:padding="14dp"
     android:descendantFocusability="blocksDescendants"
     android:focusable="true"
@@ -82,8 +81,9 @@
                 android:textColor="@color/kl_text_1"
                 android:textSize="14sp"
                 android:fontFamily="sans-serif-medium"
-                android:maxLines="2"
+                android:maxLines="1"
                 android:breakStrategy="simple"
+                android:hyphenationFrequency="none"
                 android:ellipsize="end" />
 
             <ImageView
@@ -144,8 +144,9 @@
                 android:textColor="@color/kl_text_1"
                 android:textSize="14sp"
                 android:fontFamily="sans-serif-medium"
-                android:maxLines="2"
+                android:maxLines="1"
                 android:breakStrategy="simple"
+                android:hyphenationFrequency="none"
                 android:ellipsize="end" />
         </LinearLayout>
     </LinearLayout>
@@ -156,7 +157,7 @@
         android:layout_height="1dp"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="8dp"
-        android:background="#151A24" />
+        android:background="#22FFFFFF" />
 
     <!-- Row 3: Ngày thi đấu + Danh sách BLV dự kiến phân bổ -->
     <LinearLayout

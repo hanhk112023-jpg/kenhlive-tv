@@ -943,7 +943,7 @@ object WatchHistoryManager {
 
             // 2. Sao lưu history
             val histArr = JSONArray()
-            val curHist = db.query(TABLE_HISTORY, null, null, null, null, null, "$COL_LAST_WATCHED_AT DESC", "100")
+            val curHist = db.query(TABLE_HISTORY, null, null, null, null, null, "$COL_LAST_WATCHED_AT DESC", null) // v7.9: sao lưu TOÀN BỘ lịch sử (trước giới hạn 100 dòng, khôi phục mất phim cũ)
             curHist.use { c ->
                 while (c.moveToNext()) {
                     val obj = JSONObject().apply {
@@ -966,7 +966,7 @@ object WatchHistoryManager {
 
             // 3. Sao lưu episodes
             val epArr = JSONArray()
-            val curEp = db.query(TABLE_EPISODES, null, null, null, null, null, "$COL_EP_WATCHED_AT DESC", "200")
+            val curEp = db.query(TABLE_EPISODES, null, null, null, null, null, "$COL_EP_WATCHED_AT DESC", null) // v7.9: sao lưu toàn bộ tập đã xem
             curEp.use { c ->
                 while (c.moveToNext()) {
                     val obj = JSONObject().apply {

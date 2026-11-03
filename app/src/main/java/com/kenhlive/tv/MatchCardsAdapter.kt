@@ -168,6 +168,46 @@ class MatchCardsAdapter(
         val guestIcon: ImageView? = v.findViewById(R.id.fxGuestIcon)
     }
 
+    // v7.9 (fix issue #1, phía rail ngang): giữ focus theo vị trí khi submitList làm detach card đang focus.
+    private var hostRv: RecyclerView? = null
+
+    override fun onAttachedToRecyclerView(rv: RecyclerView) {
+        super.onAttachedToRecyclerView(rv)
+        hostRv = rv
+    }
+
+    override fun onDetachedFromRecyclerView(rv: RecyclerView) {
+        if (hostRv === rv) hostRv = null
+        super.onDetachedFromRecyclerView(rv)
+    }
+
+    override fun submitList(list: MutableList<Any>?) {
+        submitList(list, null)
+    }
+
+    override fun submitList(list: MutableList<Any>?, commitCallback: Runnable?) {
+        val rv = hostRv
+        val focusedPos = if (rv != null && rv.hasFocus()) {
+            val f = rv.findFocus()
+            if (f != null) rv.getChildAdapterPosition(f) else -1
+        } else -1
+        super.submitList(list) {
+            commitCallback?.run()
+            if (rv != null && focusedPos >= 0 && rv.findFocus() == null) {
+                val target = focusedPos.coerceAtMost(itemCount - 1)
+                if (target >= 0) {
+                    rv.post {
+                        if (rv.findFocus() == null) {
+                            val v = rv.layoutManager?.findViewByPosition(target)
+                                ?: rv.findViewHolderForAdapterPosition(target)?.itemView
+                            v?.requestFocus()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     override fun getItemViewType(pos: Int) =
         if (getItem(pos) is LiveMatchGroup) TYPE_LIVE else TYPE_FIXTURE
 

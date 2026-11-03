@@ -83,6 +83,9 @@ object NguoncRepository {
         "thai-lan" to "Thái Lan"
     )
 
+    /** Khoá khử trùng slug: bỏ khoảng trắng thừa, chữ thường, bỏ '/' cuối — chỉ dùng để so trùng, không đổi slug gốc khi gọi API. */
+    private fun slugKey(raw: String): String = raw.trim().lowercase().trimEnd('/')
+
     private fun normalizeImgUrl(raw: String): String {
         val s = raw.trim()
         if (s.isEmpty()) return ""
@@ -254,7 +257,7 @@ object NguoncRepository {
                     }
                 }
             }
-            deferreds.awaitAll().flatten().distinctBy { it.slug }
+            deferreds.awaitAll().flatten().distinctBy { slugKey(it.slug) }
         }
 
         if (allFilms.isNotEmpty()) {
@@ -471,7 +474,7 @@ object NguoncRepository {
                 )
             }
         } catch (_: Exception) {}
-        return list
+        return list.distinctBy { slugKey(it.slug) }
     }
 
     private fun parseKkphimDetail(jsonStr: String): NguoncFilmDetail? {
@@ -622,7 +625,7 @@ object NguoncRepository {
                 list.add(parseFilmObject(obj))
             }
         } catch (_: Exception) {}
-        return list
+        return list.distinctBy { slugKey(it.slug) }
     }
 
     /**

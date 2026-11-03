@@ -368,10 +368,13 @@ class LiveFragment : Fragment() {
 
         val hadFocus = list.hasFocus() && FocusKit.lastSlot != null
         val wasEmpty = adapter.itemCount == 0
-        adapter.submitList(items)
-        if (hadFocus) {
-            list.post { list.post { FocusKit.restore(adapter) } }
-        } else if (items.isNotEmpty() && DeviceMode.isTv) {
+        // v7.9 (fix issue #1): restore focus CHỈ chạy trong commit callback của submitList —
+        // trước đây restore chạy sau 2 frame post trong khi DiffUtil chưa áp xong, ViewHolder cũ
+        // bị detach sau đó nên focus văng khỏi vùng card sau auto-refresh.
+        adapter.submitList(items) {
+            if (hadFocus) {
+                list.post { FocusKit.restore(adapter) }
+            } else if (items.isNotEmpty() && DeviceMode.isTv) {
             // Đảm bảo luôn có 1 view cụ thể (heroPlay hoặc card) nhận focus trên màn hình TV
             list.postDelayed({
                 val curF = list.findFocus()
@@ -381,6 +384,7 @@ class LiveFragment : Fragment() {
                     }
                 }
             }, 60)
+            }
         }
         if (items.size > 2) state.hide()
         else if (liveGroups.isEmpty() && daysLabeled.isEmpty()) {

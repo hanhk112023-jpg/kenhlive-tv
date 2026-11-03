@@ -32,6 +32,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import coil.load
 import com.kenhlive.tv.iptv.EpgRepository
 import com.kenhlive.tv.iptv.IptvChannel
@@ -56,6 +58,11 @@ import java.util.Locale
 class PlayerActivity : AppCompatActivity() {
 
     private var player: ExoPlayer? = null
+
+    companion object {
+        private const val PREFS_PLAYER = "player_prefs"
+        private const val KEY_ASPECT_IDX = "aspect_idx"
+    }
     private val handler = Handler(Looper.getMainLooper())
     private var topOverlay: View? = null
     private var hint: TextView? = null
@@ -108,6 +115,7 @@ class PlayerActivity : AppCompatActivity() {
     private var posterUrl: String = ""
     private var startPositionMs: Long = 0L
     private var hasSeekedToStart: Boolean = false
+    private var autoNextBusy: Boolean = false
 
     // Quick Channel OSD Banner
     private var quickChannelOsd: View? = null
@@ -231,6 +239,10 @@ class PlayerActivity : AppCompatActivity() {
         if (filmSlug.isNotBlank()) {
             isVodMode = true
         }
+
+        // v7.9: khôi phục tỉ lệ khung hình người dùng đã chọn lần trước
+        currentAspectIdx = getSharedPreferences(PREFS_PLAYER, MODE_PRIVATE)
+            .getInt(KEY_ASPECT_IDX, 0).coerceIn(aspectModes.indices)
 
         topOverlay = findViewById(R.id.topOverlay)
         hint = findViewById(R.id.playerHint)
@@ -626,6 +638,7 @@ class PlayerActivity : AppCompatActivity() {
         val pv = findViewById<PlayerView>(R.id.playerView) ?: return
         currentAspectIdx = (currentAspectIdx + 1) % aspectModes.size
         pv.resizeMode = aspectModes[currentAspectIdx]
+        getSharedPreferences(PREFS_PLAYER, MODE_PRIVATE).edit().putInt(KEY_ASPECT_IDX, currentAspectIdx).apply()
         Toast.makeText(this, "Tỉ lệ màn hình: ${aspectNames[currentAspectIdx]}", Toast.LENGTH_SHORT).show()
         hideOnce()
     }
@@ -868,6 +881,57 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
+    /**
+     * v7.9: Tự chuyển tập kế tiếp khi xem hết một tập phim (chỉ khi tập sau có luồng m3u8 trực tiếp;
+     * tập dạng embed thuần sẽ giữ nguyên màn hình kết thúc như trước).
+     */
+    private fun tryAutoNextEpisode() {
+        if (autoNextBusy || filmSlug.isBlank() || episodeSlug.isBlank()) return
+        autoNextBusy = true
+        lifecycleScope.launch {
+            try {
+                val detail = withContext(Dispatchers.IO) {
+                    com.kenhlive.tv.phim.NguoncRepository.fetchFilmDetail(filmSlug, this@PlayerActivity)
+                }
+                var nextEp: com.kenhlive.tv.phim.NguoncEpisodeItem? = null
+                var foundCurrent = false
+                for (server in detail?.episodes.orEmpty()) {
+                    val idx = server.items.indexOfFirst { it.slug == episodeSlug }
+                    if (idx >= 0) {
+                        foundCurrent = true
+                        nextEp = server.items.getOrNull(idx + 1)
+                        break
+                    }
+                }
+                val next = nextEp
+                if (!foundCurrent || next == null) {
+                    Toast.makeText(this@PlayerActivity, "Đã hết tập của phim này", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+                val direct = when {
+                    next.m3u8.isNotBlank() -> next.m3u8
+                    next.embed.contains(".m3u8", ignoreCase = true) -> next.embed
+                    else -> ""
+                }
+                if (direct.isBlank()) {
+                    Toast.makeText(this@PlayerActivity, "Tập tiếp theo cần mở bằng trình phát web", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+                episodeSlug = next.slug
+                episodeTitle = if (next.name.all { it.isDigit() }) "Tập ${next.name}" else next.name
+                startPositionMs = 0L
+                hasSeekedToStart = true
+                url = direct
+                findViewById<TextView>(R.id.playerTitle).text = "$filmTitle · $episodeTitle"
+                Toast.makeText(this@PlayerActivity, "Đang chuyển sang $episodeTitle", Toast.LENGTH_SHORT).show()
+                autoNextBusy = false
+                prepareChannelUrl(direct)
+            } catch (_: Exception) {
+                autoNextBusy = false
+            }
+        }
+    }
+
     private fun prepareChannelUrl(targetUrl: String) {
         if (targetUrl.isBlank()) return
         if (Tv360Resolver.isTv360(targetUrl)) {
@@ -1100,6 +1164,9 @@ class PlayerActivity : AppCompatActivity() {
                         } else if (state == Player.STATE_ENDED || state == Player.STATE_IDLE) {
                             if (findViewById<View>(R.id.playerErrorBox)?.visibility != View.VISIBLE) {
                                 findViewById<View>(R.id.bufferBox)?.visibility = View.GONE
+                            }
+                            if (state == Player.STATE_ENDED && isVodMode) {
+                                tryAutoNextEpisode()
                             }
                         }
                     }

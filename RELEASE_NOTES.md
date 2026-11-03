@@ -1,4 +1,4 @@
-# 🚀 KENHLIVE v7.9.0 (Build 144) — GIAI ĐOẠN 1: KIỂM SOÁT API & DUNG LƯỢNG HOÀN TOÀN
+# 🚀 KENHLIVE v7.9.0 (Build 144) — KIỂM SOÁT API & DUNG LƯỢNG, GIAO DIỆN APPLE, PHIM & TRÌNH PHÁT MỚI
 
 ### 📡 1. Kiểm tra & giám sát API
 - **Sổ sức khỏe API (ApiHealth)**: mọi request qua Http đều được ghi lại host, độ trễ, lỗi gần nhất.
@@ -11,6 +11,18 @@
 - **Màn "Dung lượng & nguồn dữ liệu"** trong Cài đặt: thấy rõ APK đã cài, đệm ảnh, dữ liệu API, đệm khác và cơ sở dữ liệu lịch sử xem.
 - **Đặt trần được**: trần đệm ảnh 25/45/80/120MB, trần dữ liệu API 8/16/32MB (áp dụng khi mở lại app) + nút xóa toàn bộ bộ nhớ đệm (không mất lịch sử xem).
 - **ProGuard chuẩn lại**: bỏ keep toàn bộ Coil/Media3, R8 thu gọn sâu hơn.
+
+### 🎨 3. Giao diện kiểu Apple & thẻ trận chuẩn hoá (Giai đoạn 2)
+- **Thẻ trận dùng nền Apple thống nhất** (sl_apple_card): nền gradient tối + viền mảnh, khi focus chuyển viền cam 2dp kiểu tvOS — áp dụng cho thẻ trận live, thẻ sắp đá và hàng lịch thi đấu.
+- **Tên đội không còn ngắt chữ giữa từ** (fix issue #2): thêm breakStrategy + hyphenationFrequency vào tên đội chủ/khách trên thẻ trận, 1 dòng + dấu … ở cuối.
+- **Tỉ số trên thẻ to rõ hơn** (16sp), đường chia thẻ chuyển sang hairline sáng mờ kiểu Apple.
+- **Focus không còn văng sau auto-refresh** (fix issue #1): khôi phục focus chỉ chạy khi danh sách mới đã áp xong (commit callback của submitList) + rail ngang tự giữ focus theo vị trí khi danh sách con thay đổi.
+
+### 🎬 4. Phim & trình phát (Giai đoạn 3)
+- **Tự chuyển tập**: xem hết một tập, trình phát tự tải tập kế tiếp (khi có luồng m3u8 trực tiếp) và hiện thông báo chuyển tập.
+- **Nhớ tỉ lệ khung hình**: chọn Fit/Fill/Zoom/Fixed một lần, lần sau mở phát giữ nguyên.
+- **Sao lưu lịch sử đầy đủ**: bản sao lưu lịch sử xem không còn giới hạn 100 phim / 200 tập — khôi phục không mất phim cũ.
+- **Khử trùng phim theo slug chuẩn hoá** (bỏ khoảng trắng/chữ hoa/'/' cuối) khi gộp và hiển thị danh sách, tránh một phim hiện hai lần vì slug lệch nhau giữa các nguồn.
 
 ### 📝 Ghi chú
 - Thu gọn file fallback_nguonc_films.json (2,45MB) sẽ làm ở bước riêng bằng checkout local (file vượt giới hạn đọc của connector GitHub).
