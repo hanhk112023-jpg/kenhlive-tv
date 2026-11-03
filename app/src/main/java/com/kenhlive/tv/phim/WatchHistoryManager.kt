@@ -125,6 +125,7 @@ object WatchHistoryManager {
     private const val PREFS_BACKUP = "kenhlive_cinema_backup_prefs"
     private const val KEY_VAULT_JSON = "vault_json"
     private const val BACKUP_FILE_NAME = "kenhlive_cinema_vault.json"
+    private const val SNAPSHOT_FILE_NAME = "kenhlive_cinema_snapshot.db"
 
     private val ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -135,9 +136,9 @@ object WatchHistoryManager {
     private var appContext: Context? = null
 
     // ===== Chống "backup storm" (v7.13) =====
-    // Lưu tiến độ chỉ ghi SQLite (nhẹ) + đánh dấu dirty. Sao lưu JSON đầy đủ bị debounce:
+    // Lưu tiến độ chỉ ghi SQLite (nhẹ) + đánh dấu dirty. Sao lưu snapshot .db bị debounce:
     // tối đa 1 lần / 5 phút, và xả ngay (flush) khi toàn bộ Activity dừng (app xuống nền/đóng).
-    // Mọi lần chạy backup đều đi qua backupLock để không có 2 performBackup ghi xen kẽ cùng file.
+    // Mọi lần chạy backup đều đi qua backupLock để không có 2 snapshot ghi xen kẽ cùng file.
     private const val BACKUP_MIN_INTERVAL_MS = 5 * 60 * 1000L
     private const val MAX_EPISODES_PER_FILM = 500
 
@@ -930,7 +931,7 @@ object WatchHistoryManager {
         } catch (_: Exception) {}
     }
 
-    // ================= DUAL-LAYER PERSISTENT BACKUP & AUTO RESTORE =================
+    // ================= SQLITE SNAPSHOT BACKUP & AUTO RESTORE (v0.1.5 — thay vault JSON) =================
 
     /**
      * Đánh dấu dữ liệu đã thay đổi và lên lịch sao lưu JSON đầy đủ (DEBOUNCE).
@@ -971,7 +972,7 @@ object WatchHistoryManager {
 
     /**
      * Chạy backup nếu có thay đổi chưa sao lưu. Toàn bộ thân hàm nằm trong [backupLock]
-     * nên không bao giờ có 2 performBackup chạy đồng thời/ghi xen kẽ cùng một file vault.
+     * nên không bao giờ có 2 snapshot chạy đồng thời/ghi xen kẽ cùng một file.
      */
     private fun runBackupIfDirty() {
         synchronized(backupLock) {
@@ -979,7 +980,7 @@ object WatchHistoryManager {
             backupDirty = false
             lastBackupAtMs = System.currentTimeMillis()
             try {
-                performBackup()
+                snapshotDatabase()
             } catch (e: Exception) {
                 // Backup lỗi thì đánh dấu lại dirty để lần kích hoạt sau thử lại
                 backupDirty = true
@@ -1017,128 +1018,145 @@ object WatchHistoryManager {
         })
     }
 
-    /** Ghi file kiểu nguyên tử (tmp + rename) để vault không bao giờ bị rách giữa chừng khi mất điện/sập app. */
-    private fun writeTextAtomic(file: File, text: String) {
-        val tmp = File(file.parentFile, file.name + ".tmp")
-        tmp.writeText(text)
-        if (!tmp.renameTo(file)) {
-            file.writeText(text)
+    /** Sao chép file nhị phân kiểu nguyên tử (tmp + rename) để snapshot không bao giờ bị rách giữa chừng khi mất điện/sập app. */
+    private fun copyFileAtomic(src: File, dst: File) {
+        dst.parentFile?.mkdirs()
+        val tmp = File(dst.parentFile, dst.name + ".tmp")
+        src.inputStream().use { input -> tmp.outputStream().use { output -> input.copyTo(output) } }
+        if (!tmp.renameTo(dst)) {
+            tmp.copyTo(dst, overwrite = true)
             tmp.delete()
         }
     }
 
-    private fun performBackup() {
+    /**
+     * Sao lưu kiểu SNAPSHOT nhị phân (v0.1.5): sao chép thẳng file SQLite .db thay vì
+     * xuất toàn bộ dữ liệu ra JSON như trước. JSON phình rất nhanh (mỗi dòng lặp lại
+     * toàn bộ tên cột) và mỗi lần sao lưu phải serialize/parse toàn bảng; bản sao .db
+     * nhỏ hơn nhiều, chép xong trong một lần đọc/ghi tuần tự, khôi phục là mở lại
+     * đúng file đó. Hai đích: thư mục nội bộ (khôi phục nhanh) + Downloads (sống sót
+     * qua gỡ cài). Bỏ hẳn bản sao SharedPreferences và external-app của vault JSON cũ.
+     */
+    private fun snapshotDatabase() {
         val helper = dbHelper ?: return
         val app = appContext ?: return
         try {
-            val db = helper.readableDatabase
-            val root = JSONObject()
-            root.put("version", 2)
-            root.put("updated_at", System.currentTimeMillis())
-
-            // 1. Sao lưu favorites
-            val favArr = JSONArray()
-            val curFav = db.query(TABLE_FAVORITES, null, null, null, null, null, null)
-            curFav.use { c ->
-                while (c.moveToNext()) {
-                    val obj = JSONObject().apply {
-                        put(COL_SLUG, c.getString(c.getColumnIndexOrThrow(COL_SLUG)))
-                        put(COL_FILM_NAME, c.getString(c.getColumnIndexOrThrow(COL_FILM_NAME)))
-                        put(COL_POSTER_URL, c.getString(c.getColumnIndexOrThrow(COL_POSTER_URL)).orEmpty())
-                        put(COL_FAV_YEAR, c.getString(c.getColumnIndexOrThrow(COL_FAV_YEAR)).orEmpty())
-                        put(COL_FAV_QUALITY, c.getString(c.getColumnIndexOrThrow(COL_FAV_QUALITY)).orEmpty())
-                        put(COL_EPISODE_NAME, c.getString(c.getColumnIndexOrThrow(COL_EPISODE_NAME)).orEmpty())
-                        put(COL_EPISODE_SLUG, c.getString(c.getColumnIndexOrThrow(COL_EPISODE_SLUG)).orEmpty())
-                        put(COL_EMBED_URL, c.getString(c.getColumnIndexOrThrow(COL_EMBED_URL)).orEmpty())
-                        put(COL_POSITION_MS, c.getLong(c.getColumnIndexOrThrow(COL_POSITION_MS)))
-                        put(COL_DURATION_MS, c.getLong(c.getColumnIndexOrThrow(COL_DURATION_MS)))
-                        put(COL_PROGRESS_PCT, c.getInt(c.getColumnIndexOrThrow(COL_PROGRESS_PCT)))
-                        put(COL_FAV_ADDED_AT, c.getLong(c.getColumnIndexOrThrow(COL_FAV_ADDED_AT)))
-                    }
-                    favArr.put(obj)
-                }
-            }
-            root.put("favorites", favArr)
-
-            // 2. Sao lưu history
-            val histArr = JSONArray()
-            val curHist = db.query(TABLE_HISTORY, null, null, null, null, null, "$COL_LAST_WATCHED_AT DESC", null) // v7.9: sao lưu TOÀN BỘ lịch sử (trước giới hạn 100 dòng, khôi phục mất phim cũ)
-            curHist.use { c ->
-                while (c.moveToNext()) {
-                    val obj = JSONObject().apply {
-                        put(COL_SLUG, c.getString(c.getColumnIndexOrThrow(COL_SLUG)))
-                        put(COL_FILM_NAME, c.getString(c.getColumnIndexOrThrow(COL_FILM_NAME)))
-                        put(COL_POSTER_URL, c.getString(c.getColumnIndexOrThrow(COL_POSTER_URL)).orEmpty())
-                        put(COL_EPISODE_NAME, c.getString(c.getColumnIndexOrThrow(COL_EPISODE_NAME)))
-                        put(COL_EPISODE_SLUG, c.getString(c.getColumnIndexOrThrow(COL_EPISODE_SLUG)))
-                        put(COL_EMBED_URL, c.getString(c.getColumnIndexOrThrow(COL_EMBED_URL)))
-                        put(COL_POSITION_MS, c.getLong(c.getColumnIndexOrThrow(COL_POSITION_MS)))
-                        put(COL_DURATION_MS, c.getLong(c.getColumnIndexOrThrow(COL_DURATION_MS)))
-                        put(COL_PROGRESS_PCT, c.getInt(c.getColumnIndexOrThrow(COL_PROGRESS_PCT)))
-                        put(COL_LAST_WATCHED_AT, c.getLong(c.getColumnIndexOrThrow(COL_LAST_WATCHED_AT)))
-                        put(COL_IS_COMPLETED, c.getInt(c.getColumnIndexOrThrow(COL_IS_COMPLETED)))
-                    }
-                    histArr.put(obj)
-                }
-            }
-            root.put("history", histArr)
-
-            // 3. Sao lưu episodes
-            val epArr = JSONArray()
-            val curEp = db.query(TABLE_EPISODES, null, null, null, null, null, "$COL_EP_WATCHED_AT DESC", null) // v7.9: sao lưu toàn bộ tập đã xem
-            curEp.use { c ->
-                while (c.moveToNext()) {
-                    val obj = JSONObject().apply {
-                        put(COL_EP_FILM_SLUG, c.getString(c.getColumnIndexOrThrow(COL_EP_FILM_SLUG)))
-                        put(COL_EP_SLUG, c.getString(c.getColumnIndexOrThrow(COL_EP_SLUG)))
-                        put(COL_EP_NAME, c.getString(c.getColumnIndexOrThrow(COL_EP_NAME)).orEmpty())
-                        put(COL_EP_EMBED, c.getString(c.getColumnIndexOrThrow(COL_EP_EMBED)).orEmpty())
-                        put(COL_EP_POSITION_MS, c.getLong(c.getColumnIndexOrThrow(COL_EP_POSITION_MS)))
-                        put(COL_EP_DURATION_MS, c.getLong(c.getColumnIndexOrThrow(COL_EP_DURATION_MS)))
-                        put(COL_EP_WATCHED_AT, c.getLong(c.getColumnIndexOrThrow(COL_EP_WATCHED_AT)))
-                    }
-                    epArr.put(obj)
-                }
-            }
-            root.put("episodes", epArr)
-
-            val jsonString = root.toString()
-
-            // Tầng 1: SharedPreferences
-            val sp = app.getSharedPreferences(PREFS_BACKUP, Context.MODE_PRIVATE)
-            sp.edit().putString(KEY_VAULT_JSON, jsonString).apply()
-
-            // Tầng 2: Internal storage file (ghi nguyên tử tmp+rename)
-            val internalFile = File(app.filesDir, BACKUP_FILE_NAME)
-            writeTextAtomic(internalFile, jsonString)
-
-            // Tầng 3: External app storage file (Bền vững qua cập nhật Android TV)
+            val dbFile = app.getDatabasePath(DB_NAME)
+            if (!dbFile.exists() || dbFile.length() == 0L) return
+            // Chốt dữ liệu xuống file chính nếu đang dùng WAL + thu hồi bớt trang trống
             try {
-                val extDir = app.getExternalFilesDir(null)
-                if (extDir != null) {
-                    val extFile = File(extDir, BACKUP_FILE_NAME)
-                    writeTextAtomic(extFile, jsonString)
-                }
+                val db = helper.writableDatabase
+                db.rawQuery("PRAGMA wal_checkpoint(TRUNCATE)", null)?.use { it.moveToFirst() }
+                db.execSQL("PRAGMA incremental_vacuum(128)")
             } catch (_: Throwable) {}
-
-            // Tầng 4: Downloads Public Folder (Chống mất khi người dùng gỡ bản cũ cài bản mới)
+            copyFileAtomic(dbFile, File(app.filesDir, SNAPSHOT_FILE_NAME))
             try {
                 val pubDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                 if (pubDir != null && pubDir.exists()) {
-                    val pubFile = File(pubDir, BACKUP_FILE_NAME)
-                    writeTextAtomic(pubFile, jsonString)
+                    copyFileAtomic(dbFile, File(pubDir, SNAPSHOT_FILE_NAME))
                 }
             } catch (_: Throwable) {}
-
+            cleanupLegacyJsonVault(app)
         } catch (e: Exception) {
-            Log.w(TAG, "performBackup failed: ${e.message}")
+            Log.w(TAG, "snapshotDatabase failed: ${e.message}")
+        }
+    }
+
+    /** Đếm nhanh xem DB đã có dữ liệu chưa (điều kiện để bỏ qua khôi phục). */
+    private fun databaseHasData(): Boolean {
+        val helper = dbHelper ?: return false
+        return try {
+            val db = helper.readableDatabase
+            var total = 0
+            db.rawQuery("SELECT count(*) FROM $TABLE_FAVORITES", null).use { c -> if (c.moveToFirst()) total += c.getInt(0) }
+            db.rawQuery("SELECT count(*) FROM $TABLE_HISTORY", null).use { c -> if (c.moveToFirst()) total += c.getInt(0) }
+            total > 0
+        } catch (_: Exception) { false }
+    }
+
+    /**
+     * Khôi phục từ snapshot .db: đóng DB hiện tại (đang trống), chép file snapshot đè
+     * lên vị trí DB rồi để SQLiteOpenHelper mở lại ở lần truy cập kế tiếp. Chỉ nhận
+     * snapshot có user_version <= DB_VERSION hiện tại (tránh hạ cấp schema khi người
+     * dùng cài bản cũ hơn bản đã tạo snapshot).
+     */
+    private fun restoreFromSnapshot(): Boolean {
+        val helper = dbHelper ?: return false
+        val app = appContext ?: return false
+        val candidates = mutableListOf<File>()
+        candidates += File(app.filesDir, SNAPSHOT_FILE_NAME)
+        try {
+            val pubDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            if (pubDir != null) candidates += File(pubDir, SNAPSHOT_FILE_NAME)
+        } catch (_: Throwable) {}
+        val srcFile = candidates.firstOrNull { it.exists() && it.length() > 0L } ?: return false
+        try {
+            val probe = SQLiteDatabase.openDatabase(srcFile.absolutePath, null, SQLiteDatabase.OPEN_READONLY)
+            val v = probe.version
+            probe.close()
+            if (v > DB_VERSION) {
+                Log.w(TAG, "Snapshot version $v > DB_VERSION $DB_VERSION — bỏ qua khôi phục snapshot")
+                return false
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "Snapshot không đọc được (${e.message}) — bỏ qua")
+            return false
+        }
+        return try {
+            val dbFile = app.getDatabasePath(DB_NAME)
+            helper.close()
+            for (suffix in listOf("-wal", "-shm", "-journal")) {
+                try { File(dbFile.absolutePath + suffix).delete() } catch (_: Throwable) {}
+            }
+            dbFile.parentFile?.mkdirs()
+            copyFileAtomic(srcFile, dbFile)
+            Log.i(TAG, "Đã khôi phục dữ liệu từ snapshot SQLite (${srcFile.name}, ${srcFile.length()} bytes)")
+            true
+        } catch (e: Exception) {
+            Log.e(TAG, "restoreFromSnapshot error: ${e.message}")
+            false
+        }
+    }
+
+    /** Xoá tàn dư vault JSON cũ (3 file + SharedPreferences) sau khi đã có snapshot. */
+    private fun cleanupLegacyJsonVault(app: Context) {
+        try { File(app.filesDir, BACKUP_FILE_NAME).delete() } catch (_: Throwable) {}
+        try {
+            val extDir = app.getExternalFilesDir(null)
+            if (extDir != null) File(extDir, BACKUP_FILE_NAME).delete()
+        } catch (_: Throwable) {}
+        try {
+            val pubDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+            if (pubDir != null) File(pubDir, BACKUP_FILE_NAME).delete()
+        } catch (_: Throwable) {}
+        try {
+            app.getSharedPreferences(PREFS_BACKUP, Context.MODE_PRIVATE).edit().remove(KEY_VAULT_JSON).apply()
+        } catch (_: Throwable) {}
+    }
+
+    /**
+     * Điểm vào khôi phục khi mở app (chỉ chạy khi DB đang trống): ưu tiên snapshot .db;
+     * nếu chưa có snapshot (người dùng nâng cấp từ bản vault JSON) thì nhập JSON cũ
+     * MỘT LẦN rồi chụp snapshot mới và dọn vault JSON.
+     */
+    private fun restoreFromBackupIfNeeded() {
+        if (databaseHasData()) return
+        if (restoreFromSnapshot()) {
+            appContext?.let { cleanupLegacyJsonVault(it) }
+            return
+        }
+        importLegacyJsonVaultIfNeeded()
+        if (databaseHasData()) {
+            snapshotDatabase()
         }
     }
 
     /**
-     * Tự động khôi phục toàn bộ phim đã lưu, các tập và tiến độ xem nếu SQLite đang trống.
+     * NHẬP MỘT LẦN từ vault JSON cũ (chỉ còn dùng khi nâng cấp từ bản trước v0.1.5 mà
+     * chưa từng có snapshot .db): đọc JSON từ SharedPreferences/file nội bộ/Downloads
+     * rồi ghi vào SQLite; xong việc, bản snapshot .db sẽ thay thế hẳn cơ chế này.
      */
-    private fun restoreFromBackupIfNeeded() {
+    private fun importLegacyJsonVaultIfNeeded() {
         val helper = dbHelper ?: return
         val app = appContext ?: return
         try {
