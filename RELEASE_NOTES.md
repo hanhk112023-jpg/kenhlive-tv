@@ -1,3 +1,21 @@
+# 🚀 KENHLIVE v7.9.0 (Build 144) — GIAI ĐOẠN 1: KIỂM SOÁT API & DUNG LƯỢNG HOÀN TOÀN
+
+### 📡 1. Kiểm tra & giám sát API
+- **Sổ sức khỏe API (ApiHealth)**: mọi request qua Http đều được ghi lại host, độ trễ, lỗi gần nhất.
+- **Cầu dao theo host**: nguồn lỗi liên tiếp 3 lần sẽ tự nghỉ 2 phút, app rơi về cache/fallback ngay thay vì bắt người dùng chờ timeout lặp lại.
+- **Timeout theo nhóm**: JSON dùng timeout chuẩn 8/12s; playlist M3U dùng nhóm dài 15/30/45s qua Http.getLongWithRetry (IptvRepository đã chuyển sang dùng chung).
+- **Màn "Trạng thái nguồn dữ liệu"** trong Cài đặt: bấm là kiểm tra sống/chết + tốc độ của 9 nguồn (Socolive, KKPhim, NguonC, Gà Vàng, Giờ Vàng, ColaTV, IPTV-org, EPG, máy chủ cập nhật).
+
+### 💾 2. Dung lượng — kiểm soát hoàn toàn
+- **Tách APK theo kiến trúc chip**: phát hành thêm bản armeabi-v7a và arm64-v8a riêng (CI tự đóng gói), mỗi máy chỉ tải đúng phần của mình; vẫn giữ bản Universal cho cập nhật OTA.
+- **Màn "Dung lượng & nguồn dữ liệu"** trong Cài đặt: thấy rõ APK đã cài, đệm ảnh, dữ liệu API, đệm khác và cơ sở dữ liệu lịch sử xem.
+- **Đặt trần được**: trần đệm ảnh 25/45/80/120MB, trần dữ liệu API 8/16/32MB (áp dụng khi mở lại app) + nút xóa toàn bộ bộ nhớ đệm (không mất lịch sử xem).
+- **ProGuard chuẩn lại**: bỏ keep toàn bộ Coil/Media3, R8 thu gọn sâu hơn.
+
+### 📝 Ghi chú
+- Thu gọn file fallback_nguonc_films.json (2,45MB) sẽ làm ở bước riêng bằng checkout local (file vượt giới hạn đọc của connector GitHub).
+
+---
 # 🚀 KENHLIVE v7.8.0 (Build 143) — CHUẨN HOÁ THẺ TRẬN ĐẤU ĐA NGUỒN (TỈ SỐ THỰC, ĐỒNG HỒ TRẬN, GIỜ ĐÁ & LOGO CLB HD)
 
 ### ⚽ 1. Chuẩn Hoá Thẻ Trận Đấu & Tỉ Số Thời Gian Thực (Live Score & Minute Clock)

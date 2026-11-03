@@ -63,7 +63,8 @@ class KenhLiveApp : Application(), ImageLoaderFactory {
             .diskCache {
                 DiskCache.Builder()
                     .directory(cacheDir.resolve("img_cache"))
-                    .maxSizeBytes(45L * 1024 * 1024)
+                    // v7.9: trần cache ảnh do người dùng đặt trong Cài đặt -> Dung lượng (mặc định 45MB)
+                    .maxSizeBytes(StorageManager.imageCapMb(this@KenhLiveApp).coerceIn(10, 200) * 1024L * 1024L)
                     .build()
             }
             .build()

@@ -5,8 +5,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
-import java.net.HttpURLConnection
-import java.net.URL
+import com.kenhlive.tv.Http
 import java.util.Locale
 
 data class IptvChannel(
@@ -179,15 +178,9 @@ object IptvRepository {
     }
 
     private fun fetchUrl(urlStr: String): String? {
+        // v7.9: dùng Http dùng chung (timeout dài cho playlist, ghi sức khỏe API, cầu dao theo host)
         return try {
-            val url = URL(urlStr)
-            val conn = url.openConnection() as HttpURLConnection
-            conn.connectTimeout = 10000
-            conn.readTimeout = 15000
-            conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-            if (conn.responseCode in 200..299) {
-                conn.inputStream.bufferedReader().use { it.readText() }
-            } else null
+            Http.getLongWithRetry(urlStr, attempts = 2)
         } catch (_: Exception) {
             null
         }

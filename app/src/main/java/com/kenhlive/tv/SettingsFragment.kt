@@ -9,6 +9,8 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 
 /**
  * Màn CÀI ĐẶT (phone + TV chung 1 layout, row focusable cho remote).
@@ -129,7 +131,24 @@ class SettingsFragment : Fragment() {
                     value = versionName(), chevron = false
                 ) {
                     Toast.makeText(ctx, getString(R.string.settings_about_body), Toast.LENGTH_LONG).show()
-                }
+                },
+
+                SettingsAdapter.Item.Section(getString(R.string.settings_section_storage)),
+                SettingsAdapter.Item.Row(
+                    R.drawable.ic_info, getString(R.string.settings_storage_usage),
+                    value = storageSummary(ctx), chevron = false
+                ) { showStorageDialog() },
+                SettingsAdapter.Item.Row(
+                    R.drawable.ic_quality, getString(R.string.settings_image_cap),
+                    value = StorageManager.imageCapMb(ctx).toString() + " MB"
+                ) { pickImageCap() },
+                SettingsAdapter.Item.Row(
+                    R.drawable.ic_quality, getString(R.string.settings_http_cap),
+                    value = StorageManager.httpCapMb(ctx).toString() + " MB"
+                ) { pickHttpCap() },
+                SettingsAdapter.Item.Row(
+                    R.drawable.ic_refresh, getString(R.string.settings_api_health), chevron = false
+                ) { checkApiHealth() }
             )
         )
 
@@ -150,6 +169,85 @@ class SettingsFragment : Fragment() {
                     }
                 }, 80)
             }
+        }
+    }
+
+    private fun storageSummary(ctx: android.content.Context): String = try {
+        val u = StorageManager.measure(ctx)
+        "Đệm " + StorageManager.format(u.totalCacheBytes) + " · APK " + StorageManager.format(u.apkBytes)
+    } catch (_: Exception) { "" }
+
+    private fun showStorageDialog() {
+        val ctx = requireContext()
+        val u = try { StorageManager.measure(ctx) } catch (_: Exception) { null }
+        val msg = if (u == null) "Không đo được dung lượng." else buildString {
+            append("APK đã cài: ").append(StorageManager.format(u.apkBytes)).append("\n")
+            append("Bộ nhớ đệm ảnh: ").append(StorageManager.format(u.imageCacheBytes)).append("\n")
+            append("Dữ liệu API (HTTP): ").append(StorageManager.format(u.httpCacheBytes)).append("\n")
+            append("Đệm khác (JSON, EPG…): ").append(StorageManager.format(u.otherCacheBytes)).append("\n")
+            append("Lịch sử xem (cơ sở dữ liệu): ").append(StorageManager.format(u.historyDbBytes)).append("\n\n")
+            append("Xóa bộ nhớ đệm không làm mất lịch sử xem và cài đặt.")
+        }
+        dialog?.dismiss()
+        val dlg = AlertDialog.Builder(ctx, R.style.Theme_KenhLive_Dialog)
+            .setTitle(getString(R.string.settings_section_storage))
+            .setMessage(msg)
+            .setPositiveButton(getString(R.string.settings_storage_clear_all)) { _, _ ->
+                StorageManager.clearAllCaches(ctx)
+                Toast.makeText(ctx, getString(R.string.settings_clear_cache_done), Toast.LENGTH_SHORT).show()
+                rebuild()
+            }
+            .setNegativeButton("Đóng", null)
+            .setOnDismissListener { dialog = null }
+            .create()
+        dialog = dlg
+        dlg.show()
+    }
+
+    private fun pickImageCap() {
+        val opts = StorageManager.IMAGE_CAP_OPTIONS_MB
+        val names = opts.map { it.toString() + " MB" }.toTypedArray()
+        val cur = opts.indexOf(StorageManager.imageCapMb(requireContext())).coerceAtLeast(0)
+        singleChoice(names, cur) { i ->
+            StorageManager.setImageCapMb(requireContext(), opts[i])
+            Toast.makeText(requireContext(), getString(R.string.settings_cap_restart), Toast.LENGTH_SHORT).show()
+            rebuild()
+        }
+    }
+
+    private fun pickHttpCap() {
+        val opts = StorageManager.HTTP_CAP_OPTIONS_MB
+        val names = opts.map { it.toString() + " MB" }.toTypedArray()
+        val cur = opts.indexOf(StorageManager.httpCapMb(requireContext())).coerceAtLeast(0)
+        singleChoice(names, cur) { i ->
+            StorageManager.setHttpCapMb(requireContext(), opts[i])
+            Toast.makeText(requireContext(), getString(R.string.settings_cap_restart), Toast.LENGTH_SHORT).show()
+            rebuild()
+        }
+    }
+
+    private fun checkApiHealth() {
+        val ctx = requireContext()
+        Toast.makeText(ctx, getString(R.string.settings_api_checking), Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            val results = ApiHealthChecker.checkAll()
+            if (!isAdded) return@launch
+            val okCount = results.count { it.ok }
+            val msg = buildString {
+                results.forEach { r ->
+                    append(if (r.ok) "✅ " else "❌ ").append(r.name)
+                    append(" — ").append(if (r.ok) r.latencyMs.toString() + " ms" else r.detail).append("\n")
+                }
+            }
+            dialog?.dismiss()
+            val dlg = AlertDialog.Builder(ctx, R.style.Theme_KenhLive_Dialog)
+                .setTitle(getString(R.string.settings_api_health) + " (" + okCount + "/" + results.size + ")")
+                .setMessage(msg.trim())
+                .setPositiveButton("Đóng", null)
+                .setOnDismissListener { dialog = null }
+                .create()
+            dialog = dlg
+            dlg.show()
         }
     }
 

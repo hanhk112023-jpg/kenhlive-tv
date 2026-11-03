@@ -104,6 +104,14 @@
     <string name="settings_about_body">KênhLive tổng hợp các phòng phát trực tiếp bóng đá tiếng Việt. Chất lượng phụ thuộc nguồn phát của từng BLV.</string>
     <string name="settings_feedback">Liên hệ &amp; Báo lỗi</string>
     <string name="settings_feedback_sub">Nhóm Telegram: @kenhlivetv</string>
+    <string name="settings_section_storage">Dung lượng &amp; nguồn dữ liệu</string>
+    <string name="settings_storage_usage">Dung lượng bộ nhớ đệm</string>
+    <string name="settings_image_cap">Trần bộ nhớ đệm ảnh</string>
+    <string name="settings_http_cap">Trần dữ liệu API</string>
+    <string name="settings_api_health">Trạng thái nguồn dữ liệu</string>
+    <string name="settings_api_checking">Đang kiểm tra các nguồn dữ liệu…</string>
+    <string name="settings_cap_restart">Đã lưu. Trần mới áp dụng khi mở lại ứng dụng.</string>
+    <string name="settings_storage_clear_all">Xóa toàn bộ bộ nhớ đệm</string>
     <string name="feedback_dialog_title">Liên Hệ &amp; Báo Lỗi</string>
     <string name="feedback_dialog_guide">Quét mã QR bằng điện thoại hoặc tham gia nhóm Telegram để cùng thảo luận và nhận hỗ trợ:</string>
     <string name="feedback_btn_open">Vào Nhóm Telegram</string>

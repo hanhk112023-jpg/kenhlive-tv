@@ -38,8 +38,8 @@ android {
         applicationId "com.kenhlive.tv"
         minSdk 21
         targetSdk 34
-        versionCode 143
-        versionName "7.8.0"
+        versionCode 144
+        versionName "7.9.0"
         // Bản APK Universal: Gộp chung cả 32-bit (armeabi-v7a) và 64-bit (arm64-v8a) vào 1 file APK duy nhất
         // tương thích mọi dòng Android TV Box từ chip 32-bit cũ đến 64-bit đời mới, cài đè không mất dữ liệu.
         ndk {
@@ -47,10 +47,15 @@ android {
         }
     }
 
-    // Tắt tách APK để xuất ra 1 bản Universal duy nhất chứa cả 2 kiến trúc 32-bit và 64-bit
+    // v7.9: Tách APK theo kiến trúc để mỗi máy chỉ tải đúng phần của mình (giảm ~25-40% dung lượng tải).
+    // Vẫn xuất thêm bản Universal cho kênh cập nhật OTA (workers.dev/apk) và máy chưa rõ kiến trúc.
+    // CI (build.yml) đã có sẵn bước đóng gói riêng app-armeabi-v7a-release.apk / app-arm64-v8a-release.apk.
     splits {
         abi {
-            enable false
+            enable true
+            reset()
+            include 'armeabi-v7a', 'arm64-v8a'
+            universalApk true
         }
     }
 
