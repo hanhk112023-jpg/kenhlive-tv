@@ -66,6 +66,13 @@ jobs:
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
 
+      # Mobilerun requires Python >=3.11,<3.14 — the runner's default python3 is
+      # newer (3.14), which made the first pilot run fail with
+      # "No matching distribution found". Pin 3.12 explicitly.
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - name: Install Mobilerun
         run: |
           python3 --version
