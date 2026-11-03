@@ -371,7 +371,8 @@ class PhimFragment : Fragment() {
                     }
                 },
                 onHeroPlay = { film -> openHeroPlay(film) },
-                onFavoriteToggle = { film -> showFilmOptionDialog(film) },
+                onFavoriteToggle = { film -> toggleFilmFavorite(film) },
+                onFilmLongClick = { film -> showFilmOptionDialog(film) },
                 onHeroNext = { cycleHeroNext() },
                 filterAdapter = filterAdapter,
                 onUp = { false }
@@ -810,6 +811,7 @@ class PhimFragment : Fragment() {
                     },
                     onHeroPlay = { film -> openHeroPlay(film) },
                     onFavoriteToggle = { film -> toggleFilmFavorite(film) },
+                    onFilmLongClick = { film -> showFilmOptionDialog(film) },
                     onHeroNext = { cycleHeroNext() },
                     filterAdapter = filterAdapter,
                     onUp = { false }
@@ -941,6 +943,7 @@ class PhimFragment : Fragment() {
             onFilmClick = { film -> onHubFilmClick(film) },
             onHeroPlay = { film -> openHeroPlay(film) },
             onFavoriteToggle = { film -> toggleFilmFavorite(film) },
+            onFilmLongClick = { film -> showFilmOptionDialog(film) },
             onHeroNext = { cycleHeroNext() },
             filterAdapter = filterAdapter,
             onUp = { false },
@@ -1287,6 +1290,11 @@ class PhimFragment : Fragment() {
         private val onFilmClick: (NguoncFilm) -> Unit,
         private val onHeroPlay: (NguoncFilm) -> Unit,
         private val onFavoriteToggle: (NguoncFilm) -> Unit,
+        // Nhấn-giữ trên thẻ/poster phim: mở dialog tùy chọn (gồm Xóa Lịch Sử).
+        // Tách riêng khỏi onFavoriteToggle (nút Lưu của Hero) — trước đây dùng chung
+        // một callback nên ở đường nạp chính, nhấn-giữ thẻ chỉ lặng lẽ lưu/bỏ lưu
+        // yêu thích, dialog không bao giờ mở -> người dùng không xoá được lịch sử.
+        private val onFilmLongClick: (NguoncFilm) -> Unit,
         private val onHeroNext: () -> Unit = {},
         private val onUp: () -> Boolean = { false },
         private val filterAdapter: FilterAdapter? = null,
@@ -1378,12 +1386,12 @@ class PhimFragment : Fragment() {
             } else if (holder is GridPosterVH) {
                 val gridIdx = position - headerCount
                 if (gridIdx in gridFilms.indices) {
-                    holder.bind(gridFilms[gridIdx], onFilmClick, onFavoriteToggle)
+                    holder.bind(gridFilms[gridIdx], onFilmClick, onFilmLongClick)
                 }
             } else if (holder is RowVH) {
                 val sectionIdx = position - headerCount
                 if (sectionIdx in sections.indices) {
-                    holder.bind(sections[sectionIdx], onFilmClick, onFavoriteToggle)
+                    holder.bind(sections[sectionIdx], onFilmClick, onFavoriteToggle, onFilmLongClick)
                 }
             }
         }
@@ -1589,18 +1597,19 @@ class PhimFragment : Fragment() {
         fun bind(
             section: PhimSection,
             onFilmClick: (NguoncFilm) -> Unit,
-            onFavoriteToggle: (NguoncFilm) -> Unit
+            onFavoriteToggle: (NguoncFilm) -> Unit,
+            onFilmLongClick: (NguoncFilm) -> Unit
         ) {
             title.text = section.title
             count.text = "${section.films.size} phim"
-            carousel.adapter = PhimCardAdapter(section.films, onFilmClick, onFavoriteToggle)
+            carousel.adapter = PhimCardAdapter(section.films, onFilmClick, onFilmLongClick)
         }
     }
 
     private class PhimCardAdapter(
         private val films: List<NguoncFilm>,
         private val onFilmClick: (NguoncFilm) -> Unit,
-        private val onFavoriteToggle: (NguoncFilm) -> Unit
+        private val onFilmLongClick: (NguoncFilm) -> Unit
     ) : RecyclerView.Adapter<PhimCardAdapter.CardVH>() {
 
         class CardVH(v: View) : RecyclerView.ViewHolder(v) {
@@ -1657,7 +1666,7 @@ class PhimFragment : Fragment() {
             }
 
             holder.itemView.setOnLongClickListener {
-                onFavoriteToggle(film)
+                onFilmLongClick(film)
                 true
             }
 
@@ -1689,7 +1698,7 @@ class PhimFragment : Fragment() {
         fun bind(
             film: NguoncFilm,
             onFilmClick: (NguoncFilm) -> Unit,
-            onFavoriteToggle: (NguoncFilm) -> Unit
+            onFilmLongClick: (NguoncFilm) -> Unit
         ) {
             title.text = film.name
 
@@ -1724,7 +1733,7 @@ class PhimFragment : Fragment() {
 
             itemView.setOnClickListener { onFilmClick(film) }
             itemView.setOnLongClickListener {
-                onFavoriteToggle(film)
+                onFilmLongClick(film)
                 true
             }
 

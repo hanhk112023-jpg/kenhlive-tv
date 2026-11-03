@@ -86,10 +86,11 @@ class PlayerActivity : AppCompatActivity() {
     companion object {
         private const val PREFS_PLAYER = "player_prefs"
         private const val KEY_ASPECT_IDX = "aspect_idx"
+        // Độ trễ chốt seek khi scrub bằng D-pad trên seekbar (chờ lần bấm cuối)
+        private const val SCRUB_COMMIT_DELAY_MS = 500L
     }
     private val handler = Handler(Looper.getMainLooper())
     private var topOverlay: View? = null
-    private var hint: TextView? = null
     private var centerPlayPauseBtn: ImageButton? = null
     private var gestureFeedbackBox: View? = null
     private var gestureIcon: ImageView? = null
@@ -107,6 +108,23 @@ class PlayerActivity : AppCompatActivity() {
     private var tvSeekCurrent: TextView? = null
     private var tvSeekTotal: TextView? = null
     private var seekDragging: Boolean = false
+    // Đang kéo bằng cảm ứng (phone) — phân biệt với scrub bằng D-pad trên TV: D-pad chỉ
+    // bắn onProgressChanged(fromUser=true), KHÔNG có start/stop tracking, nên phải chốt
+    // seek bằng debounce; cảm ứng thì chốt ở onStopTrackingTouch như cũ.
+    private var seekTouchTracking: Boolean = false
+    private var pendingScrubTargetMs: Long = -1L
+    private val scrubCommitRunnable = Runnable {
+        if (seekTouchTracking) return@Runnable
+        val target = pendingScrubTargetMs
+        seekDragging = false
+        pendingScrubTargetMs = -1L
+        if (target >= 0L) {
+            noteUserSeek(target)
+            player?.seekTo(target)
+            tvSeekCurrent?.text = fmtPlaybackTime(target)
+        }
+        hideOnce()
+    }
     // Guard chống "tua tới giật lại" trên máy yếu: sau seekTo(), player còn báo vị trí CŨ
     // một lúc (đang buffering). Ghi lại đích + thời điểm của lần tua do người dùng để
     // (a) lần tua tiếp theo lấy đích cũ làm gốc thay vì vị trí cũ player báo về,
@@ -115,7 +133,7 @@ class PlayerActivity : AppCompatActivity() {
     private var lastSeekAtMs: Long = 0L
     // Thanh điều khiển VOD trên TV (hiện cùng overlay khi bấm OK)
     private var vodControlBar: View? = null
-    private var btnBarStop: Button? = null
+    private var btnBarSettings: Button? = null
     private var btnBarPrevEp: Button? = null
     private var btnBarSeekBack: Button? = null
     private var btnBarPlayPause: Button? = null
@@ -159,7 +177,6 @@ class PlayerActivity : AppCompatActivity() {
     }
     private val hideOverlay = Runnable {
         topOverlay?.visibility = View.GONE
-        hint?.visibility = View.GONE
         centerPlayPauseBtn?.visibility = View.GONE
         phoneBottomBar?.visibility = View.GONE
         phoneSeekRow?.visibility = View.GONE
@@ -270,7 +287,6 @@ class PlayerActivity : AppCompatActivity() {
 
     private fun showKeypadFeedback(num: Int) {
         topOverlay?.visibility = View.GONE
-        hint?.visibility = View.GONE
         quickChannelOsd?.visibility = View.VISIBLE
         osdChannelNumber?.text = String.format(Locale.US, "%02d", num)
         osdChannelTitle?.text = "Kênh số $num • Bấm OK để chuyển ngay"
@@ -329,7 +345,6 @@ class PlayerActivity : AppCompatActivity() {
             .getInt(KEY_ASPECT_IDX, 0).coerceIn(aspectModes.indices)
 
         topOverlay = findViewById(R.id.topOverlay)
-        hint = findViewById(R.id.playerHint)
         channelSidebar = findViewById(R.id.channelSidebar)
         sidebarList = findViewById(R.id.sidebarChannelList)
         findViewById<TextView>(R.id.playerTitle).text = name
@@ -423,10 +438,22 @@ class PlayerActivity : AppCompatActivity() {
             centerPlayPauseBtn?.setOnClickListener { togglePlayPause() }
         }
 
+        if (isVodMode && !DeviceMode.isPhone) {
+            // TV + VOD: gom các nút chỉnh thông số rời rạc trên topOverlay (Chất lượng /
+            // Âm thanh / Tỷ lệ / Kênh âm thanh) vào nút Cài Đặt trong thanh điều khiển
+            // VOD -> ẩn khỏi topOverlay cho thoáng màn hình. Chế độ live thể thao/IPTV
+            // giữ nguyên vì đó là điều khiển chính ở live. Phone giữ nguyên như cũ vì
+            // thanh điều khiển VOD (nơi chứa nút Cài Đặt) chỉ có trên TV.
+            qualityBtn.visibility = View.GONE
+            audioBtn?.visibility = View.GONE
+            aspectBtn?.visibility = View.GONE
+            audioTrackBtn?.visibility = View.GONE
+        }
+
         // Thanh tua VOD dùng chung cho cả phone và TV
         wireVodSeekBar()
 
-        // Thanh điều khiển VOD trên TV (bấm OK để mở): Dừng / Tập trước / Tua / Phát / Tập tiếp / Danh sách tập
+        // Thanh điều khiển VOD trên TV (bấm OK để mở): Cài Đặt / Tập trước / Tua / Phát / Tập tiếp / Danh sách tập
         wireVodControlBar()
 
         initPlayer()
@@ -467,7 +494,6 @@ class PlayerActivity : AppCompatActivity() {
         multiBtn.visibility = View.GONE
         if (intent.getBooleanExtra("pip", false)) pv.post { enterPip(manual = false) }
 
-        hint?.text = getString(if (DeviceMode.isTv) R.string.player_hint_tv else R.string.player_hint_phone)
         showOverlay()
     }
 
@@ -920,7 +946,6 @@ class PlayerActivity : AppCompatActivity() {
         val ch = list[safeIndex]
 
         topOverlay?.visibility = View.GONE
-        hint?.visibility = View.GONE
         quickChannelOsd?.visibility = View.VISIBLE
 
         osdChannelNumber?.text = String.format(Locale.US, "%02d", safeIndex + 1)
@@ -1104,7 +1129,6 @@ class PlayerActivity : AppCompatActivity() {
             hideCarousel()
             sb.visibility = View.VISIBLE
             topOverlay?.visibility = View.GONE
-            hint?.visibility = View.GONE
             handler.removeCallbacks(hideOverlay)
             sb.post {
                 sidebarList?.findViewHolderForAdapterPosition(currentChannelIndex)?.itemView?.requestFocus()
@@ -1177,7 +1201,6 @@ class PlayerActivity : AppCompatActivity() {
     private fun showCarousel() {
         if (!isIptvMode || IptvRepository.currentChannels.isEmpty()) return
         topOverlay?.visibility = View.GONE
-        hint?.visibility = View.GONE
         quickChannelOsd?.visibility = View.GONE
         channelSidebar?.visibility = View.GONE
 
@@ -1545,7 +1568,6 @@ class PlayerActivity : AppCompatActivity() {
         super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig)
         if (isInPictureInPictureMode) {
             topOverlay?.visibility = View.GONE
-            hint?.visibility = View.GONE
             quickChannelOsd?.visibility = View.GONE
             statsHudBox?.visibility = View.GONE
             findViewById<PlayerView>(R.id.playerView)?.resizeMode = AspectRatioFrameLayout.RESIZE_MODE_FILL
@@ -1566,15 +1588,35 @@ class PlayerActivity : AppCompatActivity() {
         seekVod?.keyProgressIncrement = PlayerPrefs.seekStepSec(this)
         seekVod?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(sb: SeekBar?, progress: Int, fromUser: Boolean) {
-                if (fromUser) tvSeekCurrent?.text = fmtPlaybackTime(progress * 1000L)
+                if (!fromUser) return
+                tvSeekCurrent?.text = fmtPlaybackTime(progress * 1000L)
+                // Remote TV: D-pad ◄/► khi seekbar đang focus CHỈ bắn onProgressChanged
+                // (fromUser=true) — không hề có start/stop tracking. Coi đây là đang
+                // scrub: khóa updater bằng seekDragging (updater đã tôn trọng cờ này —
+                // nó không ghi đè progress khi seekDragging=true), ghi đích cho guard
+                // chống giật ngược và lên lịch chốt seek bằng debounce sau lần bấm cuối.
+                // Kéo cảm ứng (phone) thì bỏ qua debounce — onStopTrackingTouch chốt ngay.
+                seekDragging = true
+                pendingScrubTargetMs = progress * 1000L
+                noteUserSeek(pendingScrubTargetMs)
+                if (!seekTouchTracking) {
+                    handler.removeCallbacks(scrubCommitRunnable)
+                    handler.postDelayed(scrubCommitRunnable, SCRUB_COMMIT_DELAY_MS)
+                }
             }
 
             override fun onStartTrackingTouch(sb: SeekBar?) {
+                seekTouchTracking = true
                 seekDragging = true
+                handler.removeCallbacks(scrubCommitRunnable)
             }
 
             override fun onStopTrackingTouch(sb: SeekBar?) {
+                // Hủy commit debounce đang chờ (nếu có) và chốt ngay tại vị trí núm.
+                handler.removeCallbacks(scrubCommitRunnable)
+                seekTouchTracking = false
                 seekDragging = false
+                pendingScrubTargetMs = -1L
                 val target = (sb?.progress ?: 0) * 1000L
                 noteUserSeek(target)
                 player?.seekTo(target)
@@ -1582,6 +1624,14 @@ class PlayerActivity : AppCompatActivity() {
                 hideOnce()
             }
         })
+        // Mất focus giữa chừng khi đang scrub bằng D-pad (vd bấm phím điều hướng sang
+        // nút khác): chốt seek ngay thay vì chờ hết debounce.
+        seekVod?.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus && seekDragging && !seekTouchTracking) {
+                handler.removeCallbacks(scrubCommitRunnable)
+                scrubCommitRunnable.run()
+            }
+        }
     }
 
     /** Bước tua hiện tại (giây) theo cài đặt của người dùng — mặc định 10s. */
@@ -1641,25 +1691,68 @@ class PlayerActivity : AppCompatActivity() {
         btnBarSeekFwd?.text = "Tua +${step}s"
     }
 
+    /**
+     * Menu Cài Đặt của thanh điều khiển VOD (nút Cài Đặt): gom các chỉnh thông số vốn
+     * nằm rời rạc trên topOverlay. Mỗi mục gọi ĐÚNG handler của nút topOverlay tương ứng:
+     * Chất lượng = qualityBtn, Âm thanh = audioBtn, Tỷ lệ khung hình = aspectBtn.
+     */
+    private fun showVodSettingsDialog() {
+        val step = PlayerPrefs.seekStepSec(this)
+        val items = arrayOf(
+            "Chất lượng",
+            "Âm thanh",
+            "Kênh âm thanh",
+            "Tỷ lệ khung hình",
+            "Bước tua: ${step}s"
+        )
+        AlertDialog.Builder(this, R.style.Theme_KenhLive_Dialog)
+            .setTitle("Cài Đặt")
+            .setItems(items) { _, which ->
+                when (which) {
+                    0 -> showSettingsDialog(video = true)
+                    1 -> showSettingsDialog(video = false)
+                    2 -> showAudioTrackDialog()
+                    3 -> cycleAspectRatio()
+                    4 -> showSeekStepDialog()
+                }
+            }
+            .setNegativeButton(R.string.dialog_close, null)
+            .show()
+        hideOnce()
+    }
+
+    /** Chọn bước tua 10/20/30s — ghi qua PlayerPrefs như màn Cài đặt của app. */
+    private fun showSeekStepDialog() {
+        val options = PlayerPrefs.SEEK_STEP_OPTIONS_SEC
+        val labels = options.map { "${it}s" }.toTypedArray()
+        val checked = options.indexOf(PlayerPrefs.seekStepSec(this)).coerceAtLeast(0)
+        AlertDialog.Builder(this, R.style.Theme_KenhLive_Dialog)
+            .setTitle("Bước tua")
+            .setSingleChoiceItems(labels, checked) { d, which ->
+                PlayerPrefs.setSeekStepSec(this, options[which])
+                // Áp dụng ngay: bước phím trên seekbar + nhãn 2 nút Tua trên thanh.
+                seekVod?.keyProgressIncrement = options[which]
+                syncVodControlBar()
+                d.dismiss()
+            }
+            .setNegativeButton(R.string.dialog_close, null)
+            .show()
+        hideOnce()
+    }
+
     private fun wireVodControlBar() {
         vodControlBar = findViewById(R.id.vodControlBar)
-        btnBarStop = findViewById(R.id.btnBarStop)
+        btnBarSettings = findViewById(R.id.btnBarSettings)
         btnBarPrevEp = findViewById(R.id.btnBarPrevEp)
         btnBarSeekBack = findViewById(R.id.btnBarSeekBack)
         btnBarPlayPause = findViewById(R.id.btnBarPlayPause)
         btnBarSeekFwd = findViewById(R.id.btnBarSeekFwd)
         btnBarNextEp = findViewById(R.id.btnBarNextEp)
         btnBarEpisodes = findViewById(R.id.btnBarEpisodes)
-        // Nút đầu tiên của thanh: hành vi là dừng phát + lưu tiến độ + THOÁT khỏi player,
-        // tức là nút "Thoát" chứ không phải "Dừng" (người dùng góp ý). Text khai trong XML
-        // là "Dừng" nên đặt lại nhãn + mô tả tại đây cho đúng bản chất.
-        btnBarStop?.text = "Thoát"
-        btnBarStop?.contentDescription = "Thoát"
-        btnBarStop?.setOnClickListener {
-            saveVodProgress()
-            player?.stop()
-            finish()
-        }
+        // Nút đầu tiên của thanh: Cài Đặt — gom Chất lượng / Âm thanh / Tỷ lệ khung hình /
+        // Bước tua vào một menu. Nút "Thoát" cũ bị bỏ vì trùng chức năng phím BACK cứng
+        // trên remote (thoát vẫn qua BACK; onPause/onDestroy vẫn lưu tiến độ như trước).
+        btnBarSettings?.setOnClickListener { showVodSettingsDialog() }
         btnBarPrevEp?.setOnClickListener { switchEpisodeByDelta(-1); hideOnce() }
         btnBarSeekBack?.setOnClickListener { seekByStep(-1) }
         btnBarPlayPause?.setOnClickListener { togglePlayPause() }
@@ -1862,12 +1955,6 @@ class PlayerActivity : AppCompatActivity() {
         if (channelSidebar?.visibility == View.VISIBLE) return
         quickChannelOsd?.visibility = View.GONE
         topOverlay?.visibility = View.VISIBLE
-        // Dòng gợi ý phím chỉ hiện khi overlay KHÔNG kèm thanh điều khiển: trên TV xem VOD,
-        // thanh nút nằm đúng vị trí của dòng chữ nên hint sẽ đè/che nút bấm (góp ý người dùng).
-        // Đây là nơi DUY NHẤT trong file bật hint — mọi nơi khác chỉ tắt — nên đồng bộ tại
-        // đây + ngay tại điểm bật thanh (nhánh TV-VOD bên dưới) là khép kín.
-        val barWillShow = !DeviceMode.isPhone && isVodMode
-        hint?.visibility = if (barWillShow) View.GONE else View.VISIBLE
         if (DeviceMode.isPhone) {
             centerPlayPauseBtn?.visibility = View.VISIBLE
             phoneBottomBar?.visibility = View.VISIBLE
@@ -1882,14 +1969,11 @@ class PlayerActivity : AppCompatActivity() {
                 phoneSeekRow?.visibility = View.GONE
             }
         } else if (isVodMode) {
-            // TV xem phim VOD: hiện THANH ĐIỀU KHIỂN dưới đáy (Dừng / Tập trước / Tua /
+            // TV xem phim VOD: hiện THANH ĐIỀU KHIỂN dưới đáy (Cài Đặt / Tập trước / Tua /
             // Phát-Dừng / Tập tiếp / Danh sách tập) + thanh tua kèm overlay. Nút Play/Pause
             // giữa màn hình không cần nữa vì đã có ngay trong thanh (bản v7.11-v7.13 dùng
             // nút giữa màn hình; người dùng góp ý muốn đủ tính năng như các trình phát TV).
             vodControlBar?.visibility = View.VISIBLE
-            // Thanh hiện ⇒ hint phải tắt (đồng bộ ngay tại điểm bật thanh, phòng khi
-            // logic phía trên thay đổi sau này).
-            hint?.visibility = View.GONE
             syncVodControlBar()
             centerPlayPauseBtn?.visibility = View.GONE
             val row = phoneSeekRow
@@ -2058,7 +2142,7 @@ class PlayerActivity : AppCompatActivity() {
                 return true
             }
             // Bấm OK khi đang xem phim VOD:
-            // - TV: mở thanh điều khiển đầy đủ (Dừng / Tập trước / Tua / Phát / Tập tiếp /
+            // - TV: mở thanh điều khiển đầy đủ (Cài Đặt / Tập trước / Tua / Phát / Tập tiếp /
             //   Danh sách tập) như các trình phát TV, focus vào nút Phát/Dừng trong thanh.
             // - Điện thoại: Dừng/Tiếp tục phát ngay (hành vi từ v7.11).
             if (isOkKey && isVodMode) {
@@ -2120,7 +2204,6 @@ class PlayerActivity : AppCompatActivity() {
             }
             if (topOverlay?.visibility == View.VISIBLE) {
                 topOverlay?.visibility = View.GONE
-                hint?.visibility = View.GONE
                 handler.removeCallbacks(hideOverlay)
                 return true
             }

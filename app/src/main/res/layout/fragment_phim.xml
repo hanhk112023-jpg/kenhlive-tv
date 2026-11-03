@@ -23,6 +23,7 @@
             android:layout_height="match_parent"
             android:clipToPadding="false"
             android:clipChildren="false"
+            android:paddingTop="8dp"
             android:paddingBottom="40dp"
             android:scrollbars="none" />
 
@@ -240,6 +241,7 @@
                 android:layout_weight="1"
                 android:clipToPadding="false"
                 android:clipChildren="false"
+                android:paddingTop="8dp"
                 android:paddingBottom="24dp"
                 android:scrollbars="none" />
 

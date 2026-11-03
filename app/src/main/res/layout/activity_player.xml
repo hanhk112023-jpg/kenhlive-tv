@@ -432,7 +432,7 @@
             android:textSize="12sp" />
     </LinearLayout>
 
-    <!-- VOD CONTROL BAR (TV): thanh điều khiển phim khi bấm OK — Dừng / Tập trước / Tua lại / Phát-Dừng / Tua tới / Tập tiếp / Danh sách tập -->
+    <!-- VOD CONTROL BAR (TV): thanh điều khiển phim khi bấm OK — Cài Đặt / Tập trước / Tua lại / Phát-Dừng / Tua tới / Tập tiếp / Danh sách tập -->
     <LinearLayout
         android:id="@+id/vodControlBar"
         android:layout_width="match_parent"
@@ -448,14 +448,14 @@
         android:visibility="gone">
 
         <Button
-            android:id="@+id/btnBarStop"
+            android:id="@+id/btnBarSettings"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:background="@drawable/kl2_card_glass"
-            android:drawableTop="@drawable/ic_stop"
+            android:drawableTop="@drawable/ic_nav_settings"
             android:drawablePadding="2dp"
-            android:text="Dừng"
+            android:text="Cài Đặt"
             android:textColor="#FFFFFF"
             android:textSize="10.5sp"
             android:focusable="true" />
@@ -941,22 +941,5 @@
             android:textSize="11.5sp"
             android:text="Khung hình rớt: 0" />
     </LinearLayout>
-
-    <!-- BOTTOM HINT (TV) -->
-    <TextView
-        android:id="@+id/playerHint"
-        style="@style/KL.Text.Meta"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="14dp"
-        android:background="@drawable/bg_player_hud_card"
-        android:paddingLeft="18dp"
-        android:paddingRight="18dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
-        android:textColor="#F1F5F9"
-        android:textSize="12sp"
-        android:visibility="gone" />
 
 </FrameLayout>
