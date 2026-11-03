@@ -181,11 +181,11 @@ class MatchCardsAdapter(
         super.onDetachedFromRecyclerView(rv)
     }
 
-    override fun submitList(list: MutableList<Any>?) {
+    override fun submitList(list: List<Any>?) {
         submitList(list, null)
     }
 
-    override fun submitList(list: MutableList<Any>?, commitCallback: Runnable?) {
+    override fun submitList(list: List<Any>?, commitCallback: Runnable?) {
         val rv = hostRv
         val focusedPos = if (rv != null && rv.hasFocus()) {
             val f = rv.findFocus()
