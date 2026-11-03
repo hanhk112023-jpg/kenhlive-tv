@@ -361,8 +361,8 @@
         <ImageButton
             android:id="@+id/phoneLockBtn"
             style="@style/KL.IconButton"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_marginRight="8dp"
             android:src="@drawable/ic_lock"
             android:contentDescription="Khóa màn hình" />
@@ -370,8 +370,8 @@
         <ImageButton
             android:id="@+id/phoneAspectBtn"
             style="@style/KL.IconButton"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:layout_marginRight="8dp"
             android:src="@drawable/ic_aspect_ratio"
             android:contentDescription="Tỉ lệ màn hình" />
@@ -379,10 +379,56 @@
         <ImageButton
             android:id="@+id/phoneRotateBtn"
             style="@style/KL.IconButton"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="48dp"
+            android:layout_height="48dp"
             android:src="@drawable/ic_fullscreen"
             android:contentDescription="Xoay toàn màn hình" />
+    </LinearLayout>
+
+    <!-- VOD SEEK ROW (PHONE ONLY): thanh tua phim + thời gian, hiện cùng overlay trên phoneBottomBar -->
+    <LinearLayout
+        android:id="@+id/phoneSeekRow"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="64dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/bg_overlay_bottom"
+        android:paddingLeft="18dp"
+        android:paddingRight="18dp"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/tvSeekCurrent"
+            android:layout_width="52dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="00:00"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold" />
+
+        <SeekBar
+            android:id="@+id/seekVod"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginLeft="8dp"
+            android:layout_marginRight="8dp"
+            android:maxHeight="4dp"
+            android:minHeight="4dp"
+            android:progressTint="@color/kl_brand"
+            android:thumbTint="#FFFFFF" />
+
+        <TextView
+            android:id="@+id/tvSeekTotal"
+            android:layout_width="52dp"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="00:00"
+            android:textColor="#CBD5E1"
+            android:textSize="12sp" />
     </LinearLayout>
 
     <!-- FLOATING UNLOCK BUTTON (WHEN SCREEN IS LOCKED ON MOBILE) -->

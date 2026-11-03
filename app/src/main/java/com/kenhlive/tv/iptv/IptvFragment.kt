@@ -2,6 +2,7 @@ package com.kenhlive.tv.iptv
 
 import android.content.Context
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
@@ -55,6 +56,8 @@ class IptvFragment : Fragment() {
     private var heroEpgProgress: ProgressBar? = null
     private var heroEpgNext: TextView? = null
     private var heroLogoImg: ImageView? = null
+    private var heroLogoContainer: View? = null
+    private var heroHintText: TextView? = null
 
     private var previewJob: Job? = null
     private var currentPreviewUrl: String? = null
@@ -90,6 +93,9 @@ class IptvFragment : Fragment() {
         heroEpgProgress = view.findViewById(R.id.heroEpgProgress)
         heroEpgNext = view.findViewById(R.id.heroEpgNext)
         heroLogoImg = view.findViewById(R.id.heroLogoImg)
+        heroLogoContainer = view.findViewById(R.id.heroLogoContainer)
+        heroHintText = view.findViewById(R.id.heroHintText)
+        applyHeroLayoutForDevice()
 
         heroPreviewBox?.setOnClickListener {
             currentlyFocusedChannel?.let { ch ->
@@ -98,16 +104,8 @@ class IptvFragment : Fragment() {
             }
         }
 
-        // Lưới thẻ TV chuẩn Leanback: Tự động phân chia 5 cột (TV 1080p), 4 cột (Tablet ngang) hoặc 2 cột (Phone)
-        val dm = resources.displayMetrics
-        val widthDp = dm.widthPixels / dm.density
-        val spanCount = when {
-            widthDp >= 800 || DeviceMode.isTv -> 5
-            widthDp >= 600 -> 4
-            widthDp >= 400 -> 3
-            else -> 2
-        }
-        gridList.layoutManager = GridLayoutManager(requireContext(), spanCount)
+        // Lưới thẻ kênh: Tự động phân chia 5 cột (TV 1080p), 4 cột (Tablet ngang) hoặc 2-3 cột (Phone)
+        gridList.layoutManager = GridLayoutManager(requireContext(), computeGridSpan())
         gridList.clipChildren = false
         gridList.clipToPadding = false
         gridList.setHasFixedSize(true)
@@ -132,6 +130,54 @@ class IptvFragment : Fragment() {
         })
 
         loadData()
+    }
+
+    private fun computeGridSpan(): Int {
+        val dm = resources.displayMetrics
+        val widthDp = dm.widthPixels / dm.density
+        return when {
+            widthDp >= 800 || DeviceMode.isTv -> 5
+            widthDp >= 600 -> 4
+            widthDp >= 400 -> 3
+            else -> 2
+        }
+    }
+
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // Activity xử lý configChanges nên không recreate: cập nhật số cột + hero khi xoay máy
+        if (this::gridList.isInitialized) {
+            val lm = gridList.layoutManager as? GridLayoutManager
+            val target = computeGridSpan()
+            if (lm != null && lm.spanCount != target) lm.spanCount = target
+        }
+        applyHeroLayoutForDevice()
+    }
+
+    /**
+     * Hero IPTV trên điện thoại dọc: khung logo 160dp + padding chiếm gần nửa bề ngang 360dp,
+     * cột chữ chỉ còn ~120dp và thanh tiến độ EPG 280dp tràn ra ngoài -> ẩn khung logo,
+     * cho thanh tiến độ chạy hết bề ngang cột chữ, đổi gợi ý sang thao tác chạm.
+     * TV và điện thoại ngang giữ nguyên bố cục gốc.
+     */
+    private fun applyHeroLayoutForDevice() {
+        val ctx = context ?: return
+        val compact = DeviceMode.isPhone && DeviceMode.isPortrait(ctx)
+        heroLogoContainer?.visibility = if (compact) View.GONE else View.VISIBLE
+        heroEpgProgress?.let { pb ->
+            val lp = pb.layoutParams
+            lp.width = if (compact) {
+                ViewGroup.LayoutParams.MATCH_PARENT
+            } else {
+                (280 * resources.displayMetrics.density).toInt()
+            }
+            pb.layoutParams = lp
+        }
+        heroHintText?.text = if (DeviceMode.isPhone) {
+            "Chạm vào kênh bên dưới để xem toàn màn hình"
+        } else {
+            "Bấm [OK] để xem toàn màn hình • Bấm [Lên/Xuống] để duyệt kênh"
+        }
     }
 
     private fun getFavoriteChannelIds(): Set<String> {

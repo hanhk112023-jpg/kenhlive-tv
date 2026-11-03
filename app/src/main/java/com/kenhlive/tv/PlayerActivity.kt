@@ -6,6 +6,7 @@ import android.view.GestureDetector
 import android.media.AudioManager
 import android.view.WindowManager
 import android.widget.ProgressBar
+import android.widget.SeekBar
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.content.res.Configuration
@@ -77,6 +78,30 @@ class PlayerActivity : AppCompatActivity() {
         gestureFeedbackBox?.visibility = View.GONE
     }
     private var phoneBottomBar: View? = null
+    // Thanh tua VOD trên điện thoại (chỉ hiện khi xem phim + overlay đang mở)
+    private var phoneSeekRow: View? = null
+    private var seekVod: SeekBar? = null
+    private var tvSeekCurrent: TextView? = null
+    private var tvSeekTotal: TextView? = null
+    private var seekDragging: Boolean = false
+    private val seekUpdateRunnable = object : Runnable {
+        override fun run() {
+            val row = phoneSeekRow ?: return
+            val p = player ?: return
+            if (row.visibility != View.VISIBLE) return
+            if (!seekDragging) {
+                val dur = p.duration
+                val pos = p.currentPosition.coerceAtLeast(0L)
+                if (dur > 0L) {
+                    seekVod?.max = (dur / 1000L).toInt().coerceAtLeast(1)
+                    seekVod?.progress = (pos / 1000L).toInt()
+                    tvSeekTotal?.text = fmtPlaybackTime(dur)
+                }
+                tvSeekCurrent?.text = fmtPlaybackTime(pos)
+            }
+            handler.postDelayed(this, 500L)
+        }
+    }
     private var phoneUnlockContainer: View? = null
     private var isScreenLocked: Boolean = false
     private val hideUnlockBtnTask = Runnable {
@@ -87,6 +112,7 @@ class PlayerActivity : AppCompatActivity() {
         hint?.visibility = View.GONE
         centerPlayPauseBtn?.visibility = View.GONE
         phoneBottomBar?.visibility = View.GONE
+        phoneSeekRow?.visibility = View.GONE
     }
     private val audioFx = AudioEnhancer(this)
     private var url: String = ""
@@ -321,6 +347,29 @@ class PlayerActivity : AppCompatActivity() {
             phoneUnlockContainer = findViewById(R.id.phoneUnlockContainer)
             findViewById<ImageButton>(R.id.phoneLockBtn)?.setOnClickListener { setScreenLock(true) }
             phoneUnlockContainer?.setOnClickListener { setScreenLock(false) }
+
+            // Thanh tua phim (VOD) cho điện thoại: kéo để tua, nhãn thời gian cập nhật trực tiếp
+            phoneSeekRow = findViewById(R.id.phoneSeekRow)
+            seekVod = findViewById(R.id.seekVod)
+            tvSeekCurrent = findViewById(R.id.tvSeekCurrent)
+            tvSeekTotal = findViewById(R.id.tvSeekTotal)
+            seekVod?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+                override fun onProgressChanged(sb: SeekBar?, progress: Int, fromUser: Boolean) {
+                    if (fromUser) tvSeekCurrent?.text = fmtPlaybackTime(progress * 1000L)
+                }
+
+                override fun onStartTrackingTouch(sb: SeekBar?) {
+                    seekDragging = true
+                }
+
+                override fun onStopTrackingTouch(sb: SeekBar?) {
+                    seekDragging = false
+                    val target = (sb?.progress ?: 0) * 1000L
+                    player?.seekTo(target)
+                    tvSeekCurrent?.text = fmtPlaybackTime(target)
+                    hideOnce()
+                }
+            })
         } else {
             // Trên TV: Giữ nguyên bố cục đầy đủ cho remote
             phoneMenuBtn?.visibility = View.GONE
@@ -411,9 +460,21 @@ class PlayerActivity : AppCompatActivity() {
                     p.seekTo(target)
                     showGestureFeedback(R.drawable.ic_back, 0, "-10s")
                 } else {
-                    // Chạm đúp bên phải: Nhảy tới Live Edge tức thì
-                    p.seekToDefaultPosition()
-                    showGestureFeedback(R.drawable.ic_play, 100, "TRỰC TIẾP")
+                    // Chạm đúp bên phải: Phim VOD tua tới +10s; luồng LIVE nhảy tới Live Edge.
+                    // (Trước đây VOD cũng seekToDefaultPosition() = quay về 00:00, mất vị trí đang xem.)
+                    if (isVodMode || !p.isCurrentMediaItemLive) {
+                        val dur = p.duration
+                        val target = if (dur > 0L) {
+                            (p.currentPosition + 10_000L).coerceAtMost(dur)
+                        } else {
+                            p.currentPosition + 10_000L
+                        }
+                        p.seekTo(target)
+                        showGestureFeedback(R.drawable.ic_play, 100, "+10s")
+                    } else {
+                        p.seekToDefaultPosition()
+                        showGestureFeedback(R.drawable.ic_play, 100, "TRỰC TIẾP")
+                    }
                 }
                 return true
             }
@@ -502,6 +563,16 @@ class PlayerActivity : AppCompatActivity() {
         gestureText?.text = text
         handler.removeCallbacks(hideGestureRunnable)
         handler.postDelayed(hideGestureRunnable, 1000L)
+    }
+
+    private fun fmtPlaybackTime(ms: Long): String {
+        if (ms <= 0L) return "00:00"
+        val totalSec = ms / 1000L
+        val h = totalSec / 3600L
+        val m = (totalSec % 3600L) / 60L
+        val s = totalSec % 60L
+        return if (h > 0L) String.format(Locale.US, "%d:%02d:%02d", h, m, s)
+        else String.format(Locale.US, "%02d:%02d", m, s)
     }
 
     private fun togglePlayPause() {
@@ -1404,6 +1475,14 @@ class PlayerActivity : AppCompatActivity() {
             phoneBottomBar?.visibility = View.VISIBLE
             val isPlaying = player?.isPlaying == true
             centerPlayPauseBtn?.setImageResource(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
+            // Thanh tua chỉ dành cho phim VOD (luồng live không tua được)
+            if (isVodMode) {
+                phoneSeekRow?.visibility = View.VISIBLE
+                handler.removeCallbacks(seekUpdateRunnable)
+                handler.post(seekUpdateRunnable)
+            } else {
+                phoneSeekRow?.visibility = View.GONE
+            }
         }
         hideOnce()
     }
@@ -1650,6 +1729,7 @@ class PlayerActivity : AppCompatActivity() {
         val inPip = Build.VERSION.SDK_INT >= 26 && isInPictureInPictureMode && !DeviceMode.isTv
         if (inPip && !isFinishing) return
         handler.removeCallbacks(hideOverlay)
+        handler.removeCallbacks(seekUpdateRunnable)
         handler.removeCallbacks(statsUpdateRunnable)
         handler.removeCallbacks(commitChannelSwitch)
         handler.removeCallbacks(keypadCommitRunnable)

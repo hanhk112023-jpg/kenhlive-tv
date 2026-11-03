@@ -162,8 +162,9 @@
                 android:maxLines="1"
                 android:ellipsize="end" />
 
-            <!-- Gợi ý điều khiển TV -->
+            <!-- Gợi ý điều khiển (chữ đổi theo thiết bị trong IptvFragment) -->
             <TextView
+                android:id="@+id/heroHintText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
@@ -221,8 +222,8 @@
         <!-- Ô Tìm kiếm nhanh phong cách bo tròn -->
         <EditText
             android:id="@+id/searchChannelInput"
-            android:layout_width="220dp"
-            android:layout_height="36dp"
+            android:layout_width="@dimen/iptv_search_w"
+            android:layout_height="@dimen/iptv_search_h"
             android:layout_marginLeft="14dp"
             android:hint="Tìm kênh TV..."
             android:textColorHint="#64748B"

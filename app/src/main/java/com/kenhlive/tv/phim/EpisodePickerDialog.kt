@@ -151,7 +151,8 @@ object EpisodePickerDialog {
             dialog.dismiss()
         }
 
-        val spanCount = if (DeviceMode.isTv) 5 else 3
+        // Lưới tập: TV 5 cột, phone dọc 3 cột, phone ngang 5 cột
+        val spanCount = DeviceMode.getGridSpanCount(context, defaultTv = 5, phonePortrait = 3, phoneLandscape = 5)
         rvEpisodes.layoutManager = GridLayoutManager(context, spanCount)
 
         rvServers.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
@@ -331,6 +332,14 @@ object EpisodePickerDialog {
         }
 
         dialog.show()
+        if (DeviceMode.isPhone) {
+            // Trên điện thoại cho dialog gần hết bề ngang để poster + lưới tập dễ đọc/chạm;
+            // TV giữ nguyên kích thước mặc định của theme.
+            dialog.window?.setLayout(
+                (context.resources.displayMetrics.widthPixels * 0.94f).toInt(),
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        }
         return dialog
     }
 

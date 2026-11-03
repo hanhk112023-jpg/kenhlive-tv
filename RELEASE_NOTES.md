@@ -1,3 +1,27 @@
+# 🚀 KENHLIVE v7.10.0 (Build 145) — HOÀN THIỆN GIAO DIỆN ĐIỆN THOẠI (CẢM ỨNG, XOAY MÀN HÌNH, THANH TUA PHIM)
+
+### 📱 1. Trình phát trên điện thoại
+- **Thanh tua phim (seek bar) mới**: khi xem phim (VOD) trên điện thoại, chạm để hiện điều khiển sẽ thấy thanh tua kèm thời gian hiện tại / tổng thời lượng ngay trên thanh điều khiển dưới — kéo để tua tới đoạn mong muốn. Luồng trực tiếp (thể thao, kênh TV) không hiện thanh tua như trước.
+- **Sửa lỗi chạm đúp tua phim**: trước đây chạm đúp bên phải khi xem phim bị nhảy về đầu phim (00:00); nay tua tới +10 giây đúng chuẩn ứng dụng xem phim. Chạm đúp bên trái vẫn tua lùi 10 giây; với luồng trực tiếp, chạm đúp bên phải vẫn về điểm trực tiếp.
+- **Nút điều khiển dưới trình phát to hơn** (khóa màn hình / tỉ lệ / xoay): 40dp → 48dp, đúng chuẩn vùng chạm tối thiểu trên Android.
+
+### 🧭 2. Điều hướng & focus đúng chất cảm ứng
+- **Không còn bị "nhảy về đầu trang"**: màn Thể thao và màn Phim trước đây tự ép focus kiểu remote TV mỗi lần quay lại từ trình phát, khiến danh sách trên điện thoại bị kéo về đầu. Nay việc khôi phục focus chỉ chạy trên TV; điện thoại giữ nguyên vị trí cuộn.
+- **Cổng chọn (Hub) không còn tự sáng focus** trên điện thoại; nút "Về trang chủ" trong màn Phim trên điện thoại nay về đúng tab Thể thao (trang chủ của bản điện thoại) thay vì mở cổng chọn kiểu TV.
+- **Cổng chọn trên điện thoại dọc được xếp lại**: hai thẻ Thể thao / Phim xếp dọc, hàng nút tiện ích xếp dọc — trước đây bị bóp ngang và tràn khỏi màn hình.
+
+### 🔄 3. Xoay màn hình & lưới nội dung
+- **Lưới tự đổi số cột khi xoay máy**: lưới tìm phim (3 cột dọc / 5 cột ngang), lưới kênh truyền hình và lưới chọn tập phim cập nhật ngay khi xoay, không cần mở lại màn hình.
+- **Hero kênh truyền hình gọn trên màn dọc**: ẩn khung logo lớn, thanh tiến độ lịch phát sóng chạy hết bề ngang, gợi ý đổi sang thao tác chạm ("Chạm vào kênh để xem").
+
+### 👆 4. Vùng chạm & khoảng đệm chuẩn điện thoại
+- **Nút trên thanh ứng dụng** (làm mới / cài đặt): 36dp → 48dp.
+- **Chip chọn tập phim** cao hơn (36dp → 44dp), **pill lọc phim** 32dp → 38dp, **chip nhóm kênh** 36dp → 42dp, **ô tìm kênh** cao 44dp và hẹp lại để hàng nhóm kênh có thêm chỗ trên màn dọc.
+- **Poster lưới tìm phim** thấp hơn trên điện thoại (165dp thay vì 215dp) để đúng tỉ lệ poster trong ô lưới hẹp.
+- **Hộp thoại chọn tập** trên điện thoại mở rộng gần hết bề ngang (94%) cho dễ đọc và chạm.
+- Toàn bộ kích thước trên được tách theo dimen riêng cho điện thoại/TV — **trải nghiệm và kích thước trên TV giữ nguyên 100%**.
+
+---
 # 🚀 KENHLIVE v7.9.0 (Build 144) — KIỂM SOÁT API & DUNG LƯỢNG, GIAO DIỆN APPLE, PHIM & TRÌNH PHÁT MỚI
 
 ### 📡 1. Kiểm tra & giám sát API

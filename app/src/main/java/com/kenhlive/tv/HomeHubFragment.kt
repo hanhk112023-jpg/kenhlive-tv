@@ -1,11 +1,14 @@
 package com.kenhlive.tv
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
+import android.view.Gravity
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -133,6 +136,9 @@ class HomeHubFragment : Fragment() {
             }
         }
 
+        // Điện thoại: chỉnh lại bố cục Hub (vốn thiết kế cho TV) theo chiều màn hình
+        applyHubLayout(view)
+
         // Live Clock Updater (GMT+7)
         viewLifecycleOwner.lifecycleScope.launch {
             val fmt = SimpleDateFormat("HH:mm · dd/MM/yyyy", Locale("vi", "VN")).apply {
@@ -170,7 +176,102 @@ class HomeHubFragment : Fragment() {
         }
     }
 
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // Activity xử lý configChanges nên không recreate: tự xếp lại Hub khi xoay máy (phone)
+        view?.let { applyHubLayout(it) }
+    }
+
+    /**
+     * Hub vốn là màn hình TV (2 thẻ cổng nằm ngang + hàng tiện ích ngang).
+     * Trên điện thoại dọc, bố cục ngang khiến mỗi thẻ bị bóp còn ~124dp và hàng nút tiện ích
+     * tràn khỏi màn hình -> xếp dọc cả hai hàng, ẩn spacer và dòng chú thích phím D-pad.
+     * TV và điện thoại ngang giữ nguyên bố cục gốc.
+     */
+    private fun applyHubLayout(root: View) {
+        if (!DeviceMode.isPhone) return
+        val portal = root.findViewById<LinearLayout>(R.id.portalContainer) ?: return
+        val cardSports = root.findViewById<View>(R.id.cardSports) ?: return
+        val cardPhim = root.findViewById<View>(R.id.cardPhim) ?: return
+        val btnSettings = root.findViewById<View>(R.id.btnHubSettings) ?: return
+        val bottomRow = btnSettings.parent as? LinearLayout ?: return
+        val d = root.resources.displayMetrics.density
+        val gap = (12 * d).toInt()
+        val portrait = DeviceMode.isPortrait(root.context)
+
+        fun cardLp(v: View) = v.layoutParams as? LinearLayout.LayoutParams
+
+        if (portrait) {
+            portal.orientation = LinearLayout.VERTICAL
+            cardLp(cardSports)?.let { lp ->
+                lp.width = LinearLayout.LayoutParams.MATCH_PARENT
+                lp.height = 0
+                lp.weight = 1f
+                lp.rightMargin = 0
+                lp.bottomMargin = gap
+                cardSports.layoutParams = lp
+            }
+            cardLp(cardPhim)?.let { lp ->
+                lp.width = LinearLayout.LayoutParams.MATCH_PARENT
+                lp.height = 0
+                lp.weight = 1f
+                lp.leftMargin = 0
+                lp.topMargin = 0
+                cardPhim.layoutParams = lp
+            }
+            bottomRow.orientation = LinearLayout.VERTICAL
+            bottomRow.gravity = Gravity.START
+            for (i in 0 until bottomRow.childCount) {
+                val child = bottomRow.getChildAt(i)
+                val lp = child.layoutParams as? LinearLayout.LayoutParams ?: continue
+                when {
+                    child.id == View.NO_ID -> child.visibility = View.GONE // spacer co giãn
+                    child is TextView -> child.visibility = View.GONE // chú thích "D-pad · OK..."
+                    else -> {
+                        lp.leftMargin = 0
+                        lp.topMargin = if (child === btnSettings) 0 else (10 * d).toInt()
+                        child.layoutParams = lp
+                    }
+                }
+            }
+        } else {
+            portal.orientation = LinearLayout.HORIZONTAL
+            cardLp(cardSports)?.let { lp ->
+                lp.width = 0
+                lp.height = LinearLayout.LayoutParams.MATCH_PARENT
+                lp.weight = 1f
+                lp.rightMargin = gap
+                lp.bottomMargin = 0
+                cardSports.layoutParams = lp
+            }
+            cardLp(cardPhim)?.let { lp ->
+                lp.width = 0
+                lp.height = LinearLayout.LayoutParams.MATCH_PARENT
+                lp.weight = 1f
+                lp.leftMargin = gap
+                cardPhim.layoutParams = lp
+            }
+            bottomRow.orientation = LinearLayout.HORIZONTAL
+            bottomRow.gravity = Gravity.CENTER_VERTICAL
+            for (i in 0 until bottomRow.childCount) {
+                val child = bottomRow.getChildAt(i)
+                val lp = child.layoutParams as? LinearLayout.LayoutParams ?: continue
+                when {
+                    child.id == View.NO_ID -> child.visibility = View.VISIBLE
+                    child is TextView -> child.visibility = View.VISIBLE
+                    else -> {
+                        lp.leftMargin = if (child === btnSettings) 0 else gap
+                        lp.topMargin = 0
+                        child.layoutParams = lp
+                    }
+                }
+            }
+        }
+    }
+
     fun ensureHubFocus(): Boolean {
+        // Điện thoại dùng cảm ứng: không ép focus lên thẻ (tránh thẻ bị phóng to / sáng focus sẵn)
+        if (DeviceMode.isPhone) return false
         val root = view ?: return false
         val target = root.findViewById<View>(lastFocusedViewId)
             ?: root.findViewById<View>(R.id.cardSports)

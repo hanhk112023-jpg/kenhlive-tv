@@ -14,7 +14,7 @@
     <!-- Poster Container (2:3 Cinema Proportions) -->
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="215dp">
+        android:layout_height="@dimen/phim_grid_poster_h">
 
         <ImageView
             android:id="@+id/gridPhimPoster"

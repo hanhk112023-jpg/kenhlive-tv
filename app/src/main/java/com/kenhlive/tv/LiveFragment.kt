@@ -398,8 +398,10 @@ class LiveFragment : Fragment() {
         svm.startAutoRefresh()
         startProvidersAutoRefresh()
         if (::adapter.isInitialized) {
-            adapter.restoreFocus()
+            // Chỉ TV mới cần khôi phục focus D-pad. Trên điện thoại, ép focus sẽ khiến
+            // danh sách nhảy về hero ở đầu trang mỗi lần quay lại từ trình phát.
             if (DeviceMode.isTv) {
+                adapter.restoreFocus()
                 list.postDelayed({
                     val curF = list.findFocus()
                     if (curF == null || curF == list || curF is RecyclerView || curF is androidx.viewpager2.widget.ViewPager2) {

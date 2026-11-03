@@ -1,6 +1,7 @@
 package com.kenhlive.tv.phim
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
 import android.text.Editable
@@ -145,7 +146,8 @@ class PhimFragment : Fragment() {
         llSearchEmpty = v.findViewById(R.id.llSearchEmpty)
         tvSearchEmptyTitle = v.findViewById(R.id.tvSearchEmptyTitle)
 
-        val spanCount = if (DeviceMode.isTv) 5 else 3
+        // Lưới kết quả tìm kiếm: TV 5 cột, phone dọc 3 cột, phone ngang 5 cột
+        val spanCount = DeviceMode.getGridSpanCount(requireContext(), defaultTv = 5, phonePortrait = 3, phoneLandscape = 5)
         rvSearchGrid.layoutManager = GridLayoutManager(requireContext(), spanCount)
         rvSearchGrid.itemAnimator = null
 
@@ -215,6 +217,16 @@ class PhimFragment : Fragment() {
         }
     }
 
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        // Activity xử lý configChanges nên không recreate: tự cập nhật số cột lưới tìm kiếm khi xoay máy
+        if (::rvSearchGrid.isInitialized) {
+            val lm = rvSearchGrid.layoutManager as? GridLayoutManager
+            val target = DeviceMode.getGridSpanCount(requireContext(), defaultTv = 5, phonePortrait = 3, phoneLandscape = 5)
+            if (lm != null && lm.spanCount != target) lm.spanCount = target
+        }
+    }
+
     private fun focusMainListFromFilter(): Boolean {
         if (!::mainList.isInitialized || mainList.visibility != View.VISIBLE) return false
         val heroPlay = mainList.findViewById<View>(R.id.btnHeroPlay)
@@ -243,6 +255,8 @@ class PhimFragment : Fragment() {
     }
 
     fun ensurePhimFocus(): Boolean {
+        // Điện thoại dùng cảm ứng: không ép focus (tránh nhảy cuộn / cướp focus khi quay lại tab)
+        if (DeviceMode.isPhone) return false
         if (!isAdded || view == null || isHidden) return false
         (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
         val cur = view?.findFocus()
@@ -1081,7 +1095,20 @@ class PhimFragment : Fragment() {
             btnBackHome?.setOnKeyListener(upListener)
 
             btnBackHome?.setOnClickListener {
-                (itemView.context as? MainActivity)?.openSection(MainActivity.TAB_HUB)
+                val act = itemView.context as? MainActivity
+                // Phone không có Cổng Hub trong điều hướng: "Trang chủ" của phone là tab Thể thao (0)
+                if (DeviceMode.isPhone) act?.openSection(0) else act?.openSection(MainActivity.TAB_HUB)
+            }
+
+            // Phone: hàng CTA 4 nút (tổng ~527dp) tràn màn hình dọc (~328dp khả dụng) khiến nút
+            // cuối nằm ngoài màn hình, không chạm tới -> ẩn nút "Phim khác", thu gọn padding 3 nút còn lại.
+            if (DeviceMode.isPhone) {
+                btnNext?.visibility = View.GONE
+                val d = itemView.resources.displayMetrics.density
+                btnPlay.setPadding((18 * d).toInt(), 0, (18 * d).toInt(), 0)
+                btnEpisodes.setPadding((12 * d).toInt(), 0, (12 * d).toInt(), 0)
+                btnFavorite.setPadding((12 * d).toInt(), 0, (12 * d).toInt(), 0)
+                btnEpisodes.text = "CHỌN TẬP"
             }
             btnBackHome?.let { setupFocusAnimation(it) }
             title.text = film.name

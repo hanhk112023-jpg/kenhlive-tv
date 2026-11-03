@@ -8,8 +8,8 @@
     android:descendantFocusability="afterDescendants"
     android:clipChildren="false"
     android:clipToPadding="false"
-    android:paddingLeft="44dp"
-    android:paddingRight="44dp"
+    android:paddingLeft="@dimen/hub_pad_x"
+    android:paddingRight="@dimen/hub_pad_x"
     android:paddingTop="20dp"
     android:paddingBottom="20dp">
 

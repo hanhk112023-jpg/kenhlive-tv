@@ -61,4 +61,16 @@
     <dimen name="sched_time_w">72dp</dimen>
     <dimen name="sched_row_gap">8dp</dimen>
     <dimen name="hero_dots_margin">48dp</dimen>
+
+    <!-- phone touch targets & phone-only sizing (TV overrides in values-television) -->
+    <dimen name="episode_chip_h">44dp</dimen>
+    <dimen name="episode_chip_min_w">72dp</dimen>
+    <dimen name="phim_pill_h">38dp</dimen>
+    <dimen name="iptv_group_chip_h">42dp</dimen>
+    <dimen name="iptv_search_w">150dp</dimen>
+    <dimen name="iptv_search_h">44dp</dimen>
+    <dimen name="dialog_btn_h">44dp</dimen>
+    <dimen name="retry_btn_h">44dp</dimen>
+    <dimen name="phim_grid_poster_h">165dp</dimen>
+    <dimen name="hub_pad_x">16dp</dimen>
 </resources>
