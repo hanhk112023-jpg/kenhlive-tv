@@ -5,6 +5,7 @@ import android.os.Handler
 import android.os.Looper
 import android.view.KeyEvent
 import android.view.View
+import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -53,6 +54,14 @@ class MultiViewActivity : AppCompatActivity() {
     private val handler = Handler(Looper.getMainLooper())
     private var dialog: AlertDialog? = null
 
+    // Trạng thái rỗng trung thực khi không có trận live thật + dữ liệu mở màn từ intent
+    // (giữ ở field để nút Thử lại nạp lại đúng ngữ cảnh ban đầu)
+    private var mvEmptyBox: View? = null
+    private var btnMvRetry: Button? = null
+    private var btnMvBack: Button? = null
+    private var initialRoomName: String? = null
+    private var initialUrl: String? = null
+
     private val active get() = slots.take(layoutN)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -82,22 +91,30 @@ class MultiViewActivity : AppCompatActivity() {
         }
         applyLayoutChrome()
 
-        val initialRoomName = intent.getStringExtra("initial_room")
-        val initialUrl = intent.getStringExtra("initial_url")
+        initialRoomName = intent.getStringExtra("initial_room")
+        initialUrl = intent.getStringExtra("initial_url")
 
+        mvEmptyBox = findViewById(R.id.mvEmptyBox)
+        btnMvRetry = findViewById(R.id.btnMvRetry)
+        btnMvBack = findViewById(R.id.btnMvBack)
+        btnMvRetry?.setOnClickListener { loadMatches() }
+        btnMvBack?.setOnClickListener { finish() }
+
+        loadMatches()
+    }
+
+    /** Nạp danh sách trận live thật và dựng các ô. KHÔNG còn dữ liệu mẫu dự phòng:
+     *  fetch trống/lỗi -> trạng thái rỗng trung thực (mvEmptyBox) với nút Thử lại. */
+    private fun loadMatches() {
         lifecycleScope.launch {
             groups = try {
                 SocoliveRepository.groupRooms(SocoliveRepository.fetchLiveRooms())
             } catch (_: Exception) { emptyList() }
             if (groups.isEmpty()) {
-                // Fallback danh sách trận mẫu để MultiView luôn hoạt động ổn định
-                groups = listOf(
-                    LiveMatchGroup("Premier League", "Arsenal vs Chelsea", listOf(LiveRoom("101", "BLV Giàng A Phò", "", 12500, "Arsenal vs Chelsea", "Premier League"))),
-                    LiveMatchGroup("La Liga", "Real Madrid vs Barcelona", listOf(LiveRoom("102", "BLV Batman", "", 9800, "Real Madrid vs Barcelona", "La Liga"))),
-                    LiveMatchGroup("Serie A", "Inter Milan vs Juventus", listOf(LiveRoom("103", "BLV Người Cồn", "", 6400, "Inter Milan vs Juventus", "Serie A"))),
-                    LiveMatchGroup("Bundesliga", "Bayern Munich vs Dortmund", listOf(LiveRoom("104", "BLV Captain", "", 5200, "Bayern Munich vs Dortmund", "Bundesliga")))
-                )
+                showEmptyState()
+                return@launch
             }
+            hideEmptyState()
             val wantMatch = initialRoomName?.substringBefore(" · ")
             var idx0 = if (wantMatch != null) groups.indexOfFirst { it.matchTitle == wantMatch } else -1
             if (idx0 < 0) idx0 = 0
@@ -110,8 +127,18 @@ class MultiViewActivity : AppCompatActivity() {
                 if (f != null) bindSlot(3, f, null)
             }
             applyFocus()
+            handler.removeCallbacks(watchdog)
             handler.postDelayed(watchdog, 15_000)
         }
+    }
+
+    private fun showEmptyState() {
+        mvEmptyBox?.visibility = View.VISIBLE
+        btnMvRetry?.post { btnMvRetry?.requestFocus() }
+    }
+
+    private fun hideEmptyState() {
+        mvEmptyBox?.visibility = View.GONE
     }
 
     private fun toggleMute(s: Slot) {
@@ -278,6 +305,17 @@ class MultiViewActivity : AppCompatActivity() {
 
     // ===== ĐIỀU HƯỚNG =====
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        // Trạng thái rỗng đang hiện: phím thuộc về 2 nút Thử lại/Quay lại (dispatch mặc
+        // định lo focus + click; BACK thoát như thường). Không chạy cơ chế chuyển ô —
+        // không có ô nào có trận để focus.
+        if (mvEmptyBox?.visibility == View.VISIBLE) {
+            if (event.action == KeyEvent.ACTION_DOWN &&
+                btnMvRetry?.hasFocus() != true && btnMvBack?.hasFocus() != true
+            ) {
+                btnMvRetry?.requestFocus()
+            }
+            return super.dispatchKeyEvent(event)
+        }
         if (event.action != KeyEvent.ACTION_DOWN) return super.dispatchKeyEvent(event)
         when (event.keyCode) {
             KeyEvent.KEYCODE_DPAD_LEFT -> { moveFocus(-1, 0); return true }

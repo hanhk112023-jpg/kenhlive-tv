@@ -72,6 +72,21 @@ class IptvFragment : Fragment() {
     private var groupsAdapter: GroupsAdapter? = null
     private var channelsAdapter: ChannelsAdapter? = null
 
+    /**
+     * Cache badge đài (bitmap 240x135 vẽ bằng Canvas) — H1 audit 2026-11-03.
+     * Trước đây getChannelBadgeDrawable() cấp phát + vẽ lại bitmap mới ở MỌI lần bind
+     * của lưới kênh và MỌI nhịp D-pad (updateHeroPreview) -> GC churn, giật hình trên
+     * TV box 1GB RAM. Nội dung badge chỉ phụ thuộc vào badgeText suy ra từ tên kênh
+     * (họ đài: "VTV 1", "HTV 7"...), nên khóa theo badgeText: playlist vài trăm kênh
+     * cũng chỉ có ~20 họ đài khác nhau. Trần 32 mục x ~127KB (240x135 ARGB_8888)
+     * = tối đa ~4MB — đủ chứa mọi họ đài + biến thể nhóm/tên, vẫn nhẹ cho máy 1GB.
+     * LruCache tự đồng bộ nội bộ; cả hai điểm gọi (onBindViewHolder, updateHeroPreview)
+     * đều chạy trên main thread nên không cần khóa thêm.
+     */
+    private val badgeCache = object : android.util.LruCache<String, android.graphics.drawable.Drawable>(32) {
+        override fun sizeOf(key: String, value: android.graphics.drawable.Drawable): Int = 1
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         return inflater.inflate(R.layout.fragment_iptv, container, false)
     }
@@ -211,11 +226,6 @@ class IptvFragment : Fragment() {
     }
 
     private fun getChannelBadgeDrawable(ch: IptvChannel): android.graphics.drawable.Drawable {
-        val w = 240
-        val h = 135
-        val bm = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888)
-        val canvas = android.graphics.Canvas(bm)
-
         val n = ch.name.uppercase(Locale.ROOT)
         val (bgTop, bgBot, badgeText) = when {
             n.contains("VTV10") -> Triple(0xFFD32F2F.toInt(), 0xFFB71C1C.toInt(), "VTV 10")
@@ -240,6 +250,14 @@ class IptvFragment : Fragment() {
             else -> Triple(0xFF263238.toInt(), 0xFF101217.toInt(), ch.name.take(6).uppercase(Locale.ROOT))
         }
 
+        // Trúng cache thì trả ngay — không cấp phát/vẽ lại bitmap (H1 audit 2026-11-03)
+        badgeCache.get(badgeText)?.let { return it }
+
+        val w = 240
+        val h = 135
+        val bm = android.graphics.Bitmap.createBitmap(w, h, android.graphics.Bitmap.Config.ARGB_8888)
+        val canvas = android.graphics.Canvas(bm)
+
         val paint = android.graphics.Paint(android.graphics.Paint.ANTI_ALIAS_FLAG)
         val shader = android.graphics.LinearGradient(0f, 0f, 0f, h.toFloat(), bgTop, bgBot, android.graphics.Shader.TileMode.CLAMP)
         paint.shader = shader
@@ -262,7 +280,9 @@ class IptvFragment : Fragment() {
         val yPos = (h / 2f) - ((paint.descent() + paint.ascent()) / 2f)
         canvas.drawText(badgeText, w / 2f, yPos, paint)
 
-        return android.graphics.drawable.BitmapDrawable(resources, bm)
+        val drawable = android.graphics.drawable.BitmapDrawable(resources, bm)
+        badgeCache.put(badgeText, drawable)
+        return drawable
     }
 
     private fun updateHeroPreview(ch: IptvChannel) {

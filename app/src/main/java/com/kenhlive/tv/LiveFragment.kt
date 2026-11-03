@@ -491,6 +491,11 @@ class LiveFragment : Fragment() {
     }
 
     private fun openGroupPicker(g: LiveMatchGroup) {
+        // H2: trận đã kết thúc không mở phòng live như trận đang đá — báo đúng trạng thái.
+        if (MatchCardsAdapter.isMatchFinished(g, DataNormalizer.parseMatch(g.matchTitle, g.league))) {
+            android.widget.Toast.makeText(requireContext(), "Trận đấu đã kết thúc", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
         val topRoom = g.rooms.firstOrNull()
         if (topRoom != null && (
                 topRoom.roomNum.startsWith("cola_") ||
@@ -514,6 +519,12 @@ class LiveFragment : Fragment() {
     }
 
     private fun onFixtureTap(m: ScheduleMatch) {
+        // H2: khớp hiển thị KẾT THÚC ở dòng lịch — bấm vào trận đã xong báo đúng trạng thái,
+        // không mở picker phòng live (và không báo sai "chưa có phòng" như phía Lịch hiện tại).
+        if (m.isFinished) {
+            android.widget.Toast.makeText(requireContext(), "Trận đấu đã kết thúc", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
         val live = m.anchors.filter { it.roomNum.isNotBlank() }
         if (live.isEmpty()) {
             android.widget.Toast.makeText(requireContext(), R.string.sched_no_room, android.widget.Toast.LENGTH_SHORT).show()
@@ -537,6 +548,16 @@ class LiveFragment : Fragment() {
     }
 
     private fun openRoom(room: LiveRoom) {
+        // H2: chốt chặn cuối — phòng thuộc trận đã kết thúc (vd hàng BLV còn sót phòng cũ,
+        // đi thẳng vào đây không qua openGroupPicker) không được phát như trận đang đá.
+        // Thiếu dữ kiện (matchTimeMs = 0 / không có trạng thái) thì isGroupFinished trả
+        // false nên luồng mở phòng thường không bị ảnh hưởng.
+        val parsedRoom = DataNormalizer.parseMatch(room.matchTitle, room.league)
+        val roomMeta = com.kenhlive.tv.sports.TeamLogoRegistry.findMatchMeta(parsedRoom.host, parsedRoom.guest, room.matchTimeMs)
+        if (DataNormalizer.isGroupFinished(room.isLiveGame, room.matchTimeMs, roomMeta?.isLive)) {
+            android.widget.Toast.makeText(requireContext(), "Trận đấu đã kết thúc", android.widget.Toast.LENGTH_SHORT).show()
+            return
+        }
         viewLifecycleOwner.lifecycleScope.launch {
             val url = SocoliveRepository.fetchStream(room.roomNum)
             if (url == null) {

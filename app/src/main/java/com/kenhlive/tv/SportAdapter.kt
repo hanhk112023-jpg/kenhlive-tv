@@ -347,13 +347,20 @@ class SportAdapter(
                 val vh = h as HeroVH
                 if (item.groups.isNotEmpty()) {
                     vh.itemView.visibility = View.VISIBLE
-                    var cur = (vh.pager.adapter as? HeroPagerAdapter)
-                    if (cur == null || cur.itemCount != item.groups.size.coerceAtMost(8)) {
-                        cur = HeroPagerAdapter(item.groups, onGroupClick, onGroupDetails, onDownKey = { focusRailFirst() })
-                        vh.pager.adapter = cur
-                        cur.attach(vh.pager, vh.dots)
+                    val cur = vh.pager.adapter as? HeroPagerAdapter
+                    if (cur == null) {
+                        val created = HeroPagerAdapter(item.groups, onGroupClick, onGroupDetails, onDownKey = { focusRailFirst() })
+                        vh.pager.adapter = created
+                        created.attach(vh.pager, vh.dots)
                     } else {
+                        // H1: cập nhật dữ liệu TẠI CHỖ kể cả khi số trận không đổi (trước đây
+                        // tỉ số/trạng thái mới bị bỏ qua -> hero đứng hình) và attach() lại vì
+                        // adapter đã bị detach() lúc VH recycle. Tuyệt đối không thay adapter
+                        // mà bỏ qua detach adapter cũ: vòng tự lật của nó tự tái đăng ký vô
+                        // hạn, sẽ chạy song song (lật trang gấp đôi, hai callback vẽ dots chéo).
                         cur.onDownKey = { focusRailFirst() }
+                        cur.updateGroups(item.groups)
+                        cur.attach(vh.pager, vh.dots)
                     }
                     vh.pager.setOnKeyListener { _, code, ev ->
                         if (ev.action == android.view.KeyEvent.ACTION_DOWN &&
@@ -437,6 +444,13 @@ class SportAdapter(
                     vh.badge.setBackgroundResource(R.drawable.bg_badge_live_red)
                     vh.badge.setTextColor(0xFFFFFFFF.toInt())
                     vh.time.setTextColor(ContextCompat.getColor(ctx, R.color.kl_live))
+                } else if (item.isFinished) {
+                    // H2: khớp ScheduleAdapter phía Lịch — trận đã xong hiện KẾT THÚC xám,
+                    // không còn "Có phòng" như thể bấm vào xem live được.
+                    vh.badge.text = "KẾT THÚC"
+                    vh.badge.setBackgroundResource(R.drawable.bg_badge_glass)
+                    vh.badge.setTextColor(ContextCompat.getColor(ctx, R.color.kl_text_3))
+                    vh.time.setTextColor(ContextCompat.getColor(ctx, R.color.kl_text_3))
                 } else if (item.hasRoom) {
                     vh.badge.setText(R.string.badge_has_room)
                     vh.badge.setBackgroundResource(R.drawable.bg_badge_glass)

@@ -90,6 +90,73 @@
             android:paddingBottom="8dp" />
     </LinearLayout>
 
+    <!-- Trạng thái rỗng TRUNG THỰC khi không có trận live thật (thay cho danh sách
+         trận mẫu bịa trước đây). clickable+focusable để chặn chạm xuyên xuống các ô. -->
+    <LinearLayout
+        android:id="@+id/mvEmptyBox"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#E6000000"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            style="@style/KL.Text.Section"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:text="Hiện chưa có trận đấu nào đang trực tiếp" />
+
+        <TextView
+            style="@style/KL.Text.Meta"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:gravity="center"
+            android:text="Danh sách trận sẽ có khi các trận bắt đầu. Bấm Thử lại để kiểm tra lại."
+            android:textColor="#CBD5E1" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <Button
+                android:id="@+id/btnMvRetry"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:background="@drawable/bg_dialog_choice_chip"
+                android:focusable="true"
+                android:nextFocusRight="@id/btnMvBack"
+                android:paddingLeft="22dp"
+                android:paddingRight="22dp"
+                android:text="Thử lại"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <Button
+                android:id="@+id/btnMvBack"
+                android:layout_width="wrap_content"
+                android:layout_height="44dp"
+                android:layout_marginLeft="12dp"
+                android:background="@drawable/bg_dialog_choice_chip"
+                android:focusable="true"
+                android:nextFocusLeft="@id/btnMvRetry"
+                android:paddingLeft="22dp"
+                android:paddingRight="22dp"
+                android:text="Quay lại"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
     <!-- Focus border placed at the very end of FrameLayout to ensure it is always above overlays -->
     <View
         android:id="@+id/focusBorder"

@@ -892,11 +892,14 @@ class PlayerActivity : AppCompatActivity() {
             if (statsHudBox?.visibility == View.VISIBLE && player != null) {
                 val p = player!!
                 val f = p.videoFormat
-                val res = if (f != null && f.width > 0) "${f.width} x ${f.height}" else "1920 x 1080 (HD)"
-                val fps = if (f != null && f.frameRate > 0) String.format(Locale.US, "%.1f fps", f.frameRate) else "50.0 fps"
-                val br = if (f != null && f.bitrate > 0) String.format(Locale.US, "%,d kbps", f.bitrate / 1000) else "3,850 kbps"
-                val codec = (f?.sampleMimeType?.substringAfter('/')?.uppercase(Locale.US) ?: "H.264") + " / " +
-                        (p.audioFormat?.sampleMimeType?.substringAfter('/')?.uppercase(Locale.US) ?: "AAC")
+                // Chỉ hiện số liệu THẬT lấy từ format của luồng; chưa có format thì để "—"
+                // (trước đây bịa "1920 x 1080 (HD)" / "50.0 fps" / "3,850 kbps" / "H.264 / AAC"
+                // hiển thị như số đo thật — audit L1, nhóm dữ liệu bịa).
+                val res = if (f != null && f.width > 0) "${f.width} x ${f.height}" else "—"
+                val fps = if (f != null && f.frameRate > 0) String.format(Locale.US, "%.1f fps", f.frameRate) else "—"
+                val br = if (f != null && f.bitrate > 0) String.format(Locale.US, "%,d kbps", f.bitrate / 1000) else "—"
+                val codec = (f?.sampleMimeType?.substringAfter('/')?.uppercase(Locale.US) ?: "—") + " / " +
+                        (p.audioFormat?.sampleMimeType?.substringAfter('/')?.uppercase(Locale.US) ?: "—")
                 val bufferMs = (p.bufferedPosition - p.currentPosition).coerceAtLeast(0L)
                 val bufferSec = String.format(Locale.US, "%.1f s", bufferMs / 1000f)
 
@@ -1888,6 +1891,10 @@ class PlayerActivity : AppCompatActivity() {
                 .setTitle("$filmTitle · ${srv.serverName}")
                 .setView(rv)
                 .setNegativeButton("Đóng", null)
+                // BẮT BUỘC reset trường dialog khi đóng (như showSettingsDialog): thiếu dòng này
+                // thì sau khi đóng dialog tập, cổng phím chính (dialog == null) không bao giờ mở
+                // lại -> OK không mở được thanh điều khiển, ◄/► không tua được (audit H1).
+                .setOnDismissListener { dialog = null }
                 .create()
             dialog?.show()
             rv.scrollToPosition(curIdx)
@@ -2202,9 +2209,18 @@ class PlayerActivity : AppCompatActivity() {
                 quickChannelOsd?.visibility = View.GONE
                 return true
             }
-            if (topOverlay?.visibility == View.VISIBLE) {
-                topOverlay?.visibility = View.GONE
+            // BACK khi overlay đang hiện: ẩn ĐỒNG BỘ mọi lớp overlay bằng đúng runnable
+            // chuẩn hideOverlay (top + nút giữa + thanh dưới phone + hàng seek + thanh điều
+            // khiển VOD) và hủy timer tự ẩn. Trước đây chỉ ẩn topOverlay nên thanh dưới +
+            // hàng seek treo vô thời hạn trên video và còn giữ focus (audit H2).
+            if (topOverlay?.visibility == View.VISIBLE ||
+                vodControlBar?.visibility == View.VISIBLE ||
+                phoneBottomBar?.visibility == View.VISIBLE ||
+                phoneSeekRow?.visibility == View.VISIBLE ||
+                centerPlayPauseBtn?.visibility == View.VISIBLE
+            ) {
                 handler.removeCallbacks(hideOverlay)
+                hideOverlay.run()
                 return true
             }
             finish()

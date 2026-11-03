@@ -166,6 +166,11 @@ class ScheduleFragment : Fragment() {
     }
 
     private fun onMatchTap(match: ScheduleMatch) {
+        // Trận đã kết thúc: báo đúng trạng thái, không mở picker phòng (nhất quán màn Thể thao).
+        if (match.isFinished) {
+            Toast.makeText(requireContext(), "Trận đấu đã kết thúc", Toast.LENGTH_SHORT).show()
+            return
+        }
         val live = match.anchors.filter { it.roomNum.isNotBlank() }
         if (live.isEmpty()) {
             Toast.makeText(requireContext(), R.string.sched_no_room, Toast.LENGTH_SHORT).show()

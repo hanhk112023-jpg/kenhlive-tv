@@ -27,7 +27,16 @@ class ScheduleAdapter(
                 a is ScheduleMatch && b is ScheduleMatch -> a.scheduleId == b.scheduleId
                 else -> false
             }
-            override fun areContentsTheSame(a: Any, b: Any) = a == b
+            override fun areContentsTheSame(a: Any, b: Any): Boolean {
+                if (a is ScheduleMatch && b is ScheduleMatch) {
+                    // isLive/isFinished là getter suy ra theo đồng hồ/registry, không
+                    // nằm trong equals (chỉ statusSnapshot chụp lúc fetch mới có). So
+                    // thêm getter sống để cả trường hợp list instance cũ được submit
+                    // lại sau khi thời gian trôi (snapshot đã cũ) vẫn rebind đúng badge.
+                    return a == b && a.isLive == b.isLive && a.isFinished == b.isFinished
+                }
+                return a == b
+            }
         }
     }
 

@@ -76,7 +76,23 @@ data class ScheduleMatch(
     val hostIcon: String,
     val guestIcon: String,
     val anchors: List<AnchorInfo>,
-    val leagueCrest: String = ""
+    val leagueCrest: String = "",
+    // Chữ ký trạng thái chụp tại thời điểm dựng (0 = sắp đá, 1 = live, 2 = kết thúc).
+    // isLive/isFinished là getter suy ra theo đồng hồ + registry nên KHÔNG nằm trong
+    // equals của data class: nếu không có field này, refresh mà field tĩnh không đổi sẽ
+    // bị StateFlow conflate nuốt mất và DiffUtil kết luận "contents same" -> badge đóng
+    // băng. Đưa snapshot vào constructor để nó tham gia equals/hashCode; hiển thị vẫn
+    // đọc getter sống lúc bind. Thứ tự nhánh khớp đúng ưu tiên bind (live trước finished).
+    val statusSnapshot: Int = run {
+        val meta = com.kenhlive.tv.sports.TeamLogoRegistry.findMatchMeta(host, guest, matchTimeMs)
+        val liveNow = meta?.isLive
+            ?: DataNormalizer.isMatchLive(matchTimeMs, anchors.any { it.roomNum.isNotBlank() })
+        when {
+            liveNow -> 1
+            DataNormalizer.isMatchFinished(matchTimeMs) -> 2
+            else -> 0
+        }
+    }
 ) {
     // Ưu tiên dữ kiện thật từ registry đa nguồn (trạng thái do chính các nhà đài báo,
     // khớp theo cặp đội + ngày/giờ đá) trước khi suy luận theo đồng hồ.

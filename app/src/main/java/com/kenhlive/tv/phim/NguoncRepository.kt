@@ -91,28 +91,35 @@ object NguoncRepository {
     }
 
     /**
+     * Nạp 1 trang danh sách KKPhim (có cache RAM). KHÁC các hàm fetch* công khai:
+     * lỗi mạng / cầu dao mở từ Http.executeRequest được NÉM ra ngoài thay vì nuốt
+     * thành list rỗng, để nơi gọi phân biệt được "lỗi tải" với "trang rỗng thật"
+     * (trang cuối / danh mục không có phim). Trang rỗng thật vẫn trả emptyList().
+     */
+    private fun fetchListPage(cacheKey: String, url: String): List<NguoncFilm> {
+        listCache[cacheKey]?.let { (ts, list) ->
+            if (System.currentTimeMillis() - ts < CACHE_TTL_MS && list.isNotEmpty()) {
+                return list
+            }
+        }
+        val films = fetchKkphimList(url)
+        if (films.isNotEmpty()) {
+            listCache[cacheKey] = System.currentTimeMillis() to films
+        }
+        return films
+    }
+
+    /**
      * Lấy danh sách phim mới cập nhật (có hỗ trợ phân trang).
      */
     suspend fun fetchNewFilms(context: Context? = null, page: Int = 1): List<NguoncFilm> =
         withContext(Dispatchers.IO) {
-            val cacheKey = "new_films_p$page"
-            listCache[cacheKey]?.let { (ts, list) ->
-                if (System.currentTimeMillis() - ts < CACHE_TTL_MS && list.isNotEmpty()) {
-                    return@withContext list
-                }
-            }
-
-            // KKPhim phim mới cập nhật
+            // KKPhim phim mới cập nhật; lỗi -> rỗng như hành vi cũ
             try {
-                val kkUrl = "$KKPHIM_API/danh-sach/phim-moi-cap-nhat?page=$page"
-                val kkFilms = fetchKkphimList(kkUrl)
-                if (kkFilms.isNotEmpty()) {
-                    listCache[cacheKey] = System.currentTimeMillis() to kkFilms
-                    return@withContext kkFilms
-                }
-            } catch (_: Exception) {}
-
-            emptyList()
+                fetchListPage("new_films_p$page", "$KKPHIM_API/danh-sach/phim-moi-cap-nhat?page=$page")
+            } catch (_: Exception) {
+                emptyList()
+            }
         }
 
     /**
@@ -124,24 +131,24 @@ object NguoncRepository {
                 return@withContext fetchNewFilms(context, page)
             }
 
-            val cacheKey = "type_${typeSlug}_p$page"
-            listCache[cacheKey]?.let { (ts, list) ->
-                if (System.currentTimeMillis() - ts < CACHE_TTL_MS && list.isNotEmpty()) {
-                    return@withContext list
-                }
-            }
-
-            // KKPhim theo danh mục v1/api/danh-sach/{slug}
+            // KKPhim theo danh mục v1/api/danh-sach/{slug}; lỗi -> rỗng như hành vi cũ
             try {
-                val kkUrl = "$KKPHIM_API/v1/api/danh-sach/$typeSlug?page=$page&limit=36"
-                val kkFilms = fetchKkphimList(kkUrl)
-                if (kkFilms.isNotEmpty()) {
-                    listCache[cacheKey] = System.currentTimeMillis() to kkFilms
-                    return@withContext kkFilms
-                }
-            } catch (_: Exception) {}
+                fetchListPage("type_${typeSlug}_p$page", "$KKPHIM_API/v1/api/danh-sach/$typeSlug?page=$page&limit=36")
+            } catch (_: Exception) {
+                emptyList()
+            }
+        }
 
-            emptyList()
+    /**
+     * Biến thể nghiêm của [fetchFilmsByType] cho PHÂN TRANG LƯỚI: lỗi tải được ném ra
+     * ngoài (không nuốt thành rỗng) để UI không nhầm lỗi tạm thời với trang cuối thật.
+     */
+    suspend fun fetchFilmsByTypeStrict(typeSlug: String, page: Int = 1): List<NguoncFilm> =
+        withContext(Dispatchers.IO) {
+            if (typeSlug == "phim-moi" || typeSlug == "tat-ca" || typeSlug.isBlank()) {
+                return@withContext fetchListPage("new_films_p$page", "$KKPHIM_API/danh-sach/phim-moi-cap-nhat?page=$page")
+            }
+            fetchListPage("type_${typeSlug}_p$page", "$KKPHIM_API/v1/api/danh-sach/$typeSlug?page=$page&limit=36")
         }
 
     /**
@@ -149,24 +156,21 @@ object NguoncRepository {
      */
     suspend fun fetchFilmsByCategory(categorySlug: String, page: Int = 1, context: Context? = null): List<NguoncFilm> =
         withContext(Dispatchers.IO) {
-            val cacheKey = "cat_${categorySlug}_p$page"
-            listCache[cacheKey]?.let { (ts, list) ->
-                if (System.currentTimeMillis() - ts < CACHE_TTL_MS && list.isNotEmpty()) {
-                    return@withContext list
-                }
-            }
-
-            // KKPhim v1/api/the-loai/{slug}
+            // KKPhim v1/api/the-loai/{slug}; lỗi -> rỗng như hành vi cũ
             try {
-                val kkUrl = "$KKPHIM_API/v1/api/the-loai/$categorySlug?page=$page&limit=36"
-                val kkFilms = fetchKkphimList(kkUrl)
-                if (kkFilms.isNotEmpty()) {
-                    listCache[cacheKey] = System.currentTimeMillis() to kkFilms
-                    return@withContext kkFilms
-                }
-            } catch (_: Exception) {}
+                fetchListPage("cat_${categorySlug}_p$page", "$KKPHIM_API/v1/api/the-loai/$categorySlug?page=$page&limit=36")
+            } catch (_: Exception) {
+                emptyList()
+            }
+        }
 
-            emptyList()
+    /**
+     * Biến thể nghiêm của [fetchFilmsByCategory] cho PHÂN TRANG LƯỚI: lỗi tải được ném
+     * ra ngoài (không nuốt thành rỗng) để UI phân biệt lỗi với trang cuối thật.
+     */
+    suspend fun fetchFilmsByCategoryStrict(categorySlug: String, page: Int = 1): List<NguoncFilm> =
+        withContext(Dispatchers.IO) {
+            fetchListPage("cat_${categorySlug}_p$page", "$KKPHIM_API/v1/api/the-loai/$categorySlug?page=$page&limit=36")
         }
 
     /**
@@ -217,24 +221,21 @@ object NguoncRepository {
      */
     suspend fun fetchFilmsByCountry(countrySlug: String, page: Int = 1, context: Context? = null): List<NguoncFilm> =
         withContext(Dispatchers.IO) {
-            val cacheKey = "country_${countrySlug}_p$page"
-            listCache[cacheKey]?.let { (ts, list) ->
-                if (System.currentTimeMillis() - ts < CACHE_TTL_MS && list.isNotEmpty()) {
-                    return@withContext list
-                }
-            }
-
-            // KKPhim v1/api/quoc-gia/{slug}
+            // KKPhim v1/api/quoc-gia/{slug}; lỗi -> rỗng như hành vi cũ
             try {
-                val kkUrl = "$KKPHIM_API/v1/api/quoc-gia/$countrySlug?page=$page&limit=36"
-                val kkFilms = fetchKkphimList(kkUrl)
-                if (kkFilms.isNotEmpty()) {
-                    listCache[cacheKey] = System.currentTimeMillis() to kkFilms
-                    return@withContext kkFilms
-                }
-            } catch (_: Exception) {}
+                fetchListPage("country_${countrySlug}_p$page", "$KKPHIM_API/v1/api/quoc-gia/$countrySlug?page=$page&limit=36")
+            } catch (_: Exception) {
+                emptyList()
+            }
+        }
 
-            emptyList()
+    /**
+     * Biến thể nghiêm của [fetchFilmsByCountry] cho PHÂN TRANG LƯỚI: lỗi tải được ném
+     * ra ngoài (không nuốt thành rỗng) để UI phân biệt lỗi với trang cuối thật.
+     */
+    suspend fun fetchFilmsByCountryStrict(countrySlug: String, page: Int = 1): List<NguoncFilm> =
+        withContext(Dispatchers.IO) {
+            fetchListPage("country_${countrySlug}_p$page", "$KKPHIM_API/v1/api/quoc-gia/$countrySlug?page=$page&limit=36")
         }
 
     /**
@@ -347,8 +348,9 @@ object NguoncRepository {
                         totalEpisodes = obj.opt("episode_total")?.toString().orEmpty(),
                         currentEpisode = obj.optString("episode_current", ""),
                         time = obj.optString("time", ""),
-                        quality = obj.optString("quality", "FHD"),
-                        language = obj.optString("lang", "Vietsub"),
+                        // Không bịa mặc định: API thiếu trường nào thì để trống, UI sẽ ẩn
+                        quality = obj.optString("quality", ""),
+                        language = obj.optString("lang", ""),
                         categories = cats,
                         country = country,
                         thumbUrl = thumbUrl,
@@ -411,8 +413,9 @@ object NguoncRepository {
                 totalEpisodes = movieObj.opt("episode_total")?.toString().orEmpty(),
                 currentEpisode = movieObj.optString("episode_current", ""),
                 time = movieObj.optString("time", ""),
-                quality = movieObj.optString("quality", "FHD"),
-                language = movieObj.optString("lang", "Vietsub"),
+                // Không bịa mặc định: API thiếu trường nào thì để trống, UI sẽ ẩn
+                quality = movieObj.optString("quality", ""),
+                language = movieObj.optString("lang", ""),
                 director = director,
                 casts = casts.joinToString(", "),
                 categories = cats,

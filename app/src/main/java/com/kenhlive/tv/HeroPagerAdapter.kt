@@ -19,7 +19,7 @@ import com.kenhlive.tv.ui.LunarCalendar
  * Hỗ trợ giao diện kiểu IMG_2815: đồng hồ + lịch âm dương, LIVE meta, nút Xem ngay + Chi tiết.
  */
 class HeroPagerAdapter(
-    private val groups: List<LiveMatchGroup>,
+    private var groups: List<LiveMatchGroup>,
     private val onClick: (LiveMatchGroup) -> Unit,
     private val onDetailsClick: ((LiveMatchGroup) -> Unit)? = null,
     var onDownKey: (() -> Boolean)? = null
@@ -34,8 +34,9 @@ class HeroPagerAdapter(
             val p = pager
             val currentFocus = p?.rootView?.findFocus()
             val userIsBrowsing = currentFocus != null && !p.hasFocus()
-            if (p != null && groups.size > 1 && !p.hasFocus() && !userIsBrowsing) {
-                p.currentItem = (p.currentItem + 1) % groups.size
+            val n = itemCount
+            if (p != null && n > 1 && !p.hasFocus() && !userIsBrowsing) {
+                p.currentItem = (p.currentItem + 1) % n
             }
             handler.postDelayed(this, if (DeviceMode.lowRam) 9000 else 6000)
         }
@@ -60,6 +61,18 @@ class HeroPagerAdapter(
         pager?.unregisterOnPageChangeCallback(pageCb)
         pager = null
         dots = null
+    }
+
+    /**
+     * Cập nhật dữ liệu hero tại chỗ (H1): trước đây SportAdapter chỉ tạo adapter mới khi
+     * SỐ trận thay đổi, cùng số lượng thì tỉ số/trạng thái mới bị bỏ qua -> hero đứng hình.
+     * So sánh bằng data-class để bỏ qua lần bind không đổi dữ liệu, tránh nạp lại trang vô ích.
+     */
+    fun updateGroups(newGroups: List<LiveMatchGroup>) {
+        if (groups == newGroups) return
+        groups = newGroups
+        notifyDataSetChanged()
+        buildDots()
     }
 
     private fun buildDots() {
@@ -129,7 +142,10 @@ class HeroPagerAdapter(
         val parsed = DataNormalizer.parseMatch(g.matchTitle, g.league)
         h.league.text = "• ${parsed.league}"
 
-        val isTrulyLive = MatchCardsAdapter.isMatchLive(g, parsed)
+        // H2: trận đã kết thúc phải thắng nhánh live — isMatchLive coi "có tỉ số" là đang đá
+        // nên trận xong sẽ hiện LIVE đỏ với tỉ số cuối nếu không chặn trước.
+        val isFinished = MatchCardsAdapter.isMatchFinished(g, parsed)
+        val isTrulyLive = !isFinished && MatchCardsAdapter.isMatchLive(g, parsed)
         val kickoff = if (g.kickoffTime.isNotBlank()) g.kickoffTime else MatchCardsAdapter.extractKickoffTime(g.matchTitle, top.notice)
 
         val hasArenaTeams = parsed.host.isNotBlank() && parsed.guest.isNotBlank()
@@ -161,7 +177,17 @@ class HeroPagerAdapter(
                 h.guestIcon?.setImageResource(R.drawable.bg_team_crest_placeholder)
             }
 
-            if (isTrulyLive) {
+            if (isFinished) {
+                val hs = g.hostScore ?: parsed.hostScore
+                val gs = g.guestScore ?: parsed.guestScore
+                if (hs != null && gs != null) {
+                    h.scoreText?.text = "$hs : $gs"
+                } else {
+                    h.scoreText?.text = "VS"
+                }
+                h.scoreText?.setBackgroundResource(R.drawable.bg_score_pill)
+                h.scoreText?.setTextColor(android.graphics.Color.parseColor("#CBD5E1"))
+            } else if (isTrulyLive) {
                 if (parsed.hostScore != null && parsed.guestScore != null) {
                     h.scoreText?.text = "${parsed.hostScore} : ${parsed.guestScore}"
                     h.scoreText?.setBackgroundResource(R.drawable.bg_score_pill_live)
@@ -188,7 +214,12 @@ class HeroPagerAdapter(
             h.title.text = parsed.cleanTitle
         }
 
-        if (isTrulyLive) {
+        if (isFinished) {
+            h.liveBadge?.text = "KẾT THÚC"
+            h.liveBadge?.setBackgroundResource(R.drawable.bg_badge_glass)
+            h.liveBadge?.setTextColor(android.graphics.Color.parseColor("#8E95A5"))
+            h.playText?.text = "Đã kết thúc"
+        } else if (isTrulyLive) {
             h.liveBadge?.text = "● TRỰC TIẾP"
             h.liveBadge?.setBackgroundResource(R.drawable.bg_badge_live_red)
             h.liveBadge?.setTextColor(android.graphics.Color.WHITE)
@@ -201,7 +232,9 @@ class HeroPagerAdapter(
         }
 
         val desc = buildString {
-            if (isTrulyLive) {
+            if (isFinished) {
+                append("Đã kết thúc")
+            } else if (isTrulyLive) {
                 append("Trực tiếp")
             } else {
                 if (kickoff.isNotBlank()) append("Sắp diễn ra lúc $kickoff") else append("Sắp diễn ra")

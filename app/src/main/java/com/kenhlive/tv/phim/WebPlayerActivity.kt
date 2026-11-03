@@ -22,7 +22,10 @@ import android.widget.ImageButton
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import android.net.http.SslError
 import android.view.LayoutInflater
+import android.webkit.SslErrorHandler
+import android.webkit.WebResourceResponse
 import android.widget.Button
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
@@ -65,6 +68,11 @@ class WebPlayerActivity : AppCompatActivity() {
             topOsd.visibility = View.GONE
         }.start()
         webControlBar?.visibility = View.GONE
+        // Thanh/OSD ẩn mà focus đang nằm trên một nút của chúng: trả focus về WebView,
+        // nếu không focus sẽ bị hệ thống dọn đi nơi khác và phím D-pad "chết" theo view GONE.
+        if (isControlFocused()) {
+            try { webView?.requestFocus() } catch (_: Throwable) {}
+        }
     }
 
     private var embedUrl: String = ""
@@ -82,6 +90,15 @@ class WebPlayerActivity : AppCompatActivity() {
     // Thanh điều khiển riêng của app cho trình phát web (trước đây chỉ có nút Back)
     private var webControlBar: View? = null
     private var btnWebPlayPause: ImageButton? = null
+    private var btnBackView: View? = null
+
+    // Hộp lỗi tải trang embed (H2): chỉ lỗi khung hình chính mới hiện; lỗi tài nguyên
+    // phụ (ảnh/script con của nhà cung cấp) tuyệt đối không dựng màn hình lỗi.
+    private var webErrorBox: View? = null
+    private var tvWebError: TextView? = null
+    private var btnWebRetry: Button? = null
+    private var btnWebErrorBack: Button? = null
+    private var mainFrameLoadFailed: Boolean = false
     // JS có tìm thấy <video>/JWPlayer điều khiển được không (kể cả trong iframe cùng nguồn).
     // Nếu không, phím D-pad được trả lại cho WebView để trình phát của nhà cung cấp tự xử lý.
     private var hasJsControl: Boolean = false
@@ -125,7 +142,8 @@ class WebPlayerActivity : AppCompatActivity() {
         tvFilmTitle.text = filmTitle
         tvEpisodeTitle.text = episodeTitle
 
-        findViewById<ImageButton>(R.id.btnBack).setOnClickListener {
+        btnBackView = findViewById(R.id.btnBack)
+        btnBackView?.setOnClickListener {
             saveCurrentProgress()
             finish()
         }
@@ -146,6 +164,16 @@ class WebPlayerActivity : AppCompatActivity() {
         findViewById<View>(R.id.btnWebPrevEp).setOnClickListener { switchWebEpisodeByDelta(-1) }
         findViewById<View>(R.id.btnWebNextEp).setOnClickListener { switchWebEpisodeByDelta(1) }
         findViewById<View>(R.id.btnWebEpisodes).setOnClickListener { showWebEpisodeListDialog() }
+
+        webErrorBox = findViewById(R.id.webErrorBox)
+        tvWebError = findViewById(R.id.tvWebError)
+        btnWebRetry = findViewById(R.id.btnWebRetry)
+        btnWebErrorBack = findViewById(R.id.btnWebErrorBack)
+        btnWebRetry?.setOnClickListener { retryLoadEmbed() }
+        btnWebErrorBack?.setOnClickListener {
+            saveCurrentProgress()
+            finish()
+        }
 
         val host = findViewById<FrameLayout>(R.id.webViewHost)
         val wv = try {
@@ -278,15 +306,26 @@ class WebPlayerActivity : AppCompatActivity() {
         wv.webViewClient = object : WebViewClient() {
             override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 super.onPageStarted(view, url, favicon)
+                // Một lượt tải mới bắt đầu (kể cả bấm Thử lại): dọn trạng thái lỗi cũ
+                hideWebLoadError()
                 loadingBar.visibility = View.VISIBLE
             }
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 loadingBar.visibility = View.GONE
+                if (mainFrameLoadFailed) {
+                    // Trang vừa nạp xong là trang lỗi (HTTP/SSL/mạng): giữ nguyên màn hình
+                    // lỗi + focus ở nút Thử lại, không trao focus cho WebView, không chạy
+                    // autoplay/tua tiếp tục xem trên một trang không có video.
+                    return
+                }
                 // Trao focus cho trang web (trình phát của nhà cung cấp nhận được phím khi JS
-                // không điều khiển được) + thăm dò sớm khả năng điều khiển bằng JS
-                try { view?.requestFocus() } catch (_: Throwable) {}
+                // không điều khiển được) + thăm dò sớm khả năng điều khiển bằng JS.
+                // Không cướp focus nếu người dùng đang đứng trên một nút của thanh điều khiển.
+                if (!isControlFocused()) {
+                    try { view?.requestFocus() } catch (_: Throwable) {}
+                }
                 handler.postDelayed({ queryPlaybackPosition() }, 2000L)
 
                 // 1. Kích hoạt Autoplay
@@ -340,9 +379,39 @@ class WebPlayerActivity : AppCompatActivity() {
 
             override fun onReceivedError(view: WebView?, request: WebResourceRequest?, error: android.webkit.WebResourceError?) {
                 super.onReceivedError(view, request, error)
+                // CHỈ lỗi ở khung hình chính mới dựng màn hình lỗi; lỗi tài nguyên phụ
+                // (ảnh, script, iframe con...) bỏ qua như cũ — trước đây lỗi main-frame
+                // chỉ tắt spinner, để lại màn hình đen vô hạn không lối thoát rõ ràng.
                 if (request?.isForMainFrame == true) {
-                    loadingBar.visibility = View.GONE
+                    android.util.Log.e(
+                        "WebPlayerActivity",
+                        "Embed load error ${error?.errorCode}: ${error?.description} (${request.url})"
+                    )
+                    showWebLoadError("Không tải được trang phát phim.\nKiểm tra kết nối mạng rồi bấm Thử lại.")
                 }
+            }
+
+            override fun onReceivedHttpError(view: WebView?, request: WebResourceRequest?, errorResponse: WebResourceResponse?) {
+                super.onReceivedHttpError(view, request, errorResponse)
+                val code = errorResponse?.statusCode ?: 0
+                if (request?.isForMainFrame == true && code >= 400) {
+                    android.util.Log.e("WebPlayerActivity", "Embed HTTP $code (${request.url})")
+                    showWebLoadError(
+                        "Máy chủ phát phim trả về lỗi $code.\n" +
+                            "Nguồn phát có thể đang bận hoặc đã bị gỡ — thử lại sau ít phút, hoặc Quay lại chọn tập/server khác."
+                    )
+                }
+            }
+
+            override fun onReceivedSslError(view: WebView?, handler: SslErrorHandler?, error: SslError?) {
+                // TUYỆT ĐỐI không proceed() bỏ qua lỗi SSL: hủy tải và báo lỗi rõ ràng
+                // (trước đây lỗi SSL bị hủy im lặng, cũng thành màn hình đen).
+                handler?.cancel()
+                android.util.Log.e("WebPlayerActivity", "Embed SSL error: $error")
+                showWebLoadError(
+                    "Kết nối bảo mật tới máy chủ phát phim bị lỗi (SSL).\n" +
+                        "Kiểm tra ngày giờ của thiết bị và kết nối mạng rồi bấm Thử lại."
+                )
             }
 
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
@@ -806,6 +875,49 @@ class WebPlayerActivity : AppCompatActivity() {
         )
     }
 
+    /** Focus hiện tại có đang nằm trên chrome của app (nút Back ở OSD trên, một nút trong
+     *  thanh điều khiển dưới, hoặc trong hộp lỗi) hay không. Nếu có, phím D-pad/OK phải
+     *  được trả cho cơ chế focus mặc định thay vì ép thành lệnh phát/tua cho WebView. */
+    private fun isControlFocused(): Boolean {
+        var v: View? = currentFocus ?: return false
+        while (v != null) {
+            if (v === webControlBar || v === topOsd || v === webErrorBox) return true
+            v = v.parent as? View
+        }
+        return false
+    }
+
+    /** Hiện màn hình lỗi tải embed (chỉ gọi cho lỗi khung hình chính) + focus nút Thử lại. */
+    private fun showWebLoadError(message: String) {
+        mainFrameLoadFailed = true
+        loadingBar.visibility = View.GONE
+        tvWebError?.text = message
+        webErrorBox?.visibility = View.VISIBLE
+        btnWebRetry?.post { btnWebRetry?.requestFocus() }
+    }
+
+    private fun hideWebLoadError() {
+        mainFrameLoadFailed = false
+        webErrorBox?.visibility = View.GONE
+    }
+
+    /** Nút Thử lại ở màn hình lỗi: nạp lại đúng URL embed kèm Referer như lần tải đầu. */
+    private fun retryLoadEmbed() {
+        val wv = webView ?: return
+        hideWebLoadError()
+        loadingBar.visibility = View.VISIBLE
+        try { wv.requestFocus() } catch (_: Throwable) {}
+        if (embedUrl.isNotBlank()) {
+            val extraHeaders = mapOf(
+                "Referer" to EMBED_REFERER,
+                "Origin" to "https://phimapi.com"
+            )
+            wv.loadUrl(embedUrl, extraHeaders)
+        } else {
+            wv.reload()
+        }
+    }
+
     private fun showOsd() {
         handler.removeCallbacks(hideOsdRunnable)
         topOsd.visibility = View.VISIBLE
@@ -815,7 +927,30 @@ class WebPlayerActivity : AppCompatActivity() {
         handler.postDelayed(hideOsdRunnable, 3500L)
     }
 
+    /** Dispatch mặc định (focus-search + click của nút đang focus), bọc try/catch như cũ. */
+    private fun superDispatch(event: KeyEvent): Boolean = try {
+        super.dispatchKeyEvent(event)
+    } catch (t: Throwable) {
+        true
+    }
+
     override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        // 0. Hộp lỗi tải embed đang hiện (mẫu PlayerActivity): BACK = thoát; nếu chưa có
+        //    nút nào giữ focus thì ép focus về nút Thử lại; mọi phím còn lại để dispatch
+        //    mặc định lo (D-pad di chuyển giữa Thử lại/Quay lại, OK kích hoạt nút).
+        if (webErrorBox?.visibility == View.VISIBLE) {
+            if (event.action == KeyEvent.ACTION_DOWN) {
+                if (event.keyCode == KeyEvent.KEYCODE_BACK) {
+                    saveCurrentProgress()
+                    finish()
+                    return true
+                }
+                if (btnWebRetry?.hasFocus() != true && btnWebErrorBack?.hasFocus() != true) {
+                    btnWebRetry?.requestFocus()
+                }
+            }
+            return superDispatch(event)
+        }
         try {
             if (event.action == KeyEvent.ACTION_DOWN) {
                 when (event.keyCode) {
@@ -824,9 +959,30 @@ class WebPlayerActivity : AppCompatActivity() {
                     KeyEvent.KEYCODE_MENU,
                     KeyEvent.KEYCODE_INFO -> {
                         showOsd()
-                        return true
+                        if (!isControlFocused()) {
+                            // Focus đang kẹt ở WebView: đưa focus vào chrome của app —
+                            // UP lên nút Back ở OSD trên, DOWN/MENU/INFO xuống nút
+                            // Phát/Dừng giữa thanh điều khiển — để các phím tiếp theo
+                            // di chuyển được giữa các nút. Khi focus đã nằm trên một nút
+                            // thì KHÔNG nuốt phím: rơi xuống superDispatch ở cuối hàm
+                            // cho focus-search tự nhiên (nextFocusUp/Down đã khai trong XML).
+                            if (event.keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                                btnBackView?.requestFocus()
+                            } else {
+                                btnWebPlayPause?.requestFocus()
+                            }
+                            return true
+                        }
                     }
-                    KeyEvent.KEYCODE_DPAD_LEFT,
+                    KeyEvent.KEYCODE_DPAD_LEFT -> {
+                        // Focus ở trên nút trong thanh: ◄ để di chuyển focus giữa các nút
+                        // (rơi xuống superDispatch), không tua video. Focus ở WebView:
+                        // tua như cũ khi JS điều khiển được video.
+                        if (!isControlFocused() && hasJsControl) {
+                            webSeekBy(-10)
+                            return true
+                        }
+                    }
                     KeyEvent.KEYCODE_MEDIA_REWIND -> {
                         // Chỉ chặn phím khi JS điều khiển được video; nếu không, để WebView/trình phát
                         // của nhà cung cấp tự nhận phím (trước đây chặn vô điều kiện mà JS lại không tìm
@@ -836,7 +992,12 @@ class WebPlayerActivity : AppCompatActivity() {
                             return true
                         }
                     }
-                    KeyEvent.KEYCODE_DPAD_RIGHT,
+                    KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                        if (!isControlFocused() && hasJsControl) {
+                            webSeekBy(10)
+                            return true
+                        }
+                    }
                     KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> {
                         if (hasJsControl) {
                             webSeekBy(10)
@@ -857,9 +1018,17 @@ class WebPlayerActivity : AppCompatActivity() {
                     }
                     KeyEvent.KEYCODE_DPAD_CENTER,
                     KeyEvent.KEYCODE_ENTER,
+                    KeyEvent.KEYCODE_NUMPAD_ENTER,
                     KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
-                        webTogglePlayPause()
-                        return true
+                        // Focus đang ở trên một nút (Tập trước/Tiếp, Danh sách tập, tua,
+                        // Back...): để dispatch mặc định kích hoạt ĐÚNG nút đó — rơi xuống
+                        // superDispatch ở cuối hàm. Trước đây nhánh này ép mọi OK thành
+                        // Play/Pause nên toàn bộ nút trong thanh là "nút chết" với remote.
+                        // Focus ở WebView (không ở nút nào): giữ hành vi cũ — OK = Play/Pause.
+                        if (!isControlFocused()) {
+                            webTogglePlayPause()
+                            return true
+                        }
                     }
                     KeyEvent.KEYCODE_BACK -> {
                         if (customView != null) {
@@ -879,11 +1048,7 @@ class WebPlayerActivity : AppCompatActivity() {
         } catch (t: Throwable) {
             android.util.Log.e("WebPlayerActivity", "dispatchKeyEvent error", t)
         }
-        return try {
-            super.dispatchKeyEvent(event)
-        } catch (t: Throwable) {
-            true
-        }
+        return superDispatch(event)
     }
 
     override fun onResume() {

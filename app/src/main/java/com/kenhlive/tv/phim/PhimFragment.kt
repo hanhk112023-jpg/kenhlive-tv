@@ -4,6 +4,7 @@ import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Bundle
+import android.os.Parcelable
 import android.text.Editable
 import android.text.TextWatcher
 import android.view.KeyEvent
@@ -30,11 +31,11 @@ import com.kenhlive.tv.DeviceMode
 import com.kenhlive.tv.MainActivity
 import com.kenhlive.tv.R
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.util.Locale
 
 data class PhimSection(
     val title: String,
@@ -111,6 +112,14 @@ class PhimFragment : Fragment() {
     private var gridEndReached = false
     // Tăng mỗi lần đổi filter/chế độ: kết quả tải trang về trễ của filter cũ bị bỏ qua
     private var gridGeneration = 0
+
+    // Vị trí cuộn ngang của từng rail (khóa ổn định theo rail), dùng chung cho mọi
+    // PhimMainAdapter của fragment để không mất vị trí khi bind lại / thay adapter (04-H3)
+    private val railScrollStates = HashMap<String, Parcelable>()
+
+    // Tìm kiếm trong hub: job + generation để hủy / bỏ qua kết quả của từ khóa cũ (05-H1)
+    private var searchJob: Job? = null
+    private var searchGeneration = 0
 
     // Ngưỡng tiền tải: còn ~10 poster chưa hiển thị thì bắt đầu tải trang tiếp
     private val gridPrefetchItems = 10
@@ -337,6 +346,10 @@ class PhimFragment : Fragment() {
                     posterUrl = h.posterUrl,
                     thumbUrl = h.posterUrl,
                     currentEpisode = h.episodeName,
+                    // Lịch sử không lưu năm/chất lượng/ngôn ngữ: để trống tường minh để
+                    // thẻ không hiện mặc định bịa ("HD"/"Vietsub") của data class
+                    quality = "",
+                    language = "",
                     watchProgress = h
                 )
             }
@@ -349,6 +362,9 @@ class PhimFragment : Fragment() {
                 newSections.add(0, PhimSection("TIẾP TỤC XEM", historyFilms, isContinueWatching = true))
             }
             sections = newSections
+            // Giữ vị trí cuộn dọc của danh sách chính qua lần thay adapter này (04-H3):
+            // trước đây mỗi lần quay lại tab / đóng dialog là danh sách nhảy về hero.
+            val mainLmState = (mainList.layoutManager as? LinearLayoutManager)?.onSaveInstanceState()
             mainList.adapter = PhimMainAdapter(
                 hero = heroFilm,
                 heroIdx = currentHeroIdx,
@@ -375,8 +391,12 @@ class PhimFragment : Fragment() {
                 onFilmLongClick = { film -> showFilmOptionDialog(film) },
                 onHeroNext = { cycleHeroNext() },
                 filterAdapter = filterAdapter,
-                onUp = { false }
+                onUp = { false },
+                railScrollStates = railScrollStates
             )
+            if (mainLmState != null) {
+                (mainList.layoutManager as? LinearLayoutManager)?.onRestoreInstanceState(mainLmState)
+            }
             mainList.postDelayed({
                 ensurePhimFocus()
             }, 100L)
@@ -564,6 +584,9 @@ class PhimFragment : Fragment() {
     }
 
     private fun closeSearchOverlay() {
+        // Đóng overlay: hủy tìm kiếm đang chạy dở để kết quả về trễ không ghi vào UI nữa
+        searchJob?.cancel()
+        searchGeneration++
         phimSearchOverlay.visibility = View.GONE
         mainList.visibility = View.VISIBLE
         searchBackCallback.isEnabled = false
@@ -584,14 +607,19 @@ class PhimFragment : Fragment() {
         pbSearchPhim.visibility = View.VISIBLE
         tvSearchResultsStatus.text = "Đang tìm kiếm: \"$q\"..."
 
-        viewLifecycleOwner.lifecycleScope.launch {
+        // Chống race (05-H1): hủy job của từ khóa trước + tăng generation; kết quả về
+        // trễ của từ khóa cũ bị bỏ qua, không ghi đè kết quả/trạng thái của từ khóa mới.
+        searchJob?.cancel()
+        val gen = ++searchGeneration
+        searchJob = viewLifecycleOwner.lifecycleScope.launch {
             val results = withContext(Dispatchers.IO) {
                 NguoncRepository.searchFilms(q, requireContext())
             }
+            if (gen != searchGeneration) return@launch
             pbSearchPhim.visibility = View.GONE
 
             if (results.isNotEmpty()) {
-                tvSearchResultsStatus.text = "Tìm thấy ${results.size} kết quả cho \"$q\" (Chuẩn Netflix 4K)"
+                tvSearchResultsStatus.text = "Tìm thấy ${results.size} kết quả cho \"$q\""
                 rvSearchGrid.visibility = View.VISIBLE
                 llSearchEmpty.visibility = View.GONE
                 rvSearchGrid.adapter = NetflixSearchGridAdapter(
@@ -646,6 +674,10 @@ class PhimFragment : Fragment() {
                         posterUrl = h.posterUrl,
                         thumbUrl = h.posterUrl,
                         currentEpisode = h.episodeName,
+                        // Như ở refreshContinueWatchingOnly: lịch sử không có
+                        // chất lượng/ngôn ngữ thật -> để trống, không hiện mặc định bịa
+                        quality = "",
+                        language = "",
                         watchProgress = h
                     )
                 }
@@ -672,6 +704,8 @@ class PhimFragment : Fragment() {
                             posterUrl = h.posterUrl,
                             thumbUrl = h.posterUrl,
                             currentEpisode = h.episodeName,
+                            quality = "",
+                            language = "",
                             watchProgress = h
                         )
                     } else null)
@@ -687,6 +721,8 @@ class PhimFragment : Fragment() {
                             posterUrl = h.posterUrl,
                             thumbUrl = h.posterUrl,
                             currentEpisode = h.episodeName,
+                            quality = "",
+                            language = "",
                             watchProgress = h
                         )
                     }
@@ -700,6 +736,8 @@ class PhimFragment : Fragment() {
                             posterUrl = c.posterUrl,
                             thumbUrl = c.posterUrl,
                             currentEpisode = c.episodeName,
+                            quality = "",
+                            language = "",
                             watchProgress = c
                         )
                     }
@@ -814,7 +852,8 @@ class PhimFragment : Fragment() {
                     onFilmLongClick = { film -> showFilmOptionDialog(film) },
                     onHeroNext = { cycleHeroNext() },
                     filterAdapter = filterAdapter,
-                    onUp = { false }
+                    onUp = { false },
+                    railScrollStates = railScrollStates
                 )
             } else {
                 mainList.visibility = View.GONE
@@ -856,12 +895,16 @@ class PhimFragment : Fragment() {
      * loadFilmsByCategory: quốc gia kiểm tra trước; nhóm loại đi qua fetchFilmsByType
      * (batch isCategory=false); còn lại là thể loại qua fetchFilmsByCategory (isCategory=true).
      */
+    /**
+     * Nạp 1 trang lưới qua biến thể Strict của repository: lỗi mạng/cầu dao được NÉM ra
+     * (không nuốt thành list rỗng) để nơi gọi phân biệt "lỗi tải tạm thời" với
+     * "trang cuối thật" (trả list rỗng). Xem [loadNextGridPage] (05-H2).
+     */
     private suspend fun fetchGridPage(slug: String, page: Int): List<NguoncFilm> {
-        val ctx = requireContext()
         return when {
-            slug in gridCountrySlugs -> NguoncRepository.fetchFilmsByCountry(slug, page, ctx)
-            slug in gridTypeSlugs -> NguoncRepository.fetchFilmsByType(slug, page, ctx)
-            else -> NguoncRepository.fetchFilmsByCategory(slug, page, ctx)
+            slug in gridCountrySlugs -> NguoncRepository.fetchFilmsByCountryStrict(slug, page)
+            slug in gridTypeSlugs -> NguoncRepository.fetchFilmsByTypeStrict(slug, page)
+            else -> NguoncRepository.fetchFilmsByCategoryStrict(slug, page)
         }
     }
 
@@ -955,15 +998,29 @@ class PhimFragment : Fragment() {
         mainList.scrollToPosition(0)
 
         viewLifecycleOwner.lifecycleScope.launch {
-            val films = withContext(Dispatchers.IO) { fetchGridPage(slug, 1) }
+            // Trang 1: phân biệt lỗi tải (ném ngoại lệ) với danh mục rỗng thật
+            var loadFailed = false
+            val films = try {
+                withContext(Dispatchers.IO) { fetchGridPage(slug, 1) }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                loadFailed = true
+                emptyList()
+            }
             if (gen != gridGeneration || !gridMode || slug != gridSlug) return@launch
             gridLoading = false
             if (films.isEmpty()) {
                 mainList.visibility = View.GONE
                 errorLayout.visibility = View.VISIBLE
                 ivEmptyIll.visibility = View.GONE
-                tvErrorTitle.text = "Không thể tải kho phim"
-                tvErrorSub.text = "Kiểm tra kết nối mạng hoặc thử lại sau"
+                if (loadFailed) {
+                    tvErrorTitle.text = "Không thể tải kho phim"
+                    tvErrorSub.text = "Kiểm tra kết nối mạng hoặc thử lại sau"
+                } else {
+                    tvErrorTitle.text = "Danh mục chưa có phim"
+                    tvErrorSub.text = "Danh mục này hiện chưa có nội dung, thử danh mục khác nhé"
+                }
                 btnRetry.text = "Thử lại"
                 btnRetry.setOnClickListener { loadFilmsByCategory(selectedCategorySlug) }
                 return@launch
@@ -992,7 +1049,26 @@ class PhimFragment : Fragment() {
         gridLoading = true
         setGridFooterVisible(true)
         viewLifecycleOwner.lifecycleScope.launch {
-            val films = withContext(Dispatchers.IO) { fetchGridPage(slug, gridPage + 1) }
+            val films = try {
+                withContext(Dispatchers.IO) { fetchGridPage(slug, gridPage + 1) }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Lỗi tải TẠM THỜI không phải trang cuối thật (05-H2): KHÔNG đặt
+                // gridEndReached — giữ nguyên trạng thái để lần cuộn tới thử lại được;
+                // tắt footer + báo nhẹ. Kết quả của filter cũ (gen lệch) thì bỏ qua.
+                if (gen != gridGeneration || !gridMode || slug != gridSlug) return@launch
+                gridLoading = false
+                setGridFooterVisible(false)
+                if (isAdded) {
+                    android.widget.Toast.makeText(
+                        requireContext(),
+                        "Không tải thêm được phim — cuộn xuống để thử lại",
+                        android.widget.Toast.LENGTH_SHORT
+                    ).show()
+                }
+                return@launch
+            }
             if (gen != gridGeneration || !gridMode || slug != gridSlug) return@launch
             gridLoading = false
             setGridFooterVisible(false)
@@ -1189,17 +1265,12 @@ class PhimFragment : Fragment() {
         currentHeroIdx = (currentHeroIdx + 1) % featuredFilms.size
         val nextFilm = featuredFilms[currentHeroIdx]
         heroFilm = nextFilm
-        val vh = mainList.findViewHolderForAdapterPosition(0) as? HeroVH
-        if (vh != null) {
-            vh.bind(
-                film = nextFilm,
-                heroIdx = currentHeroIdx,
-                totalHero = featuredFilms.size,
-                onFilmClick = { f -> openFilmDialog(f) },
-                onHeroPlay = { f -> openHeroPlay(f) },
-                onFavoriteToggle = { f -> toggleFilmFavorite(f) },
-                onHeroNext = { cycleHeroNext() }
-            )
+        // Adapter giữ trạng thái hero (04-H2): updateHero + notifyItemChanged(0) bind lại
+        // đúng phim mới dù HeroVH còn hiện hay đã bị recycle. Cách cũ rebind tay VH /
+        // notify trên adapter vẫn giữ phim đầu -> hero nhảy ngược về phim 1 sau recycle.
+        val adapter = mainList.adapter as? PhimMainAdapter
+        if (adapter != null) {
+            adapter.updateHero(nextFilm, currentHeroIdx, featuredFilms.size)
         } else {
             mainList.adapter?.notifyItemChanged(0)
         }
@@ -1301,7 +1372,10 @@ class PhimFragment : Fragment() {
         // Chế độ lưới dọc: danh sách poster dùng chung tham chiếu với PhimFragment để nối trang
         private val gridFilms: List<NguoncFilm> = emptyList(),
         private val gridMode: Boolean = false,
-        gridFooter: Boolean = false
+        gridFooter: Boolean = false,
+        // Vị trí cuộn ngang của từng rail, dùng chung với PhimFragment (sống qua các lần
+        // thay adapter) để khôi phục khi rail được bind lại (04-H3)
+        private val railScrollStates: MutableMap<String, Parcelable> = mutableMapOf()
     ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         companion object {
@@ -1315,8 +1389,28 @@ class PhimFragment : Fragment() {
         /** Hàng "đang tải thêm" ở cuối lưới (chỉ có ý nghĩa khi gridMode = true). */
         var gridFooterVisible: Boolean = gridFooter
 
+        // Trạng thái spotlight hero: sau khi khởi tạo, ADAPTER là nguồn sự thật duy nhất.
+        // Fragment đổi phim qua updateHero() thay vì rebind tay như trước — cách cũ làm
+        // hero nhảy ngược về phim đầu của adapter mỗi khi HeroVH bị recycle (04-H2).
+        private var currentHero: NguoncFilm? = hero
+        private var currentHeroIdx: Int = heroIdx
+        private var currentTotalHero: Int = totalHero
+
+        /** Đổi phim spotlight: bind lại vị trí 0 bằng phim mới, đúng kể cả khi HeroVH đã recycle. */
+        fun updateHero(film: NguoncFilm, idx: Int, total: Int) {
+            if (gridMode) return
+            currentHero = film
+            currentHeroIdx = idx
+            currentTotalHero = total
+            notifyItemChanged(0)
+        }
+
+        /** Khóa ổn định cho vị trí cuộn của 1 rail: tiêu đề bỏ hậu tố đếm "(N)" hay thay đổi theo số lượng. */
+        private fun railKey(section: PhimSection): String =
+            (if (section.isContinueWatching) "cw:" else "row:") + section.title.substringBefore(" (")
+
         private val headerCount: Int
-            get() = (if (hero != null) 1 else 0) + (if (filterAdapter != null) 1 else 0)
+            get() = (if (currentHero != null) 1 else 0) + (if (filterAdapter != null) 1 else 0)
 
         // FPT/Netflix standard: Shared RecycledViewPool across all carousel rows cuts 60% view memory
         private val sharedRowPool = RecyclerView.RecycledViewPool().apply {
@@ -1324,8 +1418,8 @@ class PhimFragment : Fragment() {
         }
 
         override fun getItemViewType(position: Int): Int = when {
-            position == 0 && hero != null -> TYPE_HERO
-            position == (if (hero != null) 1 else 0) && filterAdapter != null -> TYPE_FILTERS
+            position == 0 && currentHero != null -> TYPE_HERO
+            position == (if (currentHero != null) 1 else 0) && filterAdapter != null -> TYPE_FILTERS
             gridMode && gridFooterVisible && position == headerCount + gridFilms.size -> TYPE_LOADING
             gridMode && position >= headerCount -> TYPE_POSTER
             else -> TYPE_ROW
@@ -1379,8 +1473,9 @@ class PhimFragment : Fragment() {
         }
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-            if (holder is HeroVH && hero != null) {
-                holder.bind(hero, heroIdx, totalHero, onFilmClick, onHeroPlay, onFavoriteToggle, onHeroNext, onUp)
+            val heroNow = currentHero
+            if (holder is HeroVH && heroNow != null) {
+                holder.bind(heroNow, currentHeroIdx, currentTotalHero, onFilmClick, onHeroPlay, onFavoriteToggle, onHeroNext, onUp)
             } else if (holder is FilterRowVH) {
                 holder.bind(filterAdapter)
             } else if (holder is GridPosterVH) {
@@ -1391,7 +1486,8 @@ class PhimFragment : Fragment() {
             } else if (holder is RowVH) {
                 val sectionIdx = position - headerCount
                 if (sectionIdx in sections.indices) {
-                    holder.bind(sections[sectionIdx], onFilmClick, onFavoriteToggle, onFilmLongClick)
+                    val section = sections[sectionIdx]
+                    holder.bind(section, onFilmClick, onFavoriteToggle, onFilmLongClick, railKey(section), railScrollStates)
                 }
             }
         }
@@ -1477,8 +1573,14 @@ class PhimFragment : Fragment() {
             }
             btnBackHome?.let { setupFocusAnimation(it) }
             title.text = film.name
-            year.text = film.year.ifBlank { "2026" }
-            quality.text = "${film.quality.ifBlank { "FHD" }} · ${film.language.ifBlank { "Vietsub" }}"
+            // Không bịa metadata: thiếu năm/chất lượng/ngôn ngữ thì ẨN thành phần đó
+            // thay vì hiện "2026"/"FHD"/"Vietsub" như dữ kiện thật (04-M2)
+            year.text = film.year
+            year.visibility = if (film.year.isBlank()) View.GONE else View.VISIBLE
+            val qualityLine = listOf(film.quality, film.language)
+                .filter { it.isNotBlank() }.joinToString(" · ")
+            quality.text = qualityLine
+            quality.visibility = if (qualityLine.isBlank()) View.GONE else View.VISIBLE
 
             val epLabel = when {
                 film.currentEpisode.isNotBlank() && film.totalEpisodes.isNotBlank() && film.currentEpisode != film.totalEpisodes ->
@@ -1486,9 +1588,10 @@ class PhimFragment : Fragment() {
                 film.currentEpisode.isNotBlank() -> film.currentEpisode
                 film.totalEpisodes.isNotBlank() -> "${film.totalEpisodes} Tập"
                 film.time.isNotBlank() -> film.time
-                else -> "Bản Đẹp"
+                else -> ""
             }
             episodeCount?.text = epLabel
+            episodeCount?.visibility = if (epLabel.isBlank()) View.GONE else View.VISIBLE
 
             val categoriesText = when {
                 film.categories.isNotEmpty() -> film.categories.take(2).joinToString(" · ")
@@ -1536,7 +1639,9 @@ class PhimFragment : Fragment() {
                 }
             }
 
-            val imgUrl = film.posterUrl.ifBlank { film.thumbUrl }
+            // Backdrop NGANG 16:9: ưu tiên thumbUrl (ảnh ngang của KKPhim); posterUrl là
+            // ảnh DỌC 2:3, dùng cho backdrop sẽ bị crop ~62% và mờ (04-H1)
+            val imgUrl = film.thumbUrl.ifBlank { film.posterUrl }
             if (imgUrl.isNotBlank()) {
                 backdrop.load(imgUrl) {
                     crossfade(if (DeviceMode.lowRam) false else true)
@@ -1584,6 +1689,10 @@ class PhimFragment : Fragment() {
         val count: TextView = v.findViewById(R.id.rowCount)
         val carousel: RecyclerView = v.findViewById(R.id.rowCarousel)
 
+        // Khóa rail mà VH này đang hiển thị; dùng để lưu vị trí cuộn trước khi bị
+        // tái dùng cho rail khác / trước khi adapter bị thay (04-H3)
+        private var boundRailKey: String? = null
+
         init {
             carousel.clipChildren = false
             carousel.clipToPadding = false
@@ -1598,11 +1707,27 @@ class PhimFragment : Fragment() {
             section: PhimSection,
             onFilmClick: (NguoncFilm) -> Unit,
             onFavoriteToggle: (NguoncFilm) -> Unit,
-            onFilmLongClick: (NguoncFilm) -> Unit
+            onFilmLongClick: (NguoncFilm) -> Unit,
+            railKey: String,
+            scrollStates: MutableMap<String, Parcelable>
         ) {
+            val lm = carousel.layoutManager as? LinearLayoutManager
+            // VH có thể đang hiển thị một rail khác (bị recycle) hoặc cùng rail sắp được
+            // bind lại sau khi thay adapter: chụp vị trí cuộn hiện tại của carousel
+            // TRƯỚC khi gán adapter mới (gán adapter sẽ reset cuộn về 0) (04-H3).
+            boundRailKey?.let { prevKey ->
+                lm?.onSaveInstanceState()?.let { scrollStates[prevKey] = it }
+            }
+            boundRailKey = railKey
             title.text = section.title
             count.text = "${section.films.size} phim"
             carousel.adapter = PhimCardAdapter(section.films, onFilmClick, onFilmLongClick)
+            val saved = scrollStates[railKey]
+            if (saved != null) {
+                lm?.onRestoreInstanceState(saved)
+            } else {
+                carousel.scrollToPosition(0)
+            }
         }
     }
 
@@ -1641,20 +1766,38 @@ class PhimFragment : Fragment() {
                 holder.progressBar.progress = progress.progressPct.coerceAtLeast(3)
                 val timeLabel = progress.formattedTimeOnly()
                 val badgeText = if (timeLabel.isNotBlank()) "${progress.episodeName} · $timeLabel" else "${progress.episodeName} (${progress.progressPct}%)"
+                holder.episodeBadge.visibility = View.VISIBLE
                 holder.episodeBadge.text = badgeText
                 holder.meta.text = progress.formattedProgress()
             } else {
                 holder.progressBar.visibility = View.GONE
-                val epStr = film.currentEpisode.ifBlank {
-                    if (film.totalEpisodes.isNotBlank()) "Tập ${film.totalEpisodes}" else "Full"
+                // Không bịa "Full" khi không rõ số tập: thiếu cả hai thì ẩn badge tập
+                val epStr = when {
+                    film.currentEpisode.isNotBlank() -> film.currentEpisode
+                    film.totalEpisodes.isNotBlank() -> "Tập ${film.totalEpisodes}"
+                    else -> ""
                 }
-                holder.episodeBadge.text = epStr
-                holder.meta.text = "${film.year.ifBlank { "2026" }} · ${film.language.ifBlank { "Vietsub" }}"
+                if (epStr.isBlank()) {
+                    holder.episodeBadge.visibility = View.GONE
+                } else {
+                    holder.episodeBadge.visibility = View.VISIBLE
+                    holder.episodeBadge.text = epStr
+                }
+                // Meta chỉ gồm dữ kiện thật: thiếu năm/ngôn ngữ thì bỏ phần đó (không "2026"/"Vietsub" giả)
+                holder.meta.text = listOf(film.year, film.language)
+                    .filter { it.isNotBlank() }.joinToString(" · ")
             }
 
-            holder.qualityBadge.text = film.quality.ifBlank { "FHD" }
+            // Badge chất lượng: không có dữ kiện thật thì ẩn, không hiện "FHD" giả
+            if (film.quality.isBlank()) {
+                holder.qualityBadge.visibility = View.GONE
+            } else {
+                holder.qualityBadge.visibility = View.VISIBLE
+                holder.qualityBadge.text = film.quality
+            }
 
-            val posterUrl = film.thumbUrl.ifBlank { film.posterUrl }
+            // Thẻ DỌC 2:3: ưu tiên posterUrl (ảnh dọc của KKPhim); thumbUrl là ảnh ngang (04-H1)
+            val posterUrl = film.posterUrl.ifBlank { film.thumbUrl }
             holder.poster.load(posterUrl) {
                 crossfade(false)
                 placeholder(R.drawable.thumb_round_bg)
@@ -1708,6 +1851,7 @@ class PhimFragment : Fragment() {
             val progress = film.watchProgress
             if (progress != null && (progress.progressPct > 0 || progress.positionMs > 0L)) {
                 val timeLabel = progress.formattedTimeOnly()
+                episodeBadge.visibility = View.VISIBLE
                 episodeBadge.text = if (timeLabel.isNotBlank()) {
                     "${progress.episodeName} · $timeLabel"
                 } else {
@@ -1715,16 +1859,31 @@ class PhimFragment : Fragment() {
                 }
                 meta.text = progress.formattedProgress()
             } else {
-                val epStr = film.currentEpisode.ifBlank {
-                    if (film.totalEpisodes.isNotBlank()) "Tập ${film.totalEpisodes}" else "Full"
+                // Không bịa "Full"/"2026"/"Vietsub": thiếu dữ kiện thì ẩn/bỏ phần tương ứng
+                val epStr = when {
+                    film.currentEpisode.isNotBlank() -> film.currentEpisode
+                    film.totalEpisodes.isNotBlank() -> "Tập ${film.totalEpisodes}"
+                    else -> ""
                 }
-                episodeBadge.text = epStr
-                meta.text = "${film.year.ifBlank { "2026" }} · ${film.language.ifBlank { "Vietsub" }}"
+                if (epStr.isBlank()) {
+                    episodeBadge.visibility = View.GONE
+                } else {
+                    episodeBadge.visibility = View.VISIBLE
+                    episodeBadge.text = epStr
+                }
+                meta.text = listOf(film.year, film.language)
+                    .filter { it.isNotBlank() }.joinToString(" · ")
             }
 
-            qualityBadge.text = film.quality.ifBlank { "FHD" }
+            if (film.quality.isBlank()) {
+                qualityBadge.visibility = View.GONE
+            } else {
+                qualityBadge.visibility = View.VISIBLE
+                qualityBadge.text = film.quality
+            }
 
-            val posterUrl = film.thumbUrl.ifBlank { film.posterUrl }
+            // Thẻ DỌC 2:3: ưu tiên posterUrl (ảnh dọc); thumbUrl là ảnh ngang (04-H1)
+            val posterUrl = film.posterUrl.ifBlank { film.thumbUrl }
             poster.load(posterUrl) {
                 crossfade(false)
                 placeholder(R.drawable.thumb_round_bg)
@@ -1774,17 +1933,33 @@ class PhimFragment : Fragment() {
             val film = films[position]
             holder.title.text = film.name
 
-            val score = 8.2 + (Math.abs(film.name.hashCode()) % 15) / 10.0
-            holder.ratingBadge.text = String.format(Locale.US, "★ %.1f", score)
-            holder.qualityBadge.text = film.quality.ifBlank { "FHD" }
+            // KHÔNG bịa điểm rating từ hashCode tên phim (05-H3): không có dữ liệu
+            // đánh giá thật -> ẩn badge, nhất quán với GridPosterVH và thẻ rail
+            holder.ratingBadge.visibility = View.GONE
 
-            val epStr = film.currentEpisode.ifBlank {
-                if (film.totalEpisodes.isNotBlank()) "Tập ${film.totalEpisodes}" else "Full"
+            if (film.quality.isBlank()) {
+                holder.qualityBadge.visibility = View.GONE
+            } else {
+                holder.qualityBadge.visibility = View.VISIBLE
+                holder.qualityBadge.text = film.quality
             }
-            holder.episodeBadge.text = epStr
-            holder.meta.text = "${film.year.ifBlank { "2026" }} · ${film.language.ifBlank { "Vietsub" }}"
 
-            val posterUrl = film.thumbUrl.ifBlank { film.posterUrl }
+            val epStr = when {
+                film.currentEpisode.isNotBlank() -> film.currentEpisode
+                film.totalEpisodes.isNotBlank() -> "Tập ${film.totalEpisodes}"
+                else -> ""
+            }
+            if (epStr.isBlank()) {
+                holder.episodeBadge.visibility = View.GONE
+            } else {
+                holder.episodeBadge.visibility = View.VISIBLE
+                holder.episodeBadge.text = epStr
+            }
+            holder.meta.text = listOf(film.year, film.language)
+                .filter { it.isNotBlank() }.joinToString(" · ")
+
+            // Thẻ DỌC 2:3: ưu tiên posterUrl (ảnh dọc); thumbUrl là ảnh ngang (04-H1)
+            val posterUrl = film.posterUrl.ifBlank { film.thumbUrl }
             holder.poster.load(posterUrl) {
                 crossfade(false)
                 placeholder(R.drawable.thumb_round_bg)

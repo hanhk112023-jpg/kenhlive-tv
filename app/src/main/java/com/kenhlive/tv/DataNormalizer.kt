@@ -236,6 +236,29 @@ object DataNormalizer {
         return (now - matchTimeMs) > MATCH_LIVE_WINDOW_MS
     }
 
+    /**
+     * Trận thuộc danh sách live (LiveMatchGroup) đã KẾT THÚC chưa — dùng cho hero/thẻ trận
+     * ở màn Thể thao, cùng quy tắc với ScheduleMatch.isFinished phía Lịch: dữ kiện thật
+     * (trạng thái API của nhà đài / meta registry) thắng suy luận đồng hồ. LiveMatchGroup
+     * không tự thêm getter được (model nằm ở SocoliveRepository) nên gom quy tắc về đây để
+     * mọi nơi hiển thị group dùng chung, tránh lệch trạng thái giữa các màn.
+     */
+    fun isGroupFinished(isLiveGame: Boolean?, matchTimeMs: Long, metaIsLive: Boolean?): Boolean {
+        // Nguồn thật còn báo live (API hoặc registry) -> chưa thể kết thúc.
+        if (isLiveGame == true || metaIsLive == true) return false
+        if (matchTimeMs <= 0L) return false
+        val ms = if (matchTimeMs in 1..100_000_000_000L) matchTimeMs * 1000L else matchTimeMs
+        // Đồng hồ: đã qua cửa sổ live tối đa (đúng phép của ScheduleMatch.isFinished).
+        if (isMatchFinished(ms)) return true
+        // API chính thức đã khẳng định KHÔNG còn live mà giờ bóng lăn đã qua -> kết thúc,
+        // không chờ đủ 180' (trận kết thúc sớm / nhà đài đã đóng phòng; tỉ số cuối vẫn còn
+        // nên suy luận "có tỉ số = đang đá" sẽ hiển thị LIVE sai nếu chờ đồng hồ).
+        if (isLiveGame == false) {
+            return System.currentTimeMillis() > ms + MATCH_KICKOFF_TOLERANCE_MS
+        }
+        return false
+    }
+
     fun isMatchUpcoming(matchTimeMs: Long): Boolean {
         if (matchTimeMs <= 0) return false
         val now = System.currentTimeMillis()

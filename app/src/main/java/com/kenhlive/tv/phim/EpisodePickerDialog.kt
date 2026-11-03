@@ -127,8 +127,21 @@ object EpisodePickerDialog {
 
         tvTitle.text = film.name
         tvOrigTitle.text = film.originalName.ifBlank { film.categories.joinToString(" · ") }
-        tvYear.text = film.year.ifBlank { "2026" }
-        tvQuality.text = "${film.quality} · ${film.language}"
+        // Thiếu năm thì ẩn badge, không bịa số (audit L1).
+        if (film.year.isBlank()) {
+            tvYear.visibility = View.GONE
+        } else {
+            tvYear.visibility = View.VISIBLE
+            tvYear.text = film.year
+        }
+        // Ghép chỉ phần có thật; thiếu cả hai thì ẩn (parser không còn bịa "FHD"/"Vietsub").
+        val qualityMeta = listOf(film.quality, film.language).filter { it.isNotBlank() }.joinToString(" · ")
+        if (qualityMeta.isBlank()) {
+            tvQuality.visibility = View.GONE
+        } else {
+            tvQuality.visibility = View.VISIBLE
+            tvQuality.text = qualityMeta
+        }
         tvEpisodesCount.text = film.currentEpisode.ifBlank {
             if (film.totalEpisodes.isNotBlank()) "Tổng ${film.totalEpisodes} tập" else "Trọn bộ"
         }
@@ -344,6 +357,16 @@ object EpisodePickerDialog {
             // TV giữ nguyên kích thước mặc định của theme.
             dialog.window?.setLayout(
                 (context.resources.displayMetrics.widthPixels * 0.94f).toInt(),
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        } else {
+            // TV: giới hạn bề ngang dialog ở 640dp. Thuộc tính android:maxWidth trong XML
+            // không có tác dụng trên View (đã xóa khỏi layout) nên phải đặt qua window —
+            // đây là cơ chế thật thay cho thuộc tính chết đó (audit H1).
+            val maxWidthPx = (640 * context.resources.displayMetrics.density).toInt()
+            val screenWidthPx = context.resources.displayMetrics.widthPixels
+            dialog.window?.setLayout(
+                minOf(maxWidthPx, (screenWidthPx * 0.94f).toInt()),
                 ViewGroup.LayoutParams.WRAP_CONTENT
             )
         }

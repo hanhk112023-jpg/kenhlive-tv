@@ -5,10 +5,12 @@
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:background="@drawable/bg_dialog"
-    android:padding="20dp"
+    android:paddingLeft="20dp"
+    android:paddingRight="20dp"
+    android:paddingTop="16dp"
+    android:paddingBottom="16dp"
     android:clipChildren="false"
-    android:clipToPadding="false"
-    android:maxWidth="640dp">
+    android:clipToPadding="false">
 
     <!-- Header: Poster + Movie Info -->
     <LinearLayout
@@ -18,8 +20,8 @@
 
         <ImageView
             android:id="@+id/dialogFilmPoster"
-            android:layout_width="88dp"
-            android:layout_height="124dp"
+            android:layout_width="76dp"
+            android:layout_height="108dp"
             android:scaleType="centerCrop"
             android:background="@drawable/thumb_round_bg"
             android:contentDescription="Poster phim" />
@@ -36,6 +38,8 @@
                 style="@style/KL.Text.Section"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:maxLines="2"
+                android:ellipsize="end"
                 android:textSize="17sp"
                 android:textColor="#FFFFFF" />
 
@@ -99,7 +103,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:maxLines="3"
+                android:maxLines="2"
                 android:ellipsize="end"
                 android:textColor="@color/kl_text_2"
                 android:textSize="12sp" />
@@ -109,8 +113,8 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_marginTop="14dp"
-        android:layout_marginBottom="12dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="8dp"
         android:background="@drawable/card_top_divider" />
 
     <TextView
@@ -127,7 +131,7 @@
         android:id="@+id/dialogServersRow"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="6dp"
         android:padding="8dp"
         android:clipToPadding="false"
         android:visibility="gone" />
@@ -137,7 +141,7 @@
         android:id="@+id/dialogChunksRow"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="4dp"
         android:padding="8dp"
         android:clipToPadding="false"
         android:visibility="gone" />
@@ -155,8 +159,8 @@
         android:id="@+id/dialogEpisodesGrid"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:maxHeight="220dp"
+        android:layout_marginTop="6dp"
+        android:maxHeight="192dp"
         android:padding="8dp"
         android:clipToPadding="false"
         android:visibility="gone" />
@@ -174,7 +178,7 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="12dp"
         android:padding="8dp"
         android:clipChildren="false"
         android:clipToPadding="false"

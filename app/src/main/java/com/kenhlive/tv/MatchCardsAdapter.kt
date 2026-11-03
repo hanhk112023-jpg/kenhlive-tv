@@ -143,6 +143,18 @@ class MatchCardsAdapter(
             return true
         }
 
+        /**
+         * Trận trong danh sách live đã KẾT THÚC chưa (H2): LiveMatchGroup không có sẵn
+         * isFinished như ScheduleMatch, nên suy ra theo đúng quy tắc phía Lịch — meta
+         * registry trước, trạng thái API + đồng hồ sau (DataNormalizer.isGroupFinished).
+         * Nơi hiển thị phải xét hàm này TRƯỚC isMatchLive: isMatchLive coi "có tỉ số" là
+         * đang đá nên trận đã xong vẫn bị báo LIVE nếu chỉ dùng nó.
+         */
+        fun isMatchFinished(g: LiveMatchGroup, parsed: DataNormalizer.ParsedMatch): Boolean {
+            val meta = com.kenhlive.tv.sports.TeamLogoRegistry.findMatchMeta(parsed.host, parsed.guest, g.matchTimeMs)
+            return DataNormalizer.isGroupFinished(g.isLiveGame, g.matchTimeMs, meta?.isLive)
+        }
+
         fun extractKickoffTime(matchTitle: String, notice: String): String {
             val timeRegex = Regex("""\b(\d{1,2}:\d{2})\b""")
             val m = timeRegex.find(matchTitle) ?: timeRegex.find(notice)
@@ -290,12 +302,31 @@ class MatchCardsAdapter(
         }
 
         // 2. Phân biệt rõ Trực Tiếp (LIVE) và Sắp Diễn Ra (UPCOMING) kèm giờ thi đấu
-        val isTrulyLive = isMatchLive(g, parsed)
+        // H2: thêm nhánh KẾT THÚC, xét trước LIVE (xem isMatchFinished).
+        val isFinished = isMatchFinished(g, parsed)
+        val isTrulyLive = !isFinished && isMatchLive(g, parsed)
         val kickoff = if (g.kickoffTime.isNotBlank()) g.kickoffTime else extractKickoffTime(g.matchTitle, g.top.notice)
         val effectiveHostScore = g.hostScore ?: parsed.hostScore
         val effectiveGuestScore = g.guestScore ?: parsed.guestScore
 
-        if (isTrulyLive) {
+        if (isFinished) {
+            h.liveBadge?.visibility = View.VISIBLE
+            h.liveBadge?.text = "KẾT THÚC"
+            h.liveBadge?.setBackgroundResource(R.drawable.bg_badge_glass)
+            h.liveBadge?.setTextColor(android.graphics.Color.parseColor("#8E95A5"))
+
+            // Tỉ số cuối là thông tin chính của trận đã xong: pill trung tính, không vàng LIVE.
+            if (effectiveHostScore != null && effectiveGuestScore != null) {
+                h.score?.setBackgroundResource(R.drawable.bg_score_pill)
+                h.score?.setTextColor(android.graphics.Color.parseColor("#CBD5E1"))
+                h.score?.text = "$effectiveHostScore : $effectiveGuestScore"
+            } else {
+                h.score?.setBackgroundResource(R.drawable.bg_score_pill)
+                h.score?.setTextColor(android.graphics.Color.parseColor("#94A3B8"))
+                h.score?.text = "VS"
+            }
+            h.timeBadge?.visibility = View.GONE
+        } else if (isTrulyLive) {
             h.liveBadge?.visibility = View.VISIBLE
             if (g.liveClock.isNotBlank()) {
                 h.liveBadge?.text = "● ${g.liveClock}"
@@ -377,7 +408,9 @@ class MatchCardsAdapter(
         val rawBlv = g.top.blvName.trim()
         val formattedBlv = if (rawBlv.startsWith("BLV ", ignoreCase = true)) rawBlv else "BLV $rawBlv"
         val countSuffix = if (g.count > 1) " +${g.count - 1}" else ""
-        if (isTrulyLive) {
+        if (isFinished) {
+            h.blv.text = "Đã kết thúc • $formattedBlv$countSuffix"
+        } else if (isTrulyLive) {
             h.blv.text = if (kickoff.isNotBlank()) "Trực tiếp ($kickoff) • $formattedBlv$countSuffix" else "Đang trực tiếp • $formattedBlv$countSuffix"
         } else {
             h.blv.text = if (kickoff.isNotBlank()) "Lên sóng lúc $kickoff • $formattedBlv$countSuffix" else "Sắp lên sóng • $formattedBlv$countSuffix"
@@ -395,7 +428,7 @@ class MatchCardsAdapter(
         }
         h.itemView.setOnClickListener { onLiveClick(g) }
         h.itemView.setOnLongClickListener { onLiveLong(g); true }
-        h.itemView.contentDescription = "${g.matchTitle}, ${if (isTrulyLive) "TRỰC TIẾP" else "SẮP DIỄN RA"}, ${g.top.blvName}"
+        h.itemView.contentDescription = "${g.matchTitle}, ${when { isFinished -> "KẾT THÚC"; isTrulyLive -> "TRỰC TIẾP"; else -> "SẮP DIỄN RA" }}, ${g.top.blvName}"
     }
 
     private fun bindFixture(h: FixtureVH, m: ScheduleMatch) {
