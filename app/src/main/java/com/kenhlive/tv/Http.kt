@@ -103,18 +103,56 @@ object Http {
         throw last ?: IOException("network error")
     }
 
-    /** GET trực tiếp không qua proxy (dùng cho các API quốc tế như ColaTV/GVAPI). */
+    /**
+     * Thực thi một [Request] có sẵn (giữ nguyên header tùy biến của nơi gọi) qua client dùng chung,
+     * CÓ ghi sức khỏe API + tôn trọng cầu dao theo host — cùng cơ chế với [getOnce].
+     * Ném IOException khi: cầu dao đang mở, HTTP khác 2xx (kể cả 5xx), hoặc lỗi mạng.
+     */
+    @Throws(IOException::class)
+    fun executeRequest(request: Request): String {
+        val url = request.url.toString()
+        val host = ApiHealth.hostOf(url)
+        if (ApiHealth.isCircuitOpen(host)) {
+            throw IOException("circuit open for $host (API đang nghỉ sau nhiều lần lỗi)")
+        }
+        val started = System.currentTimeMillis()
+        try {
+            get().newCall(request).execute().use { res ->
+                if (!res.isSuccessful) throw IOException("HTTP ${res.code}")
+                val body = res.body?.string() ?: throw IOException("empty body")
+                ApiHealth.record(url, ok = true, latencyMs = System.currentTimeMillis() - started)
+                return body
+            }
+        } catch (e: Exception) {
+            ApiHealth.record(url, ok = false, latencyMs = System.currentTimeMillis() - started, error = e.message)
+            throw if (e is IOException) e else IOException(e)
+        }
+    }
+
+    /**
+     * GET trực tiếp không qua proxy (dùng cho các API quốc tế như ColaTV/GVAPI).
+     * v7.13: ghi kết quả vào ApiHealth (thành công/thất bại/5xx) và tôn trọng cầu dao theo host,
+     * giống đường [executeTimed] — trước đây đường này vòng qua hoàn toàn.
+     */
     @Throws(IOException::class)
     fun getDirectWithRetry(url: String, attempts: Int = 2): String {
+        val host = ApiHealth.hostOf(url)
         var last: Exception? = null
         repeat(attempts) { i ->
+            if (ApiHealth.isCircuitOpen(host)) {
+                throw IOException("circuit open for $host (API đang nghỉ sau nhiều lần lỗi)")
+            }
+            val started = System.currentTimeMillis()
             try {
                 val call = getDirect().newCall(Request.Builder().url(url).build())
                 call.execute().use { res ->
                     if (!res.isSuccessful) throw IOException("HTTP ${res.code}")
-                    return res.body?.string() ?: throw IOException("empty body")
+                    val body = res.body?.string() ?: throw IOException("empty body")
+                    ApiHealth.record(url, ok = true, latencyMs = System.currentTimeMillis() - started)
+                    return body
                 }
             } catch (e: Exception) {
+                ApiHealth.record(url, ok = false, latencyMs = System.currentTimeMillis() - started, error = e.message)
                 last = e
                 if (i < attempts - 1) Thread.sleep(300L * (i + 1))
             }

@@ -11,7 +11,7 @@ import java.io.File
  * liệu lịch sử xem (kenhlive_cinema.db) và tổng dữ liệu người dùng.
  *
  * Đặt trần được (SharedPreferences "storage", áp dụng khi app khởi động lại):
- * - Trần cache ảnh: 25 / 45 / 80 / 120 MB (mặc định 45MB như v7.8)
+ * - Trần cache ảnh: 50 / 100 / 200 / 400 MB (mặc định 50MB, v7.13 đồng bộ dãy với iOS)
  * - Trần cache HTTP: 8 / 16 / 32 MB (mặc định 8MB)
  */
 object StorageManager {
@@ -19,10 +19,10 @@ object StorageManager {
     const val PREFS = "storage"
     const val KEY_IMAGE_CACHE_MB = "image_cache_mb"
     const val KEY_HTTP_CACHE_MB = "http_cache_mb"
-    const val DEFAULT_IMAGE_CACHE_MB = 45
+    const val DEFAULT_IMAGE_CACHE_MB = 50
     const val DEFAULT_HTTP_CACHE_MB = 8
 
-    val IMAGE_CAP_OPTIONS_MB = intArrayOf(25, 45, 80, 120)
+    val IMAGE_CAP_OPTIONS_MB = intArrayOf(50, 100, 200, 400)
     val HTTP_CAP_OPTIONS_MB = intArrayOf(8, 16, 32)
 
     data class Usage(
@@ -30,14 +30,24 @@ object StorageManager {
         val imageCacheBytes: Long,
         val httpCacheBytes: Long,
         val otherCacheBytes: Long,
-        val historyDbBytes: Long
+        val historyDbBytes: Long,
+        // v7.13: dữ liệu WebView (app_webview trong data dir) — nơi phim embed phình dung lượng,
+        // trước đây hoàn toàn ngoài sổ đo/dọn của màn Dung lượng.
+        val webViewBytes: Long = 0L
     ) {
-        val totalCacheBytes: Long get() = imageCacheBytes + httpCacheBytes + otherCacheBytes
+        val totalCacheBytes: Long get() = imageCacheBytes + httpCacheBytes + otherCacheBytes + webViewBytes
     }
 
-    fun imageCapMb(ctx: Context): Int =
-        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+    /** Thư mục dữ liệu nội bộ của WebView (cache HTTP + DOM storage + Web SQL/IndexedDB). */
+    private fun webViewDir(ctx: Context): File = File(ctx.applicationInfo.dataDir, "app_webview")
+
+    fun imageCapMb(ctx: Context): Int {
+        val stored = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
             .getInt(KEY_IMAGE_CACHE_MB, DEFAULT_IMAGE_CACHE_MB)
+        // v7.13: dãy trần đổi 25/45/80/120 -> 50/100/200/400; giá trị cũ ngoài dãy mới
+        // được tự động quy về mặc định thay vì áp một trần không còn trong danh sách chọn.
+        return if (stored in IMAGE_CAP_OPTIONS_MB) stored else DEFAULT_IMAGE_CACHE_MB
+    }
 
     fun httpCapMb(ctx: Context): Int =
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -90,7 +100,8 @@ object StorageManager {
             imageCacheBytes = img,
             httpCacheBytes = http,
             otherCacheBytes = (allCache - img - http).coerceAtLeast(0L),
-            historyDbBytes = db
+            historyDbBytes = db,
+            webViewBytes = dirSize(webViewDir(ctx))
         )
     }
 
@@ -116,6 +127,23 @@ object StorageManager {
         }
         try {
             com.kenhlive.tv.phim.NguoncRepository.clearCache()
+        } catch (_: Exception) {
+        }
+        // v7.13: dọn cả dữ liệu WebView (trước đây không API nào chạm tới):
+        // xóa DOM storage/database qua WebStorage, cookie qua CookieManager,
+        // và xóa thẳng thư mục app_webview (cache HTTP của các trang embed).
+        try {
+            android.webkit.WebStorage.getInstance().deleteAllData()
+        } catch (_: Exception) {
+        }
+        try {
+            android.webkit.CookieManager.getInstance().removeAllCookies(null)
+            android.webkit.CookieManager.getInstance().flush()
+        } catch (_: Exception) {
+        }
+        try {
+            val wvDir = webViewDir(ctx)
+            if (wvDir.exists()) wvDir.deleteRecursively()
         } catch (_: Exception) {
         }
     }

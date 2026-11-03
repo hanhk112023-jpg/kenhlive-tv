@@ -206,21 +206,34 @@ object DataNormalizer {
         )
     }
 
+    // ===== Cửa sổ suy luận trạng thái theo giờ — HẰNG SỐ DUY NHẤT cho toàn app =====
+    // Mọi nơi cần đoán "đang đá / kết thúc" theo đồng hồ (DataNormalizer, MatchCardsAdapter,
+    // tab Lịch) đều phải dùng các hằng số này, không tự chế số phút riêng (trước đây từng
+    // tồn tại song song 120'/140'/180' ở ba nơi khiến cùng một trận LIVE ở màn này
+    // nhưng KẾT THÚC ở màn khác).
+    /** Tối đa 180' kể từ giờ bóng lăn còn coi là đang đá (khi có phòng live thật). */
+    const val MATCH_LIVE_WINDOW_MS = 180 * 60_000L
+    /** Không có phòng live: thu hẹp cửa sổ đoán xuống 120'. */
+    const val MATCH_LIVE_NO_ROOM_WINDOW_MS = 120 * 60_000L
+    /** Cho phép coi là live sớm tối đa 10' trước giờ bóng lăn (sai số đồng hồ/nguồn). */
+    const val MATCH_KICKOFF_TOLERANCE_MS = 10 * 60_000L
+
     /**
-     * Xác định trạng thái trận đấu chuẩn xác theo múi giờ & thời lượng thi đấu
+     * Xác định trạng thái trận đấu chuẩn xác theo múi giờ & thời lượng thi đấu.
+     * LƯU Ý: đây chỉ là FALLBACK cuối cùng — nơi nào có dữ kiện thật (trạng thái API,
+     * phòng live thật, meta registry) phải ưu tiên dữ kiện thật trước khi gọi hàm này.
      */
     fun isMatchLive(matchTimeMs: Long, hasRoom: Boolean = false): Boolean {
         if (matchTimeMs <= 0) return false
         val now = System.currentTimeMillis()
         val diff = now - matchTimeMs
-        // Đang diễn ra trong khoảng từ thời điểm bắt đầu đến 180 phút (3 tiếng)
-        return diff in 0..(180 * 60_000L) && (hasRoom || diff < 120 * 60_000L)
+        return diff in 0..MATCH_LIVE_WINDOW_MS && (hasRoom || diff < MATCH_LIVE_NO_ROOM_WINDOW_MS)
     }
 
     fun isMatchFinished(matchTimeMs: Long): Boolean {
         if (matchTimeMs <= 0) return false
         val now = System.currentTimeMillis()
-        return (now - matchTimeMs) > (180 * 60_000L)
+        return (now - matchTimeMs) > MATCH_LIVE_WINDOW_MS
     }
 
     fun isMatchUpcoming(matchTimeMs: Long): Boolean {

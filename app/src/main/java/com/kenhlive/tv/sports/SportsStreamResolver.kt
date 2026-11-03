@@ -38,6 +38,32 @@ object SportsStreamResolver {
         return com.kenhlive.tv.DataNormalizer.formatKickoffTime(ts)
     }
 
+    /**
+     * Nhận diện trạng thái LIVE dùng chung cho họ backend Cola/Gà Vàng:
+     * chấp nhận "live" (ở cả matchStatus dạng chuỗi và match_status) và mã số 2 (đang đá)
+     * lẫn 3 (nghỉ giữa hiệp HT) — trước đây Gà Vàng thiếu mã 3 nên trận đang nghỉ
+     * giữa hiệp bị rơi khỏi danh sách live.
+     */
+    private fun isLiveMatchStatus(m: JSONObject): Boolean {
+        if (m.optString("matchStatus").equals("live", ignoreCase = true)) return true
+        if (m.optString("match_status").equals("live", ignoreCase = true)) return true
+        val n = m.optInt("matchStatus", -1)
+        return n == 2 || n == 3
+    }
+
+    /**
+     * Đọc mảng tỉ số với fallback chéo tên trường: hai parser cùng họ backend từng dùng
+     * hai tên khác nhau (homeScores số nhiều ở Gà Vàng, homeScore số ít ở Cola) — một
+     * trong hai có thể là tên sai khiến tỉ số chết lặng. Đọc cả hai dạng cho chắc ăn.
+     */
+    private fun scoreArray(m: JSONObject, vararg names: String): JSONArray? {
+        for (n in names) {
+            val a = m.optJSONArray(n)
+            if (a != null && a.length() > 0) return a
+        }
+        return null
+    }
+
     suspend fun resolveStream(roomNum: String): String? = withContext(Dispatchers.IO) {
         if (roomNum.isBlank()) return@withContext null
         if (roomNum.startsWith("http://") || roomNum.startsWith("https://")) {
@@ -55,34 +81,22 @@ object SportsStreamResolver {
             when (source) {
                 SportsSource.GAVANG33 -> {
                     if (realRoomNum.startsWith("http")) return@withContext realRoomNum
-                    ensureDirectFeedsLoaded()
-                    if (cachedGavangStreams.isNotEmpty()) {
-                        val idx = (realRoomNum.hashCode().and(0x7FFFFFFF)) % cachedGavangStreams.size
-                        return@withContext cachedGavangStreams[idx]
-                    }
-                    return@withContext "https://live2.zktsva.app/live/307240.m3u8"
+                    // ĐÃ BỎ cơ chế chọn stream theo hashCode % danh sách (phát chéo trận
+                    // khác dưới nhãn trận này) và URL cứng lạ: không khớp chắc chắn
+                    // stream của đúng trận thì trả rỗng, thà không phát còn hơn phát sai.
+                    return@withContext null
                 }
                 SportsSource.GIOVANG -> {
                     if (realRoomNum.startsWith("http")) return@withContext realRoomNum
+                    // Đường phân giải thật duy nhất: fixture id -> API chi tiết của chính trận đó
                     val streamById = resolveGiovangById(realRoomNum)
                     if (!streamById.isNullOrBlank()) return@withContext streamById
-
-                    ensureDirectFeedsLoaded()
-                    if (cachedGiovangIds.isNotEmpty()) {
-                        val idx = (realRoomNum.hashCode().and(0x7FFFFFFF)) % cachedGiovangIds.size
-                        val fallbackStream = resolveGiovangById(cachedGiovangIds[idx])
-                        if (!fallbackStream.isNullOrBlank()) return@withContext fallbackStream
-                    }
-                    return@withContext "https://ftlh5sc02iliv.vcdn.cloud/1791734978_hd/1791734978_hd@720p.m3u8"
+                    return@withContext null
                 }
                 SportsSource.COLATV -> {
                     if (realRoomNum.startsWith("http")) return@withContext realRoomNum
-                    ensureDirectFeedsLoaded()
-                    if (cachedColaStreams.isNotEmpty()) {
-                        val idx = (realRoomNum.hashCode().and(0x7FFFFFFF)) % cachedColaStreams.size
-                        return@withContext cachedColaStreams[idx]
-                    }
-                    return@withContext "https://live05.zhwpg.app/live/78905744_tsc.m3u8"
+                    // Như Gà Vàng: bỏ chọn stream theo hashCode + URL cứng lạ -> trả rỗng
+                    return@withContext null
                 }
                 SportsSource.SOCOLIVE -> {
                     val now = stamp()
@@ -145,7 +159,9 @@ object SportsStreamResolver {
             while (keys.hasNext()) {
                 val k = keys.next()
                 val m = data.optJSONObject(k) ?: continue
-                val isLive = m.optString("matchStatus") == "live" || m.optInt("matchStatus") == 2
+                // Dùng chung hàm nhận diện live với Cola: gồm cả mã 3 = nghỉ giữa hiệp (HT)
+                val isLive = isLiveMatchStatus(m)
+                val statusNum = m.optInt("matchStatus", -1)
                 val homeObj = m.optJSONObject("homeTeam")
                 val awayObj = m.optJSONObject("awayTeam")
                 val compObj = m.optJSONObject("competition")
@@ -157,11 +173,14 @@ object SportsStreamResolver {
                 val awayLogo = awayObj?.optString("logo") ?: ""
                 val league = compObj?.optString("name") ?: "Bóng đá"
 
-                val hs = m.optJSONArray("homeScores")
-                val as_ = m.optJSONArray("awayScores")
+                // Đọc cả hai dạng tên trường tỉ số (homeScores/homeScore) — xem scoreArray()
+                val hs = scoreArray(m, "homeScores", "homeScore")
+                val as_ = scoreArray(m, "awayScores", "awayScore")
                 val rawMatchTime = m.optLong("matchTime").takeIf { it > 0 } ?: m.optLong("match_time")
                 val matchTimeMs = if (rawMatchTime in 1..100_000_000_000L) rawMatchTime * 1000L else rawMatchTime
                 val normTime = m.optString("matchNormalizedTime").trim()
+                // Trận nghỉ giữa hiệp mà feed không cho đồng hồ: hiển thị "HT" như Cola
+                val liveClock = if (statusNum == 3 && normTime.isBlank()) "HT" else normTime
                 val kickoffTime = formatTimestampToTime(matchTimeMs)
 
                 val hScore = if (isLive && hs != null && hs.length() > 0) hs.optInt(0, 0) else null
@@ -187,7 +206,7 @@ object SportsStreamResolver {
                     isLive = isLive,
                     matchTimeMs = matchTimeMs,
                     kickoffTime = kickoffTime,
-                    liveClock = normTime
+                    liveClock = liveClock
                 )
 
                 val rooms = mutableListOf<LiveRoom>()
@@ -230,7 +249,7 @@ object SportsStreamResolver {
                                 isLiveGame = isLive,
                                 hostScore = hScore,
                                 guestScore = aScore,
-                                liveClock = normTime
+                                liveClock = liveClock
                             )
                         )
                     }
@@ -254,7 +273,7 @@ object SportsStreamResolver {
                             isLiveGame = isLive,
                             hostScore = hScore,
                             guestScore = aScore,
-                            liveClock = normTime
+                            liveClock = liveClock
                         )
                     )
                 }
@@ -275,7 +294,7 @@ object SportsStreamResolver {
                         isLiveGame = isLive,
                         hostScore = hScore,
                         guestScore = aScore,
-                        liveClock = normTime
+                        liveClock = liveClock
                     )
                     val enriched = TeamLogoRegistry.enrich(group)
                     if (isLive) {
@@ -360,10 +379,11 @@ object SportsStreamResolver {
                 val league = m.optString("competitionName").ifBlank { m.optJSONObject("competition")?.optString("name") ?: "ColaTV Thể Thao" }.trim()
 
                 val status = m.optInt("matchStatus", 0)
-                val isLive = status == 2 || status == 3 || m.optString("match_status") == "live"
+                val isLive = isLiveMatchStatus(m)
 
-                val hs = m.optJSONArray("homeScore")
-                val as_ = m.optJSONArray("awayScore")
+                // Đọc cả hai dạng tên trường tỉ số (homeScore/homeScores) — xem scoreArray()
+                val hs = scoreArray(m, "homeScore", "homeScores")
+                val as_ = scoreArray(m, "awayScore", "awayScores")
                 val rawMatchTime = m.optLong("matchTime").takeIf { it > 0 } ?: m.optLong("match_time")
                 val matchTimeMs = if (rawMatchTime in 1..100_000_000_000L) rawMatchTime * 1000L else rawMatchTime
                 var kickoffTime = formatTimestampToTime(matchTimeMs)
@@ -658,14 +678,25 @@ object SportsStreamResolver {
                 val awayLogo = awayObj?.optString("logo") ?: ""
                 val league = m.optJSONObject("league")?.optString("title") ?: "Thể thao"
 
+                val statusCode = m.optString("status_code", "").uppercase()
+                val statusText = m.optString("status")
+                // Đọc thêm trường is_live (trước đây không được đọc ở đâu): dạng boolean hoặc số 1
+                val isLiveFlag = m.optBoolean("is_live", false) || m.optInt("is_live", 0) == 1
+                val isLive = isLiveFlag ||
+                    statusCode in setOf("LIVE", "1H", "2H", "HT", "INPLAY", "IN_PLAY") ||
+                    statusText.contains("diễn ra", ignoreCase = true)
+                val isFinished = statusCode in setOf("FT", "END", "FINISHED", "FULLTIME", "AET", "PEN") ||
+                    statusText.contains("kết thúc", ignoreCase = true)
+
+                // CHỈ dùng score.fulltime khi trận đang live (làm tỉ số hiện tại) hoặc đã
+                // kết thúc tường minh (kết quả thật). Trước đây đọc vô điều kiện: feed hay
+                // trả fulltime = {0,0} dạng placeholder cho trận chưa đá -> tỉ số "0-0 ma"
+                // chảy vào registry và lan sang thẻ của các đài khác.
                 val scoreObj = m.optJSONObject("score")
                 val ftObj = scoreObj?.optJSONObject("fulltime")
                 val hasScore = ftObj != null && ftObj.has("home") && ftObj.has("away")
-                val hScore = if (hasScore) ftObj?.optInt("home", 0) else null
-                val aScore = if (hasScore) ftObj?.optInt("away", 0) else null
-
-                val statusCode = m.optString("status_code", "").uppercase()
-                val isLive = statusCode == "LIVE" || m.optString("status").contains("diễn ra", ignoreCase = true)
+                val hScore = if ((isLive || isFinished) && hasScore) ftObj?.optInt("home", 0) else null
+                val aScore = if ((isLive || isFinished) && hasScore) ftObj?.optInt("away", 0) else null
                 val timeStart = m.optLong("time_start")
                 val matchTimeMs = if (timeStart in 1..100_000_000_000L) timeStart * 1000L else timeStart
                 val kickoffTime = if (matchTimeMs > 0L) formatTimestampToTime(matchTimeMs) else {
@@ -684,7 +715,7 @@ object SportsStreamResolver {
                     isLive = isLive,
                     matchTimeMs = matchTimeMs,
                     kickoffTime = kickoffTime,
-                    liveClock = liveMinute
+                    liveClock = if (isLive) liveMinute else ""
                 )
 
                 val matchTitle = if (isLive && hScore != null && aScore != null) {
@@ -778,7 +809,9 @@ object SportsStreamResolver {
                 while (keys.hasNext()) {
                     val k = keys.next()
                     val m = data.optJSONObject(k) ?: continue
-                    if (m.optString("matchStatus") != "live") continue
+                    // Dùng chung hàm nhận diện live (trước đây chỉ chấp nhận chuỗi "live"
+                    // -> bỏ sót mọi trận live dạng mã số 2/3 khỏi cache stream)
+                    if (!isLiveMatchStatus(m)) continue
                     val anchors: JSONArray? = m.optJSONArray("anchorAppointmentVoList")
                     if (anchors != null) {
                         for (i in 0 until anchors.length()) {

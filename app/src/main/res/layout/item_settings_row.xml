@@ -4,19 +4,27 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:background="@drawable/bg_card"
+    android:background="@drawable/kl2_card_glass"
     android:foreground="@drawable/fg_focus"
     android:padding="@dimen/sp_item_pad"
-    android:layout_marginBottom="8dp"
+    android:layout_marginBottom="10dp"
     android:focusable="true"
     android:clickable="true">
 
-    <ImageView
-        android:id="@+id/rowIcon"
-        android:layout_width="22dp"
-        android:layout_height="22dp"
-        android:contentDescription="@null"
-        android:alpha="0.9" />
+    <!-- Icon nằm trong ô kính tròn (đồng bộ ngôn ngữ thẻ kính kl2) -->
+    <FrameLayout
+        android:layout_width="@dimen/kl2_settings_icon_box"
+        android:layout_height="@dimen/kl2_settings_icon_box"
+        android:background="@drawable/bg_badge_glass">
+
+        <ImageView
+            android:id="@+id/rowIcon"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="center"
+            android:contentDescription="@null"
+            android:alpha="0.95" />
+    </FrameLayout>
 
     <LinearLayout
         android:layout_width="0dp"

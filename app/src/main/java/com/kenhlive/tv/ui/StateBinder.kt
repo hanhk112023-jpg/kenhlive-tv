@@ -3,6 +3,7 @@ package com.kenhlive.tv.ui
 import android.view.View
 import android.widget.ImageView
 import android.widget.TextView
+import com.kenhlive.tv.DeviceMode
 import com.kenhlive.tv.R
 import com.kenhlive.tv.UiState
 
@@ -42,7 +43,11 @@ class StateBinder(root: View) {
                 image.setImageResource(R.drawable.empty_schedule)
                 title.text = state.title
                 body.text = state.body
-                retry.visibility = View.GONE
+                // Trước đây Empty ẩn luôn nút retry -> không còn MỘT view focusable nào trên TV
+                // (danh sách phía dưới đang rỗng) -> chân không focus, chỉ còn phím BACK.
+                // Nay Empty cũng hiện nút "Thử lại" (làm mới) để TV có điểm focus.
+                retry.visibility = View.VISIBLE
+                armRetry(onRetry)
             }
             is UiState.Error -> {
                 stateRoot.visibility = View.VISIBLE
@@ -53,7 +58,35 @@ class StateBinder(root: View) {
                 body.text = state.body
                 retry.visibility = if (state.retryable) View.VISIBLE else View.GONE
                 retry.setOnClickListener { onRetry() }
+                if (state.retryable) armRetryFocus()
             }
         }
+    }
+
+    /** Gắn click + đảm bảo nút retry focusable/clickable tường minh (không chỉ dựa vào style). */
+    private fun armRetry(onRetry: () -> Unit) {
+        retry.setOnClickListener { onRetry() }
+        armRetryFocus()
+    }
+
+    /**
+     * Cho nút retry nhận focus trên TV ngay khi trạng thái hiện.
+     * Style KL.Button.Primary đã có state_focused (viền trắng) nên focus nhìn thấy được;
+     * ở đây đặt focusable tường minh trong code và requestFocus sau khi layout xong.
+     */
+    private fun armRetryFocus() {
+        retry.isFocusable = true
+        retry.isClickable = true
+        if (!DeviceMode.isTv) return
+        retry.post {
+            if (retry.visibility == View.VISIBLE && stateRoot.visibility == View.VISIBLE && !retry.hasFocus()) {
+                retry.requestFocus()
+            }
+        }
+        retry.postDelayed({
+            if (retry.visibility == View.VISIBLE && stateRoot.visibility == View.VISIBLE && !retry.hasFocus()) {
+                retry.requestFocus()
+            }
+        }, 150)
     }
 }

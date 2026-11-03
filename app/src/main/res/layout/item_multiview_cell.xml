@@ -35,6 +35,10 @@
         android:layout_marginTop="12dp"
         android:layout_marginRight="90dp"
         android:textColor="@color/kl_text_1"
+        android:textStyle="bold"
+        android:shadowColor="#CC000000"
+        android:shadowDy="2"
+        android:shadowRadius="6"
         android:maxLines="1"
         android:ellipsize="end"
         android:maxWidth="320dp" />

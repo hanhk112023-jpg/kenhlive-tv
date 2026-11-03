@@ -17,8 +17,13 @@ object TeamLogoRegistry {
 
     private val registry = ConcurrentHashMap<String, String>()
 
+    // CHỈ bỏ các hậu tố pháp lý thuần túy (FC/CF/SC/AC/CLB/Club).
+    // TUYỆT ĐỐI không bỏ các từ cấu thành tên đội: united/city/real/atletico/sporting/borussia/u\d+
+    // (trước đây "Manchester City" và "Manchester United" cùng rút thành "manchester",
+    //  "Real Madrid" và "Atlético Madrid" cùng rút thành "madrid" -> hai trận khác nhau
+    //  dùng chung một khóa registry, tỉ số/logo bị gắn chéo).
     private val STRIP_REGEX = Pattern.compile(
-        """\b(fc|cf|sc|ac|clb|club|u\d+|united|city|real|sporting|atletico|borussia)\b""",
+        """\b(fc|cf|sc|ac|clb|club)\b""",
         Pattern.CASE_INSENSITIVE
     )
     private val NON_ALPHANUM = Pattern.compile("""[^a-zA-Z0-9\u00C0-\u1EF9]""")
@@ -90,10 +95,66 @@ object TeamLogoRegistry {
         val isLive: Boolean = false,
         val matchTimeMs: Long = 0L,
         val kickoffTime: String = "",
-        val liveClock: String = ""
+        val liveClock: String = "",
+        val storedAtMs: Long = 0L
     )
 
     private val matchMetaRegistry = ConcurrentHashMap<String, MatchMetadata>()
+
+    /** Meta chỉ sống tối đa 4 giờ — app TV chạy nhiều ngày, tỉ số cũ không được sống qua ngày. */
+    private const val META_TTL_MS = 4 * 3600_000L
+    /** Hai bản ghi được coi là cùng một trận nếu giờ đá lệch nhau không quá 3 giờ (đá bù/dời giờ nhẹ). */
+    private const val META_TIME_TOLERANCE_MS = 3 * 3600_000L
+
+    private fun normalizeTs(ts: Long): Long =
+        if (ts in 1..100_000_000_000L) ts * 1000L else ts
+
+    private fun dayKeyOf(matchTimeMs: Long): String {
+        val ms = normalizeTs(matchTimeMs)
+        if (ms <= 0L) return ""
+        // Tạo formatter theo từng lần gọi: SimpleDateFormat không thread-safe,
+        // registry được gọi đồng thời từ nhiều luồng IO.
+        val fmt = java.text.SimpleDateFormat("yyyyMMdd", java.util.Locale.US).apply {
+            timeZone = java.util.TimeZone.getTimeZone("Asia/Ho_Chi_Minh")
+        }
+        return fmt.format(java.util.Date(ms))
+    }
+
+    /** Khóa registry: tên chuẩn hóa ĐẦY ĐỦ của hai đội + ngày thi đấu (khi biết giờ đá). */
+    private fun metaKey(homeName: String, awayName: String, matchTimeMs: Long): String {
+        val base = "${normalize(homeName)}_vs_${normalize(awayName)}"
+        val day = dayKeyOf(matchTimeMs)
+        return if (day.isNotBlank()) "$base@$day" else base
+    }
+
+    private fun isExpired(meta: MatchMetadata, now: Long): Boolean =
+        meta.storedAtMs > 0L && now - meta.storedAtMs > META_TTL_MS
+
+    private fun purgeExpired(now: Long) {
+        val it = matchMetaRegistry.entries.iterator()
+        while (it.hasNext()) {
+            if (isExpired(it.next().value, now)) it.remove()
+        }
+    }
+
+    /** Bản ghi LIVE còn đáng tin không (trận chưa thể đã kết thúc theo giờ đá / độ tươi của bản ghi). */
+    private fun liveEntryStillPlausible(e: MatchMetadata, now: Long): Boolean {
+        if (!e.isLive) return false
+        val ko = normalizeTs(e.matchTimeMs)
+        return if (ko > 0L) {
+            (now - ko) in -10 * 60_000L..(180 * 60_000L)
+        } else {
+            e.storedAtMs > 0L && now - e.storedAtMs < 30 * 60_000L
+        }
+    }
+
+    private fun timesCompatible(queryMs: Long, metaMs: Long): Boolean {
+        val q = normalizeTs(queryMs)
+        val m = normalizeTs(metaMs)
+        if (q <= 0L || m <= 0L) return true
+        if (dayKeyOf(q) == dayKeyOf(m)) return true
+        return kotlin.math.abs(q - m) <= META_TIME_TOLERANCE_MS
+    }
 
     fun registerMatchMeta(
         homeName: String,
@@ -108,7 +169,12 @@ object TeamLogoRegistry {
         liveClock: String = ""
     ) {
         if (homeName.isBlank() || awayName.isBlank()) return
-        val key = "${simplify(homeName)}_vs_${simplify(awayName)}"
+        if (homeLogo.isNotBlank()) register(homeName, homeLogo)
+        if (awayLogo.isNotBlank()) register(awayName, awayLogo)
+
+        val now = System.currentTimeMillis()
+        purgeExpired(now)
+        val key = metaKey(homeName, awayName, matchTimeMs)
         val meta = MatchMetadata(
             homeName = homeName,
             awayName = awayName,
@@ -119,30 +185,57 @@ object TeamLogoRegistry {
             isLive = isLive,
             matchTimeMs = matchTimeMs,
             kickoffTime = kickoffTime,
-            liveClock = liveClock
+            liveClock = liveClock,
+            storedAtMs = now
         )
+        // Không cho bản ghi "sắp đá" của một nhà đài đè lên trạng thái LIVE đang còn
+        // đáng tin của cùng trận (đài phụ không được hạ trạng thái live của trận đang phát).
+        val existing = matchMetaRegistry[key]
+        if (existing != null && !meta.isLive && liveEntryStillPlausible(existing, now)) {
+            return
+        }
         matchMetaRegistry[key] = meta
-        if (homeLogo.isNotBlank()) register(homeName, homeLogo)
-        if (awayLogo.isNotBlank()) register(awayName, awayLogo)
     }
 
-    fun findMatchMeta(homeName: String, awayName: String): MatchMetadata? {
+    fun findMatchMeta(homeName: String, awayName: String, matchTimeMs: Long = 0L): MatchMetadata? {
         if (homeName.isBlank() || awayName.isBlank()) return null
-        val hSimp = simplify(homeName)
-        val aSimp = simplify(awayName)
-        val directKey = "${hSimp}_vs_${aSimp}"
-        matchMetaRegistry[directKey]?.let { return it }
+        val now = System.currentTimeMillis()
+        val qH = normalize(homeName)
+        val qA = normalize(awayName)
+        val qHs = simplify(homeName)
+        val qAs = simplify(awayName)
+        val qMs = normalizeTs(matchTimeMs)
 
+        // Đối sánh XÁC ĐỊNH: tên chuẩn hóa (hoặc tên rút gọn an toàn) phải bằng nhau tuyệt đối
+        // cho CẢ hai đội + giờ đá tương thích. Bỏ cơ chế "contains hai chiều" cũ — nó ghép
+        // nhầm Man City/Man Utd, Real/Atlético và cho kết quả không xác định theo thứ tự map.
+        var best: MatchMetadata? = null
+        var bestRank: Int = Int.MAX_VALUE
+        var bestTimeDiff: Long = Long.MAX_VALUE
+        var bestStored: Long = Long.MIN_VALUE
         for ((_, meta) in matchMetaRegistry) {
-            val metaH = simplify(meta.homeName)
-            val metaA = simplify(meta.awayName)
-            val matchH = (hSimp.isNotBlank() && metaH.isNotBlank()) && (hSimp.contains(metaH) || metaH.contains(hSimp))
-            val matchA = (aSimp.isNotBlank() && metaA.isNotBlank()) && (aSimp.contains(metaA) || metaA.contains(aSimp))
-            if (matchH && matchA) {
-                return meta
+            if (isExpired(meta, now)) continue
+            val exact = normalize(meta.homeName) == qH && normalize(meta.awayName) == qA
+            val simplified = !exact && simplify(meta.homeName) == qHs && simplify(meta.awayName) == qAs
+            if (!exact && !simplified) continue
+            if (!timesCompatible(qMs, meta.matchTimeMs)) continue
+            val mMs = normalizeTs(meta.matchTimeMs)
+            val timeDiff = if (qMs > 0L && mMs > 0L) kotlin.math.abs(qMs - mMs) else Long.MAX_VALUE
+            val rank = if (exact) 0 else 1
+            val better = when {
+                best == null -> true
+                rank != bestRank -> rank < bestRank
+                timeDiff != bestTimeDiff -> timeDiff < bestTimeDiff
+                else -> meta.storedAtMs > bestStored
+            }
+            if (better) {
+                best = meta
+                bestRank = rank
+                bestTimeDiff = timeDiff
+                bestStored = meta.storedAtMs
             }
         }
-        return null
+        return best
     }
 
     /**
@@ -150,7 +243,7 @@ object TeamLogoRegistry {
      */
     fun enrich(group: LiveMatchGroup): LiveMatchGroup {
         val parsed = DataNormalizer.parseMatch(group.matchTitle, group.league)
-        val meta = findMatchMeta(parsed.host, parsed.guest)
+        val meta = findMatchMeta(parsed.host, parsed.guest, group.matchTimeMs)
 
         val hIcon = when {
             group.hostIcon.isNotBlank() -> group.hostIcon

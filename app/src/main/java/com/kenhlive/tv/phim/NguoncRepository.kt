@@ -323,9 +323,8 @@ object NguoncRepository {
                     .url(kkUrl)
                     .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
                     .build()
-                val jsonStr = Http.get().newCall(req).execute().use { res ->
-                    if (res.isSuccessful) res.body?.string().orEmpty() else ""
-                }
+                // Qua Http.executeRequest: có ghi ApiHealth + tôn trọng cầu dao (ném lỗi -> rơi xuống NguonC)
+                val jsonStr = Http.executeRequest(req)
                 if (jsonStr.isNotBlank()) {
                     val detail = parseKkphimDetail(jsonStr)
                     if (detail != null && detail.episodes.isNotEmpty()) {
@@ -343,10 +342,7 @@ object NguoncRepository {
                     .url(url)
                     .header("Referer", REFERER_NGUONC)
                     .build()
-                val jsonStr = Http.get().newCall(req).execute().use { res ->
-                    if (!res.isSuccessful) throw Exception("HTTP ${res.code}")
-                    res.body?.string().orEmpty()
-                }
+                val jsonStr = Http.executeRequest(req)
                 val detail = parseFilmDetail(jsonStr)
                 if (detail != null) {
                     pruneDetailCacheIfNeeded()
@@ -412,10 +408,9 @@ object NguoncRepository {
             .url(url)
             .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
             .build()
-        val jsonStr = Http.get().newCall(req).execute().use { res ->
-            if (!res.isSuccessful) return emptyList()
-            res.body?.string().orEmpty()
-        }
+        // Qua Http.executeRequest (ghi ApiHealth + cầu dao); lỗi ném ra cho nơi gọi xử lý fallback.
+        // Mọi điểm gọi fetchKkphimList đều đã nằm trong try/catch nên hành vi tổng thể không đổi.
+        val jsonStr = Http.executeRequest(req)
         if (jsonStr.isBlank()) return emptyList()
 
         val list = mutableListOf<NguoncFilm>()
@@ -581,10 +576,7 @@ object NguoncRepository {
                 .url(url)
                 .header("Referer", REFERER_NGUONC)
                 .build()
-            val jsonStr = Http.get().newCall(req).execute().use { res ->
-                if (!res.isSuccessful) throw Exception("HTTP ${res.code}")
-                res.body?.string().orEmpty()
-            }
+            val jsonStr = Http.executeRequest(req)
             parseFilmsList(jsonStr)
         } catch (_: Exception) {
             emptyList()

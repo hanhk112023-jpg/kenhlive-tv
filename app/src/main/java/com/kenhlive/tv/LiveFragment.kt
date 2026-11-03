@@ -388,7 +388,7 @@ class LiveFragment : Fragment() {
         }
         if (items.size > 2) state.hide()
         else if (liveGroups.isEmpty() && daysLabeled.isEmpty()) {
-            state.render(UiState.Empty("Sân vắng bóng", "Hiện không có trận nào đang live"), R.string.live_loading)
+            state.render(UiState.Empty("Sân vắng bóng", "Hiện không có trận nào đang live"), R.string.live_loading, onRetry = { refresh() })
         }
     }
 

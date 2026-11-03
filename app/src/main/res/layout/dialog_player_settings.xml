@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@drawable/bg_dialog"
+    android:background="@drawable/kl2_dialog_bg"
     android:paddingLeft="24dp"
     android:paddingRight="24dp"
     android:paddingTop="22dp"
@@ -17,9 +17,9 @@
         android:gravity="center_vertical">
 
         <View
-            android:layout_width="3.5dp"
-            android:layout_height="18dp"
-            android:background="@color/kl_brand"
+            android:layout_width="4dp"
+            android:layout_height="20dp"
+            android:background="@drawable/kl2_section_bar"
             android:layout_marginRight="10dp" />
 
         <TextView
@@ -48,7 +48,7 @@
         android:textColor="@color/kl_brand"
         android:textSize="12sp"
         android:textStyle="bold"
-        android:letterSpacing="0.04"
+        android:letterSpacing="0.08"
         android:text="@string/player_video_label" />
 
     <LinearLayout
@@ -68,7 +68,7 @@
         android:textColor="@color/kl_brand"
         android:textSize="12sp"
         android:textStyle="bold"
-        android:letterSpacing="0.04"
+        android:letterSpacing="0.08"
         android:text="@string/player_audio_label" />
 
     <HorizontalScrollView

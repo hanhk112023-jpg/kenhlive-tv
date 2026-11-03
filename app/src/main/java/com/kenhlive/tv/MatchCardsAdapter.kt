@@ -42,7 +42,14 @@ class MatchCardsAdapter(
             override fun areContentsTheSame(a: Any, b: Any) = when {
                 a is LiveMatchGroup && b is LiveMatchGroup ->
                     a.count == b.count && a.totalViewers == b.totalViewers &&
-                        a.top.blvName == b.top.blvName && a.top.cover == b.top.cover
+                        a.top.blvName == b.top.blvName && a.top.cover == b.top.cover &&
+                        // Tỉ số / đồng hồ / trạng thái live PHẢI nằm trong phép so sánh:
+                        // thiếu chúng, refresh tải được tỉ số mới nhưng RecyclerView không
+                        // rebind -> tỉ số và phút "đứng hình" trên màn hình dù API trả đúng.
+                        a.hostScore == b.hostScore && a.guestScore == b.guestScore &&
+                        a.liveClock == b.liveClock && a.isLiveGame == b.isLiveGame &&
+                        a.kickoffTime == b.kickoffTime && a.matchTimeMs == b.matchTimeMs &&
+                        a.hostIcon == b.hostIcon && a.guestIcon == b.guestIcon
                 else -> a == b
             }
         }
@@ -64,6 +71,13 @@ class MatchCardsAdapter(
                 return g.isLiveGame == true
             }
 
+            // 1b. Dữ kiện thật từ registry đa nguồn (trạng thái do chính các nhà đài báo,
+            // khớp theo cặp đội + ngày/giờ đá) — ưu tiên hơn mọi suy luận theo đồng hồ bên dưới.
+            val meta = com.kenhlive.tv.sports.TeamLogoRegistry.findMatchMeta(parsed.host, parsed.guest, g.matchTimeMs)
+            if (meta != null) {
+                return meta.isLive
+            }
+
             val title = (g.matchTitle + " " + g.top.notice).lowercase(Locale.ROOT)
             if (title.contains("[sắp đá]") || title.contains("[sắp diễn ra]") ||
                 title.contains("[chưa đá]") || title.contains("[sắp]") ||
@@ -83,16 +97,18 @@ class MatchCardsAdapter(
             }
 
             // 2. Kiểm tra theo mốc thời gian đá chuẩn (Epoch Timestamp)
+            // Dùng HẰNG SỐ DUY NHẤT của DataNormalizer (trước đây nơi này tự dùng 140'
+            // trong khi DataNormalizer dùng 120'/180' -> cùng trận hai màn hai trạng thái).
             if (g.matchTimeMs > 0L) {
                 val now = System.currentTimeMillis()
                 val ms = if (g.matchTimeMs in 1..100_000_000_000L) g.matchTimeMs * 1000L else g.matchTimeMs
-                if (ms > now + 10 * 60_000L) {
+                if (ms > now + DataNormalizer.MATCH_KICKOFF_TOLERANCE_MS) {
                     return false
                 }
-                if (ms in (now - 140 * 60_000L)..(now + 10 * 60_000L)) {
+                if (ms in (now - DataNormalizer.MATCH_LIVE_WINDOW_MS)..(now + DataNormalizer.MATCH_KICKOFF_TOLERANCE_MS)) {
                     return true
                 }
-                if (now > ms + 140 * 60_000L) {
+                if (now > ms + DataNormalizer.MATCH_LIVE_WINDOW_MS) {
                     return false
                 }
             }

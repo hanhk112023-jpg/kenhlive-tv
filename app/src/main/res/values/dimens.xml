@@ -74,4 +74,10 @@
     <dimen name="retry_btn_h">44dp</dimen>
     <dimen name="phim_grid_poster_h">165dp</dimen>
     <dimen name="hub_pad_x">16dp</dimen>
+
+    <!-- KL2 redesign tokens (phone) -->
+    <dimen name="kl2_iptv_hero_h">196dp</dimen>
+    <dimen name="kl2_iptv_card_h">148dp</dimen>
+    <dimen name="kl2_crest_l">38dp</dimen>
+    <dimen name="kl2_settings_icon_box">42dp</dimen>
 </resources>

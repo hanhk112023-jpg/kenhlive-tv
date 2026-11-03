@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@drawable/bg_dialog"
+    android:background="@drawable/kl2_dialog_bg"
     android:paddingLeft="32dp"
     android:paddingRight="32dp"
     android:paddingTop="26dp"
@@ -73,7 +73,7 @@
         android:layout_height="1dp"
         android:layout_marginTop="14dp"
         android:layout_marginBottom="18dp"
-        android:background="#222838" />
+        android:background="@color/kl_border_soft" />
 
     <!-- Two-Column Body: Exact Announcement Text (Left) + Telegram QR Code Card (Right) -->
     <LinearLayout

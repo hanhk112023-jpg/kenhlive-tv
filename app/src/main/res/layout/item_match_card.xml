@@ -6,7 +6,7 @@
     android:orientation="vertical"
     android:layout_marginRight="@dimen/sp_card_gap"
     android:background="@drawable/sl_apple_card"
-    android:padding="14dp"
+    android:padding="16dp"
     android:descendantFocusability="blocksDescendants"
     android:focusable="true"
     android:clickable="true">
@@ -83,7 +83,7 @@
             android:textSize="11sp"
             android:textStyle="bold"
             android:letterSpacing="0.06"
-            android:background="@drawable/bg_badge_live_red"
+            android:background="@drawable/kl2_live_badge"
             android:paddingLeft="9dp"
             android:paddingRight="9dp"
             android:paddingTop="3dp"
@@ -114,7 +114,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="end"
                 android:textColor="#FFFFFF"
-                android:textSize="13.5sp"
+                android:textSize="14sp"
                 android:fontFamily="sans-serif-medium"
                 android:maxLines="1"
                 android:singleLine="true"
@@ -124,8 +124,8 @@
 
             <ImageView
                 android:id="@+id/cardHostIcon"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
+                android:layout_width="@dimen/kl2_crest_l"
+                android:layout_height="@dimen/kl2_crest_l"
                 android:layout_marginLeft="7dp"
                 android:padding="2dp"
                 android:src="@drawable/bg_team_crest_placeholder"
@@ -144,14 +144,14 @@
 
             <TextView
                 android:id="@+id/cardScore"
-                android:layout_width="54dp"
-                android:layout_height="32dp"
+                android:layout_width="62dp"
+                android:layout_height="36dp"
                 android:gravity="center"
-                android:background="@drawable/bg_score_pill"
+                android:background="@drawable/kl2_score_pill"
                 android:textColor="#FFFFFF"
                 android:text="VS"
                 android:fontFamily="@font/oswald"
-                android:textSize="16sp"
+                android:textSize="18sp"
                 android:textStyle="bold"
                 android:letterSpacing="0.05" />
         </LinearLayout>
@@ -166,8 +166,8 @@
 
             <ImageView
                 android:id="@+id/cardGuestIcon"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
+                android:layout_width="@dimen/kl2_crest_l"
+                android:layout_height="@dimen/kl2_crest_l"
                 android:layout_marginRight="7dp"
                 android:padding="2dp"
                 android:src="@drawable/bg_team_crest_placeholder"
@@ -181,7 +181,7 @@
                 android:layout_height="wrap_content"
                 android:gravity="start"
                 android:textColor="#FFFFFF"
-                android:textSize="13.5sp"
+                android:textSize="14sp"
                 android:fontFamily="sans-serif-medium"
                 android:maxLines="1"
                 android:singleLine="true"
@@ -208,8 +208,8 @@
 
         <ImageView
             android:id="@+id/cardAvatar"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
             android:layout_marginRight="7dp"
             android:background="@drawable/bg_circle"
             android:contentDescription="@null" />

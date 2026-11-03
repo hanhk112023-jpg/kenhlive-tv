@@ -796,8 +796,69 @@ class PhimFragment : Fragment() {
         loadFilmsByCategory(selectedCategorySlug)
     }
 
+    // Focus restore sau khi đóng EpisodePicker: poster đang mở dialog (vị trí section/card).
+    // Trước đây onDismiss tải lại TOÀN BỘ danh mục + thay adapter mới -> focus rơi về hero.
+    private data class PosterFocusTarget(val slug: String, val sectionPos: Int, val cardIdx: Int)
+    private var pendingPosterRestore: PosterFocusTarget? = null
+
+    /** Chụp vị trí poster đang focus (chỉ khi focus hiện nằm trong một carousel của mainList). */
+    private fun capturePosterFocus(film: NguoncFilm): PosterFocusTarget? {
+        if (!DeviceMode.isTv || !::mainList.isInitialized) return null
+        var v: View? = view?.findFocus() ?: return null
+        var cardIdx = -1
+        var sectionPos = -1
+        while (v != null) {
+            val parent = v.parent as? View ?: break
+            if (parent is RecyclerView && parent !== mainList && cardIdx < 0) {
+                cardIdx = parent.getChildAdapterPosition(v)
+            }
+            if (parent === mainList) {
+                sectionPos = mainList.getChildAdapterPosition(v)
+                break
+            }
+            v = parent
+        }
+        if (sectionPos < 0 || cardIdx < 0) return null
+        return PosterFocusTarget(film.slug, sectionPos, cardIdx)
+    }
+
+    /** Thử đưa focus về poster đã chụp; kết thúc khi đạt đích hoặc hết lượt thử (~5s). */
+    private fun tryRestorePosterFocus(attempt: Int) {
+        val target = pendingPosterRestore ?: return
+        if (!isAdded || !::mainList.isInitialized) { pendingPosterRestore = null; return }
+        val focused = view?.findFocus()
+        // Focus đã nằm ở một poster trong carousel (không phải nút hero) -> coi như đã khôi phục
+        if (focused != null && focused.id != R.id.btnHeroPlay) {
+            var v: View? = focused
+            var inCarousel = false
+            while (v != null) {
+                val p = v.parent as? View ?: break
+                if (p === mainList) { inCarousel = true; break }
+                v = p
+            }
+            if (inCarousel) { pendingPosterRestore = null; return }
+        }
+        val rowVh = mainList.findViewHolderForAdapterPosition(target.sectionPos) as? RowVH
+        val carousel = rowVh?.carousel
+        val card = carousel?.let {
+            it.findViewHolderForAdapterPosition(target.cardIdx)?.itemView
+                ?: it.layoutManager?.findViewByPosition(target.cardIdx)
+        }
+        if (card != null && card.requestFocus()) { pendingPosterRestore = null; return }
+        carousel?.scrollToPosition(target.cardIdx)
+        mainList.scrollToPosition(target.sectionPos)
+        if (attempt >= 24) { pendingPosterRestore = null; return }
+        mainList.postDelayed({ tryRestorePosterFocus(attempt + 1) }, 200)
+    }
+
+    private fun restorePosterFocusDelayed() {
+        if (pendingPosterRestore == null || !::mainList.isInitialized) return
+        mainList.postDelayed({ tryRestorePosterFocus(0) }, 250)
+    }
+
     private fun openFilmDialog(film: NguoncFilm) {
         val ctx = context ?: return
+        pendingPosterRestore = capturePosterFocus(film)
         try {
             dialog?.dismiss()
             dialog = EpisodePickerDialog.show(
@@ -805,9 +866,12 @@ class PhimFragment : Fragment() {
                 scope = viewLifecycleOwner.lifecycleScope,
                 film = film,
                 onDismissCallback = {
-                    // Tự động làm mới danh sách phim đang xem / đã lưu khi người dùng đóng dialog (sau khi xóa hoặc lưu)
+                    // Chỉ cập nhật DỮ LIỆU (tiếp tục xem / đã lưu), KHÔNG tải lại toàn bộ danh mục
+                    // như trước -> adapter không bị thay -> focus không rơi về hero;
+                    // sau đó khôi phục focus về đúng poster vừa mở dialog.
                     if (isAdded) {
-                        loadFilmsByCategory(selectedCategorySlug)
+                        refreshContinueWatchingOnly()
+                        restorePosterFocusDelayed()
                     }
                 },
                 onSelectEpisode = { f, ep, startPos ->

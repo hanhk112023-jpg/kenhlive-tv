@@ -10,87 +10,17 @@ import com.kenhlive.tv.LiveRoom
 object SportsAggregator {
 
     /**
-     * Bổ sung các server phát sóng ColaTV, Gà Vàng 33, Giờ Vàng vào mỗi trận đấu.
+     * Làm giàu một nhóm trận (logo/tỉ số/đồng hồ từ registry đa nguồn).
+     *
+     * ĐÃ BỎ cơ chế tự chế phòng ColaTV/Gà Vàng/Giờ Vàng cho mọi trận Socolive bằng cách
+     * tiền tố số phòng Socolive kèm viewers nhân hệ số bịa: các phòng đó không tồn tại ở
+     * đài kia, khi phát sẽ rơi vào resolver đoán stream -> người dùng xem trận khác dưới
+     * nhãn trận này. Từ nay chỉ giữ các phòng THẬT đã có sẵn trong group — hiển thị
+     * thiếu còn hơn bịa.
      */
     fun enrichMatchGroup(group: LiveMatchGroup): LiveMatchGroup {
         if (group.rooms.isEmpty()) return group
-
-        val top = group.top
-        val baseRoomNum = SportsSource.extractRealRoomNum(top.roomNum)
-
-        // Kiểm tra xem đã có các nguồn phụ chưa
-        val hasCola = group.rooms.any { it.roomNum.startsWith("cola_") }
-        val hasGavang = group.rooms.any { it.roomNum.startsWith("gavang33_") || it.roomNum.startsWith("gavang_") }
-        val hasGiovang = group.rooms.any { it.roomNum.startsWith("giovang_") || it.roomNum.startsWith("khandai_") }
-
-        val extraRooms = mutableListOf<LiveRoom>()
-
-        if (!hasCola) {
-            extraRooms.add(
-                LiveRoom(
-                    roomNum = "cola_$baseRoomNum",
-                    blvName = "[ColaTV] BLV Cola HD",
-                    avatar = top.avatar,
-                    viewers = (top.viewers * 0.88).toInt().coerceAtLeast(1200),
-                    matchTitle = group.matchTitle,
-                    league = group.league,
-                    cover = top.cover,
-                    category = top.category,
-                    blvLevel = "Server 1",
-                    score = top.score,
-                    focusCount = top.focusCount,
-                    notice = "Kênh thể thao trực tiếp ColaTV · Luồng phát tốc độ cao",
-                    hostIcon = group.hostIcon,
-                    guestIcon = group.guestIcon
-                )
-            )
-        }
-
-        if (!hasGavang) {
-            extraRooms.add(
-                LiveRoom(
-                    roomNum = "gavang33_$baseRoomNum",
-                    blvName = "[Gà Vàng 33] BLV Gà Rừng HD",
-                    avatar = top.avatar,
-                    viewers = (top.viewers * 0.76).toInt().coerceAtLeast(980),
-                    matchTitle = group.matchTitle,
-                    league = group.league,
-                    cover = top.cover,
-                    category = top.category,
-                    blvLevel = "Server 2",
-                    score = top.score,
-                    focusCount = top.focusCount,
-                    notice = "Kênh trực tiếp Gà Vàng 33 · Âm thanh vòm sống động",
-                    hostIcon = group.hostIcon,
-                    guestIcon = group.guestIcon
-                )
-            )
-        }
-
-        if (!hasGiovang) {
-            extraRooms.add(
-                LiveRoom(
-                    roomNum = "giovang_$baseRoomNum",
-                    blvName = "[Giờ Vàng] BLV Giờ Vàng HD",
-                    avatar = top.avatar,
-                    viewers = (top.viewers * 0.65).toInt().coerceAtLeast(850),
-                    matchTitle = group.matchTitle,
-                    league = group.league,
-                    cover = top.cover,
-                    category = top.category,
-                    blvLevel = "Server 3",
-                    score = top.score,
-                    focusCount = top.focusCount,
-                    notice = "Kênh trực tiếp Giờ Vàng TV · Đường truyền tốc độ cao",
-                    hostIcon = group.hostIcon,
-                    guestIcon = group.guestIcon
-                )
-            )
-        }
-
-        val allRooms = group.rooms + extraRooms
-        val merged = group.copy(rooms = allRooms)
-        return TeamLogoRegistry.enrich(merged)
+        return TeamLogoRegistry.enrich(group)
     }
 
     /**
@@ -102,6 +32,11 @@ object SportsAggregator {
 
     /**
      * Tạo danh sách trận đấu chuyên biệt cho từng nguồn phát sóng (không gộp chung vào Socolive).
+     *
+     * CHỈ giữ các phòng THẬT thuộc đúng nguồn đó đã có sẵn trong group. Trước đây hàm này
+     * tự chế một phòng cho đài được chọn từ số phòng Socolive (kèm viewers bịa) — phòng
+     * không tồn tại ở đài kia và khi phát sẽ thành stream của trận khác. Không có phòng
+     * thật của nguồn -> loại trận khỏi danh sách của nguồn đó.
      */
     fun createProviderMatchGroups(
         baseGroups: List<LiveMatchGroup>,
@@ -109,131 +44,39 @@ object SportsAggregator {
     ): List<LiveMatchGroup> {
         return baseGroups.mapNotNull { g ->
             if (g.rooms.isEmpty()) return@mapNotNull null
-            val top = g.top
-            val baseRoomNum = SportsSource.extractRealRoomNum(top.roomNum)
-            when (source) {
-                SportsSource.SOCOLIVE -> {
-                    val socoRooms = g.rooms.filter {
-                        !it.roomNum.startsWith("cola_") &&
-                        !it.roomNum.startsWith("gavang") &&
-                        !it.roomNum.startsWith("giovang") &&
-                        !it.roomNum.startsWith("khandai_")
-                    }
-                    if (socoRooms.isNotEmpty()) g.copy(rooms = socoRooms) else g
+            val rooms = when (source) {
+                SportsSource.SOCOLIVE -> g.rooms.filter {
+                    !it.roomNum.startsWith("cola_") &&
+                    !it.roomNum.startsWith("gavang") &&
+                    !it.roomNum.startsWith("giovang") &&
+                    !it.roomNum.startsWith("khandai_")
                 }
-                SportsSource.COLATV -> {
-                    val colaRoom = LiveRoom(
-                        roomNum = "cola_$baseRoomNum",
-                        blvName = "[ColaTV] BLV Cola HD",
-                        avatar = top.avatar,
-                        viewers = (top.viewers * 0.88).toInt().coerceAtLeast(1200),
-                        matchTitle = g.matchTitle,
-                        league = g.league,
-                        cover = top.cover,
-                        category = g.category,
-                        blvLevel = "Server 1",
-                        score = top.score,
-                        focusCount = top.focusCount,
-                        notice = "Kênh thể thao trực tiếp ColaTV · Luồng phát tốc độ cao",
-                        hostIcon = g.hostIcon,
-                        guestIcon = g.guestIcon,
-                        kickoffTime = g.kickoffTime,
-                        matchTimeMs = g.matchTimeMs,
-                        isLiveGame = g.isLiveGame,
-                        hostScore = g.hostScore,
-                        guestScore = g.guestScore,
-                        liveClock = g.liveClock
-                    )
-                    g.copy(
-                        rooms = listOf(colaRoom),
-                        kickoffTime = g.kickoffTime,
-                        matchTimeMs = g.matchTimeMs,
-                        isLiveGame = g.isLiveGame,
-                        hostScore = g.hostScore,
-                        guestScore = g.guestScore,
-                        liveClock = g.liveClock
-                    )
+                SportsSource.COLATV -> g.rooms.filter { it.roomNum.startsWith("cola_") }
+                SportsSource.GAVANG33 -> g.rooms.filter {
+                    it.roomNum.startsWith("gavang33_") || it.roomNum.startsWith("gavang_")
                 }
-                SportsSource.GAVANG33 -> {
-                    val gavangRoom = LiveRoom(
-                        roomNum = "gavang33_$baseRoomNum",
-                        blvName = "[Gà Vàng 33] BLV Gà Rừng HD",
-                        avatar = top.avatar,
-                        viewers = (top.viewers * 0.76).toInt().coerceAtLeast(980),
-                        matchTitle = g.matchTitle,
-                        league = g.league,
-                        cover = top.cover,
-                        category = g.category,
-                        blvLevel = "Server 2",
-                        score = top.score,
-                        focusCount = top.focusCount,
-                        notice = "Kênh trực tiếp Gà Vàng 33 · Âm thanh vòm sống động",
-                        hostIcon = g.hostIcon,
-                        guestIcon = g.guestIcon,
-                        kickoffTime = g.kickoffTime,
-                        matchTimeMs = g.matchTimeMs,
-                        isLiveGame = g.isLiveGame,
-                        hostScore = g.hostScore,
-                        guestScore = g.guestScore,
-                        liveClock = g.liveClock
-                    )
-                    g.copy(
-                        rooms = listOf(gavangRoom),
-                        kickoffTime = g.kickoffTime,
-                        matchTimeMs = g.matchTimeMs,
-                        isLiveGame = g.isLiveGame,
-                        hostScore = g.hostScore,
-                        guestScore = g.guestScore,
-                        liveClock = g.liveClock
-                    )
-                }
-                SportsSource.GIOVANG -> {
-                    val giovangRoom = LiveRoom(
-                        roomNum = "giovang_$baseRoomNum",
-                        blvName = "[Giờ Vàng] BLV Giờ Vàng HD",
-                        avatar = top.avatar,
-                        viewers = (top.viewers * 0.65).toInt().coerceAtLeast(850),
-                        matchTitle = g.matchTitle,
-                        league = g.league,
-                        cover = top.cover,
-                        category = g.category,
-                        blvLevel = "Server 3",
-                        score = top.score,
-                        focusCount = top.focusCount,
-                        notice = "Kênh trực tiếp Giờ Vàng TV · Đường truyền tốc độ cao",
-                        hostIcon = g.hostIcon,
-                        guestIcon = g.guestIcon,
-                        kickoffTime = g.kickoffTime,
-                        matchTimeMs = g.matchTimeMs,
-                        isLiveGame = g.isLiveGame,
-                        hostScore = g.hostScore,
-                        guestScore = g.guestScore,
-                        liveClock = g.liveClock
-                    )
-                    g.copy(
-                        rooms = listOf(giovangRoom),
-                        kickoffTime = g.kickoffTime,
-                        matchTimeMs = g.matchTimeMs,
-                        isLiveGame = g.isLiveGame,
-                        hostScore = g.hostScore,
-                        guestScore = g.guestScore,
-                        liveClock = g.liveClock
-                    )
+                SportsSource.GIOVANG -> g.rooms.filter {
+                    it.roomNum.startsWith("giovang_") || it.roomNum.startsWith("khandai_")
                 }
             }
+            if (rooms.isEmpty()) null else g.copy(rooms = rooms)
         }
     }
 
     /**
-     * Lấy danh sách 4 máy chủ khả dụng cho một phòng/trận đấu bất kỳ.
+     * Danh sách máy chủ khả dụng cho một phòng: chỉ gồm máy chủ của ĐÚNG nguồn sở hữu
+     * phòng đó. Trước đây hàm này luôn liệt kê thêm 3 máy chủ dự phòng bịa bằng cách
+     * tiền tố số phòng — các máy chủ đó không tồn tại và resolver không còn đoán
+     * stream thay thế, nên liệt kê chúng chỉ dẫn người dùng vào ngõ cụt.
      */
     fun getAvailableServers(baseRoomNum: String): List<SportsServer> {
-        val cleanRoom = SportsSource.extractRealRoomNum(baseRoomNum)
-        return listOf(
-            SportsServer(SportsSource.SOCOLIVE, "Máy Chủ Socolive (Chính)", cleanRoom, isPrimary = true),
-            SportsServer(SportsSource.COLATV, "Máy Chủ ColaTV (Dự phòng 1)", "cola_$cleanRoom"),
-            SportsServer(SportsSource.GAVANG33, "Máy Chủ Gà Vàng 33 (Dự phòng 2)", "gavang33_$cleanRoom"),
-            SportsServer(SportsSource.GIOVANG, "Máy Chủ Giờ Vàng (Dự phòng 3)", "giovang_$cleanRoom")
-        )
+        val source = SportsSource.detectSource(baseRoomNum)
+        val label = when (source) {
+            SportsSource.SOCOLIVE -> "Máy Chủ Socolive (Chính)"
+            SportsSource.COLATV -> "Máy Chủ ColaTV"
+            SportsSource.GAVANG33 -> "Máy Chủ Gà Vàng 33"
+            SportsSource.GIOVANG -> "Máy Chủ Giờ Vàng"
+        }
+        return listOf(SportsServer(source, label, baseRoomNum, isPrimary = true))
     }
 }

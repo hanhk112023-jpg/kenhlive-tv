@@ -27,6 +27,8 @@ import com.kenhlive.tv.phim.WebPlayerActivity
 import com.kenhlive.tv.ui.RoomPickerDialog
 import com.kenhlive.tv.ui.StateBinder
 import com.kenhlive.tv.viewmodel.SearchViewModel
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
@@ -48,6 +50,26 @@ class SearchFragment : Fragment() {
     private var dialog: AlertDialog? = null
     private var syncing = false
     private var lastFocusedPosition: Int = -1
+
+    // H7: debounce + chống race ở tầng Fragment (job tìm kiếm trong ViewModel không
+    // huỷ được từ đây) — chỉ áp kết quả khớp với query mới nhất người dùng đã gõ.
+    private var queryJob: Job? = null
+    private var latestQuery: String = ""
+
+    /** Gửi query vào ViewModel: gõ phím thì debounce 300ms (huỷ lần hẹn trước),
+     *  thao tác dứt điểm (chip/Enter/xoá) thì áp dụng ngay. */
+    private fun submitQuery(q: String, immediate: Boolean = false) {
+        latestQuery = q
+        queryJob?.cancel()
+        if (immediate) {
+            vm.setQuery(q)
+        } else {
+            queryJob = viewLifecycleOwner.lifecycleScope.launch {
+                delay(300)
+                vm.setQuery(q)
+            }
+        }
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, s: Bundle?): View {
         val v = inflater.inflate(R.layout.fragment_search, container, false)
@@ -84,12 +106,12 @@ class SearchFragment : Fragment() {
             override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
             override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
             override fun afterTextChanged(s: Editable?) {
-                if (!syncing) vm.setQuery(s?.toString().orEmpty())
+                if (!syncing) submitQuery(s?.toString().orEmpty())
             }
         })
         input.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEARCH) {
-                vm.setQuery(input.text.toString()); true
+                submitQuery(input.text.toString(), immediate = true); true
             } else false
         }
         input.setOnKeyListener { _, keyCode, event ->
@@ -105,7 +127,7 @@ class SearchFragment : Fragment() {
         }
         v.findViewById<ImageButton>(R.id.clearBtn).setOnClickListener {
             input.setText("")
-            vm.setQuery("")
+            submitQuery("", immediate = true)
             input.requestFocus()
         }
 
@@ -116,6 +138,9 @@ class SearchFragment : Fragment() {
         }
         viewLifecycleOwner.lifecycleScope.launch {
             vm.result.collect { r ->
+                // H7: kết quả của query cũ về trễ (mạng chậm) không được đè kết quả
+                // của query hiện tại — query đính kèm kết quả phải khớp chữ đang gõ.
+                if (r.query.trim() != latestQuery.trim()) return@collect
                 searchAdapter.submitList(r.items)
                 val q = r.query
                 resultCount.text = if (q.isEmpty())
@@ -226,7 +251,7 @@ class SearchFragment : Fragment() {
                 syncing = true
                 input.setText(lg)
                 syncing = false
-                vm.setQuery(lg)
+                submitQuery(lg, immediate = true)
                 (activity as? MainActivity)?.hideKeyboard()
             }
             chip.setOnKeyListener { _, keyCode, ev ->

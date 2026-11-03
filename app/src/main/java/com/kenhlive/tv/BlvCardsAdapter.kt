@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import coil.load
 import coil.transform.CircleCropTransformation
+import com.kenhlive.tv.ui.FocusKit
 
 /**
  * Adapter cho hàng "Bình Luận Viên Tâm Điểm" — hiển thị các phòng live BLV hot nhất của Socolive
@@ -19,6 +20,71 @@ class BlvCardsAdapter(
     private val onRoomClick: (LiveRoom) -> Unit,
     private val onRoomLong: ((LiveRoom) -> Unit)? = null
 ) : ListAdapter<LiveRoom, BlvCardsAdapter.BlvVH>(DIFF) {
+
+    /** Vị trí của hàng BLV trong adapter cha (SportAdapter) — do BlvRowVH gán khi bind. */
+    var rowPos: Int = -1
+
+    /** Điều hướng trái/phải ở biên hàng (FocusKit.rowCardKey) — do BlvRowVH gán. */
+    var keyHandler: ((rowPos: Int, idx: Int, size: Int) -> Boolean)? = null
+
+    // Khôi phục focus sau refresh (port từ bản vá v7.9 của MatchCardsAdapter):
+    // hàng BLV trước đây không nhớ/khôi phục gì nên mỗi lần LiveFragment rebuild là mất focus.
+    private var hostRv: RecyclerView? = null
+
+    override fun onAttachedToRecyclerView(rv: RecyclerView) {
+        super.onAttachedToRecyclerView(rv)
+        hostRv = rv
+    }
+
+    override fun onDetachedFromRecyclerView(rv: RecyclerView) {
+        if (hostRv === rv) hostRv = null
+        super.onDetachedFromRecyclerView(rv)
+    }
+
+    override fun submitList(list: List<LiveRoom>?) {
+        submitList(list, null)
+    }
+
+    override fun submitList(list: List<LiveRoom>?, commitCallback: Runnable?) {
+        val rv = hostRv
+        var focusedRoom: Int? = null
+        var focusedPos = -1
+        if (rv != null && rv.hasFocus()) {
+            val f = rv.findFocus()
+            val vh = if (f != null) rv.findContainingViewHolder(f) else null
+            val p = vh?.bindingAdapterPosition ?: RecyclerView.NO_POSITION
+            if (p != RecyclerView.NO_POSITION) {
+                focusedPos = p
+                focusedRoom = currentList.getOrNull(p)?.roomNum
+            }
+        }
+        super.submitList(list) {
+            commitCallback?.run()
+            if (rv != null && focusedPos >= 0) {
+                restoreFocusAfterSubmit(rv, focusedRoom, focusedPos)
+            }
+        }
+    }
+
+    private fun restoreFocusAfterSubmit(rv: RecyclerView, focusedRoom: Int?, focusedPos: Int) {
+        if (rv.findFocus() != null) return
+        var target = -1
+        if (focusedRoom != null) {
+            for (i in 0 until itemCount) {
+                if (currentList.getOrNull(i)?.roomNum == focusedRoom) { target = i; break }
+            }
+        }
+        if (target < 0) target = focusedPos.coerceAtMost(itemCount - 1)
+        if (target < 0) return
+        rv.scrollToPosition(target)
+        rv.post {
+            val itemView = rv.findViewHolderForAdapterPosition(target)?.itemView
+                ?: rv.layoutManager?.findViewByPosition(target)
+            val v = itemView?.findViewById<View>(R.id.blvCardRoot)
+                ?: itemView?.let { FocusKit.firstFocusableIn(it) }
+            v?.requestFocus()
+        }
+    }
 
     companion object {
         private const val TYPE_BLV = 10
@@ -81,7 +147,23 @@ class BlvCardsAdapter(
             error(R.drawable.logo_placeholder)
         }
 
+        h.root.setOnKeyListener { _, keyCode, event ->
+            if (event.action != android.view.KeyEvent.ACTION_DOWN) return@setOnKeyListener false
+            if (keyCode != android.view.KeyEvent.KEYCODE_DPAD_LEFT &&
+                keyCode != android.view.KeyEvent.KEYCODE_DPAD_RIGHT) return@setOnKeyListener false
+            val idx = h.bindingAdapterPosition
+            if (idx == RecyclerView.NO_POSITION) return@setOnKeyListener false
+            keyHandler?.invoke(rowPos, idx, itemCount) ?: false
+        }
+
         h.root.setOnFocusChangeListener { v, hasFocus ->
+            if (hasFocus) {
+                val idx = h.bindingAdapterPosition
+                if (idx != RecyclerView.NO_POSITION) {
+                    // Key FocusKit cho hàng BLV: "B|<roomNum>|" — SportAdapter.slotFor tra cứu theo định dạng này
+                    FocusKit.remember(rowPos, idx, "B|${r.roomNum}|")
+                }
+            }
             v.animate().cancel()
             v.animate()
                 .scaleX(if (hasFocus) 1.05f else 1.0f)

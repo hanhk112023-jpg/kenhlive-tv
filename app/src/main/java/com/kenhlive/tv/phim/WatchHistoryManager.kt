@@ -1,15 +1,20 @@
 package com.kenhlive.tv.phim
 
+import android.app.Activity
+import android.app.Application
 import android.content.ContentValues
 import android.content.Context
 import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.os.Bundle
 import android.os.Environment
 import android.util.Log
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -129,6 +134,28 @@ object WatchHistoryManager {
     @Volatile
     private var appContext: Context? = null
 
+    // ===== Chống "backup storm" (v7.13) =====
+    // Lưu tiến độ chỉ ghi SQLite (nhẹ) + đánh dấu dirty. Sao lưu JSON đầy đủ bị debounce:
+    // tối đa 1 lần / 5 phút, và xả ngay (flush) khi toàn bộ Activity dừng (app xuống nền/đóng).
+    // Mọi lần chạy backup đều đi qua backupLock để không có 2 performBackup ghi xen kẽ cùng file.
+    private const val BACKUP_MIN_INTERVAL_MS = 5 * 60 * 1000L
+    private const val MAX_EPISODES_PER_FILM = 500
+
+    private val backupLock = Any()
+
+    @Volatile
+    private var backupDirty = false
+
+    @Volatile
+    private var lastBackupAtMs = 0L
+
+    private var backupJob: Job? = null
+
+    @Volatile
+    private var lifecycleFlushRegistered = false
+
+    private var startedActivities = 0
+
     fun init(context: Context) {
         val app = context.applicationContext
         appContext = app
@@ -139,6 +166,7 @@ object WatchHistoryManager {
                 }
             }
         }
+        registerBackgroundFlush(app)
         // Tự động kiểm tra và phục hồi nếu database trống sau khi cài đặt/nâng cấp
         ioScope.launch {
             try {
@@ -362,18 +390,22 @@ object WatchHistoryManager {
                 db.update(TABLE_FAVORITES, cvFav, "$COL_SLUG = ?", arrayOf(slug))
             }
 
-            // 4. Dọn dẹp an toàn: Giữ tối đa 200 phim gần nhất nhưng KHÔNG BAO GIỜ xóa phim nằm trong mục Đã Lưu
+            // 4. Lịch sử phim: KHÔNG cắt ngầm nữa (v7.13). Trước đây saveProgress âm thầm xóa
+            //    history ngoài 200 phim gần nhất, mâu thuẫn với cam kết "sao lưu đầy đủ".
+            //    Chỉ khống chế bảng episodes (bảng phình nhanh nhất): giữ tối đa
+            //    MAX_EPISODES_PER_FILM tập gần nhất cho chính phim vừa xem.
             db.execSQL(
                 """
-                DELETE FROM $TABLE_HISTORY WHERE $COL_SLUG NOT IN (
-                    SELECT $COL_SLUG FROM $TABLE_HISTORY ORDER BY $COL_LAST_WATCHED_AT DESC LIMIT 200
-                ) AND $COL_SLUG NOT IN (
-                    SELECT $COL_SLUG FROM $TABLE_FAVORITES
+                DELETE FROM $TABLE_EPISODES WHERE $COL_EP_FILM_SLUG = ? AND $COL_EP_SLUG NOT IN (
+                    SELECT $COL_EP_SLUG FROM $TABLE_EPISODES
+                    WHERE $COL_EP_FILM_SLUG = ?
+                    ORDER BY $COL_EP_WATCHED_AT DESC LIMIT $MAX_EPISODES_PER_FILM
                 )
-                """.trimIndent()
+                """.trimIndent(),
+                arrayOf<Any>(slug, slug)
             )
 
-            // 5. Sao lưu đồng bộ ra lưu trữ bền vững
+            // 5. Chỉ đánh dấu cần sao lưu (debounce — xem triggerBackupAsync), KHÔNG xuất JSON tại đây
             triggerBackupAsync()
         } catch (e: Exception) {
             Log.e(TAG, "saveProgress error: ${e.message}")
@@ -896,15 +928,86 @@ object WatchHistoryManager {
     // ================= DUAL-LAYER PERSISTENT BACKUP & AUTO RESTORE =================
 
     /**
-     * Kích hoạt sao lưu toàn bộ dữ liệu ra SharedPreferences và file JSON bền vững.
+     * Đánh dấu dữ liệu đã thay đổi và lên lịch sao lưu JSON đầy đủ (DEBOUNCE).
+     *
+     * Trước đây mỗi lần lưu tiến độ (3–5 giây/lần khi đang phát) đều xuất toàn bộ DB ra JSON
+     * và ghi 4 nơi — "backup storm" mài mòn flash + rủi ro ghi xen kẽ làm rách vault.
+     * Nay: chỉ đặt cờ dirty; backup thật chạy tối đa 1 lần / [BACKUP_MIN_INTERVAL_MS],
+     * hoặc ngay khi app xuống nền/đóng hẳn (xem [registerBackgroundFlush] / [flushBackupAsync]).
      */
     private fun triggerBackupAsync() {
-        ioScope.launch {
+        backupDirty = true
+        synchronized(backupLock) {
+            if (backupJob?.isActive == true) return
+            val waitMs = (BACKUP_MIN_INTERVAL_MS - (System.currentTimeMillis() - lastBackupAtMs))
+                .coerceAtLeast(0L)
+            backupJob = ioScope.launch {
+                if (waitMs > 0L) delay(waitMs)
+                runBackupIfDirty()
+            }
+        }
+    }
+
+    /** Xả sao lưu ngay bất kể debounce (dùng khi app xuống nền/đóng hoặc nơi gọi cần bền vững tức thì). */
+    fun flushBackupAsync() {
+        ioScope.launch { runBackupIfDirty() }
+    }
+
+    /**
+     * Chạy backup nếu có thay đổi chưa sao lưu. Toàn bộ thân hàm nằm trong [backupLock]
+     * nên không bao giờ có 2 performBackup chạy đồng thời/ghi xen kẽ cùng một file vault.
+     */
+    private fun runBackupIfDirty() {
+        synchronized(backupLock) {
+            if (!backupDirty) return
+            backupDirty = false
+            lastBackupAtMs = System.currentTimeMillis()
             try {
                 performBackup()
             } catch (e: Exception) {
-                Log.w(TAG, "triggerBackupAsync error: ${e.message}")
+                // Backup lỗi thì đánh dấu lại dirty để lần kích hoạt sau thử lại
+                backupDirty = true
+                Log.w(TAG, "runBackupIfDirty error: ${e.message}")
             }
+        }
+    }
+
+    /**
+     * Đăng ký xả backup khi TOÀN BỘ Activity đã dừng (app xuống nền / bị đóng) —
+     * thời điểm "dừng hẳn" chuẩn để chốt vault mà không cần sửa từng Activity.
+     */
+    private fun registerBackgroundFlush(app: Context) {
+        if (lifecycleFlushRegistered) return
+        val application = app as? Application ?: return
+        lifecycleFlushRegistered = true
+        application.registerActivityLifecycleCallbacks(object : Application.ActivityLifecycleCallbacks {
+            override fun onActivityStarted(activity: Activity) {
+                startedActivities++
+            }
+
+            override fun onActivityStopped(activity: Activity) {
+                startedActivities--
+                if (startedActivities <= 0) {
+                    startedActivities = 0
+                    flushBackupAsync()
+                }
+            }
+
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
+            override fun onActivityResumed(activity: Activity) {}
+            override fun onActivityPaused(activity: Activity) {}
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) {}
+            override fun onActivityDestroyed(activity: Activity) {}
+        })
+    }
+
+    /** Ghi file kiểu nguyên tử (tmp + rename) để vault không bao giờ bị rách giữa chừng khi mất điện/sập app. */
+    private fun writeTextAtomic(file: File, text: String) {
+        val tmp = File(file.parentFile, file.name + ".tmp")
+        tmp.writeText(text)
+        if (!tmp.renameTo(file)) {
+            file.writeText(text)
+            tmp.delete()
         }
     }
 
@@ -989,16 +1092,16 @@ object WatchHistoryManager {
             val sp = app.getSharedPreferences(PREFS_BACKUP, Context.MODE_PRIVATE)
             sp.edit().putString(KEY_VAULT_JSON, jsonString).apply()
 
-            // Tầng 2: Internal storage file
+            // Tầng 2: Internal storage file (ghi nguyên tử tmp+rename)
             val internalFile = File(app.filesDir, BACKUP_FILE_NAME)
-            internalFile.writeText(jsonString)
+            writeTextAtomic(internalFile, jsonString)
 
             // Tầng 3: External app storage file (Bền vững qua cập nhật Android TV)
             try {
                 val extDir = app.getExternalFilesDir(null)
                 if (extDir != null) {
                     val extFile = File(extDir, BACKUP_FILE_NAME)
-                    extFile.writeText(jsonString)
+                    writeTextAtomic(extFile, jsonString)
                 }
             } catch (_: Throwable) {}
 
@@ -1007,7 +1110,7 @@ object WatchHistoryManager {
                 val pubDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
                 if (pubDir != null && pubDir.exists()) {
                     val pubFile = File(pubDir, BACKUP_FILE_NAME)
-                    pubFile.writeText(jsonString)
+                    writeTextAtomic(pubFile, jsonString)
                 }
             } catch (_: Throwable) {}
 

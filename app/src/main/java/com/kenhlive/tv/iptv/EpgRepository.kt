@@ -94,15 +94,48 @@ object EpgRepository {
         }
     }
 
+    /**
+     * Parse thời gian XMLTV. Hỗ trợ:
+     * - Dạng chuẩn "yyyyMMddHHmmss +0700"
+     * - Offset có dấu hai chấm "+07:00" (biến thể hay gặp ở các nguồn EPG khác)
+     * - Không có offset -> hiểu theo giờ Việt Nam
+     * Trả 0L nếu không parse được (chương trình đó bị lọc bỏ, không làm hỏng cả file).
+     */
+    private fun parseXmlTvTime(raw: String, fmtOffset: SimpleDateFormat, fmtNoOffset: SimpleDateFormat): Long {
+        val s = raw.trim()
+        if (s.isEmpty()) return 0L
+        try { fmtOffset.parse(s)?.let { return it.time } } catch (_: Exception) { }
+        val colonFixed = s.replace(Regex("([+-]\\d{2}):(\\d{2})$"), "$1$2")
+        if (colonFixed != s) {
+            try { fmtOffset.parse(colonFixed)?.let { return it.time } } catch (_: Exception) { }
+        }
+        try { fmtNoOffset.parse(s)?.let { return it.time } } catch (_: Exception) { }
+        return 0L
+    }
+
     private fun parseEpgFile(file: File) {
+        val fmtOffset = SimpleDateFormat("yyyyMMddHHmmss Z", Locale.US)
+        val fmtNoOffset = SimpleDateFormat("yyyyMMddHHmmss", Locale.US).apply {
+            timeZone = com.kenhlive.tv.DataNormalizer.TZ_VN
+        }
+        val now = System.currentTimeMillis()
+        val minTime = now - 3 * 3600_000L      // 3 tiếng trước
+        val maxTime = now + 24 * 3600_000L     // 24 tiếng tới
+
+        // H5: gom vào accum và commit TĂNG DẦN vào channelPrograms. File lỗi giữa chừng
+        // (parser/GZIP/một programme hỏng) chỉ mất phần chưa parse, không mất sạch EPG.
+        val accum = mutableMapOf<String, MutableList<EpgProgram>>()
+        var sinceFlush = 0
+        fun flush() {
+            if (accum.isEmpty()) return
+            accum.forEach { (key, list) ->
+                channelPrograms[key] = list.sortedBy { it.startTime }
+            }
+            isLoaded = true
+            sinceFlush = 0
+        }
+
         try {
-            val dateFormat = SimpleDateFormat("yyyyMMddHHmmss Z", Locale.US)
-            val now = System.currentTimeMillis()
-            val minTime = now - 3 * 3600_000L      // 3 tiếng trước
-            val maxTime = now + 24 * 3600_000L     // 24 tiếng tới
-
-            val tempMap = mutableMapOf<String, MutableList<EpgProgram>>()
-
             FileInputStream(file).use { fis ->
                 GZIPInputStream(fis).use { gzis ->
                     val parser = Xml.newPullParser()
@@ -125,16 +158,19 @@ object EpgRepository {
                                         currentChannel = parser.getAttributeValue(null, "channel") ?: ""
                                         val startStr = parser.getAttributeValue(null, "start") ?: ""
                                         val stopStr = parser.getAttributeValue(null, "stop") ?: ""
-                                        currentStart = try { dateFormat.parse(startStr)?.time ?: 0L } catch (_: Exception) { 0L }
-                                        currentStop = try { dateFormat.parse(stopStr)?.time ?: 0L } catch (_: Exception) { 0L }
+                                        currentStart = parseXmlTvTime(startStr, fmtOffset, fmtNoOffset)
+                                        currentStop = parseXmlTvTime(stopStr, fmtOffset, fmtNoOffset)
                                         currentTitle = ""
                                         currentDesc = ""
                                     }
                                     "title" -> {
-                                        if (inProgramme) currentTitle = parser.nextText().trim()
+                                        // Lỗi ở một phần tử con chỉ bỏ qua phần tử đó
+                                        if (inProgramme) currentTitle =
+                                            try { parser.nextText().trim() } catch (_: Exception) { "" }
                                     }
                                     "desc" -> {
-                                        if (inProgramme) currentDesc = parser.nextText().trim()
+                                        if (inProgramme) currentDesc =
+                                            try { parser.nextText().trim() } catch (_: Exception) { "" }
                                     }
                                 }
                             }
@@ -145,7 +181,8 @@ object EpgRepository {
                                     if (currentChannel.isNotEmpty() && currentStop > minTime && currentStart < maxTime) {
                                         val normId = normalizeKey(currentChannel)
                                         val prog = EpgProgram(currentTitle, currentStart, currentStop, currentDesc)
-                                        tempMap.getOrPut(normId) { mutableListOf() }.add(prog)
+                                        accum.getOrPut(normId) { mutableListOf() }.add(prog)
+                                        if (++sinceFlush >= 500) flush()
                                     }
                                 }
                             }
@@ -154,16 +191,12 @@ object EpgRepository {
                     }
                 }
             }
-
-            channelPrograms.clear()
-            tempMap.forEach { (key, list) ->
-                channelPrograms[key] = list.sortedBy { it.startTime }
-            }
-            isLoaded = true
             Log.i(TAG, "Đã nạp thành công EPG cho ${channelPrograms.size} kênh!")
         } catch (e: Exception) {
-            Log.e(TAG, "Lỗi phân tích EPG: ${e.message}")
+            Log.e(TAG, "Lỗi phân tích EPG (giữ lại phần đã parse được): ${e.message}")
         }
+        // Commit phần còn lại — và cả phần đã parse được trước khi gặp lỗi
+        flush()
     }
 
     /**
@@ -198,18 +231,24 @@ object EpgRepository {
      */
     fun findProgramsForChannel(channelId: String, channelName: String): List<EpgProgram>? {
         val key1 = normalizeKey(channelId)
-        channelPrograms[key1]?.let { return it }
+        if (key1.isNotEmpty()) channelPrograms[key1]?.let { return it }
 
         val key2 = normalizeKey(channelName)
+        if (key2.isEmpty()) return null
         channelPrograms[key2]?.let { return it }
 
-        // Thử tìm theo từ khóa chính (vd: vtv1, htv7, thvl1)
-        for ((k, list) in channelPrograms) {
-            if (k.isNotEmpty() && (key2.contains(k) || k.contains(key2))) {
-                return list
-            }
-        }
-        return null
+        // M11: khớp mờ CÓ KIỂM SOÁT thay cho substring hai chiều vô điều kiện.
+        // Chỉ chấp nhận khi một key là tiền tố của key kia VÀ ký tự ngay sau phần
+        // tiền tố KHÔNG phải chữ số — chặn nhầm VTV1 <-> VTV10 (trước đây "vtv1"
+        // là substring của "vtv10" nên lấy nhầm lịch tuỳ thứ tự duyệt map).
+        // Ưu tiên key dài nhất = khớp cụ thể nhất, kết quả xác định (không phụ thuộc thứ tự map).
+        val candidates = channelPrograms.keys.filter { k ->
+            k.isNotEmpty() && k != key2 && (
+                (key2.startsWith(k) && key2.getOrNull(k.length)?.isDigit() == false) ||
+                    (k.startsWith(key2) && k.getOrNull(key2.length)?.isDigit() == false)
+                )
+        }.sortedByDescending { it.length }
+        return candidates.firstOrNull()?.let { channelPrograms[it] }
     }
 
     /**

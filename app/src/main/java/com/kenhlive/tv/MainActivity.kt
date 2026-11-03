@@ -6,6 +6,7 @@ import android.graphics.Color
 import android.os.Bundle
 import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
@@ -36,6 +37,12 @@ class MainActivity : AppCompatActivity() {
     private var current = TAB_HUB
     private val navViews = mutableListOf<View>()
     private var railPanel: View? = null
+    /** Thế hệ của vòng retry cấp focus — tăng mỗi lần showTab để hủy vòng retry cũ. */
+    private var focusRetryGen = 0
+    /** Số lần thử lại transaction chuyển tab sau khi commit lỗi (tối đa 1 lần). */
+    private var tabTxRetryCount = 0
+    /** View trạng thái rỗng dự phòng khi transaction chuyển tab lỗi hẳn (thay cho màn hình đen). */
+    private var tabFallbackView: TextView? = null
     private var lastBackPressTime: Long = 0L
     private var backToast: android.widget.Toast? = null
 
@@ -324,12 +331,9 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         DeviceMode.updateMode(this)
-        if (DeviceMode.isTv) {
-            window.decorView.postDelayed({
-                if (currentFocus == null) {
-                    focusContentFirst()
-                }
-            }, 150L)
+        if (DeviceMode.isTv && currentFocus == null) {
+            // Dùng cùng vòng retry như showTab (trước đây chỉ thử 1 lần sau 150ms)
+            scheduleFocusRetry(window.decorView)
         }
     }
 
@@ -438,8 +442,30 @@ class MainActivity : AppCompatActivity() {
                 f.view?.isFocusable = false
             }
         }
-        tx.commitAllowingStateLoss()
-        try { supportFragmentManager.executePendingTransactions() } catch (_: Throwable) {}
+        var txFailed = false
+        try {
+            tx.commitAllowingStateLoss()
+            supportFragmentManager.executePendingTransactions()
+        } catch (t: Throwable) {
+            // KHÔNG nuốt lặng exception nữa: trước đây lỗi transaction (điển hình: showTab sau
+            // onSaveInstanceState) làm container trống -> màn hình đen vô hạn mà không có log.
+            txFailed = true
+            android.util.Log.e("MainActivity", "showTab transaction failed (tab=$pos)", t)
+        }
+        if (txFailed) {
+            if (tabTxRetryCount == 0) {
+                tabTxRetryCount = 1
+                findViewById<ViewGroup>(R.id.fragmentContainer)?.post {
+                    showTab(pos, animate = false, keepRailOpen = keepRailOpen)
+                }
+            } else {
+                tabTxRetryCount = 0
+                showTabFallback()
+            }
+            return
+        }
+        tabTxRetryCount = 0
+        hideTabFallback()
 
         tabTags.forEachIndexed { i, tag ->
             val f = supportFragmentManager.findFragmentByTag(tag) ?: return@forEachIndexed
@@ -463,21 +489,61 @@ class MainActivity : AppCompatActivity() {
             activeNav?.requestFocus()
         } else if (DeviceMode.isTv && !keepRailOpen) {
             fc?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
-            fc?.post {
-                hideRail()
-                focusContentFirst()
-            }
-            fc?.postDelayed({
-                if (currentFocus == null) {
-                    focusContentFirst()
-                }
-            }, 120)
-            fc?.postDelayed({
-                if (currentFocus == null) {
-                    focusContentFirst()
-                }
-            }, 300)
+            if (fc != null) scheduleFocusRetry(fc)
         }
+    }
+
+    /**
+     * Cấp focus cho tab hiện tại theo nhịp tăng dần (0 -> ~1.6s) tới khi có view giữ được focus.
+     * Thay cho các mốc cố định 120/300ms trước đây: tab nạp dữ liệu chậm (IPTV tải playlist qua
+     * mạng) thường có view focusable SAU 300ms — khi đó không còn ai thử nữa nên focus mất hẳn
+     * cho tới phím DPAD tiếp theo. Vòng retry dừng ngay khi đã có focus, và bị hủy khi showTab
+     * được gọi lại (focusRetryGen tăng).
+     */
+    private fun scheduleFocusRetry(container: View) {
+        val gen = ++focusRetryGen
+        val marks = longArrayOf(0L, 120L, 300L, 600L, 1000L, 1600L)
+        var idx = 0
+        val step = object : Runnable {
+            override fun run() {
+                if (gen != focusRetryGen || isFinishing) return
+                if (idx == 0) hideRail()
+                if (currentFocus == null) {
+                    focusContentFirst()
+                }
+                if (currentFocus != null) return
+                idx++
+                if (idx < marks.size) {
+                    container.postDelayed(this, marks[idx] - marks[idx - 1])
+                }
+            }
+        }
+        container.post(step)
+    }
+
+    /** Hiện trạng thái rỗng dự phòng trong container khi chuyển tab lỗi hẳn — tránh màn hình đen vô hạn. */
+    private fun showTabFallback() {
+        val fc = findViewById<ViewGroup>(R.id.fragmentContainer) ?: return
+        val tv = tabFallbackView ?: TextView(this).apply {
+            text = "Không hiển thị được nội dung.\nBấm BACK để quay lại hoặc mở lại ứng dụng."
+            setTextColor(0xFFE2E8F0.toInt())
+            textSize = 15f
+            gravity = android.view.Gravity.CENTER
+            isFocusable = true
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+            tabFallbackView = this
+        }
+        if (tv.parent == null) fc.addView(tv)
+        tv.visibility = View.VISIBLE
+        tv.bringToFront()
+        tv.requestFocus()
+    }
+
+    private fun hideTabFallback() {
+        tabFallbackView?.visibility = View.GONE
     }
 
     fun hideKeyboard() {

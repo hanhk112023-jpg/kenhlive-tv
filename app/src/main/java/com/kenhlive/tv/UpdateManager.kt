@@ -63,6 +63,11 @@ object UpdateManager {
                 }
                 val latest = json.optString("tag").removePrefix("v")
                 val apkUrl = "https://kenhlive-dl.htuananh153.workers.dev/apk"
+                // H2: checksum SHA-256 do worker /version cung cấp (nếu có) để verify
+                // file tải về trước khi cài. Không có thì vẫn verify gói + phiên bản
+                // bằng PackageManager trong verifyDownloadedApk().
+                val expectedSha256 = listOf("sha256", "apk_sha256", "checksum_sha256")
+                    .firstNotNullOfOrNull { k -> json.optString(k).takeIf { it.isNotBlank() } }
 
                 val cur = appCtx.packageManager.getPackageInfo(appCtx.packageName, 0).versionName ?: "0"
                 if (!isNewer(latest, cur)) return@launch
@@ -73,7 +78,7 @@ object UpdateManager {
                         AlertDialog.Builder(activity)
                             .setTitle("Có bản mới v$latest")
                             .setMessage("Tải và cập nhật ngay trong app?")
-                            .setPositiveButton("TẢI NGAY") { _, _ -> startDownload(activity, apkUrl, latest) }
+                            .setPositiveButton("TẢI NGAY") { _, _ -> startDownload(activity, apkUrl, latest, expectedSha256) }
                             .setNegativeButton("Để sau", null)
                             .show()
                     } catch (e: Exception) { /* activity đã mất — bỏ qua, không crash */ }
@@ -118,7 +123,7 @@ object UpdateManager {
         return false
     }
 
-    private fun startDownload(activity: Activity, url: String, version: String) {
+    private fun startDownload(activity: Activity, url: String, version: String, expectedSha256: String? = null) {
         val appCtx = activity.applicationContext
         // quyền cài app: dialog phải chạy trên Activity
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
@@ -137,20 +142,20 @@ object UpdateManager {
                             )
                         } catch (e: Exception) {
                             Toast.makeText(appCtx, "Máy không có màn hình cấp quyền — bản tải về sẽ mở trình cài đặt thủ công", Toast.LENGTH_LONG).show()
-                            downloadNow(appCtx, activity, url, version) // vẫn cho tải, bước cài sẽ fallback
+                            downloadNow(appCtx, activity, url, version, expectedSha256) // vẫn cho tải, bước cài sẽ fallback
                         }
                     }
                     .setNegativeButton("Hủy", null).show()
             } catch (e: Exception) { }
             return
         }
-        downloadNow(appCtx, activity, url, version)
+        downloadNow(appCtx, activity, url, version, expectedSha256)
     }
 
     /** Tải APK bằng OkHttp streaming (đi qua cùng proxy với API) — KHÔNG dùng
      *  DownloadManager (system process bỏ qua proxy emulator/TV → treo vĩnh viễn).
      *  Tiến độ hiển thị Toast định kỳ. Xong → mở installer ngay trên main thread. */
-    private fun downloadNow(appCtx: Context, activity: Activity, url: String, version: String) {
+    private fun downloadNow(appCtx: Context, activity: Activity, url: String, version: String, expectedSha256: String? = null) {
         val dir = File(appCtx.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "updates").apply { mkdirs() }
         // dọn file cũ nhưng GIỮ file đang chờ cài của version mới nhất (resume)
         dir.listFiles()?.filter { !it.name.contains(version) }?.forEach { it.delete() }
@@ -206,6 +211,18 @@ object UpdateManager {
                     }
                     return@launch
                 }
+                // H2: VERIFY trước khi cài — checksum SHA-256 (nếu worker cung cấp) +
+                // gói ứng dụng + versionCode phải đúng bản KenhLive mới hơn bản đang cài.
+                // Không khớp -> xoá file, huỷ cài, báo lỗi (tránh cài nhầm APK lạ/hỏng).
+                val verifyError = verifyDownloadedApk(appCtx, file, expectedSha256)
+                if (verifyError != null) {
+                    file.delete()
+                    prefs.edit().remove(KEY_DL_PATH).remove(KEY_DL_VER).apply()
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(appCtx, "Huỷ cập nhật: $verifyError", Toast.LENGTH_LONG).show()
+                    }
+                    return@launch
+                }
                 // tải xong → mở installer NGAY (main thread)
                 withContext(Dispatchers.Main) {
                     openInstallerOnce(appCtx, System.currentTimeMillis(), file)
@@ -221,6 +238,52 @@ object UpdateManager {
         }
     }
 
+    private fun sha256Hex(f: File): String? = try {
+        val md = java.security.MessageDigest.getInstance("SHA-256")
+        f.inputStream().use { input ->
+            val buf = ByteArray(64 * 1024)
+            var r: Int
+            while (input.read(buf).also { r = it } != -1) md.update(buf, 0, r)
+        }
+        md.digest().joinToString("") { "%02x".format(it) }
+    } catch (_: Exception) { null }
+
+    /**
+     * H2 — Kiểm chứng APK vừa tải trước khi mở installer. Trả về chuỗi lỗi nếu
+     * KHÔNG đạt, null nếu đạt:
+     * 1. Nếu có checksum từ nguồn phát hành: SHA-256 của file phải khớp.
+     * 2. File phải là APK đọc được bằng PackageManager.
+     * 3. packageName phải đúng gói của app (chống cài nhầm APK ứng dụng khác).
+     * 4. versionCode/versionName phải MỚI HƠN bản đang cài (đúng bản cập nhật kỳ vọng).
+     */
+    private fun verifyDownloadedApk(appCtx: Context, file: File, expectedSha256: String?): String? {
+        if (!expectedSha256.isNullOrBlank()) {
+            val actual = sha256Hex(file) ?: return "không tính được SHA-256 của file tải về"
+            if (!actual.equals(expectedSha256.trim(), ignoreCase = true)) {
+                return "checksum SHA-256 không khớp với nguồn phát hành"
+            }
+        }
+        val pm = appCtx.packageManager
+        val archive = try { pm.getPackageArchiveInfo(file.absolutePath, 0) } catch (_: Exception) { null }
+            ?: return "file tải về không phải APK hợp lệ"
+        if (archive.packageName != appCtx.packageName) {
+            return "APK không đúng gói ứng dụng (${archive.packageName})"
+        }
+        val installed = try { pm.getPackageInfo(appCtx.packageName, 0) } catch (_: Exception) { null }
+            ?: return null // không đọc được bản đang cài -> đã qua các vòng trên, cho qua
+        @Suppress("DEPRECATION")
+        val archiveCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) archive.longVersionCode
+        else archive.versionCode.toLong()
+        @Suppress("DEPRECATION")
+        val installedCode = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) installed.longVersionCode
+        else installed.versionCode.toLong()
+        val nameNewer = isNewer(archive.versionName ?: "", installed.versionName ?: "")
+        if (archiveCode <= installedCode && !nameNewer) {
+            return "phiên bản APK (${archive.versionName ?: "?"}) không mới hơn bản đang cài (${installed.versionName ?: "?"})"
+        }
+        return null
+    }
+
     /** Gọi khi app khởi động: nếu có APK đã tải xong mà chưa cài (app bị kill giữa chừng) → mở installer. */
     fun resumePendingInstall(activity: Activity) {
         val appCtx = activity.applicationContext
@@ -230,7 +293,17 @@ object UpdateManager {
         if (!f.exists() || f.length() < 1_000_000) {
             prefs.edit().remove(KEY_DL_PATH).remove(KEY_DL_VER).apply(); return
         }
+        // H2: file chờ cài cũng phải qua kiểm chứng gói + đúng phiên bản đã tải dở,
+        // tránh trường hợp file bị thay thế trong lúc app bị kill.
+        val storedVer = prefs.getString(KEY_DL_VER, null)
+        val archive = try { appCtx.packageManager.getPackageArchiveInfo(f.absolutePath, 0) } catch (_: Exception) { null }
+        val archiveOk = archive != null && archive.packageName == appCtx.packageName &&
+            (storedVer == null || archive.versionName == null || archive.versionName == storedVer)
         prefs.edit().remove(KEY_DL_PATH).remove(KEY_DL_VER).apply()
+        if (!archiveOk) {
+            f.delete()
+            return
+        }
         openInstaller(appCtx, f)
     }
 

@@ -31,6 +31,72 @@ class ScheduleAdapter(
         }
     }
 
+    // Khôi phục focus sau refresh (port từ bản vá v7.9 của MatchCardsAdapter):
+    // submitList làm detach card đang focus -> chụp scheduleId trước diff, khôi phục trong commit callback.
+    private var hostRv: RecyclerView? = null
+
+    override fun onAttachedToRecyclerView(rv: RecyclerView) {
+        super.onAttachedToRecyclerView(rv)
+        hostRv = rv
+    }
+
+    override fun onDetachedFromRecyclerView(rv: RecyclerView) {
+        if (hostRv === rv) hostRv = null
+        super.onDetachedFromRecyclerView(rv)
+    }
+
+    override fun submitList(list: List<Any>?) {
+        submitList(list, null)
+    }
+
+    override fun submitList(list: List<Any>?, commitCallback: Runnable?) {
+        val rv = hostRv
+        var focusedId: String? = null
+        var focusedPos = -1
+        if (rv != null && rv.hasFocus()) {
+            val f = rv.findFocus()
+            if (f != null) {
+                val p = rv.getChildAdapterPosition(f)
+                if (p != RecyclerView.NO_POSITION) {
+                    focusedPos = p
+                    focusedId = (currentList.getOrNull(p) as? ScheduleMatch)?.scheduleId
+                }
+            }
+        }
+        super.submitList(list) {
+            commitCallback?.run()
+            if (rv != null && focusedPos >= 0) {
+                restoreFocusAfterSubmit(rv, focusedId, focusedPos)
+            }
+        }
+    }
+
+    private fun restoreFocusAfterSubmit(rv: RecyclerView, focusedId: String?, focusedPos: Int) {
+        // Focus còn sống nhưng rơi vào trận KHÁC (vd commit callback của fragment kéo về
+        // trận đầu) hoặc đã chết hẳn -> đưa về đúng trận đã nhớ theo scheduleId.
+        val cur = rv.findFocus()
+        val curId = if (cur != null) {
+            val cp = rv.getChildAdapterPosition(cur)
+            if (cp != RecyclerView.NO_POSITION) (currentList.getOrNull(cp) as? ScheduleMatch)?.scheduleId else null
+        } else null
+        if (focusedId != null && curId == focusedId) return
+        if (cur != null && focusedId == null) return
+        var target = -1
+        if (focusedId != null) {
+            for (i in 0 until itemCount) {
+                if ((currentList.getOrNull(i) as? ScheduleMatch)?.scheduleId == focusedId) { target = i; break }
+            }
+        }
+        if (target < 0) target = focusedPos.coerceAtMost(itemCount - 1)
+        if (target < 0) return
+        rv.scrollToPosition(target)
+        rv.post {
+            val v = rv.layoutManager?.findViewByPosition(target)
+                ?: rv.findViewHolderForAdapterPosition(target)?.itemView
+            v?.requestFocus()
+        }
+    }
+
     inner class DayVH(v: View) : RecyclerView.ViewHolder(v) {
         val tv: TextView = v.findViewById(R.id.dayLabel)
         val count: TextView = v.findViewById(R.id.dayCount)

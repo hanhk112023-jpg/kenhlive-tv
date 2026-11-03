@@ -105,15 +105,24 @@ object IptvRepository {
                 val resSports = jobSports.await()
 
                 val editor = sp.edit()
+                var anyFetchOk = false
                 if (!resVn.isNullOrBlank()) {
                     cachedVn = resVn
                     editor.putString(KEY_CACHE_VN, resVn)
+                    anyFetchOk = true
                 }
                 if (!resSports.isNullOrBlank()) {
                     cachedSports = resSports
                     editor.putString(KEY_CACHE_SPORTS, resSports)
+                    anyFetchOk = true
                 }
-                editor.putLong(KEY_LAST_UPDATE, System.currentTimeMillis()).apply()
+                // M13: chỉ gia hạn mốc cache khi ít nhất một nguồn tải THÀNH CÔNG.
+                // Trước đây putLong chạy vô điều kiện -> lần refresh hỏng vẫn bị coi là
+                // "mới" thêm 3 giờ, dữ liệu cũ không bao giờ được thử tải lại sớm.
+                if (anyFetchOk) {
+                    editor.putLong(KEY_LAST_UPDATE, System.currentTimeMillis())
+                }
+                editor.apply()
             }
         }
 

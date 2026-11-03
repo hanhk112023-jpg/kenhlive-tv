@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- KL2: thẻ kính dùng chung cho hàng cài đặt / phòng BLV / kết quả tìm kiếm / thẻ lịch.
+     Mặc định: kính tối + viền mảnh. Focus: sáng hơn + viền cam kl_brand rõ. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:startColor="#FF23262F"
+                android:endColor="#FF16181F" />
+            <stroke
+                android:width="2.5dp"
+                android:color="@color/kl_brand" />
+            <corners android:radius="20dp" />
+        </shape>
+    </item>
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:startColor="#FF23262F"
+                android:endColor="#FF16181F" />
+            <stroke
+                android:width="2.5dp"
+                android:color="@color/kl_brand" />
+            <corners android:radius="20dp" />
+        </shape>
+    </item>
+    <item android:state_selected="true">
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:startColor="#FF1D2029"
+                android:endColor="#FF12141A" />
+            <stroke
+                android:width="1.5dp"
+                android:color="#80FF6500" />
+            <corners android:radius="20dp" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:startColor="#FF17191F"
+                android:endColor="#FF0E1013" />
+            <stroke
+                android:width="1dp"
+                android:color="#24FFFFFF" />
+            <corners android:radius="20dp" />
+        </shape>
+    </item>
+</selector>

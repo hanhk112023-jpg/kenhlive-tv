@@ -73,7 +73,7 @@
         <!-- Web Player activity (Phim NguonC StreamC embed) -->
         <activity
             android:name=".phim.WebPlayerActivity"
-            android:exported="true"
+            android:exported="false"
             android:screenOrientation="sensorLandscape"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|density" />
 

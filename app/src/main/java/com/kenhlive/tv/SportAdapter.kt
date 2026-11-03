@@ -58,15 +58,26 @@ class SportAdapter(
             }
             override fun areContentsTheSame(a: Any, b: Any) = when {
                 a is ChipsItem && b is ChipsItem -> a.labels == b.labels && a.sel == b.sel
-                a is HeroItem && b is HeroItem -> a.groups.map { it.matchTitle } == b.groups.map { it.matchTitle }
+                a is HeroItem && b is HeroItem ->
+                    a.groups.map { liveSig(it) } == b.groups.map { liveSig(it) }
                 a is RailItem && b is RailItem ->
                     a.title == b.title &&
-                        a.groups.map { it.matchTitle to it.totalViewers } == b.groups.map { it.matchTitle to it.totalViewers } &&
-                        a.upcoming.map { it.scheduleId } == b.upcoming.map { it.scheduleId }
+                        a.groups.map { liveSig(it) } == b.groups.map { liveSig(it) } &&
+                        a.upcoming.map { listOf<Any?>(it.scheduleId, it.matchTimeMs, it.hasRoom) } ==
+                            b.upcoming.map { listOf<Any?>(it.scheduleId, it.matchTimeMs, it.hasRoom) }
                 a is BlvRowItem && b is BlvRowItem ->
-                    a.rooms.map { it.roomNum to it.viewers } == b.rooms.map { it.roomNum to it.viewers }
+                    a.rooms.map { listOf<Any?>(it.roomNum, it.viewers, it.isLiveGame, it.hostScore, it.guestScore, it.liveClock) } ==
+                        b.rooms.map { listOf<Any?>(it.roomNum, it.viewers, it.isLiveGame, it.hostScore, it.guestScore, it.liveClock) }
                 else -> a == b
             }
+
+            // Chữ ký nội dung của một trận: PHẢI gồm tỉ số + đồng hồ + trạng thái live.
+            // Trước đây HeroItem/RailItem chỉ so tiêu đề (+viewers) nên tỉ số/phút mới
+            // tải về không bao giờ kích hoạt vẽ lại thẻ.
+            private fun liveSig(g: LiveMatchGroup): List<Any?> = listOf(
+                g.matchTitle, g.hostScore, g.guestScore, g.liveClock,
+                g.isLiveGame, g.totalViewers, g.kickoffTime, g.matchTimeMs, g.count
+            )
         }
     }
 
@@ -95,6 +106,11 @@ class SportAdapter(
                     if (i >= 0) return pos to i
                 }
                 is ScheduleMatch -> if (kind == "M" && cur.league == lg && "${cur.host} vs ${cur.guest}" == mt) return pos to 0
+                is BlvRowItem -> if (kind == "B") {
+                    // Key BLV: "B|<roomNum>|" (roomNum nằm ở phần tử thứ 2 sau khi split limit=3)
+                    val idx = cur.rooms.indexOfFirst { it.roomNum == lg }
+                    if (idx >= 0) return pos to idx
+                }
                 else -> {}
             }
         }
@@ -262,6 +278,7 @@ class SportAdapter(
             list.clipChildren = false
             list.clipToPadding = false
             (list.parent as? ViewGroup)?.let { it.clipChildren = false; it.clipToPadding = false }
+            cards.keyHandler = { rowPos, idx, size -> FocusKit.rowCardKey(this@SportAdapter, rowPos, idx, size) }
         }
     }
 
@@ -369,6 +386,7 @@ class SportAdapter(
                 vh.itemView.visibility = if (empty) View.GONE else View.VISIBLE
                 vh.title.setText(R.string.sport_blv_title)
                 vh.count.visibility = View.GONE
+                vh.cards.rowPos = pos
                 vh.cards.submitList(item.rooms)
             }
             is String -> {

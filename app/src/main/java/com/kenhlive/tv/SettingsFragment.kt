@@ -10,7 +10,10 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /**
  * Màn CÀI ĐẶT (phone + TV chung 1 layout, row focusable cho remote).
@@ -21,6 +24,15 @@ class SettingsFragment : Fragment() {
     private lateinit var adapter: SettingsAdapter
     private var dialog: AlertDialog? = null
 
+    /** Hàng cài đặt đang được focus gần nhất (vị trí adapter) — khôi phục sau rebuild/quay lại tab.
+     * Trước đây mọi đường đều hard-code về hàng 1. Mặc định 1 = hàng đầu tiên focusable (Chất lượng hình ảnh). */
+    private var lastFocusedRow: Int = 1
+
+    // H4: dung lượng đo ở luồng nền; null = chưa đo xong (hàng hiển thị "Đang tính…")
+    private var storageSummaryText: String? = null
+    private var storageMeasureJob: Job? = null
+    private var storageMeasuredAt: Long = 0L
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, s: Bundle?): View {
         val v = inflater.inflate(R.layout.fragment_settings, container, false)
         adapter = SettingsAdapter()
@@ -28,7 +40,17 @@ class SettingsFragment : Fragment() {
         rv.layoutManager = LinearLayoutManager(requireContext())
         rv.adapter = adapter
         rv.clipToPadding = false
-        rebuild(focusRow = if (DeviceMode.isTv) 1 else -1)
+        if (DeviceMode.isTv) {
+            // Theo dõi liên tục hàng đang focus (rebuild chỉ chụp được tại thời điểm gọi,
+            // không đủ: người dùng di chuyển focus giữa các lần rebuild mà không kích hoạt rebuild nào)
+            rv.viewTreeObserver.addOnGlobalFocusChangeListener { _, newFocus ->
+                if (newFocus != null) {
+                    val pos = rv.getChildAdapterPosition(newFocus)
+                    if (pos != RecyclerView.NO_POSITION) lastFocusedRow = pos
+                }
+            }
+        }
+        rebuild(focusRow = if (DeviceMode.isTv) lastFocusedRow else -1)
         return v
     }
 
@@ -36,7 +58,7 @@ class SettingsFragment : Fragment() {
         super.onResume()
         val main = activity as? MainActivity
         val isRail = main?.isRailActive() == true
-        rebuild(focusRow = if (DeviceMode.isTv && !isRail) 1 else -1)
+        rebuild(focusRow = if (DeviceMode.isTv && !isRail) lastFocusedRow else -1)
     }
 
     override fun onHiddenChanged(hidden: Boolean) {
@@ -54,7 +76,7 @@ class SettingsFragment : Fragment() {
                 rebuild(focusRow = -1)
             } else {
                 (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
-                rebuild(focusRow = if (DeviceMode.isTv) 1 else -1)
+                rebuild(focusRow = if (DeviceMode.isTv) lastFocusedRow else -1)
             }
         }
     }
@@ -69,10 +91,11 @@ class SettingsFragment : Fragment() {
             val child = list.getChildAt(i)
             if (child != null && child.isFocusable && child.requestFocus()) return true
         }
-        val vh = list.findViewHolderForAdapterPosition(1)
+        // Ưu tiên hàng người dùng đang thao tác gần nhất, không còn hard-code hàng 1
+        val vh = list.findViewHolderForAdapterPosition(lastFocusedRow)
         if (vh?.itemView?.requestFocus() == true) return true
         list.post {
-            val vh2 = list.findViewHolderForAdapterPosition(1)
+            val vh2 = list.findViewHolderForAdapterPosition(lastFocusedRow)
             if (vh2?.itemView?.requestFocus() != true) {
                 for (i in 0 until adapter.itemCount) {
                     val r = list.findViewHolderForAdapterPosition(i)?.itemView
@@ -100,7 +123,8 @@ class SettingsFragment : Fragment() {
     private fun rebuild(focusRow: Int = -1) {
         if (!isAdded) return
         val ctx = requireContext()
-        val mvLayout = ctx.getSharedPreferences("mv", android.content.Context.MODE_PRIVATE).getInt("layout", 2)
+        // M3: đã bỏ đọc prefs "mv"/layout ở đây — biến mvLayout cũ không bao giờ
+        // được dùng (tuỳ chọn bố cục MultiView trong Cài đặt là code chết).
         adapter.submit(
             listOf(
                 SettingsAdapter.Item.Section(getString(R.string.settings_section_playback)),
@@ -136,7 +160,7 @@ class SettingsFragment : Fragment() {
                 SettingsAdapter.Item.Section(getString(R.string.settings_section_storage)),
                 SettingsAdapter.Item.Row(
                     R.drawable.ic_info, getString(R.string.settings_storage_usage),
-                    value = storageSummary(ctx), chevron = false
+                    value = storageSummaryText ?: "Đang tính…", chevron = false
                 ) { showStorageDialog() },
                 SettingsAdapter.Item.Row(
                     R.drawable.ic_quality, getString(R.string.settings_image_cap),
@@ -152,9 +176,15 @@ class SettingsFragment : Fragment() {
             )
         )
 
+        // H4: đo dung lượng ở luồng nền (hàm tự quyết định có cần đo lại không)
+        requestStorageSummary()
+
         if (focusRow >= 0 && DeviceMode.isTv) {
             val list = view?.findViewById<RecyclerView>(R.id.settingsList)
             list?.post {
+                // Focus đã sống sót qua lần submit này (kể cả khi người dùng vừa di chuyển
+                // sang hàng khác trong lúc rebuild chạy nền) -> không kéo giật về hàng cũ.
+                if (list.findFocus() != null) return@post
                 val vh = list.findViewHolderForAdapterPosition(focusRow)
                 if (vh?.itemView?.requestFocus() == true) return@post
                 list.scrollToPosition(focusRow)
@@ -177,31 +207,64 @@ class SettingsFragment : Fragment() {
         "Đệm " + StorageManager.format(u.totalCacheBytes) + " · APK " + StorageManager.format(u.apkBytes)
     } catch (_: Exception) { "" }
 
+    /**
+     * H4 — Đo dung lượng trên Dispatchers.IO (trước đây measure() duyệt đệ quy
+     * cacheDir + DB ngay trên main thread mỗi lần mở/quay lại Cài đặt -> giật).
+     * Xong thì cập nhật biến tóm tắt và rebuild (không đổi focus) để hàng hiển thị số thật.
+     */
+    private fun requestStorageSummary() {
+        if (storageMeasureJob?.isActive == true) return
+        // Số liệu còn tươi (< 30s) thì dùng lại, khỏi đo liên tục mỗi lần rebuild
+        if (storageSummaryText != null &&
+            System.currentTimeMillis() - storageMeasuredAt < 30_000L) return
+        val appCtx = context?.applicationContext ?: return
+        storageMeasureJob = lifecycleScope.launch {
+            val text = withContext(Dispatchers.IO) { storageSummary(appCtx) }
+            if (!isAdded) return@launch
+            storageSummaryText = text
+            storageMeasuredAt = System.currentTimeMillis()
+            rebuild()
+        }
+    }
+
     private fun showStorageDialog() {
         val ctx = requireContext()
-        val u = try { StorageManager.measure(ctx) } catch (_: Exception) { null }
-        val msg = if (u == null) "Không đo được dung lượng." else buildString {
-            append("APK đã cài: ").append(StorageManager.format(u.apkBytes)).append("\n")
-            append("Bộ nhớ đệm ảnh: ").append(StorageManager.format(u.imageCacheBytes)).append("\n")
-            append("Dữ liệu API (HTTP): ").append(StorageManager.format(u.httpCacheBytes)).append("\n")
-            append("Đệm khác (JSON, EPG…): ").append(StorageManager.format(u.otherCacheBytes)).append("\n")
-            append("Lịch sử xem (cơ sở dữ liệu): ").append(StorageManager.format(u.historyDbBytes)).append("\n\n")
-            append("Xóa bộ nhớ đệm không làm mất lịch sử xem và cài đặt.")
-        }
+        val appCtx = ctx.applicationContext
         dialog?.dismiss()
         val dlg = AlertDialog.Builder(ctx, R.style.Theme_KenhLive_Dialog)
             .setTitle(getString(R.string.settings_section_storage))
-            .setMessage(msg)
+            .setMessage("Đang tính…")
             .setPositiveButton(getString(R.string.settings_storage_clear_all)) { _, _ ->
-                StorageManager.clearAllCaches(ctx)
-                Toast.makeText(ctx, getString(R.string.settings_clear_cache_done), Toast.LENGTH_SHORT).show()
-                rebuild()
+                // H4: xoá cache ở luồng nền, xong mới báo + đo lại trên Main
+                lifecycleScope.launch {
+                    withContext(Dispatchers.IO) { StorageManager.clearAllCaches(appCtx) }
+                    if (!isAdded) return@launch
+                    Toast.makeText(ctx, getString(R.string.settings_clear_cache_done), Toast.LENGTH_SHORT).show()
+                    storageSummaryText = null
+                    rebuild()
+                }
             }
             .setNegativeButton("Đóng", null)
             .setOnDismissListener { dialog = null }
             .create()
         dialog = dlg
         dlg.show()
+        // H4: đo chi tiết ở luồng nền rồi điền vào dialog đang mở
+        lifecycleScope.launch {
+            val u = withContext(Dispatchers.IO) {
+                try { StorageManager.measure(appCtx) } catch (_: Exception) { null }
+            }
+            if (!isAdded || !dlg.isShowing) return@launch
+            val msg = if (u == null) "Không đo được dung lượng." else buildString {
+                append("APK đã cài: ").append(StorageManager.format(u.apkBytes)).append("\n")
+                append("Bộ nhớ đệm ảnh: ").append(StorageManager.format(u.imageCacheBytes)).append("\n")
+                append("Dữ liệu API (HTTP): ").append(StorageManager.format(u.httpCacheBytes)).append("\n")
+                append("Đệm khác (JSON, EPG…): ").append(StorageManager.format(u.otherCacheBytes)).append("\n")
+                append("Lịch sử xem (cơ sở dữ liệu): ").append(StorageManager.format(u.historyDbBytes)).append("\n\n")
+                append("Xóa bộ nhớ đệm không làm mất lịch sử xem và cài đặt.")
+            }
+            dlg.setMessage(msg)
+        }
     }
 
     private fun pickImageCap() {
@@ -211,7 +274,7 @@ class SettingsFragment : Fragment() {
         singleChoice(names, cur) { i ->
             StorageManager.setImageCapMb(requireContext(), opts[i])
             Toast.makeText(requireContext(), getString(R.string.settings_cap_restart), Toast.LENGTH_SHORT).show()
-            rebuild()
+            rebuild(focusRow = if (DeviceMode.isTv) lastFocusedRow else -1)
         }
     }
 
@@ -222,11 +285,76 @@ class SettingsFragment : Fragment() {
         singleChoice(names, cur) { i ->
             StorageManager.setHttpCapMb(requireContext(), opts[i])
             Toast.makeText(requireContext(), getString(R.string.settings_cap_restart), Toast.LENGTH_SHORT).show()
-            rebuild()
+            rebuild(focusRow = if (DeviceMode.isTv) lastFocusedRow else -1)
         }
     }
 
+    /**
+     * M2 — Màn "Trạng thái nguồn dữ liệu" hiển thị dữ liệu CẦU DAO THẬT từ
+     * [ApiHealth.snapshot] (trước đây snapshot() là code chết, màn này chỉ chạy
+     * probe tuần tự nên nguồn đang mở mạch luôn bị báo ❌ kể cả khi đã hồi phục,
+     * và không hề cho biết host nào đang bị ngắt mạch).
+     * Hiển thị ngay lập tức; nút "Kiểm tra ngay" mới chạy probe chủ động.
+     *
+     * Lưu ý: thời gian nghỉ còn lại là ƯỚC TÍNH từ thời điểm lỗi gần nhất +
+     * 120s (khớp ApiHealth.COOLDOWN_MS — hằng số đang private, xem báo cáo audit:
+     * đề xuất ApiHealth bổ sung hàm circuitRemainingMs(host) để lấy số chính xác).
+     */
     private fun checkApiHealth() {
+        val ctx = requireContext()
+        val entries = ApiHealth.snapshot().associateBy { it.host }
+        val timeFmt = java.text.SimpleDateFormat("HH:mm", java.util.Locale.US)
+        var openCount = 0
+        val msg = buildString {
+            ApiHealthChecker.SOURCES.forEach { src ->
+                val host = ApiHealth.hostOf(src.url)
+                val e = entries[host]
+                val circuitOpen = e != null && ApiHealth.isCircuitOpen(host)
+                if (circuitOpen) openCount++
+                append(
+                    when {
+                        e == null -> "⚪ "
+                        circuitOpen -> "🔴 "
+                        e.ok -> "🟢 "
+                        else -> "🟡 "
+                    }
+                ).append(src.name).append("\n")
+                when {
+                    e == null -> append("   Chưa có dữ liệu (app chưa gọi nguồn này)\n")
+                    circuitOpen -> {
+                        val remainSec = ((e.atMs + 120_000L - System.currentTimeMillis()) / 1000)
+                            .coerceAtLeast(0)
+                        append("   Cầu dao ĐANG MỞ — lỗi liên tiếp ${e.consecutiveFails} lần")
+                        append(", tự thử lại sau ~${remainSec}s (ước tính)")
+                        e.error?.takeIf { it.isNotBlank() }?.let { append("\n   Lỗi gần nhất: $it") }
+                        append("\n")
+                    }
+                    e.ok -> append("   OK — ${e.latencyMs} ms · lúc ${timeFmt.format(java.util.Date(e.atMs))}\n")
+                    else -> {
+                        append("   Lỗi gần nhất (${e.consecutiveFails} lần liên tiếp) · lúc ${timeFmt.format(java.util.Date(e.atMs))}")
+                        e.error?.takeIf { it.isNotBlank() }?.let { append("\n   $it") }
+                        append("\n")
+                    }
+                }
+            }
+        }
+        dialog?.dismiss()
+        val dlg = AlertDialog.Builder(ctx, R.style.Theme_KenhLive_Dialog)
+            .setTitle(
+                getString(R.string.settings_api_health) +
+                    if (openCount > 0) " — $openCount nguồn đang ngắt mạch" else ""
+            )
+            .setMessage(msg.trim())
+            .setPositiveButton("Đóng", null)
+            .setNeutralButton("Kiểm tra ngay") { _, _ -> runLiveProbe() }
+            .setOnDismissListener { dialog = null }
+            .create()
+        dialog = dlg
+        dlg.show()
+    }
+
+    /** Probe chủ động từng nguồn (hành vi cũ) — chỉ chạy khi người dùng bấm "Kiểm tra ngay". */
+    private fun runLiveProbe() {
         val ctx = requireContext()
         Toast.makeText(ctx, getString(R.string.settings_api_checking), Toast.LENGTH_SHORT).show()
         lifecycleScope.launch {
@@ -257,7 +385,7 @@ class SettingsFragment : Fragment() {
         singleChoice(names, cur) { i ->
             EnhanceSettings.setVideoQuality(requireContext(), i)
             Toast.makeText(requireContext(), getString(R.string.player_video_changed, names[i]), Toast.LENGTH_SHORT).show()
-            rebuild(focusRow = 1)
+            rebuild(focusRow = lastFocusedRow)
         }
     }
 
@@ -270,22 +398,13 @@ class SettingsFragment : Fragment() {
         singleChoice(names, cur) { i ->
             EnhanceSettings.setAudioMode(requireContext(), i)
             Toast.makeText(requireContext(), getString(R.string.player_audio_changed, names[i]), Toast.LENGTH_SHORT).show()
-            rebuild(focusRow = 2)
+            rebuild(focusRow = lastFocusedRow)
         }
     }
 
-    private fun pickMvLayout(current: Int) {
-        val names = arrayOf(getString(R.string.mv_layout_2), getString(R.string.mv_layout_4))
-        singleChoice(names, if (current == 4) 1 else 0) { i ->
-            if (i == 1 && KenhLiveApp.lowRam) {
-                Toast.makeText(requireContext(), getString(R.string.mv_lowram_lock), Toast.LENGTH_SHORT).show()
-            } else {
-                requireContext().getSharedPreferences("mv", android.content.Context.MODE_PRIVATE)
-                    .edit().putInt("layout", if (i == 1) 4 else 2).apply()
-            }
-            rebuild(focusRow = 4)
-        }
-    }
+    // M3: pickMvLayout() đã bị xoá — tuỳ chọn bố cục MultiView trong Cài đặt là code
+    // chết (không row nào gọi tới). MultiViewActivity vẫn tự đọc prefs "mv"/layout
+    // như cũ nếu sau này nối lại UI; khi đó chỉ cần thêm row gọi lại hàm chọn.
 
     private fun singleChoice(names: Array<String>, checked: Int, onPick: (Int) -> Unit) {
         dialog?.dismiss()
@@ -310,11 +429,20 @@ class SettingsFragment : Fragment() {
 
     private fun clearCache() {
         val ctx = requireContext()
-        coil.Coil.imageLoader(ctx).memoryCache?.clear()
-        coil.Coil.imageLoader(ctx).diskCache?.clear()
-        Http.get().cache?.evictAll()
-        com.kenhlive.tv.phim.NguoncRepository.clearCache()
-        Toast.makeText(ctx, getString(R.string.settings_clear_cache_done), Toast.LENGTH_SHORT).show()
+        val appCtx = ctx.applicationContext
+        // H4: clear disk cache là thao tác IO — chạy nền, xong mới toast + đo lại.
+        lifecycleScope.launch {
+            withContext(Dispatchers.IO) {
+                coil.Coil.imageLoader(appCtx).memoryCache?.clear()
+                coil.Coil.imageLoader(appCtx).diskCache?.clear()
+                Http.get().cache?.evictAll()
+                com.kenhlive.tv.phim.NguoncRepository.clearCache()
+            }
+            if (!isAdded) return@launch
+            Toast.makeText(ctx, getString(R.string.settings_clear_cache_done), Toast.LENGTH_SHORT).show()
+            storageSummaryText = null
+            rebuild()
+        }
     }
 
     override fun onDestroyView() {

@@ -63,7 +63,11 @@ object SocoliveParser {
                         blvLevel = level,
                         score = score,
                         focusCount = focus,
-                        notice = notice
+                        notice = notice,
+                        // Phòng đã qua lọc liveStatus == 1 ở trên = đang phát thật:
+                        // tự gán cờ live của chính Socolive để meta của đài phụ
+                        // không bao giờ ghi đè/hạ trạng thái live của phòng này.
+                        isLiveGame = true
                     )
                 )
             }

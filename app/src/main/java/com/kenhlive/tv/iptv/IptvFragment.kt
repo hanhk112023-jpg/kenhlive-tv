@@ -338,9 +338,13 @@ class IptvFragment : Fragment() {
                 setupGroups(emptyList())
                 setupGrid(emptyList())
             } else if (fresh.isNotEmpty() && fresh != allChannels) {
+                // BUG cũ: focusFirst tính SAU khi gán allChannels = fresh nên luôn = false
+                // (trừ khi fresh rỗng) -> dữ liệu mạng về mà không bao giờ xin focus.
+                // Phải chụp trạng thái rỗng TRƯỚC khi gán.
+                val wasEmpty = allChannels.isEmpty()
                 allChannels = fresh
                 emptyText.visibility = View.GONE
-                populateUi(fresh, focusFirst = allChannels.isEmpty())
+                populateUi(fresh, focusFirst = wasEmpty)
             }
 
             EpgRepository.initEpg(requireContext())
@@ -561,7 +565,9 @@ class IptvFragment : Fragment() {
 
     private fun scheduleHeroPreview(ch: IptvChannel) {
         previewJob?.cancel()
-        if (ch.url.isBlank() || DeviceMode.lowRam) {
+        // H1: điện thoại KHÔNG tự phát video preview (tốn data di động khi người dùng
+        // chưa hề chọn kênh) — chỉ hiện logo + EPG tĩnh. TV giữ nguyên hành vi cũ.
+        if (ch.url.isBlank() || DeviceMode.lowRam || DeviceMode.isPhone) {
             stopHeroPreview()
             return
         }
@@ -667,6 +673,12 @@ class IptvFragment : Fragment() {
             } else {
                 (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
                 currentlyFocusedChannel?.let { scheduleHeroPreview(it) }
+                // Tab được hiện lại bằng show/hide nên KHÔNG có onResume: phải chủ động xin focus
+                // cho kênh (ưu tiên kênh đang xem dở qua ensureIptvFocus) khi list đã có dữ liệu.
+                // Nếu dữ liệu chưa về, populateUi(focusFirst) sẽ xin focus khi bind xong.
+                if (DeviceMode.isTv && displayedChannels.isNotEmpty()) {
+                    view?.post { ensureIptvFocus() }
+                }
             }
         }
     }
@@ -681,22 +693,25 @@ class IptvFragment : Fragment() {
 
     fun ensureIptvFocus(): Boolean {
         if (!isAdded || isHidden) return false
-        if (this::gridList.isInitialized) {
-            val card0 = gridList.findViewHolderForAdapterPosition(0)?.itemView
-                ?: gridList.layoutManager?.findViewByPosition(0)
-            if (card0 != null && card0.requestFocus()) return true
+        // Ưu tiên kênh đang xem dở (lastFocusedChannelIndex) thay vì luôn nhảy về kênh 0
+        val targetPos = if (lastFocusedChannelIndex in displayedChannels.indices) lastFocusedChannelIndex else 0
+        if (this::gridList.isInitialized && displayedChannels.isNotEmpty()) {
+            val card = gridList.findViewHolderForAdapterPosition(targetPos)?.itemView
+                ?: gridList.layoutManager?.findViewByPosition(targetPos)
+            if (card != null && card.requestFocus()) return true
+            // Kênh đích chưa layout: cuộn tới rồi thử lại ở frame sau
+            gridList.scrollToPosition(targetPos)
+            gridList.post {
+                val c = gridList.findViewHolderForAdapterPosition(targetPos)?.itemView
+                    ?: gridList.layoutManager?.findViewByPosition(targetPos)
+                c?.requestFocus()
+            }
+            return false
         }
         if (this::groupList.isInitialized) {
             val grp0 = groupList.findViewHolderForAdapterPosition(0)?.itemView
                 ?: groupList.layoutManager?.findViewByPosition(0)
             if (grp0 != null && grp0.requestFocus()) return true
-        }
-        if (this::gridList.isInitialized) {
-            gridList.post {
-                val c = gridList.findViewHolderForAdapterPosition(0)?.itemView
-                    ?: gridList.layoutManager?.findViewByPosition(0)
-                c?.requestFocus()
-            }
         }
         return false
     }

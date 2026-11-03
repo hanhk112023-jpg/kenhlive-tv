@@ -2,13 +2,13 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/cardIptvRoot"
     android:layout_width="match_parent"
-    android:layout_height="140dp"
+    android:layout_height="@dimen/kl2_iptv_card_h"
     android:orientation="vertical"
     android:layout_marginLeft="6dp"
     android:layout_marginRight="6dp"
     android:layout_marginTop="6dp"
     android:layout_marginBottom="6dp"
-    android:background="@drawable/bg_iptv_channel_card"
+    android:background="@drawable/kl2_channel_card"
     android:foreground="@drawable/fg_iptv_focus"
     android:padding="6dp"
     android:descendantFocusability="blocksDescendants"
@@ -18,7 +18,7 @@
     <!-- Cụm trên: Logo Kênh TV hoàn toàn thông thoáng -->
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="82dp"
+        android:layout_height="88dp"
         android:background="@drawable/bg_iptv_card_logo_box"
         android:padding="6dp">
 
@@ -57,7 +57,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="#FFFFFF"
-            android:textSize="13.5sp"
+            android:textSize="14sp"
             android:textStyle="bold"
             android:maxLines="1"
             android:ellipsize="end"

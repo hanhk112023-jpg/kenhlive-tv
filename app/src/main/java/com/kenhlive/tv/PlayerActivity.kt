@@ -142,6 +142,12 @@ class PlayerActivity : AppCompatActivity() {
     private var startPositionMs: Long = 0L
     private var hasSeekedToStart: Boolean = false
     private var autoNextBusy: Boolean = false
+    // Server đang phát (để auto-next chỉ nhảy tập kế của CÙNG server). Nơi mở có thể truyền
+    // extra "server_name"; nếu không có, player tự nhận diện bằng URL luồng đang phát.
+    private var currentServerName: String = ""
+    // Vị trí startPositionMs hiện tại là do app xuống nền giữa chừng (không phải mở từ lịch sử):
+    // trường hợp này luôn seek lại đúng chỗ, kể cả khi đã qua 90% (xem nhánh STATE_READY).
+    private var positionFromBackground: Boolean = false
 
     // Quick Channel OSD Banner
     private var quickChannelOsd: View? = null
@@ -261,6 +267,7 @@ class PlayerActivity : AppCompatActivity() {
         episodeSlug = intent.getStringExtra("episode_slug").orEmpty()
         episodeTitle = intent.getStringExtra("episode_title").orEmpty()
         posterUrl = intent.getStringExtra("poster_url").orEmpty()
+        currentServerName = intent.getStringExtra("server_name").orEmpty()
         startPositionMs = intent.getLongExtra("start_position_ms", 0L)
         if (filmSlug.isNotBlank()) {
             isVodMode = true
@@ -948,18 +955,39 @@ class PlayerActivity : AppCompatActivity() {
                 val detail = withContext(Dispatchers.IO) {
                     com.kenhlive.tv.phim.NguoncRepository.fetchFilmDetail(filmSlug, this@PlayerActivity)
                 }
-                var nextEp: com.kenhlive.tv.phim.NguoncEpisodeItem? = null
-                var foundCurrent = false
-                for (server in detail?.episodes.orEmpty()) {
-                    val idx = server.items.indexOfFirst { it.slug == episodeSlug }
-                    if (idx >= 0) {
-                        foundCurrent = true
-                        nextEp = server.items.getOrNull(idx + 1)
-                        break
+                // v7.13: CHỈ nhảy sang tập kế của CÙNG server đang phát. Slug tập ("tap-1", "tap-2"...)
+                // thường trùng giữa các server (Vietsub/Thuyết Minh) nên cách cũ — lấy server đầu tiên
+                // chứa slug — có thể nhảy nhầm bản. Nhận diện server đang phát theo thứ tự tin cậy:
+                //  1) tên server (extra "server_name" / đã chốt từ lần auto-next trước);
+                //  2) URL luồng đang phát khớp với m3u8/embed của tập hiện tại trong server;
+                //  3) slug chỉ xuất hiện ở đúng 1 server (không nhập nhằng).
+                // Không xác định được server -> dừng ở cuối tập hiện tại, không nhảy bừa.
+                val servers = detail?.episodes.orEmpty()
+                var currentServer: com.kenhlive.tv.phim.NguoncServer? = null
+                if (currentServerName.isNotBlank()) {
+                    currentServer = servers.firstOrNull { srv ->
+                        srv.serverName.equals(currentServerName, ignoreCase = true) &&
+                            srv.items.any { it.slug == episodeSlug }
                     }
                 }
-                val next = nextEp
-                if (!foundCurrent || next == null) {
+                if (currentServer == null) {
+                    currentServer = servers.firstOrNull { srv ->
+                        srv.items.any { it.slug == episodeSlug && (it.m3u8 == url || it.embed == url) }
+                    }
+                }
+                if (currentServer == null) {
+                    val slugServers = servers.filter { srv -> srv.items.any { it.slug == episodeSlug } }
+                    if (slugServers.size == 1) currentServer = slugServers[0]
+                }
+                val srv = currentServer
+                val idx = srv?.items?.indexOfFirst { it.slug == episodeSlug } ?: -1
+                if (srv == null || idx < 0) {
+                    Toast.makeText(this@PlayerActivity, "Đã hết tập (không xác định được server đang xem)", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+                currentServerName = srv.serverName
+                val next = srv.items.getOrNull(idx + 1)
+                if (next == null) {
                     Toast.makeText(this@PlayerActivity, "Đã hết tập của phim này", Toast.LENGTH_SHORT).show()
                     return@launch
                 }
@@ -1205,10 +1233,22 @@ class PlayerActivity : AppCompatActivity() {
                             findViewById<View>(R.id.bufferBox)?.visibility = View.GONE
                             if (isVodMode && startPositionMs > 1000L && !hasSeekedToStart) {
                                 hasSeekedToStart = true
-                                player?.seekTo(startPositionMs)
-                                val m = startPositionMs / 60000L
-                                val s = (startPositionMs % 60000L) / 1000L
-                                Toast.makeText(this@PlayerActivity, String.format(Locale.US, "Tiếp tục phát từ %02d:%02d", m, s), Toast.LENGTH_SHORT).show()
+                                val dur = player?.duration ?: 0L
+                                // Tập đã xem gần hết (>= 90% hoặc còn < 10s) mà mở lại từ lịch sử/danh sách
+                                // -> phát lại từ đầu, tránh seek tới sát cuối rồi STATE_ENDED/tự nhảy tập ngay.
+                                // Ngoại lệ: vị trí do app xuống nền giữa chừng thì luôn quay lại đúng chỗ đó.
+                                val alreadyFinished = !positionFromBackground && dur > 0L &&
+                                    (startPositionMs * 10L >= dur * 9L || dur - startPositionMs < 10_000L)
+                                positionFromBackground = false
+                                if (alreadyFinished) {
+                                    startPositionMs = 0L
+                                    Toast.makeText(this@PlayerActivity, "Tập này đã xem hết — phát lại từ đầu", Toast.LENGTH_SHORT).show()
+                                } else {
+                                    player?.seekTo(startPositionMs)
+                                    val m = startPositionMs / 60000L
+                                    val s = (startPositionMs % 60000L) / 1000L
+                                    Toast.makeText(this@PlayerActivity, String.format(Locale.US, "Tiếp tục phát từ %02d:%02d", m, s), Toast.LENGTH_SHORT).show()
+                                }
                             }
                         } else if (state == Player.STATE_BUFFERING) {
                             handler.removeCallbacks(autoRecoveryRunnable)
@@ -1785,6 +1825,17 @@ class PlayerActivity : AppCompatActivity() {
         try { loudnessEnhancer?.release() } catch (_: Exception) {}
         loudnessEnhancer = null
         audioFx.detach()
+        // v7.13: trước khi release player, chốt vị trí đang xem vào startPositionMs và mở lại
+        // cờ seek — nếu không, onStart tạo lại player sẽ phát từ vị trí trong Intent ban đầu
+        // (hasSeekedToStart vẫn true) khiến người dùng mất chỗ xem dở khi app xuống nền.
+        if (isVodMode) {
+            val pos = player?.currentPosition ?: 0L
+            if (pos > 1000L) {
+                startPositionMs = pos
+                hasSeekedToStart = false
+                positionFromBackground = true
+            }
+        }
         player?.stop()
         player?.clearMediaItems()
         player?.release()

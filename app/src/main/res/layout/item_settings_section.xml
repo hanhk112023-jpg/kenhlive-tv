@@ -9,8 +9,8 @@
 
     <View
         android:layout_width="4dp"
-        android:layout_height="16dp"
-        android:background="@drawable/accent_bar"
+        android:layout_height="18dp"
+        android:background="@drawable/kl2_section_bar"
         android:layout_marginRight="9dp" />
 
     <TextView
@@ -18,5 +18,6 @@
         style="@style/KL.Text.Section"
         android:layout_width="0dp"
         android:layout_weight="1"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:letterSpacing="0.06" />
 </LinearLayout>

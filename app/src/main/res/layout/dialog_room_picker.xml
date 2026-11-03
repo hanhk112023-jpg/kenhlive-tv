@@ -4,27 +4,49 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
+    android:background="@drawable/kl2_dialog_bg"
     android:paddingLeft="24dp"
     android:paddingRight="24dp"
     android:paddingTop="22dp"
     android:paddingBottom="16dp">
 
-    <TextView
-        android:id="@+id/dialogTitle"
-        style="@style/KL.Text.Section"
+    <!-- Tiêu đề kèm thanh nhấn chuyển sắc kl2 -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="18sp"
-        android:maxLines="2"
-        android:ellipsize="end" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
 
-    <TextView
-        android:id="@+id/dialogLeague"
-        style="@style/KL.Text.Meta"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textColor="@color/kl_brand"
-        android:layout_marginTop="4dp" />
+        <View
+            android:layout_width="4dp"
+            android:layout_height="34dp"
+            android:background="@drawable/kl2_section_bar"
+            android:layout_marginRight="12dp" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/dialogTitle"
+                style="@style/KL.Text.Section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textSize="18sp"
+                android:maxLines="2"
+                android:ellipsize="end" />
+
+            <TextView
+                android:id="@+id/dialogLeague"
+                style="@style/KL.Text.Meta"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/kl_brand"
+                android:layout_marginTop="4dp" />
+        </LinearLayout>
+    </LinearLayout>
 
     <View
         android:layout_width="match_parent"

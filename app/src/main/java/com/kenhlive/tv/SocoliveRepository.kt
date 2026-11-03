@@ -78,8 +78,18 @@ data class ScheduleMatch(
     val anchors: List<AnchorInfo>,
     val leagueCrest: String = ""
 ) {
-    val isLive: Boolean get() = DataNormalizer.isMatchLive(matchTimeMs, hasRoom)
-    val isFinished: Boolean get() = DataNormalizer.isMatchFinished(matchTimeMs)
+    // Ưu tiên dữ kiện thật từ registry đa nguồn (trạng thái do chính các nhà đài báo,
+    // khớp theo cặp đội + ngày/giờ đá) trước khi suy luận theo đồng hồ.
+    val isLive: Boolean get() {
+        val meta = com.kenhlive.tv.sports.TeamLogoRegistry.findMatchMeta(host, guest, matchTimeMs)
+        if (meta != null) return meta.isLive
+        return DataNormalizer.isMatchLive(matchTimeMs, hasRoom)
+    }
+    val isFinished: Boolean get() {
+        val meta = com.kenhlive.tv.sports.TeamLogoRegistry.findMatchMeta(host, guest, matchTimeMs)
+        if (meta != null && meta.isLive) return false
+        return DataNormalizer.isMatchFinished(matchTimeMs)
+    }
     val isUpcoming: Boolean get() = DataNormalizer.isMatchUpcoming(matchTimeMs)
     val hasRoom: Boolean get() = anchors.any { it.roomNum.isNotBlank() }
 }

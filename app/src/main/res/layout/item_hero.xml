@@ -41,7 +41,7 @@
             android:paddingTop="5dp"
             android:paddingBottom="5dp"
             android:textColor="#FFFFFF"
-            android:textSize="18sp"
+            android:textSize="20sp"
             android:textStyle="bold"
             android:fontFamily="@font/oswald" />
 
@@ -187,7 +187,7 @@
                 <TextView
                     android:id="@+id/heroScoreText"
                     android:layout_width="wrap_content"
-                    android:layout_height="36dp"
+                    android:layout_height="40dp"
                     android:minWidth="64dp"
                     android:layout_marginLeft="14dp"
                     android:layout_marginRight="14dp"
@@ -195,7 +195,7 @@
                     android:background="@drawable/bg_score_pill_live"
                     android:textColor="#FFD700"
                     android:fontFamily="@font/oswald"
-                    android:textSize="18sp"
+                    android:textSize="20sp"
                     android:textStyle="bold"
                     android:letterSpacing="0.06"
                     android:paddingLeft="12dp"
@@ -246,7 +246,7 @@
                 android:hyphenationFrequency="none"
                 android:ellipsize="end"
                 android:textColor="#FFFFFF"
-                android:textSize="23sp"
+                android:textSize="25sp"
                 android:textStyle="bold"
                 android:shadowColor="#FF000000"
                 android:shadowDy="3"
@@ -285,8 +285,8 @@
                     android:background="@drawable/bg_hero_btn_watch"
                     android:paddingLeft="20dp"
                     android:paddingRight="20dp"
-                    android:paddingTop="9dp"
-                    android:paddingBottom="9dp"
+                    android:paddingTop="11dp"
+                    android:paddingBottom="11dp"
                     android:clickable="true"
                     android:focusable="true">
 
@@ -318,8 +318,8 @@
                     android:background="@drawable/bg_hero_btn_details"
                     android:paddingLeft="18dp"
                     android:paddingRight="18dp"
-                    android:paddingTop="9dp"
-                    android:paddingBottom="9dp"
+                    android:paddingTop="11dp"
+                    android:paddingBottom="11dp"
                     android:clickable="true"
                     android:focusable="true">
 
