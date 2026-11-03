@@ -24,8 +24,8 @@ class BlvCardsAdapter(
     /** Vị trí của hàng BLV trong adapter cha (SportAdapter) — do BlvRowVH gán khi bind. */
     var rowPos: Int = -1
 
-    /** Điều hướng trái/phải ở biên hàng (FocusKit.rowCardKey) — do BlvRowVH gán. */
-    var keyHandler: ((rowPos: Int, idx: Int, size: Int) -> Boolean)? = null
+    /** Điều hướng trong hàng (FocusKit.rowCardKey) — do BlvRowVH gán, cùng kiểu với MatchCardsAdapter. */
+    var keyHandler: ((rowPos: Int, idx: Int, size: Int) -> android.view.View.OnKeyListener)? = null
 
     // Khôi phục focus sau refresh (port từ bản vá v7.9 của MatchCardsAdapter):
     // hàng BLV trước đây không nhớ/khôi phục gì nên mỗi lần LiveFragment rebuild là mất focus.
@@ -47,7 +47,7 @@ class BlvCardsAdapter(
 
     override fun submitList(list: List<LiveRoom>?, commitCallback: Runnable?) {
         val rv = hostRv
-        var focusedRoom: Int? = null
+        var focusedRoom: String? = null
         var focusedPos = -1
         if (rv != null && rv.hasFocus()) {
             val f = rv.findFocus()
@@ -66,7 +66,7 @@ class BlvCardsAdapter(
         }
     }
 
-    private fun restoreFocusAfterSubmit(rv: RecyclerView, focusedRoom: Int?, focusedPos: Int) {
+    private fun restoreFocusAfterSubmit(rv: RecyclerView, focusedRoom: String?, focusedPos: Int) {
         if (rv.findFocus() != null) return
         var target = -1
         if (focusedRoom != null) {
@@ -147,14 +147,7 @@ class BlvCardsAdapter(
             error(R.drawable.logo_placeholder)
         }
 
-        h.root.setOnKeyListener { _, keyCode, event ->
-            if (event.action != android.view.KeyEvent.ACTION_DOWN) return@setOnKeyListener false
-            if (keyCode != android.view.KeyEvent.KEYCODE_DPAD_LEFT &&
-                keyCode != android.view.KeyEvent.KEYCODE_DPAD_RIGHT) return@setOnKeyListener false
-            val idx = h.bindingAdapterPosition
-            if (idx == RecyclerView.NO_POSITION) return@setOnKeyListener false
-            keyHandler?.invoke(rowPos, idx, itemCount) ?: false
-        }
+        keyHandler?.let { h.root.setOnKeyListener(it(rowPos, pos, itemCount)) }
 
         h.root.setOnFocusChangeListener { v, hasFocus ->
             if (hasFocus) {
