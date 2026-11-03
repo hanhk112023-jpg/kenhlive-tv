@@ -1218,8 +1218,12 @@ class PhimFragment : Fragment() {
         val ctx = context ?: return
         try {
             val epTitle = if (episode.name.all { it.isDigit() }) "Tập ${episode.name}" else episode.name
+            // Ưu tiên native: m3u8 sẵn có → link tách từ embed bọc (?url=<m3u8>, giống iOS)
+            // → embed tự nó là link HLS. Chỉ khi không có đường nào mới mở trình xem web.
+            val unwrapped = unwrapDirectM3u8(episode.embed)
             val directM3u8 = when {
                 episode.m3u8.isNotBlank() -> episode.m3u8
+                unwrapped.isNotBlank() -> unwrapped
                 episode.embed.contains(".m3u8", ignoreCase = true) -> episode.embed
                 else -> ""
             }

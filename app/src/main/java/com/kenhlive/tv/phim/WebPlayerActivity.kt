@@ -40,6 +40,38 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.util.Locale
+import android.net.Uri
+import android.os.Message
+import java.io.ByteArrayInputStream
+
+/**
+ * Tách link HLS trực tiếp khỏi URL embed: một số server bọc link phát trong tham số
+ * "?url=<m3u8>" của trang player. Tách được thì phát native ngay, khỏi mở WebView —
+ * cùng logic với iOS (VodWebPlayerView.directHlsUrl / extractDirectM3u8).
+ */
+internal fun unwrapDirectM3u8(embed: String): String {
+    val e = embed.trim()
+    if (e.isEmpty()) return ""
+    if (e.startsWith("http") && e.contains(".m3u8", ignoreCase = true) && !e.contains("?url=", ignoreCase = true)) {
+        return e
+    }
+    return try {
+        val q = Uri.parse(e).getQueryParameter("url").orEmpty()
+        if (q.contains(".m3u8", ignoreCase = true)) q else ""
+    } catch (_: Throwable) {
+        ""
+    }
+}
+
+/** Domain quảng cáo/tracker thuần (không phải CDN dùng chung) — chặn ở tầng mạng của WebView. */
+private val AD_HOSTS = listOf(
+    "doubleclick.net", "googlesyndication.com", "googleadservices.com", "adservice.google.com",
+    "popads.net", "popcash.net", "exoclick.com", "exosrv.com", "juicyads.com", "adcash.com",
+    "propellerads.com", "clickadu.com", "adsterra.com", "hilltopads.com", "onclickmax.com",
+    "mgid.com", "outbrain.com", "taboola.com", "revcontent.com", "smartadserver.com",
+    "a-ads.com", "trafficjunky.com", "tsyndicate.com", "adskeeper.com", "marketgid.com",
+    "adnxs.com", "rubiconproject.com", "pubmatic.com", "openx.net", "adsrvr.org", "bidvertiser.com"
+)
 
 /**
  * WebPlayerActivity — Trình phát phim web chuyên nghiệp cho embed KKPhim (player.phimapi.com):
@@ -99,6 +131,13 @@ class WebPlayerActivity : AppCompatActivity() {
     private var btnWebRetry: Button? = null
     private var btnWebErrorBack: Button? = null
     private var mainFrameLoadFailed: Boolean = false
+    // Săn luồng HLS thật bên trong trang embed để chuyển sang trình phát native
+    // (phát native = không quảng cáo của trang embed, giống trải nghiệm iOS).
+    private var nativeHandoffDone: Boolean = false
+    private var sniffedStreamUrl: String = ""
+    // Số lần khung chính đã nhảy sang domain lạ so với domain embed gốc: chỉ thả
+    // 1 lần redirect hợp lệ của nhà cung cấp, các lần sau coi là quảng cáo chiếm trang.
+    private var crossDomainNavCount: Int = 0
     // JS có tìm thấy <video>/JWPlayer điều khiển được không (kể cả trong iframe cùng nguồn).
     // Nếu không, phím D-pad được trả lại cho WebView để trình phát của nhà cung cấp tự xử lý.
     private var hasJsControl: Boolean = false
@@ -126,6 +165,19 @@ class WebPlayerActivity : AppCompatActivity() {
 
         embedUrl = intent.getStringExtra("embed_url").orEmpty()
         val m3u8Url = intent.getStringExtra("m3u8_url").orEmpty()
+        // Embed bọc link HLS (?url=<m3u8>) hoặc tự nó là link HLS: phát native ngay,
+        // không mở WebView — không dính quảng cáo (giống iOS).
+        val unwrappedStart = unwrapDirectM3u8(embedUrl)
+        if (unwrappedStart.isNotBlank()) {
+            filmSlug = intent.getStringExtra("film_slug").orEmpty()
+            filmTitle = intent.getStringExtra("film_title") ?: "Phim"
+            episodeSlug = intent.getStringExtra("episode_slug").orEmpty()
+            episodeTitle = intent.getStringExtra("episode_title") ?: "Tập 1"
+            posterUrl = intent.getStringExtra("poster_url").orEmpty()
+            startPositionMs = intent.getLongExtra("start_position_ms", 0L)
+            launchNativePlayerAndFinish(unwrappedStart)
+            return
+        }
         filmSlug = intent.getStringExtra("film_slug").orEmpty()
         filmTitle = intent.getStringExtra("film_title") ?: "Phim"
         episodeSlug = intent.getStringExtra("episode_slug").orEmpty()
@@ -240,6 +292,87 @@ class WebPlayerActivity : AppCompatActivity() {
         finish()
     }
 
+    /** URL có phải link playlist HLS trực tiếp không (xét phần path, bỏ qua query token). */
+    private fun isHlsUrl(u: String): Boolean {
+        if (u.isBlank()) return false
+        val p = try { Uri.parse(u).path } catch (_: Throwable) { null } ?: return false
+        return p.contains(".m3u8", ignoreCase = true)
+    }
+
+    /** Chuyển sang trình phát native đúng 1 lần — điểm đến của cả hai đường săn luồng. */
+    private fun handoffToNative(url: String) {
+        if (nativeHandoffDone || isFinishing) return
+        nativeHandoffDone = true
+        handler.removeCallbacks(progressTrackerRunnable)
+        try { webView?.stopLoading() } catch (_: Throwable) {}
+        android.util.Log.i("WebPlayerActivity", "Native handoff: $url")
+        launchNativePlayerAndFinish(url)
+    }
+
+    /**
+     * Ghi nhận một playlist HLS vừa thấy trên mạng (gọi từ thread nền của WebView).
+     * Sau 1,5 giây mới xác nhận chuyển giao: ưu tiên URL mà thẻ <video> đang phát thật
+     * (chắc chắn nhất), không lấy được mới dùng chính playlist đã bắt gặp.
+     */
+    private fun onStreamCandidate(url: String) {
+        if (nativeHandoffDone || mainFrameLoadFailed) return
+        if (sniffedStreamUrl.isNotEmpty()) return
+        sniffedStreamUrl = url
+        handler.postDelayed({
+            if (nativeHandoffDone || mainFrameLoadFailed || isFinishing) return@postDelayed
+            probeVideoSrc { src ->
+                if (nativeHandoffDone || isFinishing) return@probeVideoSrc
+                when {
+                    isHlsUrl(src) -> handoffToNative(src)
+                    sniffedStreamUrl.isNotBlank() -> handoffToNative(sniffedStreamUrl)
+                }
+            }
+        }, 1500L)
+    }
+
+    /** Đọc currentSrc của thẻ <video> (tìm sâu trong iframe cùng nguồn như các hàm JS khác). */
+    private fun probeVideoSrc(cb: (String) -> Unit) {
+        val js = """
+            (function() {
+                function f(w) {
+                    try {
+                        var v = w.document.querySelector('video');
+                        if (v) return v;
+                        for (var i = 0; i < w.frames.length; i++) {
+                            var r = f(w.frames[i]);
+                            if (r) return r;
+                        }
+                    } catch (e) {}
+                    return null;
+                }
+                var v = f(window);
+                return v ? (v.currentSrc || v.src || '') : '';
+            })();
+        """.trimIndent()
+        try {
+            val wv = webView
+            if (wv == null) {
+                cb("")
+            } else {
+                wv.evaluateJavascript(js) { res ->
+                    val clean = res?.trim()?.removeSurrounding("\"")
+                        ?.replace("\\/", "/")
+                        ?.replace("\\u0026", "&")
+                        .orEmpty()
+                    cb(clean)
+                }
+            }
+        } catch (_: Throwable) {
+            cb("")
+        }
+    }
+
+    /** Đặt lại trạng thái săn luồng + bộ đếm nhảy domain khi đổi tập hoặc thử lại. */
+    private fun resetStreamHunt() {
+        sniffedStreamUrl = ""
+        crossDomainNavCount = 0
+    }
+
     private fun showFallbackError(host: FrameLayout) {
         loadingBar.visibility = View.GONE
         val errorTv = TextView(this).apply {
@@ -296,6 +429,11 @@ class WebPlayerActivity : AppCompatActivity() {
         s.useWideViewPort = true
         s.loadWithOverviewMode = true
         s.cacheMode = WebSettings.LOAD_DEFAULT
+        // Không cho trang embed mở cửa sổ/tab mới (kênh popup quảng cáo kinh điển):
+        // window.open bị từ chối ở onCreateWindow, còn nếu trang cố điều hướng
+        // khung chính sang domain lạ thì shouldOverrideUrlLoading chặn.
+        s.setSupportMultipleWindows(false)
+        s.javaScriptCanOpenWindowsAutomatically = false
         val defaultUa = try { WebSettings.getDefaultUserAgent(this) } catch (_: Throwable) { "" }
         s.userAgentString = if (defaultUa.isNotBlank()) {
             defaultUa.replace("; wv", "")
@@ -414,9 +552,46 @@ class WebPlayerActivity : AppCompatActivity() {
                 )
             }
 
+            override fun shouldInterceptRequest(view: WebView?, request: WebResourceRequest?): WebResourceResponse? {
+                val uri = request?.url ?: return super.shouldInterceptRequest(view, request)
+                val host = uri.host?.lowercase().orEmpty()
+                if (host.isNotEmpty() && AD_HOSTS.any { host == it || host.endsWith(".$it") }) {
+                    // Chặn yêu cầu tới mạng quảng cáo/tracker: không banner/popup chèn,
+                    // trang nhẹ hơn hẳn trên máy yếu.
+                    return WebResourceResponse("text/plain", "utf-8", ByteArrayInputStream(ByteArray(0)))
+                }
+                // Bắt gặp yêu cầu playlist HLS của player trong trang → ứng viên chuyển
+                // sang trình phát native (xem không quảng cáo). Chỉ ghi nhận, việc
+                // chuyển giao được xác nhận ở onStreamCandidate trên main thread.
+                val path = uri.path?.lowercase().orEmpty()
+                if (path.contains(".m3u8")) {
+                    val full = uri.toString()
+                    if (full != embedUrl) onStreamCandidate(full)
+                }
+                return super.shouldInterceptRequest(view, request)
+            }
+
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val nextUrl = request?.url?.toString() ?: return false
                 if (nextUrl.startsWith("http://") || nextUrl.startsWith("https://")) {
+                    // Chặn quảng cáo "chiếm trang": khung chính nhảy sang domain lạ
+                    // (thường khi bấm Play trúng lớp quảng cáo trong suốt). Cùng domain
+                    // hoặc sub-domain của trang embed thì thả; nhảy lạ lần đầu được thả
+                    // (vài nhà cung cấp redirect 1 lần sang domain player thật), từ lần
+                    // thứ hai trở đi chặn đứng.
+                    if (request?.isForMainFrame == true) {
+                        val nextHost = request.url.host?.lowercase().orEmpty()
+                        val embedHost = try { Uri.parse(embedUrl).host?.lowercase().orEmpty() } catch (_: Throwable) { "" }
+                        if (nextHost.isNotEmpty() && embedHost.isNotEmpty() &&
+                            nextHost != embedHost && !nextHost.endsWith(".$embedHost") && !embedHost.endsWith(".$nextHost")
+                        ) {
+                            crossDomainNavCount++
+                            if (crossDomainNavCount > 1) {
+                                android.util.Log.w("WebPlayerActivity", "Blocked cross-domain nav to $nextHost")
+                                return true
+                            }
+                        }
+                    }
                     return false
                 }
                 return true
@@ -436,6 +611,11 @@ class WebPlayerActivity : AppCompatActivity() {
         }
 
         wv.webChromeClient = object : WebChromeClient() {
+            // Từ chối mọi cửa sổ mới (window.open / target=_blank): kênh popup quảng cáo.
+            override fun onCreateWindow(view: WebView?, isDialog: Boolean, isUserGesture: Boolean, resultMsg: Message?): Boolean {
+                return false
+            }
+
             override fun onShowCustomView(view: View?, callback: CustomViewCallback?) {
                 if (view == null) return
                 if (customView != null) {
@@ -511,6 +691,7 @@ class WebPlayerActivity : AppCompatActivity() {
                         pos: Math.floor(v.currentTime * 1000),
                         dur: Math.floor(v.duration * 1000),
                         paused: v.paused,
+                        src: v.currentSrc || '',
                         found: 1
                     });
                 }
@@ -556,6 +737,13 @@ class WebPlayerActivity : AppCompatActivity() {
 
                     if (pos > 0) currentPositionMs = pos
                     if (dur > 0) currentDurationMs = dur
+
+                    // Thẻ <video> đang phát một playlist HLS thật → chuyển sang trình
+                    // phát native để xem không quảng cáo (chỉ 1 lần, handoffToNative tự gác).
+                    val playingSrc = obj.optString("src", "")
+                    if (isHlsUrl(playingSrc)) {
+                        handoffToNative(playingSrc)
+                    }
 
                     // Tự động lưu tiến độ vào cơ sở dữ liệu
                     if (filmSlug.isNotBlank() && currentPositionMs > 5000L) {
@@ -720,6 +908,19 @@ class WebPlayerActivity : AppCompatActivity() {
         episodeSlug = item.slug
         episodeTitle = if (item.name.all { it.isDigit() }) "Tập ${item.name}" else item.name
         embedUrl = item.embed
+        // Tập mới bọc link HLS trực tiếp (hoặc có sẵn m3u8): sang native luôn, khỏi qua web.
+        val unwrappedEp = unwrapDirectM3u8(item.embed)
+        val directEp = when {
+            item.m3u8.isNotBlank() -> item.m3u8
+            unwrappedEp.isNotBlank() -> unwrappedEp
+            else -> ""
+        }
+        if (directEp.isNotBlank()) {
+            startPositionMs = 0L
+            launchNativePlayerAndFinish(directEp)
+            return
+        }
+        resetStreamHunt()
         tvEpisodeTitle.text = episodeTitle
         startPositionMs = 0L
         currentPositionMs = 0L
@@ -904,6 +1105,7 @@ class WebPlayerActivity : AppCompatActivity() {
     /** Nút Thử lại ở màn hình lỗi: nạp lại đúng URL embed kèm Referer như lần tải đầu. */
     private fun retryLoadEmbed() {
         val wv = webView ?: return
+        resetStreamHunt()
         hideWebLoadError()
         loadingBar.visibility = View.VISIBLE
         try { wv.requestFocus() } catch (_: Throwable) {}
