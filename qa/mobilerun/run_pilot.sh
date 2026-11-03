@@ -15,13 +15,47 @@ echo "Model: ${AI_MODEL:-<unset>}"
 mobilerun --help >/dev/null 2>&1 || { echo "mobilerun CLI not available"; echo "SETUP FAIL" > "$OUT/summary.md"; exit 0; }
 
 # Inject the Preflight-picked model into a runtime copy of the config.
-sed "s/__MODEL__/${AI_MODEL}/g" qa/mobilerun/config.yaml > qa/mobilerun/config.runtime.yaml
+# NOTE: the model id contains slashes (e.g. ag/gemini-3.8-flash-high) — the sed
+# delimiter must be |, not / (with / the first pilot run produced an empty
+# runtime config and every scenario died with "missing _version").
+sed "s|__MODEL__|${AI_MODEL}|g" qa/mobilerun/config.yaml > qa/mobilerun/config.runtime.yaml
+grep -m1 "model:" qa/mobilerun/config.runtime.yaml || true
 
 # Install + enable the Mobilerun Portal on the emulator (downloads the Portal APK).
+# The first attempt timed out on adb while pushing the ~51MB Portal APK to a
+# freshly booted emulator, so: wait for boot completion, then retry up to 3x.
 echo "== mobilerun setup (Portal) =="
-mobilerun setup > "$OUT/setup.log" 2>&1 || mobilerun setup >> "$OUT/setup.log" 2>&1 || true
+adb wait-for-device
+for i in $(seq 1 30); do
+  [ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" = "1" ] && break
+  sleep 2
+done
+# Play Protect on the GMS TV emulator BLOCKS the Portal install with a modal
+# "Blocked by Play Protect — This app may be harmful" dialog (seen in the
+# run-2 final screenshots; the dialog also made setup look like an adb
+# timeout). Disable package verification for adb installs BEFORE the first
+# Portal attempt, and dismiss any leftover dialog.
+adb shell settings put global package_verifier_enable 0
+adb shell settings put global verifier_verify_adb_installs 0
+adb shell input keyevent 66
+adb shell input keyevent 4
+SETUP_OK=0
+for attempt in 1 2 3; do
+  echo "--- setup attempt $attempt ---" >> "$OUT/setup.log"
+  if mobilerun setup >> "$OUT/setup.log" 2>&1; then SETUP_OK=1; break; fi
+  sleep 20
+done
 mobilerun ping >> "$OUT/setup.log" 2>&1 || true
 tail -5 "$OUT/setup.log" || true
+if [ "$SETUP_OK" != "1" ]; then
+  {
+    echo "# Mobilerun pilot — SETUP FAILED"
+    echo ""
+    echo "Portal không cài được lên emulator sau 3 lần thử — các kịch bản không chạy. Xem setup.log."
+  } > "$OUT/summary.md"
+  cat "$OUT/summary.md"
+  exit 0
+fi
 
 SUMMARY="$OUT/summary.md"
 {
