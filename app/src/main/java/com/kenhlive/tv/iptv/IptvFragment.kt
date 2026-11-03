@@ -687,18 +687,13 @@ class IptvFragment : Fragment() {
             view?.clearFocus()
             (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
         } else {
-            val main = activity as? com.kenhlive.tv.MainActivity
-            if (main?.isRailActive() == true) {
-                (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
-            } else {
-                (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
-                currentlyFocusedChannel?.let { scheduleHeroPreview(it) }
-                // Tab được hiện lại bằng show/hide nên KHÔNG có onResume: phải chủ động xin focus
-                // cho kênh (ưu tiên kênh đang xem dở qua ensureIptvFocus) khi list đã có dữ liệu.
-                // Nếu dữ liệu chưa về, populateUi(focusFirst) sẽ xin focus khi bind xong.
-                if (DeviceMode.isTv && displayedChannels.isNotEmpty()) {
-                    view?.post { ensureIptvFocus() }
-                }
+            (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+            currentlyFocusedChannel?.let { scheduleHeroPreview(it) }
+            // Tab được hiện lại bằng show/hide nên KHÔNG có onResume: phải chủ động xin focus
+            // cho kênh (ưu tiên kênh đang xem dở qua ensureIptvFocus) khi list đã có dữ liệu.
+            // Nếu dữ liệu chưa về, populateUi(focusFirst) sẽ xin focus khi bind xong.
+            if (DeviceMode.isTv && displayedChannels.isNotEmpty()) {
+                view?.post { ensureIptvFocus() }
             }
         }
     }

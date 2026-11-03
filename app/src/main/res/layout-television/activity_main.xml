@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- ANDROID TV Layout:
-     Overlay auto-hide Left Navigation Rail
-     Main content fills 100% full screen width.
-     Rail slides in on demand over content when user navigates left. -->
+     Điều hướng qua Home Hub (không có navigation rail).
+     Main content fills 100% full screen width. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -13,60 +12,4 @@
         android:id="@+id/fragmentContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
-
-    <!-- SLIM LEFT NAVIGATION RAIL: Đã ẩn hoàn toàn để mỗi mục có giao diện riêng biệt -->
-    <LinearLayout
-        android:id="@+id/railPanel"
-        android:layout_width="@dimen/rail_slim_w"
-        android:layout_height="match_parent"
-        android:layout_gravity="left"
-        android:orientation="vertical"
-        android:gravity="center_horizontal"
-        android:background="@drawable/bg_tv_rail_panel"
-        android:paddingTop="20dp"
-        android:paddingBottom="20dp"
-        android:paddingLeft="6dp"
-        android:paddingRight="6dp"
-        android:elevation="12dp"
-        android:visibility="gone">
-
-        <!-- User / Profile circle avatar at top -->
-        <FrameLayout
-            android:id="@+id/nav_profile"
-            android:layout_width="42dp"
-            android:layout_height="42dp"
-            android:layout_marginBottom="16dp"
-            android:background="@drawable/avatar_ring"
-            android:clickable="true"
-            android:focusable="true">
-
-            <ImageView
-                android:layout_width="22dp"
-                android:layout_height="22dp"
-                android:layout_gravity="center"
-                android:src="@drawable/ic_user_circle"
-                android:contentDescription="Tài khoản" />
-        </FrameLayout>
-
-        <!-- 1. Home / Live Sports Icon (active) -->
-        <include layout="@layout/item_nav_slim" android:id="@+id/nav_live" />
-
-        <!-- 2. Kho Phim VOD Cinema Icon -->
-        <include layout="@layout/item_nav_slim" android:id="@+id/nav_phim" />
-
-        <!-- 4. Sports / Soccer Ball Icon -->
-        <include layout="@layout/item_nav_slim" android:id="@+id/nav_schedule" />
-
-        <!-- 6. Search Icon -->
-        <include layout="@layout/item_nav_slim" android:id="@+id/nav_search" />
-
-        <!-- Spacer pushes Settings to the bottom -->
-        <View
-            android:layout_width="1dp"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
-
-        <!-- 7. Settings Icon at bottom -->
-        <include layout="@layout/item_nav_slim" android:id="@+id/nav_settings" />
-    </LinearLayout>
 </FrameLayout>

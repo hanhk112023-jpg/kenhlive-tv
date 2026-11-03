@@ -155,8 +155,7 @@ class SearchFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        val main = activity as? MainActivity
-        if (DeviceMode.isTv && main?.isRailActive() != true) focusAppropriate()
+        if (DeviceMode.isTv) focusAppropriate()
     }
 
     override fun onPause() {
@@ -173,14 +172,9 @@ class SearchFragment : Fragment() {
             view?.clearFocus()
             (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
         } else {
-            val main = activity as? MainActivity
-            if (main?.isRailActive() == true) {
-                (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
-            } else {
-                (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
-                if (DeviceMode.isTv) {
-                    focusAppropriate()
-                }
+            (view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
+            if (DeviceMode.isTv) {
+                focusAppropriate()
             }
         }
     }

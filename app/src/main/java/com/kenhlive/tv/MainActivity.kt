@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 /**
  * Shell ứng dụng — 1 codebase, 2 hình hài:
  * - PHONE: top app bar + bottom navigation (5 mục), fragment show/hide giữ state
- * - TV:    navigation rail trái (D-pad), cùng id/fragment → chung logic
+ * - TV:    điều hướng qua Home Hub (không có rail), cùng fragment → chung logic
  * Layout chọn tự động qua resource qualifier (layout/ vs layout-television/).
  */
 class MainActivity : AppCompatActivity() {
@@ -36,7 +36,6 @@ class MainActivity : AppCompatActivity() {
     private val vm: LiveViewModel by viewModels()
     private var current = TAB_HUB
     private val navViews = mutableListOf<View>()
-    private var railPanel: View? = null
     /** Thế hệ của vòng retry cấp focus — tăng mỗi lần showTab để hủy vòng retry cũ. */
     private var focusRetryGen = 0
     /** Số lần thử lại transaction chuyển tab sau khi commit lỗi (tối đa 1 lần). */
@@ -132,14 +131,6 @@ class MainActivity : AppCompatActivity() {
         }
         vm.load()
 
-        if (DeviceMode.isTv) {
-            railPanel = findViewById(R.id.railPanel)
-            railPanel?.post {
-                // Mặc định ban đầu ẩn sidebar về phía bên trái
-                hideRail(immediate = true)
-            }
-        }
-
         UpdateManager.checkAndUpdate(this)
         UpdateManager.resumePendingInstall(this)
         handleDebugIntent(intent)
@@ -165,24 +156,6 @@ class MainActivity : AppCompatActivity() {
             v.findViewById<TextView>(R.id.navLabel)?.setText(def.second)
             v.setOnClickListener {
                 showTab(tabIdx)
-                if (DeviceMode.isTv) {
-                    hideRail()
-                    focusContentFirst()
-                }
-            }
-            if (DeviceMode.isTv) {
-                v.setOnFocusChangeListener { _, hasFocus ->
-                    if (hasFocus) {
-                        v.animate().scaleX(1.06f).scaleY(1.06f).setDuration(120).start()
-                        iv?.setColorFilter(android.graphics.Color.WHITE)
-                        if (current != tabIdx) {
-                            showTab(tabIdx, animate = false, keepRailOpen = true)
-                        }
-                    } else {
-                        v.animate().scaleX(1f).scaleY(1f).setDuration(120).start()
-                        iv?.clearColorFilter()
-                    }
-                }
             }
             navViews.add(v)
         }
@@ -219,11 +192,6 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        if (DeviceMode.isTv) {
-            findViewById<View>(R.id.nav_profile)?.setOnClickListener {
-                com.kenhlive.tv.ui.FeedbackDialog.show(this)
-            }
-        }
     }
 
     private fun focusContentFirst() {
@@ -302,15 +270,6 @@ class MainActivity : AppCompatActivity() {
         return null
     }
 
-    /** Kiểm tra xem focus hiện tại đã sát mép trái màn hình chưa để chuyển sang rail. */
-    private fun atLeftEdge(f: View): Boolean {
-        val nxt = f.focusSearch(View.FOCUS_LEFT) ?: return true
-        if (nxt === f) return true
-        val a = IntArray(2); f.getLocationOnScreen(a)
-        val b = IntArray(2); nxt.getLocationOnScreen(b)
-        return b[0] >= a[0] - 4
-    }
-
     private fun isDescendant(root: View, v: View?): Boolean {
         var p: View? = v?.parent as? View
         while (p != null) { if (p === root) return true; p = p.parent as? View }
@@ -341,35 +300,6 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
     }
 
-    fun isRailActive(): Boolean {
-        val r = railPanel ?: return false
-        return r.visibility == View.VISIBLE && (r.hasFocus() || isDescendant(r, currentFocus))
-    }
-
-    private fun showRail() {
-        val r = railPanel ?: return
-        r.visibility = View.VISIBLE
-        (r as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
-        findViewById<ViewGroup>(R.id.fragmentContainer)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
-        r.animate().translationX(0f).alpha(1f).setDuration(180).start()
-    }
-
-    private fun hideRail(immediate: Boolean = false) {
-        val r = railPanel ?: return
-        val offset = -r.width.toFloat().coerceAtLeast(160f)
-        (r as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
-        findViewById<ViewGroup>(R.id.fragmentContainer)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
-        if (immediate) {
-            r.translationX = offset
-            r.alpha = 0f
-            r.visibility = View.GONE
-        } else {
-            r.animate().translationX(offset).alpha(0f).setDuration(220).withEndAction {
-                r.visibility = View.GONE
-            }.start()
-        }
-    }
-
     override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
         if (DeviceMode.isTv && event.action == android.view.KeyEvent.ACTION_DOWN) {
             var f = currentFocus
@@ -389,13 +319,12 @@ class MainActivity : AppCompatActivity() {
         showTab(tabIdx, animate = true)
     }
 
-    fun showTab(pos: Int, animate: Boolean = true, keepRailOpen: Boolean = false) {
+    fun showTab(pos: Int, animate: Boolean = true) {
         hideKeyboard()
         current = pos
         lastBackPressTime = 0L
         backToast?.cancel()
         com.kenhlive.tv.ui.RoomPickerDialog.dismissActive()
-        hideRail(immediate = true)
         if (DeviceMode.isPhone) {
             findViewById<View>(R.id.topBar)?.visibility = View.VISIBLE
             findViewById<View>(R.id.bottomNav)?.visibility = View.VISIBLE
@@ -406,13 +335,6 @@ class MainActivity : AppCompatActivity() {
         navViews.forEach { v ->
             val target = navIdToTab[v.id] ?: -1
             v.isSelected = (target == pos)
-        }
-        if (DeviceMode.isTv && keepRailOpen && pos != TAB_HUB) {
-            // Khi chuyển tab: đồng bộ tiêu điểm trên rail vào đúng icon tab đang chọn
-            val activeNav = navViews.firstOrNull { navIdToTab[it.id] == pos }
-            if (railPanel?.let { isDescendant(it, currentFocus) } == true) {
-                activeNav?.requestFocus()
-            }
         }
         val tx = supportFragmentManager.beginTransaction()
         if (animate) tx.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
@@ -456,7 +378,7 @@ class MainActivity : AppCompatActivity() {
             if (tabTxRetryCount == 0) {
                 tabTxRetryCount = 1
                 findViewById<ViewGroup>(R.id.fragmentContainer)?.post {
-                    showTab(pos, animate = false, keepRailOpen = keepRailOpen)
+                    showTab(pos, animate = false)
                 }
             } else {
                 tabTxRetryCount = 0
@@ -470,11 +392,7 @@ class MainActivity : AppCompatActivity() {
         tabTags.forEachIndexed { i, tag ->
             val f = supportFragmentManager.findFragmentByTag(tag) ?: return@forEachIndexed
             if (i == pos) {
-                if (keepRailOpen) {
-                    (f.view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
-                } else {
-                    (f.view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
-                }
+                (f.view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
             } else {
                 f.view?.clearFocus()
                 (f.view as? ViewGroup)?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
@@ -483,11 +401,7 @@ class MainActivity : AppCompatActivity() {
         }
 
         val fc = findViewById<ViewGroup>(R.id.fragmentContainer)
-        if (DeviceMode.isTv && keepRailOpen) {
-            fc?.descendantFocusability = ViewGroup.FOCUS_BLOCK_DESCENDANTS
-            val activeNav = navViews.firstOrNull { navIdToTab[it.id] == pos }
-            activeNav?.requestFocus()
-        } else if (DeviceMode.isTv && !keepRailOpen) {
+        if (DeviceMode.isTv) {
             fc?.descendantFocusability = ViewGroup.FOCUS_AFTER_DESCENDANTS
             if (fc != null) scheduleFocusRetry(fc)
         }
@@ -507,7 +421,6 @@ class MainActivity : AppCompatActivity() {
         val step = object : Runnable {
             override fun run() {
                 if (gen != focusRetryGen || isFinishing) return
-                if (idx == 0) hideRail()
                 if (currentFocus == null) {
                     focusContentFirst()
                 }
