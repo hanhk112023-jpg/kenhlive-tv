@@ -154,6 +154,8 @@ object EpisodePickerDialog {
         // Lưới tập: TV 5 cột, phone dọc 3 cột, phone ngang 5 cột
         val spanCount = DeviceMode.getGridSpanCount(context, defaultTv = 5, phonePortrait = 3, phoneLandscape = 5)
         rvEpisodes.layoutManager = GridLayoutManager(context, spanCount)
+        // Tắt item animator: tránh hiệu ứng nhấp nháy "tập ẩn tập hiện" mỗi lần danh sách vẽ lại
+        rvEpisodes.itemAnimator = null
 
         rvServers.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
         rvChunks.layoutManager = LinearLayoutManager(context, LinearLayoutManager.HORIZONTAL, false)
@@ -409,6 +411,24 @@ object EpisodePickerDialog {
             notifyDataSetChanged()
         }
 
+        /**
+         * Rút gọn nhãn tập về dạng "Tập N" thống nhất. Tên tập từ nguồn rất lộn xộn ("1", "Tập 1",
+         * "Tập 1 - Vietsub", "Tập 1 [FHD] Thuyết Minh"...) — nhãn dài bị cắt thành "T..." trong ô lưới
+         * khiến người dùng tưởng tập bị ẩn. Tên không có số (Trailer, Đặc biệt...) giữ nguyên, cắt tối đa 18 ký tự.
+         */
+        private fun normalizeEpisodeLabel(raw: String): String {
+            val name = raw.trim()
+            if (name.isEmpty()) return "Tập ?"
+            if (name.all { it.isDigit() }) return "Tập $name"
+            val trailingNum = Regex("(\\d+)\\s*$").find(name)?.groupValues?.get(1)
+            if (trailingNum != null && (name.contains("tập", true) || name.contains("tap", true) ||
+                    name.contains("ep", true) || name.length <= 22)) {
+                val n = trailingNum.toIntOrNull()
+                if (n != null) return "Tập $n"
+            }
+            return if (name.length > 18) name.substring(0, 17) + "…" else name
+        }
+
         class VH(v: View) : RecyclerView.ViewHolder(v) {
             val tv: TextView = v.findViewById(R.id.tvEpisodeName)
         }
@@ -420,7 +440,7 @@ object EpisodePickerDialog {
 
         override fun onBindViewHolder(holder: VH, position: Int) {
             val item = items[position]
-            val baseName = if (item.name.all { it.isDigit() }) "Tập ${item.name}" else item.name
+            val baseName = normalizeEpisodeLabel(item.name)
 
             val isCurrent = item.slug == currentEpSlug
             val isPastWatched = !isCurrent && watchedEpSlugs.contains(item.slug)

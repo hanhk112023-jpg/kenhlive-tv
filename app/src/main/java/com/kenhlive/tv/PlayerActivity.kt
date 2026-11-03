@@ -348,28 +348,7 @@ class PlayerActivity : AppCompatActivity() {
             findViewById<ImageButton>(R.id.phoneLockBtn)?.setOnClickListener { setScreenLock(true) }
             phoneUnlockContainer?.setOnClickListener { setScreenLock(false) }
 
-            // Thanh tua phim (VOD) cho điện thoại: kéo để tua, nhãn thời gian cập nhật trực tiếp
-            phoneSeekRow = findViewById(R.id.phoneSeekRow)
-            seekVod = findViewById(R.id.seekVod)
-            tvSeekCurrent = findViewById(R.id.tvSeekCurrent)
-            tvSeekTotal = findViewById(R.id.tvSeekTotal)
-            seekVod?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-                override fun onProgressChanged(sb: SeekBar?, progress: Int, fromUser: Boolean) {
-                    if (fromUser) tvSeekCurrent?.text = fmtPlaybackTime(progress * 1000L)
-                }
-
-                override fun onStartTrackingTouch(sb: SeekBar?) {
-                    seekDragging = true
-                }
-
-                override fun onStopTrackingTouch(sb: SeekBar?) {
-                    seekDragging = false
-                    val target = (sb?.progress ?: 0) * 1000L
-                    player?.seekTo(target)
-                    tvSeekCurrent?.text = fmtPlaybackTime(target)
-                    hideOnce()
-                }
-            })
+            // Thanh tua VOD được nối ở wireVodSeekBar() phía dưới (dùng chung phone + TV)
         } else {
             // Trên TV: Giữ nguyên bố cục đầy đủ cho remote
             phoneMenuBtn?.visibility = View.GONE
@@ -382,7 +361,12 @@ class PlayerActivity : AppCompatActivity() {
                 setupSidebar()
                 setupChannelCarousel()
             }
+            // TV: nút Play/Pause giữa màn hình cho phim VOD (trước đây bị ẩn hẳn trên TV)
+            centerPlayPauseBtn?.setOnClickListener { togglePlayPause() }
         }
+
+        // Thanh tua VOD dùng chung cho cả phone và TV
+        wireVodSeekBar()
 
         initPlayer()
         val pv = findViewById<PlayerView>(R.id.playerView)
@@ -1315,6 +1299,12 @@ class PlayerActivity : AppCompatActivity() {
         val v = LayoutInflater.from(this).inflate(R.layout.dialog_player_settings, null)
         val videoBox = v.findViewById<LinearLayout>(R.id.videoOptions)
         val audioBox = v.findViewById<LinearLayout>(R.id.audioOptions)
+        // Mỗi nút trên thanh công cụ mở đúng phần của nó. Trước đây nút Hình ảnh và nút Âm thanh
+        // đều mở nguyên dialog 2 phần giống hệt nhau -> người dùng tưởng 2 nút trùng chức năng.
+        v.findViewById<View>(R.id.videoHeader).visibility = if (video) View.VISIBLE else View.GONE
+        videoBox.visibility = if (video) View.VISIBLE else View.GONE
+        v.findViewById<View>(R.id.audioHeader).visibility = if (video) View.GONE else View.VISIBLE
+        v.findViewById<View>(R.id.audioScroll).visibility = if (video) View.GONE else View.VISIBLE
 
         val vqNames = arrayOf(
             getString(R.string.vq_auto), getString(R.string.vq_high), getString(R.string.vq_stable)
@@ -1355,8 +1345,9 @@ class PlayerActivity : AppCompatActivity() {
             closeBtn?.isFocusable = true
             closeBtn?.setOnKeyListener { _, keyCode, event ->
                 if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_UP) {
-                    val idx = EnhanceSettings.audioMode(this@PlayerActivity).coerceAtMost(audioBox.childCount - 1)
-                    audioBox.getChildAt(idx)?.requestFocus()
+                    val box = if (video) videoBox else audioBox
+                    val sel = if (video) EnhanceSettings.videoQuality(this@PlayerActivity) else EnhanceSettings.audioMode(this@PlayerActivity)
+                    box.getChildAt(sel.coerceAtMost(box.childCount - 1))?.requestFocus()
                     return@setOnKeyListener true
                 }
                 false
@@ -1386,6 +1377,14 @@ class PlayerActivity : AppCompatActivity() {
             chip.setOnClickListener { onPick(i) }
             chip.setOnKeyListener { _, keyCode, event ->
                 if (event.action == KeyEvent.ACTION_DOWN) {
+                    if (otherBox.visibility != View.VISIBLE &&
+                        (keyCode == KeyEvent.KEYCODE_DPAD_DOWN || keyCode == KeyEvent.KEYCODE_DPAD_UP)) {
+                        // Dialog chỉ còn 1 hàng chip: DOWN -> nút Đóng, UP -> giữ nguyên vị trí
+                        if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                            dialog?.getButton(AlertDialog.BUTTON_NEGATIVE)?.requestFocus()
+                        }
+                        return@setOnKeyListener true
+                    }
                     if (isUpRow && keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
                         val targetIdx = i.coerceAtMost(otherBox.childCount - 1)
                         otherBox.getChildAt(targetIdx)?.requestFocus()
@@ -1464,6 +1463,31 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
+    /** Nối thanh tua VOD (dùng chung phone + TV): kéo/chỉnh để tua, nhãn thời gian cập nhật trực tiếp. */
+    private fun wireVodSeekBar() {
+        phoneSeekRow = findViewById(R.id.phoneSeekRow)
+        seekVod = findViewById(R.id.seekVod)
+        tvSeekCurrent = findViewById(R.id.tvSeekCurrent)
+        tvSeekTotal = findViewById(R.id.tvSeekTotal)
+        seekVod?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(sb: SeekBar?, progress: Int, fromUser: Boolean) {
+                if (fromUser) tvSeekCurrent?.text = fmtPlaybackTime(progress * 1000L)
+            }
+
+            override fun onStartTrackingTouch(sb: SeekBar?) {
+                seekDragging = true
+            }
+
+            override fun onStopTrackingTouch(sb: SeekBar?) {
+                seekDragging = false
+                val target = (sb?.progress ?: 0) * 1000L
+                player?.seekTo(target)
+                tvSeekCurrent?.text = fmtPlaybackTime(target)
+                hideOnce()
+            }
+        })
+    }
+
     private fun showOverlay() {
         if (isScreenLocked) return
         if (channelSidebar?.visibility == View.VISIBLE) return
@@ -1482,6 +1506,21 @@ class PlayerActivity : AppCompatActivity() {
                 handler.post(seekUpdateRunnable)
             } else {
                 phoneSeekRow?.visibility = View.GONE
+            }
+        } else if (isVodMode) {
+            // TV xem phim VOD: hiện nút Play/Pause giữa màn hình + thanh tua kèm overlay.
+            // Trước đây overlay TV chỉ có hàng nút cài đặt phía trên, không có cách dừng/tua phim.
+            centerPlayPauseBtn?.visibility = View.VISIBLE
+            centerPlayPauseBtn?.setImageResource(if (player?.isPlaying == true) R.drawable.ic_pause else R.drawable.ic_play)
+            val row = phoneSeekRow
+            if (row != null) {
+                (row.layoutParams as? ViewGroup.MarginLayoutParams)?.let { lp ->
+                    lp.bottomMargin = (18 * resources.displayMetrics.density).toInt()
+                    row.layoutParams = lp
+                }
+                row.visibility = View.VISIBLE
+                handler.removeCallbacks(seekUpdateRunnable)
+                handler.post(seekUpdateRunnable)
             }
         }
         hideOnce()
@@ -1650,10 +1689,18 @@ class PlayerActivity : AppCompatActivity() {
                 showQuickOsd(currentChannelIndex + 1)
                 return true
             }
+            // Bấm OK khi đang xem phim VOD: Dừng/Tiếp tục phát ngay như mọi trình phát TV
+            // (trước đây OK chỉ mở overlay, mà trên overlay cũng không có nút dừng nào)
+            if (isOkKey && isVodMode) {
+                togglePlayPause()
+                return true
+            }
             // Bấm OK hoặc phím khác khi overlay đang ẩn -> Hiện overlay điều khiển
             showOverlay()
             if (isOkKey) {
-                val targetBtn = if (isIptvMode && findViewById<View>(R.id.channelListBtn)?.visibility == View.VISIBLE) {
+                val targetBtn = if (isVodMode) {
+                    centerPlayPauseBtn
+                } else if (isIptvMode && findViewById<View>(R.id.channelListBtn)?.visibility == View.VISIBLE) {
                     findViewById<View>(R.id.channelListBtn)
                 } else {
                     findViewById<View>(R.id.qualityBtn) ?: findViewById<View>(R.id.backBtn)

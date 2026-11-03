@@ -14,4 +14,6 @@
     android:paddingLeft="12dp"
     android:paddingRight="12dp"
     android:focusable="true"
-    android:clickable="true" />
+    android:clickable="true"
+    android:singleLine="true"
+    android:ellipsize="end" />

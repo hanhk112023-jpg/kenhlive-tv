@@ -1082,8 +1082,16 @@ class PhimFragment : Fragment() {
             onHeroNext: () -> Unit,
             onUp: () -> Boolean = { false }
         ) {
+            // Chuỗi focus dọc trong hero: hàng nút CTA --UP--> chip "VỀ TRANG CHỦ" --UP--> thanh tab.
+            // Trước đây CTA bấm UP là nhảy thẳng lên thanh tab (onUp), bỏ qua chip Về trang chủ nằm
+            // ngay phía trên -> chip không bao giờ tới được bằng remote ("ko chọn được").
             val upListener = View.OnKeyListener { _, keyCode, event ->
                 if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                    val chip = btnBackHome
+                    if (chip != null && chip.visibility == View.VISIBLE) {
+                        chip.requestFocus()
+                        return@OnKeyListener true
+                    }
                     if (onUp()) return@OnKeyListener true
                 }
                 false
@@ -1092,7 +1100,17 @@ class PhimFragment : Fragment() {
             btnEpisodes.setOnKeyListener(upListener)
             btnFavorite.setOnKeyListener(upListener)
             btnNext?.setOnKeyListener(upListener)
-            btnBackHome?.setOnKeyListener(upListener)
+            btnBackHome?.setOnKeyListener { _, keyCode, event ->
+                if (event.action == KeyEvent.ACTION_DOWN) {
+                    if (keyCode == KeyEvent.KEYCODE_DPAD_UP) {
+                        if (onUp()) return@setOnKeyListener true
+                    } else if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                        btnPlay.requestFocus()
+                        return@setOnKeyListener true
+                    }
+                }
+                false
+            }
 
             btnBackHome?.setOnClickListener {
                 val act = itemView.context as? MainActivity

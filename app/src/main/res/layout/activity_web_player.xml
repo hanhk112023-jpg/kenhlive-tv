@@ -95,4 +95,56 @@
             android:textColor="#FFFFFF" />
     </LinearLayout>
 
+    <!-- Thanh điều khiển dưới cho trình phát web: Tua -10s / Play-Pause / Tua +10s.
+         Hiện cùng lúc với OSD trên, tự ẩn sau 3.5s. -->
+    <LinearLayout
+        android:id="@+id/webControlBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="@drawable/bg_overlay_bottom"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingTop="10dp"
+        android:paddingBottom="16dp"
+        android:visibility="gone">
+
+        <Button
+            android:id="@+id/btnWebSeekBack"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_dialog_choice_chip"
+            android:text="◀◀  -10s"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:focusable="true" />
+
+        <ImageButton
+            android:id="@+id/btnWebPlayPause"
+            style="@style/KL.IconButton"
+            android:layout_width="52dp"
+            android:layout_height="52dp"
+            android:layout_marginLeft="22dp"
+            android:layout_marginRight="22dp"
+            android:src="@drawable/ic_pause"
+            android:contentDescription="Phát/Tạm dừng"
+            android:focusable="true" />
+
+        <Button
+            android:id="@+id/btnWebSeekFwd"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_dialog_choice_chip"
+            android:text="+10s  ▶▶"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:focusable="true" />
+    </LinearLayout>
+
 </FrameLayout>

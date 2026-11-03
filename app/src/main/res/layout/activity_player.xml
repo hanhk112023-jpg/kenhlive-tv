@@ -324,6 +324,7 @@
         android:scaleType="centerInside"
         android:padding="16dp"
         android:contentDescription="Phát/Tạm dừng"
+        android:focusable="true"
         android:visibility="gone" />
 
     <!-- BOTTOM MOBILE BAR (PHONE CONTROLS: ROTATE / ASPECT / LIVE BADGE) -->

@@ -56,6 +56,7 @@ class WebPlayerActivity : AppCompatActivity() {
         topOsd.animate().alpha(0f).translationY(-topOsd.height.toFloat()).setDuration(250).withEndAction {
             topOsd.visibility = View.GONE
         }.start()
+        webControlBar?.visibility = View.GONE
     }
 
     private var embedUrl: String = ""
@@ -69,6 +70,14 @@ class WebPlayerActivity : AppCompatActivity() {
     private var currentPositionMs: Long = 0L
     private var currentDurationMs: Long = 0L
     private var hasSeekedToStart: Boolean = false
+
+    // Thanh điều khiển riêng của app cho trình phát web (trước đây chỉ có nút Back)
+    private var webControlBar: View? = null
+    private var btnWebPlayPause: ImageButton? = null
+    // JS có tìm thấy <video>/JWPlayer điều khiển được không (kể cả trong iframe cùng nguồn).
+    // Nếu không, phím D-pad được trả lại cho WebView để trình phát của nhà cung cấp tự xử lý.
+    private var hasJsControl: Boolean = false
+    private var lastPaused: Boolean = false
 
     // Vòng lặp định kỳ thăm dò tiến độ xem phim mỗi 3 giây
     private val progressTrackerRunnable = object : Runnable {
@@ -112,6 +121,12 @@ class WebPlayerActivity : AppCompatActivity() {
             saveCurrentProgress()
             finish()
         }
+
+        webControlBar = findViewById(R.id.webControlBar)
+        btnWebPlayPause = findViewById(R.id.btnWebPlayPause)
+        btnWebPlayPause?.setOnClickListener { webTogglePlayPause() }
+        findViewById<View>(R.id.btnWebSeekBack).setOnClickListener { webSeekBy(-10) }
+        findViewById<View>(R.id.btnWebSeekFwd).setOnClickListener { webSeekBy(10) }
 
         val host = findViewById<FrameLayout>(R.id.webViewHost)
         val wv = try {
@@ -250,6 +265,10 @@ class WebPlayerActivity : AppCompatActivity() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 loadingBar.visibility = View.GONE
+                // Trao focus cho trang web (trình phát của nhà cung cấp nhận được phím khi JS
+                // không điều khiển được) + thăm dò sớm khả năng điều khiển bằng JS
+                try { view?.requestFocus() } catch (_: Throwable) {}
+                handler.postDelayed({ queryPlaybackPosition() }, 2000L)
 
                 // 1. Kích hoạt Autoplay
                 val autoPlayJs = """
@@ -366,34 +385,63 @@ class WebPlayerActivity : AppCompatActivity() {
     }
 
     /**
-     * Truy vấn vị trí phát hiện tại từ player trong web.
+     * Truy vấn vị trí phát hiện tại từ player trong web (tìm sâu cả trong iframe cùng nguồn).
+     * Đồng thời cập nhật hasJsControl: có video điều khiển được bằng JS hay không.
      */
     private fun queryPlaybackPosition() {
         val queryJs = """
             (function() {
-                var v = document.querySelector('video');
+                function klVideoIn(win) {
+                    try {
+                        var v = win.document.querySelector('video');
+                        if (v) return v;
+                        var fs = win.frames;
+                        for (var i = 0; i < fs.length; i++) {
+                            var r = klVideoIn(fs[i]);
+                            if (r) return r;
+                        }
+                    } catch (e) {}
+                    return null;
+                }
+                function klJwIn(win) {
+                    try {
+                        if (typeof win.jwplayer === 'function') {
+                            var p = win.jwplayer();
+                            if (p && typeof p.getState === 'function') return p;
+                        }
+                        var fs = win.frames;
+                        for (var i = 0; i < fs.length; i++) {
+                            var r = klJwIn(fs[i]);
+                            if (r) return r;
+                        }
+                    } catch (e) {}
+                    return null;
+                }
+                var v = klVideoIn(window);
                 if (v && v.duration > 0) {
                     return JSON.stringify({
                         pos: Math.floor(v.currentTime * 1000),
                         dur: Math.floor(v.duration * 1000),
-                        paused: v.paused
+                        paused: v.paused,
+                        found: 1
                     });
                 }
-                if (window.jwplayer && typeof window.jwplayer === 'function') {
+                var jw = klJwIn(window);
+                if (jw) {
                     try {
-                        var p = window.jwplayer();
-                        var pos = Math.floor(p.getPosition() * 1000);
-                        var dur = Math.floor(p.getDuration() * 1000);
+                        var pos = Math.floor(jw.getPosition() * 1000);
+                        var dur = Math.floor(jw.getDuration() * 1000);
                         if (dur > 0) {
                             return JSON.stringify({
                                 pos: pos,
                                 dur: dur,
-                                paused: p.getState() === 'paused'
+                                paused: jw.getState() === 'paused',
+                                found: 1
                             });
                         }
                     } catch(e){}
                 }
-                return '';
+                return JSON.stringify({ found: 0 });
             })();
         """.trimIndent()
 
@@ -406,6 +454,15 @@ class WebPlayerActivity : AppCompatActivity() {
                     } else rawJson
 
                     val obj = JSONObject(cleanJson)
+                    hasJsControl = obj.optInt("found", 0) == 1
+                    if (obj.has("paused")) {
+                        lastPaused = obj.optBoolean("paused", false)
+                        if (webControlBar?.visibility == View.VISIBLE) {
+                            btnWebPlayPause?.setImageResource(
+                                if (lastPaused) R.drawable.ic_play else R.drawable.ic_pause
+                            )
+                        }
+                    }
                     val pos = obj.optLong("pos", 0L)
                     val dur = obj.optLong("dur", 0L)
 
@@ -419,6 +476,132 @@ class WebPlayerActivity : AppCompatActivity() {
                 } catch (_: Exception) {}
             }
         }
+    }
+
+    // ===== Điều khiển phát bằng JS: tìm <video>/JWPlayer sâu trong các iframe cùng nguồn =====
+    // Trước đây chỉ tìm ở khung hình trên cùng: hầu hết trang embed bọc video trong iframe con
+    // nên querySelector('video') trả về null -> mọi phím Dừng/Tua đều "chết" dù code có sẵn.
+    private val jsFindLib = """
+        function klVideoIn(win) {
+            try {
+                var v = win.document.querySelector('video');
+                if (v) return v;
+                var fs = win.frames;
+                for (var i = 0; i < fs.length; i++) {
+                    var r = klVideoIn(fs[i]);
+                    if (r) return r;
+                }
+            } catch (e) {}
+            return null;
+        }
+        function klJwIn(win) {
+            try {
+                if (typeof win.jwplayer === 'function') {
+                    var p = win.jwplayer();
+                    if (p && typeof p.getState === 'function') return p;
+                }
+                var fs = win.frames;
+                for (var i = 0; i < fs.length; i++) {
+                    var r = klJwIn(fs[i]);
+                    if (r) return r;
+                }
+            } catch (e) {}
+            return null;
+        }
+    """.trimIndent()
+
+    /** Bấm giả vào giữa màn hình WebView — phương án dự phòng khi video nằm trong iframe khác nguồn:
+     *  hầu hết trình phát web đều dừng/phát khi chạm vào giữa khung hình. */
+    private fun simulateCenterTap() {
+        val wv = webView ?: return
+        try {
+            val x = wv.width / 2f
+            val y = wv.height / 2f
+            if (x <= 0f || y <= 0f) return
+            val now = android.os.SystemClock.uptimeMillis()
+            val down = android.view.MotionEvent.obtain(now, now, android.view.MotionEvent.ACTION_DOWN, x, y, 0)
+            val up = android.view.MotionEvent.obtain(now, now + 80, android.view.MotionEvent.ACTION_UP, x, y, 0)
+            wv.dispatchTouchEvent(down)
+            wv.dispatchTouchEvent(up)
+            down.recycle()
+            up.recycle()
+        } catch (_: Throwable) {}
+    }
+
+    private fun webTogglePlayPause() {
+        val js = """
+            (function() {
+                $jsFindLib
+                var jw = klJwIn(window);
+                if (jw) {
+                    try {
+                        if (jw.getState() === 'playing') { jw.pause(); return 'PAUSED'; }
+                        jw.play(); return 'PLAYING';
+                    } catch (e) {}
+                }
+                var v = klVideoIn(window);
+                if (v) {
+                    if (v.paused) { v.play(); return 'PLAYING'; }
+                    v.pause(); return 'PAUSED';
+                }
+                return 'NONE';
+            })();
+        """.trimIndent()
+        try {
+            webView?.evaluateJavascript(js) { res ->
+                when {
+                    res != null && res.contains("PAUSED") -> {
+                        lastPaused = true
+                        btnWebPlayPause?.setImageResource(R.drawable.ic_play)
+                    }
+                    res != null && res.contains("PLAYING") -> {
+                        lastPaused = false
+                        btnWebPlayPause?.setImageResource(R.drawable.ic_pause)
+                    }
+                    else -> simulateCenterTap()
+                }
+            }
+        } catch (_: Throwable) {
+            simulateCenterTap()
+        }
+        showOsd()
+    }
+
+    private fun webSeekBy(deltaSec: Int) {
+        val js = """
+            (function() {
+                $jsFindLib
+                var jw = klJwIn(window);
+                if (jw) {
+                    try {
+                        var pos = jw.getPosition();
+                        var dur = jw.getDuration();
+                        var t = pos + $deltaSec;
+                        if (t < 0) t = 0;
+                        if (dur > 0 && t > dur) t = dur;
+                        jw.seek(t);
+                        return 'OK';
+                    } catch (e) {}
+                }
+                var v = klVideoIn(window);
+                if (v) {
+                    var t2 = v.currentTime + $deltaSec;
+                    if (t2 < 0) t2 = 0;
+                    if (v.duration > 0 && t2 > v.duration) t2 = v.duration;
+                    v.currentTime = t2;
+                    return 'OK';
+                }
+                return 'NONE';
+            })();
+        """.trimIndent()
+        try { webView?.evaluateJavascript(js, null) } catch (_: Throwable) {}
+        Toast.makeText(
+            this,
+            if (deltaSec < 0) "◀◀ Tua lại ${-deltaSec}s" else "▶▶ Tua tới ${deltaSec}s",
+            Toast.LENGTH_SHORT
+        ).show()
+        showOsd()
+        queryPlaybackPosition()
     }
 
     private fun saveCurrentProgress() {
@@ -439,6 +622,8 @@ class WebPlayerActivity : AppCompatActivity() {
         handler.removeCallbacks(hideOsdRunnable)
         topOsd.visibility = View.VISIBLE
         topOsd.animate().alpha(1f).translationY(0f).setDuration(200).start()
+        webControlBar?.visibility = View.VISIBLE
+        btnWebPlayPause?.setImageResource(if (lastPaused) R.drawable.ic_play else R.drawable.ic_pause)
         handler.postDelayed(hideOsdRunnable, 3500L)
     }
 
@@ -455,51 +640,20 @@ class WebPlayerActivity : AppCompatActivity() {
                     }
                     KeyEvent.KEYCODE_DPAD_LEFT,
                     KeyEvent.KEYCODE_MEDIA_REWIND -> {
-                        val seekBackJs = """
-                            (function() {
-                                if (window.jwplayer && typeof window.jwplayer === 'function') {
-                                    try {
-                                        var pos = window.jwplayer().getPosition();
-                                        window.jwplayer().seek(Math.max(0, pos - 10));
-                                        return;
-                                    } catch(e){}
-                                }
-                                var v = document.querySelector('video');
-                                if (v) {
-                                    v.currentTime = Math.max(0, v.currentTime - 10);
-                                }
-                            })();
-                        """.trimIndent()
-                        try { webView?.evaluateJavascript(seekBackJs, null) } catch (_: Throwable) {}
-                        Toast.makeText(this, "◀◀ Tua lại 10s", Toast.LENGTH_SHORT).show()
-                        showOsd()
-                        queryPlaybackPosition()
-                        return true
+                        // Chỉ chặn phím khi JS điều khiển được video; nếu không, để WebView/trình phát
+                        // của nhà cung cấp tự nhận phím (trước đây chặn vô điều kiện mà JS lại không tìm
+                        // thấy video trong iframe -> bấm tua không có tác dụng gì)
+                        if (hasJsControl) {
+                            webSeekBy(-10)
+                            return true
+                        }
                     }
                     KeyEvent.KEYCODE_DPAD_RIGHT,
                     KeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> {
-                        val seekForwardJs = """
-                            (function() {
-                                if (window.jwplayer && typeof window.jwplayer === 'function') {
-                                    try {
-                                        var pos = window.jwplayer().getPosition();
-                                        var dur = window.jwplayer().getDuration();
-                                        window.jwplayer().seek(Math.min(dur, pos + 10));
-                                        return;
-                                    } catch(e){}
-                                }
-                                var v = document.querySelector('video');
-                                if (v) {
-                                    var maxDur = v.duration || (v.currentTime + 10);
-                                    v.currentTime = Math.min(maxDur, v.currentTime + 10);
-                                }
-                            })();
-                        """.trimIndent()
-                        try { webView?.evaluateJavascript(seekForwardJs, null) } catch (_: Throwable) {}
-                        Toast.makeText(this, "▶▶ Tua tới 10s", Toast.LENGTH_SHORT).show()
-                        showOsd()
-                        queryPlaybackPosition()
-                        return true
+                        if (hasJsControl) {
+                            webSeekBy(10)
+                            return true
+                        }
                     }
                     KeyEvent.KEYCODE_MEDIA_PLAY -> {
                         val playJs = "var v = document.querySelector('video'); if (v) v.play(); if (window.jwplayer) try { window.jwplayer().play(); } catch(e){}"
@@ -516,27 +670,7 @@ class WebPlayerActivity : AppCompatActivity() {
                     KeyEvent.KEYCODE_DPAD_CENTER,
                     KeyEvent.KEYCODE_ENTER,
                     KeyEvent.KEYCODE_MEDIA_PLAY_PAUSE -> {
-                        // Toggle Play / Pause video HTML5 / JWPlayer
-                        val togglePlayJs = """
-                            (function() {
-                                if (window.jwplayer && typeof window.jwplayer === 'function') {
-                                    try {
-                                        var state = window.jwplayer().getState();
-                                        if (state === 'playing') window.jwplayer().pause();
-                                        else window.jwplayer().play();
-                                        return;
-                                    } catch(e){}
-                                }
-                                var v = document.querySelector('video');
-                                if (v) {
-                                    if (v.paused) v.play();
-                                    else v.pause();
-                                }
-                            })();
-                        """.trimIndent()
-                        try { webView?.evaluateJavascript(togglePlayJs, null) } catch (_: Throwable) {}
-                        showOsd()
-                        queryPlaybackPosition()
+                        webTogglePlayPause()
                         return true
                     }
                     KeyEvent.KEYCODE_BACK -> {
