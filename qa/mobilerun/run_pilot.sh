@@ -66,7 +66,40 @@ SUMMARY="$OUT/summary.md"
   echo ""
 } > "$SUMMARY"
 
+# --- Network isolation probe (added after pilot #4: posters still blank in CI
+# even with the v0.1.2 image-loader fix, while the same URLs return 200 from
+# outside). Question to answer: can the EMULATOR's own network stack load a
+# phimimg.com poster at all (browser test), or is egress to that host broken
+# in this environment (=> environment problem, not an app problem)?
+{
+  echo "== ping phimimg.com =="
+  adb shell ping -c 2 phimimg.com || true
+  echo "== ping phimapi.com =="
+  adb shell ping -c 2 phimapi.com || true
+} > "$OUT/probe.log" 2>&1
+POSTER_URL=$(curl -s --max-time 25 "https://phimapi.com/v1/api/danh-sach/phim-moi-cap-nhat?page=1&limit=1" | python3 -c "
+import json,sys
+try:
+    it = json.load(sys.stdin)['data']['items'][0]
+    p = it.get('poster_url','')
+    print(p if p.startswith('http') else 'https://phimimg.com/' + p.lstrip('/'))
+except Exception:
+    print('https://phimimg.com/uploads/movies/20261001/lego-one-piece-poster.webp')
+" 2>/dev/null)
+echo "probe poster URL: $POSTER_URL" >> "$OUT/probe.log"
+adb shell am start -a android.intent.action.VIEW -d "$POSTER_URL" >> "$OUT/probe.log" 2>&1 || true
+sleep 8
+adb exec-out screencap -p > "$OUT/probe_browser.png" 2>/dev/null || true
+adb shell input keyevent 3 || true
+sleep 2
+
+# Optional scenario filter: ONLY=01 runs only scenarios whose name starts with it.
 for f in qa/mobilerun/scenarios/*.txt; do
+  base0=$(basename "$f")
+  if [ -n "${ONLY:-}" ] && [ "${base0#"$ONLY"}" = "$base0" ]; then
+    echo "== skip $base0 (ONLY=$ONLY) =="
+    continue
+  fi
   name=$(basename "$f" .txt)
   echo "== Scenario: $name =="
   timeout 1200 mobilerun run "$(cat "$f")" \

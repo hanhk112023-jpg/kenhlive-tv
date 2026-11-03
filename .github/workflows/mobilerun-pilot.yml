@@ -7,6 +7,11 @@ name: Mobilerun Pilot
 
 on:
   workflow_dispatch:
+    inputs:
+      only:
+        description: 'Chỉ chạy kịch bản có tên bắt đầu bằng chuỗi này (vd 01) — để trống = chạy tất cả'
+        required: false
+        default: ''
 
 jobs:
   pilot:
@@ -120,6 +125,7 @@ jobs:
         env:
           AI_MODEL: ${{ env.AI_MODEL }}
           OPENAI_API_KEY: ${{ secrets.METEOR_API_KEY }}
+          ONLY: ${{ inputs.only }}
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 30
