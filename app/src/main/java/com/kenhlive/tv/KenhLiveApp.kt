@@ -38,13 +38,27 @@ class KenhLiveApp : Application(), ImageLoaderFactory {
 
     override fun newImageLoader(): ImageLoader {
         val okHttpClient = okhttp3.OkHttpClient.Builder()
-            .proxy(java.net.Proxy.NO_PROXY)
+            // KHÔNG ép NO_PROXY nữa (v0.1.2): bản cũ cấm Coil dùng proxy hệ thống khiến
+            // ảnh không đi theo proxy VN như các API còn lại — trên môi trường có proxy
+            // (CI/giả lập) request ảnh đi thẳng bằng IP máy chủ và bị Cloudflare của
+            // img.nguonc.com chặn 403 -> poster trắng toàn bộ dù dữ liệu phim vẫn tải.
+            // Máy người dùng thật không đặt proxy nên hành vi ngoài đời không đổi.
             .addInterceptor { chain ->
                 val original = chain.request()
-                val req = original.newBuilder()
+                val host0 = original.url.host
+                // Referer phải khớp host ảnh (v0.1.2): bản cũ gắn Referer colatv.org cho
+                // MỌI request ảnh — CDN NguonC kiểm tra referer chéo domain sẽ trả 403.
+                val referer = when {
+                    host0.equals("img.nguonc.com", ignoreCase = true) ||
+                        host0.endsWith(".nguonc.com", ignoreCase = true) -> "https://phim.nguonc.com/"
+                    host0.equals("phimimg.com", ignoreCase = true) ||
+                        host0.endsWith(".phimimg.com", ignoreCase = true) -> "https://phimapi.com/"
+                    else -> null
+                }
+                val reqB = original.newBuilder()
                     .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
-                    .header("Referer", "https://colatv.org/")
-                    .build()
+                if (referer != null) reqB.header("Referer", referer) else reqB.removeHeader("Referer")
+                val req = reqB.build()
                 val host = req.url.host
                 val isPhimImg = host.equals("phimimg.com", ignoreCase = true) ||
                     host.endsWith(".phimimg.com", ignoreCase = true)
