@@ -1,8 +1,8 @@
 package com.kenhlive.tv.phim
 
 /**
- * Data models cho hệ thống Phim Nguồn C (phim.nguonc.com):
- * - Hỗ trợ kho phim hơn 33.400+ đầu phim miễn phí
+ * Data models cho hệ thống Phim (nguồn duy nhất KKPhim — phimapi.com;
+ * tên model giữ nguyên "Nguonc*" vì toàn app đang dùng):
  * - Tương thích chuẩn phim lẻ, phim bộ, anime, TV shows
  * - Tích hợp theo dõi tiến độ xem (Watch Progress)
  */
@@ -31,7 +31,7 @@ data class NguoncFilm(
 data class NguoncEpisodeItem(
     val name: String,     // e.g. "1", "2", "Tập 1", "Full"
     val slug: String,     // e.g. "tap-1"
-    val embed: String,    // e.g. "https://embed12.streamc.xyz/embed.php?hash=..."
+    val embed: String,    // e.g. "https://player.phimapi.com/player/?url=..."
     val m3u8: String = "" // link direct m3u8 nếu có
 )
 

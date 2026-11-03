@@ -28,7 +28,7 @@ sealed class SearchItem {
 /**
  * TÌM KIẾM ĐA NGUỒN:
  * 1. Trực tiếp bóng đá / thể thao Socolive
- * 2. Kho phim Nguồn C (phim.nguonc.com) với hơn 33.400+ đầu phim
+ * 2. Kho phim KKPhim (phimapi.com)
  * Query debounce 250ms qua Flow — tìm kiếm mượt mà không giật lag.
  */
 @OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)

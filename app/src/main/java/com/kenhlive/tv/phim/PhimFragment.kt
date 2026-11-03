@@ -44,7 +44,7 @@ data class PhimSection(
 
 /**
  * PhimFragment — Trung tâm Điện ảnh (VOD Cinema Hub) KenhLive TV:
- * - Hỗ trợ kho phim Nguồn C hơn 33.400+ đầu phim với đầy đủ thể loại, quốc gia, năm.
+ * - Hỗ trợ kho phim KKPhim (phimapi.com) với đầy đủ thể loại, quốc gia, năm.
  * - HÀNG TIẾP TỤC XEM (Continue Watching): Hiển thị tiến độ xem dở, bấm phát tiếp đúng giây.
  * - BỘ LỌC THỂ LOẠI APPLE PILLS: Tất cả, Phim mới, Phim bộ, Phim lẻ, Anime, Hành động, Tình cảm...
  * - Thiết kế tối giản chuẩn Apple TV & iOS: Thẻ kính mờ bo góc 16dp, gradient phản chiếu, thanh tiến độ mỏng.
@@ -1511,7 +1511,7 @@ class PhimFragment : Fragment() {
                 "${film.originalName.ifBlank { film.name }} — Siêu phẩm điện ảnh hấp dẫn chất lượng cao, trọn bộ vietsub và thuyết minh sắc nét trên KenhLive TV."
             }
 
-            // Tự động nạp chi tiết mô tả đầy đủ từ API Nguồn C nếu ban đầu còn ngắn
+            // Tự động nạp chi tiết mô tả đầy đủ từ API KKPhim nếu ban đầu còn ngắn
             if (film.description.isBlank()) {
                 (itemView.context as? androidx.appcompat.app.AppCompatActivity)?.lifecycleScope?.launch {
                     val detail = withContext(Dispatchers.IO) {

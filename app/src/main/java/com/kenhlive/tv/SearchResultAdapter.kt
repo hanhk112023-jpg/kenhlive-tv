@@ -14,7 +14,7 @@ import com.kenhlive.tv.phim.NguoncFilm
 import com.kenhlive.tv.viewmodel.SearchItem
 
 /**
- * Kết quả tìm kiếm đa nguồn (Trận đấu Thể Thao Live & Phim Nguồn C).
+ * Kết quả tìm kiếm đa nguồn (Trận đấu Thể Thao Live & Phim KKPhim).
  * DiffUtil giữ view + focus khi query đổi, tối ưu cho D-pad Android TV.
  */
 class SearchResultAdapter(
@@ -82,7 +82,7 @@ class SearchResultAdapter(
                     if (film.totalEpisodes.isNotBlank()) "Tổng ${film.totalEpisodes} tập" else "Trọn bộ"
                 }
                 h.meta.text = "${film.year.ifBlank { "2026" }} · ${film.quality} · $epStr${if (film.originalName.isNotBlank()) " · ${film.originalName}" else ""}"
-                h.league.text = "PHIM NGUỒN C"
+                h.league.text = "PHIM KKPHIM"
                 val posterUrl = film.thumbUrl.ifBlank { film.posterUrl }
                 h.avatar.load(posterUrl) {
                     crossfade(if (DeviceMode.lowRam) 0 else 80)

@@ -39,9 +39,9 @@ import org.json.JSONObject
 import java.util.Locale
 
 /**
- * WebPlayerActivity — Trình phát phim web chuyên nghiệp cho Phim Nguồn C (StreamC embed):
+ * WebPlayerActivity — Trình phát phim web chuyên nghiệp cho embed KKPhim (player.phimapi.com):
  * - Hỗ trợ WebView tăng tốc phần cứng, giải mã JWPlayer & HTML5 video.
- * - Tự động thiết lập Referer https://phim.nguonc.com/ và Chrome User-Agent chuẩn.
+ * - Tự động thiết lập Referer https://phimapi.com/ và Chrome User-Agent chuẩn.
  * - TỰ ĐỘNG LƯU TIẾN ĐỘ XEM: Theo dõi vị trí mili-giây và lưu vào WatchHistoryManager.
  * - TỰ ĐỘNG TIẾP TỤC XEM: Tua ngay đến giây đã xem dở lần trước khi mở lại.
  * - Điều khiển thân thiện chuẩn Android TV & Mobile (D-pad Center = Play/Pause, OSD tự ẩn sau 3.5s).
@@ -110,7 +110,7 @@ class WebPlayerActivity : AppCompatActivity() {
         embedUrl = intent.getStringExtra("embed_url").orEmpty()
         val m3u8Url = intent.getStringExtra("m3u8_url").orEmpty()
         filmSlug = intent.getStringExtra("film_slug").orEmpty()
-        filmTitle = intent.getStringExtra("film_title") ?: "Phim Nguồn C"
+        filmTitle = intent.getStringExtra("film_title") ?: "Phim"
         episodeSlug = intent.getStringExtra("episode_slug").orEmpty()
         episodeTitle = intent.getStringExtra("episode_title") ?: "Tập 1"
         posterUrl = intent.getStringExtra("poster_url").orEmpty()
@@ -170,8 +170,8 @@ class WebPlayerActivity : AppCompatActivity() {
 
                 if (embedUrl.isNotBlank()) {
                     val extraHeaders = mapOf(
-                        "Referer" to NguonC_REFERER,
-                        "Origin" to "https://phim.nguonc.com"
+                        "Referer" to EMBED_REFERER,
+                        "Origin" to "https://phimapi.com"
                     )
                     wv.loadUrl(embedUrl, extraHeaders)
                     handler.postDelayed(progressTrackerRunnable, 4000L)
@@ -659,8 +659,8 @@ class WebPlayerActivity : AppCompatActivity() {
         hasJsControl = false
         try { loadingBar.visibility = View.VISIBLE } catch (_: Throwable) {}
         val extraHeaders = mapOf(
-            "Referer" to NguonC_REFERER,
-            "Origin" to "https://phim.nguonc.com"
+            "Referer" to EMBED_REFERER,
+            "Origin" to "https://phimapi.com"
         )
         webView?.loadUrl(embedUrl, extraHeaders)
         Toast.makeText(this, "Đang chuyển sang $episodeTitle", Toast.LENGTH_SHORT).show()
@@ -912,6 +912,8 @@ class WebPlayerActivity : AppCompatActivity() {
     }
 
     companion object {
-        private const val NguonC_REFERER = "https://phim.nguonc.com/"
+        // Embed KKPhim chạy trên player.phimapi.com — Referer phải thuộc phimapi.com
+        // thì máy chủ embed mới chấp nhận (trước đây để referer của nguồn cũ đã bỏ).
+        private const val EMBED_REFERER = "https://phimapi.com/"
     }
 }

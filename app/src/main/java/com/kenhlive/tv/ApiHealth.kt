@@ -87,8 +87,7 @@ object ApiHealthChecker {
 
     val SOURCES: List<Source> = listOf(
         Source("Socolive (trận đấu & phòng live)", "https://json.vnres.co/match_recommend.json?callback=recommend"),
-        Source("KKPhim (phim, nguồn chính)", "https://phimapi.com/v1/api/danh-sach/phim-moi-cap-nhat?page=1&limit=1"),
-        Source("NguonC (phim, dự phòng)", "https://phim.nguonc.com/api/films/phim-moi-cap-nhat?page=1"),
+        Source("KKPhim (phim, nguồn duy nhất)", "https://phimapi.com/v1/api/danh-sach/phim-moi-cap-nhat?page=1&limit=1"),
         Source("Gà Vàng 33 (thể thao)", "https://gavangtv-api.adviceme.io/api/v1/matches?webType=gavang33"),
         Source("Giờ Vàng TV (thể thao)", "https://live-api.keonhacaitp.one/storage/livestream/live.json"),
         Source("ColaTV (thể thao)", "https://api.colaapis6.com/?t=1"),

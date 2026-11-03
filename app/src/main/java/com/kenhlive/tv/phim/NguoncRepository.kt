@@ -2,7 +2,6 @@ package com.kenhlive.tv.phim
 
 import android.content.Context
 import com.kenhlive.tv.Http
-import com.kenhlive.tv.TextNorm
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
@@ -16,19 +15,17 @@ import java.util.concurrent.ConcurrentHashMap
 
 /**
  * NguoncRepository — Quản lý và cung cấp toàn bộ dữ liệu Điện Ảnh (VOD Cinema):
- * - TÍCH HỢP NGUỒN CHÍNH KKPHIM (phimapi.com): Cung cấp 100% link direct HLS .m3u8 chuẩn 4K/FHD,
+ * - NGUỒN DUY NHẤT KKPHIM (phimapi.com): Cung cấp 100% link direct HLS .m3u8 chuẩn 4K/FHD,
  *   phát trực tiếp bằng ExoPlayer native, hỗ trợ đa server (Vietsub, Thuyết Minh, Lồng Tiếng).
- * - TÍCH HỢP NGUỒN DỰ PHÒNG NGUONC (phim.nguonc.com): Hơn 33.400+ đầu phim miễn phí.
+ *   (Nguồn dự phòng NguonC đã bị gỡ bỏ vì kém ổn định — khi KKPhim lỗi, các hàm trả
+ *   rỗng/null trung thực để UI hiển thị trạng thái lỗi thay vì dữ liệu của nguồn khác.)
  * - Hỗ trợ lọc đa chiều: Thể loại (hành động, tình cảm...), Quốc gia (Hàn, Trung, Âu Mỹ...), Phim bộ, Phim lẻ.
  * - Bộ đệm RAM thông minh (LRU Memory Cache) giúp nạp danh sách & chi tiết phim tức thì trong <50ms.
- * - Fallback Cache offline trích xuất từ assets khi API gián đoạn.
  */
 object NguoncRepository {
 
     const val KKPHIM_API = "https://phimapi.com"
     const val KKPHIM_IMAGE_CDN = "https://phimimg.com"
-    const val NGUONC_API = "https://phim.nguonc.com/api"
-    const val REFERER_NGUONC = "https://phim.nguonc.com/"
 
     // In-memory Cache với TTL (10 phút), giới hạn trần tối đa 40 phim tránh phình RAM
     private val detailCache = ConcurrentHashMap<String, Pair<Long, NguoncFilmDetail>>()
@@ -47,13 +44,9 @@ object NguoncRepository {
         }
     }
 
-    @Volatile
-    private var fallbackCache: List<NguoncFilmDetail>? = null
-
     fun clearCache() {
         detailCache.clear()
         listCache.clear()
-        fallbackCache = null
     }
 
     // Danh sách thể loại phổ biến
@@ -109,7 +102,7 @@ object NguoncRepository {
                 }
             }
 
-            // 1. Thử KKPhim phim mới cập nhật trước
+            // KKPhim phim mới cập nhật
             try {
                 val kkUrl = "$KKPHIM_API/danh-sach/phim-moi-cap-nhat?page=$page"
                 val kkFilms = fetchKkphimList(kkUrl)
@@ -119,21 +112,6 @@ object NguoncRepository {
                 }
             } catch (_: Exception) {}
 
-            // 2. Fallback sang NguonC
-            val ncUrl = "$NGUONC_API/films/phim-moi-cap-nhat?page=$page"
-            val ncFilms = executeRequestAndParseList(ncUrl)
-            if (ncFilms.isNotEmpty()) {
-                listCache[cacheKey] = System.currentTimeMillis() to ncFilms
-                return@withContext ncFilms
-            }
-
-            // 3. Fallback offline từ Assets nếu lỗi mạng
-            if (context != null) {
-                val cached = loadFallbackFilms(context)
-                if (cached.isNotEmpty()) {
-                    return@withContext cached.map { it.film }
-                }
-            }
             emptyList()
         }
 
@@ -153,7 +131,7 @@ object NguoncRepository {
                 }
             }
 
-            // 1. Thử KKPhim theo danh mục v1/api/danh-sach/{slug}
+            // KKPhim theo danh mục v1/api/danh-sach/{slug}
             try {
                 val kkUrl = "$KKPHIM_API/v1/api/danh-sach/$typeSlug?page=$page&limit=36"
                 val kkFilms = fetchKkphimList(kkUrl)
@@ -163,26 +141,6 @@ object NguoncRepository {
                 }
             } catch (_: Exception) {}
 
-            // 2. Thử NguonC endpoint danh-sach/{type}
-            val urlType = "$NGUONC_API/films/danh-sach/$typeSlug?page=$page"
-            var films = executeRequestAndParseList(urlType)
-
-            // Nếu rỗng, thử endpoint the-loai/{type}
-            if (films.isEmpty()) {
-                val urlCat = "$NGUONC_API/films/the-loai/$typeSlug?page=$page"
-                films = executeRequestAndParseList(urlCat)
-            }
-
-            if (films.isNotEmpty()) {
-                listCache[cacheKey] = System.currentTimeMillis() to films
-                return@withContext films
-            }
-
-            // Fallback từ cache offline nếu có
-            if (context != null) {
-                val cached = loadFallbackFilms(context).map { it.film }
-                return@withContext filterFilmsOffline(cached, typeSlug)
-            }
             emptyList()
         }
 
@@ -198,7 +156,7 @@ object NguoncRepository {
                 }
             }
 
-            // 1. Thử KKPhim v1/api/the-loai/{slug}
+            // KKPhim v1/api/the-loai/{slug}
             try {
                 val kkUrl = "$KKPHIM_API/v1/api/the-loai/$categorySlug?page=$page&limit=36"
                 val kkFilms = fetchKkphimList(kkUrl)
@@ -208,20 +166,6 @@ object NguoncRepository {
                 }
             } catch (_: Exception) {}
 
-            // 2. Fallback sang NguonC
-            val url = "$NGUONC_API/films/the-loai/$categorySlug?page=$page"
-            val films = executeRequestAndParseList(url)
-            if (films.isNotEmpty()) {
-                listCache[cacheKey] = System.currentTimeMillis() to films
-                return@withContext films
-            }
-
-            if (context != null) {
-                val cached = loadFallbackFilms(context).map { it.film }
-                return@withContext cached.filter { f ->
-                    f.categories.any { c -> TextNorm.norm(c).contains(TextNorm.norm(categorySlug)) }
-                }
-            }
             emptyList()
         }
 
@@ -265,10 +209,6 @@ object NguoncRepository {
             return@withContext allFilms
         }
 
-        if (context != null) {
-            val cached = loadFallbackFilms(context).map { it.film }
-            return@withContext filterFilmsOffline(cached, typeOrCatSlug)
-        }
         emptyList()
     }
 
@@ -284,7 +224,7 @@ object NguoncRepository {
                 }
             }
 
-            // 1. Thử KKPhim v1/api/quoc-gia/{slug}
+            // KKPhim v1/api/quoc-gia/{slug}
             try {
                 val kkUrl = "$KKPHIM_API/v1/api/quoc-gia/$countrySlug?page=$page&limit=36"
                 val kkFilms = fetchKkphimList(kkUrl)
@@ -294,19 +234,12 @@ object NguoncRepository {
                 }
             } catch (_: Exception) {}
 
-            // 2. Fallback sang NguonC
-            val url = "$NGUONC_API/films/quoc-gia/$countrySlug?page=$page"
-            val films = executeRequestAndParseList(url)
-            if (films.isNotEmpty()) {
-                listCache[cacheKey] = System.currentTimeMillis() to films
-                return@withContext films
-            }
             emptyList()
         }
 
     /**
      * Lấy chi tiết phim và danh sách tập phim theo slug (có kèm Cache nạp tức thì).
-     * ƯU TIÊN KKPHIM: Trả về link_m3u8 direct HLS và đa server (Vietsub, Thuyết Minh, Lồng Tiếng).
+     * Nguồn KKPHIM: Trả về link_m3u8 direct HLS và đa server (Vietsub, Thuyết Minh, Lồng Tiếng).
      */
     suspend fun fetchFilmDetail(slug: String, context: Context? = null): NguoncFilmDetail? =
         withContext(Dispatchers.IO) {
@@ -316,14 +249,14 @@ object NguoncRepository {
                 }
             }
 
-            // 1. Thử KKPhim trước để lấy direct .m3u8
+            // KKPhim để lấy direct .m3u8
             try {
                 val kkUrl = "$KKPHIM_API/phim/$slug"
                 val req = Request.Builder()
                     .url(kkUrl)
                     .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
                     .build()
-                // Qua Http.executeRequest: có ghi ApiHealth + tôn trọng cầu dao (ném lỗi -> rơi xuống NguonC)
+                // Qua Http.executeRequest: có ghi ApiHealth + tôn trọng cầu dao (ném lỗi -> trả null)
                 val jsonStr = Http.executeRequest(req)
                 if (jsonStr.isNotBlank()) {
                     val detail = parseKkphimDetail(jsonStr)
@@ -335,35 +268,11 @@ object NguoncRepository {
                 }
             } catch (_: Exception) {}
 
-            // 2. Fallback sang NguonC
-            try {
-                val url = "$NGUONC_API/film/$slug"
-                val req = Request.Builder()
-                    .url(url)
-                    .header("Referer", REFERER_NGUONC)
-                    .build()
-                val jsonStr = Http.executeRequest(req)
-                val detail = parseFilmDetail(jsonStr)
-                if (detail != null) {
-                    pruneDetailCacheIfNeeded()
-                    detailCache[slug] = System.currentTimeMillis() to detail
-                    return@withContext detail
-                }
-            } catch (_: Exception) {}
-
-            // 3. Tìm trong fallback offline nếu không gọi được online
-            if (context != null) {
-                val cached = loadFallbackFilms(context)
-                val found = cached.firstOrNull { it.film.slug == slug }
-                if (found != null) {
-                    return@withContext found
-                }
-            }
             null
         }
 
     /**
-     * Tìm kiếm phim theo từ khóa (hỗ trợ tìm kiếm KKPhim, NguonC và offline).
+     * Tìm kiếm phim theo từ khóa (KKPhim v1/api/tim-kiem).
      */
     suspend fun searchFilms(query: String, context: Context? = null, page: Int = 1): List<NguoncFilm> =
         withContext(Dispatchers.IO) {
@@ -372,34 +281,13 @@ object NguoncRepository {
 
             val encoded = try { URLEncoder.encode(qTrim, "UTF-8") } catch (_: Exception) { qTrim }
 
-            // 1. Thử KKPhim tìm kiếm v1/api/tim-kiem
+            // KKPhim tìm kiếm v1/api/tim-kiem
             try {
                 val kkUrl = "$KKPHIM_API/v1/api/tim-kiem?keyword=$encoded&limit=24"
                 val kkFilms = fetchKkphimList(kkUrl)
                 if (kkFilms.isNotEmpty()) return@withContext kkFilms
             } catch (_: Exception) {}
 
-            // 2. Thử NguonC tìm kiếm
-            try {
-                val url = "$NGUONC_API/films/search?keyword=$encoded&page=$page"
-                val films = executeRequestAndParseList(url)
-                if (films.isNotEmpty()) return@withContext films
-            } catch (_: Exception) {}
-
-            // 3. Fallback: Tìm kiếm không dấu trong kho offline
-            if (context != null) {
-                val cached = loadFallbackFilms(context)
-                val qNorm = TextNorm.norm(qTrim)
-                return@withContext cached
-                    .map { it.film }
-                    .filter {
-                        TextNorm.norm(it.name).contains(qNorm) ||
-                                TextNorm.norm(it.originalName).contains(qNorm) ||
-                                TextNorm.norm(it.casts).contains(qNorm) ||
-                                TextNorm.norm(it.director).contains(qNorm) ||
-                                it.categories.any { c -> TextNorm.norm(c).contains(qNorm) }
-                    }
-            }
             emptyList()
         }
 
@@ -408,7 +296,7 @@ object NguoncRepository {
             .url(url)
             .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
             .build()
-        // Qua Http.executeRequest (ghi ApiHealth + cầu dao); lỗi ném ra cho nơi gọi xử lý fallback.
+        // Qua Http.executeRequest (ghi ApiHealth + cầu dao); lỗi ném ra cho nơi gọi xử lý.
         // Mọi điểm gọi fetchKkphimList đều đã nằm trong try/catch nên hành vi tổng thể không đổi.
         val jsonStr = Http.executeRequest(req)
         if (jsonStr.isBlank()) return emptyList()
@@ -567,221 +455,6 @@ object NguoncRepository {
             return NguoncFilmDetail(film = film, episodes = servers)
         } catch (_: Exception) {
             return null
-        }
-    }
-
-    private fun executeRequestAndParseList(url: String): List<NguoncFilm> {
-        return try {
-            val req = Request.Builder()
-                .url(url)
-                .header("Referer", REFERER_NGUONC)
-                .build()
-            val jsonStr = Http.executeRequest(req)
-            parseFilmsList(jsonStr)
-        } catch (_: Exception) {
-            emptyList()
-        }
-    }
-
-    private fun filterFilmsOffline(films: List<NguoncFilm>, typeSlug: String): List<NguoncFilm> {
-        return when (typeSlug) {
-            "phim-bo" -> films.filter { f ->
-                f.totalEpisodes.isNotBlank() && f.totalEpisodes != "1" ||
-                        f.categories.any { c -> c.contains("bộ", ignoreCase = true) }
-            }
-            "phim-le" -> films.filter { f ->
-                f.totalEpisodes == "1" || f.currentEpisode.contains("Full", ignoreCase = true) ||
-                        f.categories.any { c -> c.contains("lẻ", ignoreCase = true) }
-            }
-            "hoat-hinh" -> films.filter { f ->
-                f.categories.any { c ->
-                    c.contains("hoạt hình", ignoreCase = true) || c.contains("anime", ignoreCase = true)
-                }
-            }
-            else -> films.filter { f ->
-                f.categories.any { c -> TextNorm.norm(c).contains(TextNorm.norm(typeSlug)) }
-            }
-        }
-    }
-
-    /**
-     * Parse danh sách phim từ JSON response của phim.nguonc.com
-     */
-    fun parseFilmsList(jsonStr: String): List<NguoncFilm> {
-        val list = mutableListOf<NguoncFilm>()
-        try {
-            val root = JSONObject(jsonStr)
-            val items = root.optJSONArray("items") ?: return emptyList()
-            for (i in 0 until items.length()) {
-                val obj = items.optJSONObject(i) ?: continue
-                list.add(parseFilmObject(obj))
-            }
-        } catch (_: Exception) {}
-        return list.distinctBy { slugKey(it.slug) }
-    }
-
-    /**
-     * Parse chi tiết phim và tập phim từ JSON response của /api/film/{slug} NguonC
-     */
-    fun parseFilmDetail(jsonStr: String): NguoncFilmDetail? {
-        try {
-            val root = JSONObject(jsonStr)
-            val movieObj = root.optJSONObject("movie") ?: return null
-            val film = parseFilmObject(movieObj)
-
-            val servers = mutableListOf<NguoncServer>()
-            val episodesArr = movieObj.optJSONArray("episodes")
-            if (episodesArr != null) {
-                for (s in 0 until episodesArr.length()) {
-                    val srvObj = episodesArr.optJSONObject(s) ?: continue
-                    val serverName = srvObj.optString("server_name", "Server ${s + 1}")
-                    val itemsArr = srvObj.optJSONArray("items") ?: JSONArray()
-                    val episodeItems = mutableListOf<NguoncEpisodeItem>()
-                    for (e in 0 until itemsArr.length()) {
-                        val epObj = itemsArr.optJSONObject(e) ?: continue
-                        val name = epObj.optString("name", "Tập ${e + 1}")
-                        val epSlug = epObj.optString("slug", "tap-${e + 1}")
-                        val embed = epObj.optString("embed", "")
-                        val m3u8 = epObj.optString("m3u8", "")
-                        if (embed.isNotBlank() || m3u8.isNotBlank()) {
-                            episodeItems.add(
-                                NguoncEpisodeItem(
-                                    name = name,
-                                    slug = epSlug,
-                                    embed = embed,
-                                    m3u8 = m3u8
-                                )
-                            )
-                        }
-                    }
-                    if (episodeItems.isNotEmpty()) {
-                        servers.add(NguoncServer(serverName = serverName, items = episodeItems))
-                    }
-                }
-            }
-            return NguoncFilmDetail(film = film, episodes = servers)
-        } catch (_: Exception) {
-            return null
-        }
-    }
-
-    private fun parseFilmObject(obj: JSONObject): NguoncFilm {
-        val catList = mutableListOf<String>()
-        val catObj = obj.opt("category")
-        if (catObj is JSONObject) {
-            val keys = catObj.keys()
-            while (keys.hasNext()) {
-                val groupObj = catObj.optJSONObject(keys.next())
-                val listArr = groupObj?.optJSONArray("list")
-                if (listArr != null) {
-                    for (c in 0 until listArr.length()) {
-                        val itemObj = listArr.optJSONObject(c)
-                        val catName = itemObj?.optString("name").orEmpty()
-                        if (catName.isNotBlank()) catList.add(catName)
-                    }
-                }
-            }
-        } else if (catObj is JSONArray) {
-            for (c in 0 until catObj.length()) {
-                val item = catObj.opt(c)
-                if (item is String) catList.add(item)
-                else if (item is JSONObject) {
-                    val n = item.optString("name", "")
-                    if (n.isNotBlank()) catList.add(n)
-                }
-            }
-        }
-
-        val catsFromProp = obj.optJSONArray("categories")
-        if (catsFromProp != null) {
-            for (c in 0 until catsFromProp.length()) {
-                val name = catsFromProp.optString(c, "")
-                if (name.isNotBlank() && !catList.contains(name)) catList.add(name)
-            }
-        }
-
-        // Parse country nếu có
-        var country = ""
-        val countryObj = obj.opt("country")
-        if (countryObj is JSONObject) {
-            country = countryObj.optString("name", "")
-        } else if (countryObj is String) {
-            country = countryObj
-        }
-
-        val rawDesc = obj.optString("description", "")
-        val cleanDesc = rawDesc.replace(Regex("""<[^>]*>"""), "").trim()
-        val rawCurrentEp = obj.optString("current_episode", "")
-        val cleanCurrentEp = com.kenhlive.tv.DataNormalizer.normalizeEpisodeName(rawCurrentEp)
-        val rawQuality = obj.optString("quality", "HD")
-        val cleanQuality = com.kenhlive.tv.DataNormalizer.normalizeQuality(rawQuality)
-        val rawLang = obj.optString("language", "Vietsub")
-        val cleanLang = com.kenhlive.tv.DataNormalizer.normalizeLanguage(rawLang)
-        val thumbUrl = com.kenhlive.tv.DataNormalizer.normalizeImageUrl(obj.optString("thumb_url", ""))
-        val posterUrl = com.kenhlive.tv.DataNormalizer.normalizeImageUrl(obj.optString("poster_url", ""))
-
-        return NguoncFilm(
-            id = obj.optString("id", ""),
-            name = obj.optString("name", "").trim(),
-            originalName = obj.optString("original_name", "").trim(),
-            slug = obj.optString("slug", ""),
-            year = obj.optString("year", ""),
-            description = cleanDesc,
-            totalEpisodes = obj.opt("total_episodes")?.toString().orEmpty(),
-            currentEpisode = cleanCurrentEp,
-            time = obj.optString("time", ""),
-            quality = cleanQuality,
-            language = cleanLang,
-            director = obj.optString("director", ""),
-            casts = obj.optString("casts", ""),
-            categories = catList,
-            country = country,
-            thumbUrl = thumbUrl,
-            posterUrl = posterUrl
-        )
-    }
-
-    /**
-     * Nạp danh sách phim dự phòng từ assets/fallback_nguonc_films.json
-     */
-    fun loadFallbackFilms(context: Context): List<NguoncFilmDetail> {
-        fallbackCache?.let { return it }
-        synchronized(this) {
-            fallbackCache?.let { return it }
-            val list = mutableListOf<NguoncFilmDetail>()
-            try {
-                val jsonStr = context.assets.open("fallback_nguonc_films.json").bufferedReader().use { it.readText() }
-                val rootArr = JSONArray(jsonStr)
-                for (i in 0 until rootArr.length()) {
-                    val mObj = rootArr.optJSONObject(i) ?: continue
-                    val film = parseFilmObject(mObj)
-                    val srvList = mutableListOf<NguoncServer>()
-                    val epArr = mObj.optJSONArray("episodes")
-                    if (epArr != null) {
-                        for (s in 0 until epArr.length()) {
-                            val sObj = epArr.optJSONObject(s) ?: continue
-                            val sName = sObj.optString("server_name", "Vietsub #1")
-                            val itArr = sObj.optJSONArray("items") ?: JSONArray()
-                            val items = mutableListOf<NguoncEpisodeItem>()
-                            for (e in 0 until itArr.length()) {
-                                val itObj = itArr.optJSONObject(e) ?: continue
-                                val name = itObj.optString("name", "")
-                                val slug = itObj.optString("slug", "")
-                                val embed = itObj.optString("embed", "")
-                                if (embed.isNotBlank()) {
-                                    items.add(NguoncEpisodeItem(name = name, slug = slug, embed = embed))
-                                }
-                            }
-                            if (items.isNotEmpty()) {
-                                srvList.add(NguoncServer(serverName = sName, items = items))
-                            }
-                        }
-                    }
-                    list.add(NguoncFilmDetail(film = film, episodes = srvList))
-                }
-            } catch (_: Exception) {}
-            fallbackCache = list
-            return list
         }
     }
 }

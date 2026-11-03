@@ -304,8 +304,8 @@ object DataNormalizer {
         return when {
             u.startsWith("http://") || u.startsWith("https://") -> u
             u.startsWith("//") -> "https:$u"
-            u.startsWith("/") -> "https://img.nguonc.com$u"
-            else -> "https://img.nguonc.com/$u"
+            u.startsWith("/") -> "https://phimimg.com$u"
+            else -> "https://phimimg.com/$u"
         }
     }
 

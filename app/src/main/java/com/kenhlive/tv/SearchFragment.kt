@@ -34,7 +34,7 @@ import kotlinx.coroutines.launch
 /**
  * TÌM KIẾM ĐA NGUỒN:
  * 1. Trực tiếp Thể thao / BLV Socolive
- * 2. Kho phim Nguồn C (phim.nguonc.com) với hơn 33.400+ đầu phim & fallback 240 phim offline
+ * 2. Kho phim KKPhim (phimapi.com)
  * TV: chip focusable để remote D-pad chọn nhanh không cần gõ bàn phím.
  */
 class SearchFragment : Fragment() {

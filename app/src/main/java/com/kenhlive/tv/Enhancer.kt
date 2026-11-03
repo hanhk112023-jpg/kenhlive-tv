@@ -131,12 +131,9 @@ object Enhancer {
             .setReadTimeoutMs(10000)
             .setAllowCrossProtocolRedirects(true)
             .setUserAgent("Mozilla/5.0 (Linux; Android 12; BRAVIA 4K Build/MMB29M) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
-            .setDefaultRequestProperties(
-                mapOf(
-                    "Referer" to "https://phim.nguonc.com/",
-                    "Origin" to "https://phim.nguonc.com"
-                )
-            )
+            // (v0.1.3) Đã bỏ Referer/Origin mặc định trỏ về phim.nguonc.com: NguonC bị
+            // loại khỏi app, và các luồng (KKPhim m3u8, thể thao, IPTV) vốn vẫn phát tốt
+            // khi referer này trỏ sai domain nên nó không phải điều kiện bắt buộc.
         return DefaultMediaSourceFactory(ctx).setDataSourceFactory(httpSource)
     }
 
