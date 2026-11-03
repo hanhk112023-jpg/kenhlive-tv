@@ -91,11 +91,17 @@ jobs:
           except Exception as e:
               print(f"models parse error: {e}", file=sys.stderr); ids = []
           print("MODELS: " + ", ".join(ids), file=sys.stderr)
-          pref = ["gpt-4o", "gpt-4o-mini", "gemini-2.5-flash", "gemini-2.0-flash", "claude-sonnet-4-5", "deepseek-chat"]
-          picked = next((p for p in pref if p in ids), "")
-          if not picked:
-              vis = [i for i in ids if "gpt-4o" in i or "gemini" in i or "claude" in i]
-              picked = vis[0] if vis else (ids[0] if ids else "")
+          # Ưu tiên tuyệt đối theo yêu cầu của Ramirez: Gemini 3.8 Flash bản High
+          g38 = [i for i in ids if "gemini-3.8-flash" in i.lower()]
+          if g38:
+              high = [i for i in g38 if "high" in i.lower()]
+              picked = high[0] if high else g38[0]
+          else:
+              pref = ["gpt-4o", "gpt-4o-mini", "gemini-2.5-flash", "gemini-2.0-flash", "claude-sonnet-4-5", "deepseek-chat"]
+              picked = next((p for p in pref if p in ids), "")
+              if not picked:
+                  vis = [i for i in ids if "gpt-4o" in i or "gemini" in i or "claude" in i]
+                  picked = vis[0] if vis else (ids[0] if ids else "")
           print(picked)
           PYEOF
           )
