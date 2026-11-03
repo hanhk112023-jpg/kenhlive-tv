@@ -52,7 +52,7 @@ data class PhimSection(
  */
 class PhimFragment : Fragment() {
 
-    private lateinit var filterList: RecyclerView
+    private var filterAdapter: FilterAdapter? = null
     private lateinit var mainList: RecyclerView
     private lateinit var loadingView: ProgressBar
     private lateinit var errorLayout: View
@@ -123,7 +123,6 @@ class PhimFragment : Fragment() {
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
         val v = inflater.inflate(R.layout.fragment_phim, container, false)
-        filterList = v.findViewById(R.id.phimFilterList)
         mainList = v.findViewById(R.id.phimMainList)
         loadingView = v.findViewById(R.id.phimLoading)
         errorLayout = v.findViewById(R.id.phimErrorLayout)
@@ -159,19 +158,9 @@ class PhimFragment : Fragment() {
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, searchBackCallback)
         setupSearchListeners()
 
-        filterList.layoutManager = LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false)
-        filterList.adapter = FilterAdapter(
-            filterCategories,
-            selectedCategorySlug,
-            onDown = { focusMainListFromFilter() }
-        ) { catSlug ->
-            if (catSlug == "tim-kiem") {
-                openSearchOverlay()
-            } else {
-                selectedCategorySlug = catSlug
-                loadFilmsByCategory(catSlug)
-            }
-        }
+        // Danh mục không còn là thanh cố định trên cùng: adapter này được gắn vào một hàng
+        // trong danh sách chính, ngay dưới hero (xem PhimMainAdapter.TYPE_FILTERS)
+        filterAdapter = newFilterAdapter()
 
         mainList.layoutManager = LinearLayoutManager(requireContext())
         mainList.itemAnimator = null
@@ -243,15 +232,18 @@ class PhimFragment : Fragment() {
         return false
     }
 
-    private fun focusFilterListFromMain(): Boolean {
-        if (!::filterList.isInitialized || filterList.visibility != View.VISIBLE) return false
-        for (i in 0 until filterList.childCount) {
-            val child = filterList.getChildAt(i)
-            if (child.isFocusable && child.requestFocus()) return true
-            val inner = firstFocusableIn(child)
-            if (inner != null && inner.requestFocus()) return true
+    private fun newFilterAdapter(): FilterAdapter = FilterAdapter(
+        filterCategories,
+        selectedCategorySlug,
+        // Hàng danh mục giờ nằm trong luồng cuộn: DPAD_DOWN để focus tự di chuyển xuống hàng phim bên dưới
+        onDown = { false }
+    ) { catSlug ->
+        if (catSlug == "tim-kiem") {
+            openSearchOverlay()
+        } else {
+            selectedCategorySlug = catSlug
+            loadFilmsByCategory(catSlug)
         }
-        return false
     }
 
     fun ensurePhimFocus(): Boolean {
@@ -269,14 +261,6 @@ class PhimFragment : Fragment() {
 
         if (focusMainListFromFilter()) return true
 
-        if (::filterList.isInitialized && filterList.visibility == View.VISIBLE) {
-            for (i in 0 until filterList.childCount) {
-                val cv = filterList.getChildAt(i)
-                if (cv.isFocusable && cv.requestFocus()) return true
-                val inner = firstFocusableIn(cv)
-                if (inner != null && inner.requestFocus()) return true
-            }
-        }
         return false
     }
 
@@ -350,7 +334,8 @@ class PhimFragment : Fragment() {
                 onHeroPlay = { film -> openHeroPlay(film) },
                 onFavoriteToggle = { film -> showFilmOptionDialog(film) },
                 onHeroNext = { cycleHeroNext() },
-                onUp = { focusFilterListFromMain() }
+                filterAdapter = filterAdapter,
+                onUp = { false }
             )
             mainList.postDelayed({
                 ensurePhimFocus()
@@ -509,7 +494,6 @@ class PhimFragment : Fragment() {
 
     private fun openSearchOverlay(initialKeyword: String? = null) {
         phimSearchOverlay.visibility = View.VISIBLE
-        filterList.visibility = View.GONE
         mainList.visibility = View.GONE
         loadingView.visibility = View.GONE
         errorLayout.visibility = View.GONE
@@ -539,14 +523,13 @@ class PhimFragment : Fragment() {
 
     private fun closeSearchOverlay() {
         phimSearchOverlay.visibility = View.GONE
-        filterList.visibility = View.VISIBLE
         mainList.visibility = View.VISIBLE
         searchBackCallback.isEnabled = false
         (activity as? MainActivity)?.hideKeyboard()
 
         if (selectedCategorySlug == "tim-kiem") {
             selectedCategorySlug = "tat-ca"
-            filterList.adapter?.notifyDataSetChanged()
+            filterAdapter?.notifyDataSetChanged()
         }
         mainList.requestFocus()
     }
@@ -779,7 +762,8 @@ class PhimFragment : Fragment() {
                     onHeroPlay = { film -> openHeroPlay(film) },
                     onFavoriteToggle = { film -> toggleFilmFavorite(film) },
                     onHeroNext = { cycleHeroNext() },
-                    onUp = { focusFilterListFromMain() }
+                    filterAdapter = filterAdapter,
+                    onUp = { false }
                 )
             } else {
                 mainList.visibility = View.GONE
@@ -791,14 +775,7 @@ class PhimFragment : Fragment() {
                     btnRetry.text = "Khám phá kho phim"
                     btnRetry.setOnClickListener {
                         selectedCategorySlug = "tat-ca"
-                        filterList.adapter = FilterAdapter(
-                            filterCategories,
-                            selectedCategorySlug,
-                            onDown = { focusMainListFromFilter() }
-                        ) { catSlug ->
-                            selectedCategorySlug = catSlug
-                            loadFilmsByCategory(catSlug)
-                        }
+                        filterAdapter = newFilterAdapter()
                         loadFilmsByCategory("tat-ca")
                     }
                 } else {
@@ -1004,6 +981,20 @@ class PhimFragment : Fragment() {
 
     // ===== ADAPTER CHO VERTICAL RECYCLERVIEW =====
 
+    /** Hàng danh mục trong luồng cuộn (dưới hero): chứa RecyclerView ngang gắn FilterAdapter dùng chung. */
+    private class FilterRowVH(v: View) : RecyclerView.ViewHolder(v) {
+        private val rv: RecyclerView = v.findViewById(R.id.rvFilterRow)
+
+        init {
+            rv.layoutManager = LinearLayoutManager(v.context, LinearLayoutManager.HORIZONTAL, false)
+            rv.itemAnimator = null
+        }
+
+        fun bind(adapter: FilterAdapter?) {
+            if (adapter != null && rv.adapter !== adapter) rv.adapter = adapter
+        }
+    }
+
     private class PhimMainAdapter(
         private val hero: NguoncFilm?,
         private val heroIdx: Int = 0,
@@ -1013,45 +1004,62 @@ class PhimFragment : Fragment() {
         private val onHeroPlay: (NguoncFilm) -> Unit,
         private val onFavoriteToggle: (NguoncFilm) -> Unit,
         private val onHeroNext: () -> Unit = {},
-        private val onUp: () -> Boolean = { false }
+        private val onUp: () -> Boolean = { false },
+        private val filterAdapter: FilterAdapter? = null
     ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         companion object {
             private const val TYPE_HERO = 0
             private const val TYPE_ROW = 1
+            private const val TYPE_FILTERS = 2
         }
+
+        private val headerCount: Int
+            get() = (if (hero != null) 1 else 0) + (if (filterAdapter != null) 1 else 0)
 
         // FPT/Netflix standard: Shared RecycledViewPool across all carousel rows cuts 60% view memory
         private val sharedRowPool = RecyclerView.RecycledViewPool().apply {
             setMaxRecycledViews(0, 20)
         }
 
-        override fun getItemViewType(position: Int): Int =
-            if (position == 0 && hero != null) TYPE_HERO else TYPE_ROW
+        override fun getItemViewType(position: Int): Int = when {
+            position == 0 && hero != null -> TYPE_HERO
+            position == (if (hero != null) 1 else 0) && filterAdapter != null -> TYPE_FILTERS
+            else -> TYPE_ROW
+        }
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
             val inf = LayoutInflater.from(parent.context)
-            return if (viewType == TYPE_HERO) {
-                val v = inf.inflate(R.layout.view_phim_hero, parent, false)
-                HeroVH(v)
-            } else {
-                val v = inf.inflate(R.layout.item_phim_row, parent, false)
-                RowVH(v, sharedRowPool)
+            return when (viewType) {
+                TYPE_HERO -> {
+                    val v = inf.inflate(R.layout.view_phim_hero, parent, false)
+                    HeroVH(v)
+                }
+                TYPE_FILTERS -> {
+                    val v = inf.inflate(R.layout.item_phim_filter_row, parent, false)
+                    FilterRowVH(v)
+                }
+                else -> {
+                    val v = inf.inflate(R.layout.item_phim_row, parent, false)
+                    RowVH(v, sharedRowPool)
+                }
             }
         }
 
         override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
             if (holder is HeroVH && hero != null) {
                 holder.bind(hero, heroIdx, totalHero, onFilmClick, onHeroPlay, onFavoriteToggle, onHeroNext, onUp)
+            } else if (holder is FilterRowVH) {
+                holder.bind(filterAdapter)
             } else if (holder is RowVH) {
-                val sectionIdx = if (hero != null) position - 1 else position
+                val sectionIdx = position - headerCount
                 if (sectionIdx in sections.indices) {
                     holder.bind(sections[sectionIdx], onFilmClick, onFavoriteToggle)
                 }
             }
         }
 
-        override fun getItemCount(): Int = (if (hero != null) 1 else 0) + sections.size
+        override fun getItemCount(): Int = headerCount + sections.size
     }
 
     private class HeroVH(v: View) : RecyclerView.ViewHolder(v) {
@@ -1165,9 +1173,10 @@ class PhimFragment : Fragment() {
             }
 
             if (totalHero > 1) {
-                spotlightCounter?.text = "${heroIdx + 1}/$totalHero · RẠP PHIM TẠI GIA · 4K"
+                spotlightCounter?.text = "${heroIdx + 1}/$totalHero"
+                spotlightCounter?.visibility = View.VISIBLE
             } else {
-                spotlightCounter?.text = "RẠP PHIM TẠI GIA · 4K"
+                spotlightCounter?.visibility = View.GONE
             }
             desc.text = film.description.ifBlank {
                 "${film.originalName.ifBlank { film.name }} — Siêu phẩm điện ảnh hấp dẫn chất lượng cao, trọn bộ vietsub và thuyết minh sắc nét trên KenhLive TV."

@@ -66,6 +66,7 @@
     <dimen name="episode_chip_h">44dp</dimen>
     <dimen name="episode_chip_min_w">72dp</dimen>
     <dimen name="phim_pill_h">38dp</dimen>
+    <dimen name="phim_hero_h">300dp</dimen>
     <dimen name="iptv_group_chip_h">42dp</dimen>
     <dimen name="iptv_search_w">150dp</dimen>
     <dimen name="iptv_search_h">44dp</dimen>

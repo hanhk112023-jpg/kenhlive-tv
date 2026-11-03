@@ -6,17 +6,8 @@
     android:orientation="vertical"
     android:background="@color/kl_bg_deep">
 
-    <!-- Apple Filter Pills Bar (Horizontal) -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/phimFilterList"
-        android:layout_width="match_parent"
-        android:layout_height="46dp"
-        android:paddingLeft="@dimen/sp_screen_margin"
-        android:paddingRight="@dimen/sp_screen_margin"
-        android:paddingTop="6dp"
-        android:paddingBottom="6dp"
-        android:clipToPadding="false"
-        android:scrollbars="none" />
+    <!-- Thiết kế mới: KHÔNG còn thanh pills ngang cố định trên cùng.
+         Danh mục chuyển thành một hàng trong luồng cuộn, ngay dưới hero (item_phim_filter_row). -->
 
     <FrameLayout
         android:layout_width="match_parent"

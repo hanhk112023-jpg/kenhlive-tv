@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hàng danh mục phim: nằm trong luồng cuộn ngay dưới hero (thay cho thanh ngang cố định
+     ở trên cùng của thiết kế cũ). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingLeft="@dimen/sp_screen_margin"
+    android:paddingRight="@dimen/sp_screen_margin"
+    android:paddingTop="14dp"
+    android:paddingBottom="2dp">
+
+    <TextView
+        style="@style/KL.Text.Meta"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="DANH MỤC"
+        android:textColor="@color/kl_brand"
+        android:textSize="11.5sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.08" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rvFilterRow"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="6dp"
+        android:clipToPadding="false"
+        android:clipChildren="false"
+        android:scrollbars="none" />
+</LinearLayout>
