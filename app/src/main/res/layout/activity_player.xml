@@ -140,7 +140,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
             android:text="@string/player_report_hint"
-            android:textColor="#64748B"
+            android:textColor="#8E9AA8"
             android:textSize="12sp" />
     </LinearLayout>
 
@@ -876,7 +876,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="✕"
-                android:textColor="#64748B"
+                android:textColor="#8E9AA8"
                 android:textSize="14sp"
                 android:padding="4dp" />
         </LinearLayout>

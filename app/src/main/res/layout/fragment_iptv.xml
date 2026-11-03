@@ -169,7 +169,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
                 android:text="Bấm [OK] để xem toàn màn hình • Bấm [Lên/Xuống] để duyệt kênh"
-                android:textColor="#64748B"
+                android:textColor="#8E9AA8"
                 android:textSize="11sp" />
         </LinearLayout>
 
@@ -226,7 +226,7 @@
             android:layout_height="@dimen/iptv_search_h"
             android:layout_marginLeft="14dp"
             android:hint="Tìm kênh TV..."
-            android:textColorHint="#64748B"
+            android:textColorHint="#8E9AA8"
             android:textColor="#FFFFFF"
             android:textSize="12sp"
             android:background="@drawable/kl2_input_pill"
@@ -268,7 +268,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center"
             android:text="Không tìm thấy kênh truyền hình phù hợp"
-            android:textColor="#64748B"
+            android:textColor="#8E9AA8"
             android:textSize="14sp"
             android:visibility="gone" />
 

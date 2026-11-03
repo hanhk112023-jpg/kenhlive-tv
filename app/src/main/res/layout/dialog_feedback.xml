@@ -171,7 +171,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="Quét mã QR để vào nhóm"
-                android:textColor="#64748B"
+                android:textColor="#8E9AA8"
                 android:textSize="10.5sp" />
         </LinearLayout>
     </LinearLayout>

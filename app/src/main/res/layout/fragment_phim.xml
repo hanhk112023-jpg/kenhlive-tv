@@ -137,7 +137,7 @@
                         android:maxLines="1"
                         android:singleLine="true"
                         android:textColor="#FFFFFF"
-                        android:textColorHint="#64748B"
+                        android:textColorHint="#8E9AA8"
                         android:textSize="14sp" />
 
                     <ImageButton
