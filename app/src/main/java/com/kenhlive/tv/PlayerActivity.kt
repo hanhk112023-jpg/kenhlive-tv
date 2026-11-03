@@ -29,6 +29,7 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.lifecycle.lifecycleScope
@@ -56,6 +57,28 @@ import java.util.Locale
  * - Quick Channel Switcher (D-pad UP/DOWN hoặc phím số) kèm EPG thời gian thực
  * - Auto Stream Failover: tự phục hồi khi mạng giật hoặc nghẽn buffer > 3.5s
  */
+/**
+ * Cài đặt trình phát dùng chung: PlayerActivity + WebPlayerActivity đọc,
+ * màn Cài đặt (SettingsFragment) ghi. Lưu trong SharedPreferences "player_prefs".
+ */
+object PlayerPrefs {
+    const val PREFS = "player_prefs"
+    const val KEY_SEEK_STEP_SEC = "seek_step_sec"
+    const val DEFAULT_SEEK_STEP_SEC = 10
+    val SEEK_STEP_OPTIONS_SEC = intArrayOf(10, 20, 30)
+
+    fun seekStepSec(ctx: android.content.Context): Int {
+        val v = ctx.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE)
+            .getInt(KEY_SEEK_STEP_SEC, DEFAULT_SEEK_STEP_SEC)
+        return if (v in SEEK_STEP_OPTIONS_SEC) v else DEFAULT_SEEK_STEP_SEC
+    }
+
+    fun setSeekStepSec(ctx: android.content.Context, sec: Int) {
+        ctx.getSharedPreferences(PREFS, android.content.Context.MODE_PRIVATE)
+            .edit().putInt(KEY_SEEK_STEP_SEC, sec).apply()
+    }
+}
+
 class PlayerActivity : AppCompatActivity() {
 
     private var player: ExoPlayer? = null
@@ -84,6 +107,15 @@ class PlayerActivity : AppCompatActivity() {
     private var tvSeekCurrent: TextView? = null
     private var tvSeekTotal: TextView? = null
     private var seekDragging: Boolean = false
+    // Thanh điều khiển VOD trên TV (hiện cùng overlay khi bấm OK)
+    private var vodControlBar: View? = null
+    private var btnBarStop: Button? = null
+    private var btnBarPrevEp: Button? = null
+    private var btnBarSeekBack: Button? = null
+    private var btnBarPlayPause: Button? = null
+    private var btnBarSeekFwd: Button? = null
+    private var btnBarNextEp: Button? = null
+    private var btnBarEpisodes: Button? = null
     private val seekUpdateRunnable = object : Runnable {
         override fun run() {
             val row = phoneSeekRow ?: return
@@ -113,6 +145,7 @@ class PlayerActivity : AppCompatActivity() {
         centerPlayPauseBtn?.visibility = View.GONE
         phoneBottomBar?.visibility = View.GONE
         phoneSeekRow?.visibility = View.GONE
+        vodControlBar?.visibility = View.GONE
     }
     private val audioFx = AudioEnhancer(this)
     private var url: String = ""
@@ -375,6 +408,9 @@ class PlayerActivity : AppCompatActivity() {
         // Thanh tua VOD dùng chung cho cả phone và TV
         wireVodSeekBar()
 
+        // Thanh điều khiển VOD trên TV (bấm OK để mở): Dừng / Tập trước / Tua / Phát / Tập tiếp / Danh sách tập
+        wireVodControlBar()
+
         initPlayer()
         val pv = findViewById<PlayerView>(R.id.playerView)
 
@@ -383,7 +419,12 @@ class PlayerActivity : AppCompatActivity() {
             findViewById<View>(R.id.playerErrorBox)?.visibility = View.GONE
             findViewById<View>(R.id.bufferBox)?.visibility = View.VISIBLE
             streamRetries = 0
-            player?.prepare()
+            if (isVodMode) {
+                // Nạp lại luồng nhưng giữ nguyên vị trí đang xem dở (tránh giật về đầu phim)
+                prepareChannelUrl(url, keepPosition = true)
+            } else {
+                player?.prepare()
+            }
         }
         findViewById<Button>(R.id.btnPlayerBack)?.setOnClickListener {
             finish()
@@ -446,22 +487,22 @@ class PlayerActivity : AppCompatActivity() {
                 val screenW = resources.displayMetrics.widthPixels
                 val p = player ?: return false
                 if (e.x < screenW / 2f) {
-                    // Chạm đúp bên trái: Tua lùi 10s
-                    val target = (p.currentPosition - 10_000L).coerceAtLeast(0L)
+                    // Chạm đúp bên trái: Tua lùi theo bước đã cài đặt (mặc định 10s)
+                    val target = (p.currentPosition - seekStepMs()).coerceAtLeast(0L)
                     p.seekTo(target)
-                    showGestureFeedback(R.drawable.ic_back, 0, "-10s")
+                    showGestureFeedback(R.drawable.ic_back, 0, "-${seekStepMs() / 1000}s")
                 } else {
-                    // Chạm đúp bên phải: Phim VOD tua tới +10s; luồng LIVE nhảy tới Live Edge.
+                    // Chạm đúp bên phải: Phim VOD tua tới theo bước cài đặt; luồng LIVE nhảy tới Live Edge.
                     // (Trước đây VOD cũng seekToDefaultPosition() = quay về 00:00, mất vị trí đang xem.)
                     if (isVodMode || !p.isCurrentMediaItemLive) {
                         val dur = p.duration
                         val target = if (dur > 0L) {
-                            (p.currentPosition + 10_000L).coerceAtMost(dur)
+                            (p.currentPosition + seekStepMs()).coerceAtMost(dur)
                         } else {
-                            p.currentPosition + 10_000L
+                            p.currentPosition + seekStepMs()
                         }
                         p.seekTo(target)
-                        showGestureFeedback(R.drawable.ic_play, 100, "+10s")
+                        showGestureFeedback(R.drawable.ic_play, 100, "+${seekStepMs() / 1000}s")
                     } else {
                         p.seekToDefaultPosition()
                         showGestureFeedback(R.drawable.ic_play, 100, "TRỰC TIẾP")
@@ -955,36 +996,15 @@ class PlayerActivity : AppCompatActivity() {
                 val detail = withContext(Dispatchers.IO) {
                     com.kenhlive.tv.phim.NguoncRepository.fetchFilmDetail(filmSlug, this@PlayerActivity)
                 }
-                // v7.13: CHỈ nhảy sang tập kế của CÙNG server đang phát. Slug tập ("tap-1", "tap-2"...)
-                // thường trùng giữa các server (Vietsub/Thuyết Minh) nên cách cũ — lấy server đầu tiên
-                // chứa slug — có thể nhảy nhầm bản. Nhận diện server đang phát theo thứ tự tin cậy:
-                //  1) tên server (extra "server_name" / đã chốt từ lần auto-next trước);
-                //  2) URL luồng đang phát khớp với m3u8/embed của tập hiện tại trong server;
-                //  3) slug chỉ xuất hiện ở đúng 1 server (không nhập nhằng).
-                // Không xác định được server -> dừng ở cuối tập hiện tại, không nhảy bừa.
-                val servers = detail?.episodes.orEmpty()
-                var currentServer: com.kenhlive.tv.phim.NguoncServer? = null
-                if (currentServerName.isNotBlank()) {
-                    currentServer = servers.firstOrNull { srv ->
-                        srv.serverName.equals(currentServerName, ignoreCase = true) &&
-                            srv.items.any { it.slug == episodeSlug }
-                    }
-                }
-                if (currentServer == null) {
-                    currentServer = servers.firstOrNull { srv ->
-                        srv.items.any { it.slug == episodeSlug && (it.m3u8 == url || it.embed == url) }
-                    }
-                }
-                if (currentServer == null) {
-                    val slugServers = servers.filter { srv -> srv.items.any { it.slug == episodeSlug } }
-                    if (slugServers.size == 1) currentServer = slugServers[0]
-                }
-                val srv = currentServer
-                val idx = srv?.items?.indexOfFirst { it.slug == episodeSlug } ?: -1
-                if (srv == null || idx < 0) {
+                // v7.13: CHỈ nhảy sang tập kế của CÙNG server đang phát (slug tập trùng giữa
+                // các server Vietsub/Thuyết Minh). v7.14: dùng chung resolveCurrentServer()
+                // với nút Tập trước/Tiếp và Danh sách tập.
+                val resolved = resolveCurrentServer(detail)
+                if (resolved == null) {
                     Toast.makeText(this@PlayerActivity, "Đã hết tập (không xác định được server đang xem)", Toast.LENGTH_SHORT).show()
                     return@launch
                 }
+                val (srv, idx) = resolved
                 currentServerName = srv.serverName
                 val next = srv.items.getOrNull(idx + 1)
                 if (next == null) {
@@ -1015,19 +1035,27 @@ class PlayerActivity : AppCompatActivity() {
         }
     }
 
-    private fun prepareChannelUrl(targetUrl: String) {
+    /**
+     * Nạp (lại) một URL vào player. setMediaItem luôn đưa vị trí về đầu item mới,
+     * nên khi nạp lại CHÍNH luồng phim đang xem (keepPosition = true, vd nút Thử Lại
+     * sau lỗi) phải seek lại vị trí cũ — nếu không người xem bị "giật" về đầu phim.
+     */
+    private fun prepareChannelUrl(targetUrl: String, keepPosition: Boolean = false) {
         if (targetUrl.isBlank()) return
+        val keepPos = if (keepPosition && isVodMode) (player?.currentPosition ?: 0L) else 0L
         if (Tv360Resolver.isTv360(targetUrl)) {
             lifecycleScope.launch {
                 val resolved = Tv360Resolver.resolve(targetUrl) ?: targetUrl
                 player?.setMediaItem(Enhancer.buildMediaItem(resolved))
                 player?.prepare()
                 player?.playWhenReady = true
+                if (keepPos > 1000L) player?.seekTo(keepPos)
             }
         } else {
             player?.setMediaItem(Enhancer.buildMediaItem(targetUrl))
             player?.prepare()
             player?.playWhenReady = true
+            if (keepPos > 1000L) player?.seekTo(keepPos)
         }
     }
 
@@ -1165,8 +1193,11 @@ class PlayerActivity : AppCompatActivity() {
                                 error.errorCode == PlaybackException.ERROR_CODE_IO_NETWORK_CONNECTION_TIMEOUT ||
                                 error.errorCodeName.startsWith("ERROR_CODE_IO")
 
-                        // 1. Thể thao: Tự động kết nối lại luồng hiện tại khi mạng chập chờn
-                        if (!isIptvMode && sportsFailoverCount < 3) {
+                        // 1. Thể thao LIVE: Tự động kết nối lại luồng hiện tại khi mạng chập chờn.
+                        // v7.14: loại phim VOD khỏi nhánh này — prepareChannelUrl() nạp lại media item
+                        // làm vị trí phát quay về đầu, chính là lỗi "bấm tua tới xong bị giật trở lại"
+                        // mà người dùng phản hồi. VOD đi nhánh 3 (prepare() giữ nguyên vị trí).
+                        if (!isIptvMode && !isVodMode && sportsFailoverCount < 3) {
                             sportsFailoverCount++
                             Toast.makeText(this@PlayerActivity, "Đang kết nối lại luồng trực tiếp (Lần $sportsFailoverCount/3)...", Toast.LENGTH_SHORT).show()
                             handler.postDelayed({
@@ -1528,6 +1559,254 @@ class PlayerActivity : AppCompatActivity() {
         })
     }
 
+    /** Bước tua hiện tại (giây) theo cài đặt của người dùng — mặc định 10s. */
+    private fun seekStepMs(): Long = PlayerPrefs.seekStepSec(this) * 1000L
+
+    /** Tua theo bước đã cài đặt. Dùng chung: D-pad ◄/►, chạm đúp (phone), nút tua trên thanh điều khiển TV. */
+    private fun seekByStep(dir: Int) {
+        val p = player ?: return
+        val step = seekStepMs()
+        if (dir < 0) {
+            val target = (p.currentPosition - step).coerceAtLeast(0L)
+            p.seekTo(target)
+            val m = target / 60000L
+            val s = (target % 60000L) / 1000L
+            showGestureFeedback(R.drawable.ic_back, 0, String.format(Locale.US, "-%ds (%02d:%02d)", step / 1000L, m, s))
+            saveVodProgress(target)
+        } else {
+            val dur = p.duration.coerceAtLeast(0L)
+            val target = if (dur > 0L) (p.currentPosition + step).coerceAtMost(dur) else p.currentPosition + step
+            p.seekTo(target)
+            val m = target / 60000L
+            val s = (target % 60000L) / 1000L
+            showGestureFeedback(R.drawable.ic_play, 100, String.format(Locale.US, "+%ds (%02d:%02d)", step / 1000L, m, s))
+            saveVodProgress(target)
+        }
+        hideOnce()
+    }
+
+    private fun syncVodControlBar() {
+        val playing = player?.isPlaying == true
+        btnBarPlayPause?.setCompoundDrawablesWithIntrinsicBounds(
+            0, if (playing) R.drawable.ic_pause else R.drawable.ic_play, 0, 0
+        )
+        btnBarPlayPause?.text = if (playing) "Tạm dừng" else "Phát"
+        val step = PlayerPrefs.seekStepSec(this)
+        btnBarSeekBack?.text = "Tua -${step}s"
+        btnBarSeekFwd?.text = "Tua +${step}s"
+    }
+
+    private fun wireVodControlBar() {
+        vodControlBar = findViewById(R.id.vodControlBar)
+        btnBarStop = findViewById(R.id.btnBarStop)
+        btnBarPrevEp = findViewById(R.id.btnBarPrevEp)
+        btnBarSeekBack = findViewById(R.id.btnBarSeekBack)
+        btnBarPlayPause = findViewById(R.id.btnBarPlayPause)
+        btnBarSeekFwd = findViewById(R.id.btnBarSeekFwd)
+        btnBarNextEp = findViewById(R.id.btnBarNextEp)
+        btnBarEpisodes = findViewById(R.id.btnBarEpisodes)
+        btnBarStop?.setOnClickListener {
+            saveVodProgress()
+            player?.stop()
+            finish()
+        }
+        btnBarPrevEp?.setOnClickListener { switchEpisodeByDelta(-1); hideOnce() }
+        btnBarSeekBack?.setOnClickListener { seekByStep(-1) }
+        btnBarPlayPause?.setOnClickListener { togglePlayPause() }
+        btnBarSeekFwd?.setOnClickListener { seekByStep(1) }
+        btnBarNextEp?.setOnClickListener { switchEpisodeByDelta(1); hideOnce() }
+        btnBarEpisodes?.setOnClickListener { showEpisodeListDialog() }
+    }
+
+    /**
+     * Nhận diện server đang phát + vị trí tập hiện tại trong server đó (dùng chung:
+     * tự chuyển tập, nút Tập trước/Tiếp, hộp thoại Danh sách tập). Thứ tự tin cậy:
+     * 1) tên server đã chốt; 2) URL luồng khớp tập hiện tại; 3) slug chỉ xuất hiện ở 1 server.
+     */
+    private fun resolveCurrentServer(
+        detail: com.kenhlive.tv.phim.NguoncFilmDetail?
+    ): Pair<com.kenhlive.tv.phim.NguoncServer, Int>? {
+        val servers = detail?.episodes.orEmpty()
+        var currentServer: com.kenhlive.tv.phim.NguoncServer? = null
+        if (currentServerName.isNotBlank()) {
+            currentServer = servers.firstOrNull { srv ->
+                srv.serverName.equals(currentServerName, ignoreCase = true) &&
+                    srv.items.any { it.slug == episodeSlug }
+            }
+        }
+        if (currentServer == null) {
+            currentServer = servers.firstOrNull { srv ->
+                srv.items.any { it.slug == episodeSlug && (it.m3u8 == url || it.embed == url) }
+            }
+        }
+        if (currentServer == null) {
+            val slugServers = servers.filter { srv -> srv.items.any { it.slug == episodeSlug } }
+            if (slugServers.size == 1) currentServer = slugServers[0]
+        }
+        val srv = currentServer ?: return null
+        val idx = srv.items.indexOfFirst { it.slug == episodeSlug }
+        if (idx < 0) return null
+        return srv to idx
+    }
+
+    /** Phát một tập khác ngay trong player (nút Tập trước/Tiếp + Danh sách tập). */
+    private fun playEpisodeItem(
+        server: com.kenhlive.tv.phim.NguoncServer,
+        item: com.kenhlive.tv.phim.NguoncEpisodeItem
+    ) {
+        val direct = when {
+            item.m3u8.isNotBlank() -> item.m3u8
+            item.embed.contains(".m3u8", ignoreCase = true) -> item.embed
+            else -> ""
+        }
+        if (direct.isBlank()) {
+            Toast.makeText(this, "Tập này cần mở bằng trình phát web", Toast.LENGTH_SHORT).show()
+            return
+        }
+        saveVodProgress()
+        currentServerName = server.serverName
+        episodeSlug = item.slug
+        episodeTitle = if (item.name.all { it.isDigit() }) "Tập ${item.name}" else item.name
+        startPositionMs = 0L
+        hasSeekedToStart = true
+        url = direct
+        findViewById<TextView>(R.id.playerTitle).text = "$filmTitle · $episodeTitle"
+        Toast.makeText(this, "Đang chuyển sang $episodeTitle", Toast.LENGTH_SHORT).show()
+        prepareChannelUrl(direct)
+    }
+
+    private fun switchEpisodeByDelta(delta: Int) {
+        if (filmSlug.isBlank() || episodeSlug.isBlank()) {
+            Toast.makeText(this, "Nội dung này không có danh sách tập", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (autoNextBusy) return
+        autoNextBusy = true
+        lifecycleScope.launch {
+            try {
+                val detail = withContext(Dispatchers.IO) {
+                    com.kenhlive.tv.phim.NguoncRepository.fetchFilmDetail(filmSlug, this@PlayerActivity)
+                }
+                val resolved = resolveCurrentServer(detail)
+                if (resolved == null) {
+                    Toast.makeText(this@PlayerActivity, "Không xác định được server đang xem", Toast.LENGTH_SHORT).show()
+                    return@launch
+                }
+                val (srv, idx) = resolved
+                val target = srv.items.getOrNull(idx + delta)
+                if (target == null) {
+                    Toast.makeText(
+                        this@PlayerActivity,
+                        if (delta < 0) "Đã là tập đầu tiên" else "Đã hết tập của phim này",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return@launch
+                }
+                playEpisodeItem(srv, target)
+            } catch (_: Exception) {
+            } finally {
+                autoNextBusy = false
+            }
+        }
+    }
+
+    /** Hộp thoại lưới tập của server đang phát — chọn tập bất kỳ để phát ngay. */
+    private fun showEpisodeListDialog() {
+        if (filmSlug.isBlank() || episodeSlug.isBlank()) {
+            Toast.makeText(this, "Không có danh sách tập cho nội dung này", Toast.LENGTH_SHORT).show()
+            return
+        }
+        lifecycleScope.launch {
+            val detail = withContext(Dispatchers.IO) {
+                com.kenhlive.tv.phim.NguoncRepository.fetchFilmDetail(filmSlug, this@PlayerActivity)
+            }
+            val srv = resolveCurrentServer(detail)?.first
+                ?: detail?.episodes?.firstOrNull { s -> s.items.any { it.slug == episodeSlug } }
+            if (srv == null || srv.items.isEmpty()) {
+                Toast.makeText(this@PlayerActivity, "Không tải được danh sách tập", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            val curIdx = srv.items.indexOfFirst { it.slug == episodeSlug }.coerceAtLeast(0)
+            val rv = RecyclerView(this@PlayerActivity).apply {
+                layoutManager = GridLayoutManager(this@PlayerActivity, 5)
+                val pad = (16 * resources.displayMetrics.density).toInt()
+                setPadding(pad, pad / 2, pad, pad / 2)
+                clipToPadding = false
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    (300 * resources.displayMetrics.density).toInt()
+                )
+                adapter = PlayerEpisodeAdapter(srv.items, episodeSlug) { item ->
+                    dialog?.dismiss()
+                    playEpisodeItem(srv, item)
+                }
+            }
+            dialog = AlertDialog.Builder(this@PlayerActivity, R.style.Theme_KenhLive_Dialog)
+                .setTitle("$filmTitle · ${srv.serverName}")
+                .setView(rv)
+                .setNegativeButton("Đóng", null)
+                .create()
+            dialog?.show()
+            rv.scrollToPosition(curIdx)
+            rv.post {
+                (rv.findViewHolderForAdapterPosition(curIdx)?.itemView
+                    ?: rv.layoutManager?.findViewByPosition(curIdx))?.requestFocus()
+            }
+        }
+    }
+
+    /** Nhãn chip tập rút gọn "Tập N" (cùng chuẩn với EpisodePickerDialog). */
+    private fun episodeChipLabel(raw: String): String {
+        val name = raw.trim()
+        if (name.isEmpty()) return "Tập ?"
+        if (name.all { it.isDigit() }) return "Tập $name"
+        val trailingNum = Regex("(\\d+)\\s*$").find(name)?.groupValues?.get(1)
+        if (trailingNum != null && (name.contains("tập", true) || name.contains("tap", true) ||
+                name.contains("ep", true) || name.length <= 22)) {
+            trailingNum.toIntOrNull()?.let { return "Tập $it" }
+        }
+        return if (name.length > 18) name.substring(0, 17) + "…" else name
+    }
+
+    private inner class PlayerEpisodeAdapter(
+        private val items: List<com.kenhlive.tv.phim.NguoncEpisodeItem>,
+        private val currentSlug: String?,
+        private val onPick: (com.kenhlive.tv.phim.NguoncEpisodeItem) -> Unit
+    ) : RecyclerView.Adapter<PlayerEpisodeAdapter.VH>() {
+
+        inner class VH(v: View) : RecyclerView.ViewHolder(v) {
+            val tv: TextView = v.findViewById(R.id.tvEpisodeName)
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+            val v = LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_episode_chip, parent, false)
+            return VH(v)
+        }
+
+        override fun onBindViewHolder(holder: VH, position: Int) {
+            val item = items[position]
+            val isCurrent = item.slug == currentSlug
+            holder.tv.text = episodeChipLabel(item.name)
+            if (isCurrent) {
+                holder.tv.setBackgroundResource(R.drawable.bg_badge_hd)
+                holder.tv.setTextColor(android.graphics.Color.WHITE)
+            } else {
+                holder.tv.setBackgroundResource(R.drawable.bg_badge_glass)
+                holder.tv.setTextColor(0xFFE2E8F0.toInt())
+            }
+            holder.itemView.setOnClickListener { onPick(item) }
+            holder.itemView.setOnFocusChangeListener { v, hasFocus ->
+                v.animate().scaleX(if (hasFocus) 1.08f else 1.0f)
+                    .scaleY(if (hasFocus) 1.08f else 1.0f).setDuration(100).start()
+                if (hasFocus) holder.tv.setTextColor(android.graphics.Color.WHITE)
+                else if (!isCurrent) holder.tv.setTextColor(0xFFE2E8F0.toInt())
+            }
+        }
+
+        override fun getItemCount(): Int = items.size
+    }
+
     private fun showOverlay() {
         if (isScreenLocked) return
         if (channelSidebar?.visibility == View.VISIBLE) return
@@ -1548,14 +1827,18 @@ class PlayerActivity : AppCompatActivity() {
                 phoneSeekRow?.visibility = View.GONE
             }
         } else if (isVodMode) {
-            // TV xem phim VOD: hiện nút Play/Pause giữa màn hình + thanh tua kèm overlay.
-            // Trước đây overlay TV chỉ có hàng nút cài đặt phía trên, không có cách dừng/tua phim.
-            centerPlayPauseBtn?.visibility = View.VISIBLE
-            centerPlayPauseBtn?.setImageResource(if (player?.isPlaying == true) R.drawable.ic_pause else R.drawable.ic_play)
+            // TV xem phim VOD: hiện THANH ĐIỀU KHIỂN dưới đáy (Dừng / Tập trước / Tua /
+            // Phát-Dừng / Tập tiếp / Danh sách tập) + thanh tua kèm overlay. Nút Play/Pause
+            // giữa màn hình không cần nữa vì đã có ngay trong thanh (bản v7.11-v7.13 dùng
+            // nút giữa màn hình; người dùng góp ý muốn đủ tính năng như các trình phát TV).
+            vodControlBar?.visibility = View.VISIBLE
+            syncVodControlBar()
+            centerPlayPauseBtn?.visibility = View.GONE
             val row = phoneSeekRow
             if (row != null) {
                 (row.layoutParams as? ViewGroup.MarginLayoutParams)?.let { lp ->
-                    lp.bottomMargin = (18 * resources.displayMetrics.density).toInt()
+                    // Thanh tua nằm ngay trên thanh điều khiển 68dp
+                    lp.bottomMargin = (76 * resources.displayMetrics.density).toInt()
                     row.layoutParams = lp
                 }
                 row.visibility = View.VISIBLE
@@ -1691,27 +1974,14 @@ class PlayerActivity : AppCompatActivity() {
             // Tua lùi / Tua tiến bằng remote D-pad Left / Right khi đang xem Phim VOD
             if (isVodMode || (player != null && !player!!.isCurrentMediaItemLive && player!!.duration > 0L)) {
                 if (e.keyCode == KeyEvent.KEYCODE_DPAD_LEFT || e.keyCode == KeyEvent.KEYCODE_MEDIA_REWIND) {
-                    val p = player
-                    if (p != null) {
-                        val target = (p.currentPosition - 15_000L).coerceAtLeast(0L)
-                        p.seekTo(target)
-                        val m = target / 60000L
-                        val s = (target % 60000L) / 1000L
-                        showGestureFeedback(R.drawable.ic_back, 0, String.format(Locale.US, "-15s (%02d:%02d)", m, s))
-                        saveVodProgress(target)
+                    if (player != null) {
+                        seekByStep(-1)
                         return true
                     }
                 }
                 if (e.keyCode == KeyEvent.KEYCODE_DPAD_RIGHT || e.keyCode == KeyEvent.KEYCODE_MEDIA_FAST_FORWARD) {
-                    val p = player
-                    if (p != null) {
-                        val dur = p.duration.coerceAtLeast(0L)
-                        val target = if (dur > 0L) (p.currentPosition + 15_000L).coerceAtMost(dur) else p.currentPosition + 15_000L
-                        p.seekTo(target)
-                        val m = target / 60000L
-                        val s = (target % 60000L) / 1000L
-                        showGestureFeedback(R.drawable.ic_play, 100, String.format(Locale.US, "+15s (%02d:%02d)", m, s))
-                        saveVodProgress(target)
+                    if (player != null) {
+                        seekByStep(1)
                         return true
                     }
                 }
@@ -1729,16 +1999,25 @@ class PlayerActivity : AppCompatActivity() {
                 showQuickOsd(currentChannelIndex + 1)
                 return true
             }
-            // Bấm OK khi đang xem phim VOD: Dừng/Tiếp tục phát ngay như mọi trình phát TV
-            // (trước đây OK chỉ mở overlay, mà trên overlay cũng không có nút dừng nào)
+            // Bấm OK khi đang xem phim VOD:
+            // - TV: mở thanh điều khiển đầy đủ (Dừng / Tập trước / Tua / Phát / Tập tiếp /
+            //   Danh sách tập) như các trình phát TV, focus vào nút Phát/Dừng trong thanh.
+            // - Điện thoại: Dừng/Tiếp tục phát ngay (hành vi từ v7.11).
             if (isOkKey && isVodMode) {
-                togglePlayPause()
+                if (DeviceMode.isTv) {
+                    showOverlay()
+                    btnBarPlayPause?.requestFocus()
+                } else {
+                    togglePlayPause()
+                }
                 return true
             }
             // Bấm OK hoặc phím khác khi overlay đang ẩn -> Hiện overlay điều khiển
             showOverlay()
             if (isOkKey) {
-                val targetBtn = if (isVodMode) {
+                val targetBtn = if (isVodMode && DeviceMode.isTv) {
+                    btnBarPlayPause ?: centerPlayPauseBtn
+                } else if (isVodMode) {
                     centerPlayPauseBtn
                 } else if (isIptvMode && findViewById<View>(R.id.channelListBtn)?.visibility == View.VISIBLE) {
                     findViewById<View>(R.id.channelListBtn)

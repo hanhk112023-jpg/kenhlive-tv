@@ -110,9 +110,23 @@
         android:visibility="gone">
 
         <Button
+            android:id="@+id/btnWebPrevEp"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:background="@drawable/bg_dialog_choice_chip"
+            android:text="◀ Tập trước"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:paddingLeft="14dp"
+            android:paddingRight="14dp"
+            android:focusable="true" />
+
+        <Button
             android:id="@+id/btnWebSeekBack"
             android:layout_width="wrap_content"
             android:layout_height="44dp"
+            android:layout_marginLeft="10dp"
             android:background="@drawable/bg_dialog_choice_chip"
             android:text="◀◀  -10s"
             android:textColor="#FFFFFF"
@@ -144,6 +158,34 @@
             android:textStyle="bold"
             android:paddingLeft="16dp"
             android:paddingRight="16dp"
+            android:focusable="true" />
+
+        <Button
+            android:id="@+id/btnWebNextEp"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:layout_marginLeft="10dp"
+            android:background="@drawable/bg_dialog_choice_chip"
+            android:text="Tập tiếp ▶"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:paddingLeft="14dp"
+            android:paddingRight="14dp"
+            android:focusable="true" />
+
+        <Button
+            android:id="@+id/btnWebEpisodes"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:layout_marginLeft="10dp"
+            android:background="@drawable/bg_dialog_choice_chip"
+            android:text="Danh sách tập"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:paddingLeft="14dp"
+            android:paddingRight="14dp"
             android:focusable="true" />
     </LinearLayout>
 

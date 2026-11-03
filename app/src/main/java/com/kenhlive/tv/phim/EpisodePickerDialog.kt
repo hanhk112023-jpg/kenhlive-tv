@@ -188,19 +188,12 @@ object EpisodePickerDialog {
                 fun renderChunksAndEpisodes() {
                     val currentServer = serverList.getOrNull(selectedServerIndex) ?: return
                     val serverItems = currentServer.items
-                    val chunkSize = 30
-                    val totalChunks = if (serverItems.size > chunkSize) (serverItems.size + chunkSize - 1) / chunkSize else 1
 
-                    var selectedChunkIndex = 0
-                    progress?.episodeSlug?.let { curSlug ->
-                        val epIdx = serverItems.indexOfFirst { it.slug == curSlug }
-                        if (epIdx >= 0) selectedChunkIndex = epIdx / chunkSize
-                    }
-
-                    fun updateEpisodesForChunk(chunkIdx: Int) {
-                        val start = chunkIdx * chunkSize
-                        val end = (start + chunkSize).coerceAtMost(serverItems.size)
-                        val chunkItems = serverItems.subList(start, end)
+                    // v7.14: BỎ chia cụm 30 tập. Người dùng phản hồi tập bị "ẩn" sau hàng
+                    // chọn cụm (khó phát hiện, focus lại nhảy thẳng vào lưới tập). Lưới
+                    // cuộn được nên hiện TẤT CẢ tập của server trong một danh sách.
+                    fun updateEpisodesForChunk() {
+                        val chunkItems = serverItems
 
                         scope.launch {
                             val watchedSlugs = withContext(Dispatchers.IO) {
@@ -277,29 +270,25 @@ object EpisodePickerDialog {
                                 }
                             )
                             rvEpisodes.adapter = adapter
-                        }
-                    }
-
-                    if (totalChunks > 1) {
-                        rvChunks.visibility = View.VISIBLE
-                        val chunkLabels = (0 until totalChunks).map { c ->
-                            val s = c * chunkSize + 1
-                            val e = ((c + 1) * chunkSize).coerceAtMost(serverItems.size)
-                            "Tập $s - $e"
-                        }
-                        rvChunks.adapter = ChipSelectorAdapter(
-                            labels = chunkLabels,
-                            selectedIndex = selectedChunkIndex,
-                            onSelect = { idx ->
-                                selectedChunkIndex = idx
-                                updateEpisodesForChunk(idx)
+                            if (DeviceMode.isTv) {
+                                // Xin focus SAU khi adapter đã gắn và cuộn tới tập đang xem dở.
+                                // (Bản cũ xin focus ở ngoài trước khi adapter tồn tại nên lệnh
+                                // chìm nghỉm — focus rơi lung tung, hàng đầu lưới bị cuộn khuất.)
+                                val curIdx = progress?.episodeSlug?.let { slug ->
+                                    serverItems.indexOfFirst { it.slug == slug }
+                                } ?: -1
+                                val target = if (curIdx >= 0) curIdx else 0
+                                rvEpisodes.scrollToPosition(target)
+                                rvEpisodes.post {
+                                    (rvEpisodes.findViewHolderForAdapterPosition(target)?.itemView
+                                        ?: rvEpisodes.layoutManager?.findViewByPosition(target))?.requestFocus()
+                                }
                             }
-                        )
-                    } else {
-                        rvChunks.visibility = View.GONE
+                        }
                     }
 
-                    updateEpisodesForChunk(selectedChunkIndex)
+                    rvChunks.visibility = View.GONE
+                    updateEpisodesForChunk()
                 }
 
                 if (serverList.size > 1) {
@@ -322,12 +311,6 @@ object EpisodePickerDialog {
                 }
 
                 renderChunksAndEpisodes()
-
-                if (DeviceMode.isTv) {
-                    rvEpisodes.post {
-                        rvEpisodes.findViewHolderForAdapterPosition(0)?.itemView?.requestFocus()
-                    }
-                }
             } else {
                 tvNoEpisodes.visibility = View.VISIBLE
             }

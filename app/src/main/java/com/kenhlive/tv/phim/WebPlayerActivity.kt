@@ -22,11 +22,19 @@ import android.widget.ImageButton
 import android.widget.ProgressBar
 import android.widget.TextView
 import android.widget.Toast
+import android.view.LayoutInflater
+import android.widget.Button
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.kenhlive.tv.PlayerPrefs
 import com.kenhlive.tv.R
 import com.kenhlive.tv.ui.applyTvDensity
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.util.Locale
 
@@ -125,8 +133,19 @@ class WebPlayerActivity : AppCompatActivity() {
         webControlBar = findViewById(R.id.webControlBar)
         btnWebPlayPause = findViewById(R.id.btnWebPlayPause)
         btnWebPlayPause?.setOnClickListener { webTogglePlayPause() }
-        findViewById<View>(R.id.btnWebSeekBack).setOnClickListener { webSeekBy(-10) }
-        findViewById<View>(R.id.btnWebSeekFwd).setOnClickListener { webSeekBy(10) }
+        // Bước tua theo cài đặt dùng chung với trình phát native (mặc định 10s, chỉnh trong Cài đặt)
+        val stepSec = PlayerPrefs.seekStepSec(this)
+        findViewById<Button>(R.id.btnWebSeekBack).apply {
+            text = "◀◀  -${stepSec}s"
+            setOnClickListener { webSeekBy(-PlayerPrefs.seekStepSec(this@WebPlayerActivity)) }
+        }
+        findViewById<Button>(R.id.btnWebSeekFwd).apply {
+            text = "+${stepSec}s  ▶▶"
+            setOnClickListener { webSeekBy(PlayerPrefs.seekStepSec(this@WebPlayerActivity)) }
+        }
+        findViewById<View>(R.id.btnWebPrevEp).setOnClickListener { switchWebEpisodeByDelta(-1) }
+        findViewById<View>(R.id.btnWebNextEp).setOnClickListener { switchWebEpisodeByDelta(1) }
+        findViewById<View>(R.id.btnWebEpisodes).setOnClickListener { showWebEpisodeListDialog() }
 
         val host = findViewById<FrameLayout>(R.id.webViewHost)
         val wv = try {
@@ -602,6 +621,175 @@ class WebPlayerActivity : AppCompatActivity() {
         ).show()
         showOsd()
         queryPlaybackPosition()
+    }
+
+    /**
+     * v7.14: Chuyển tập ngay trong trình phát web (người dùng góp ý player phải có
+     * Tập trước / Tập tiếp / Danh sách tập như các trình phát khác).
+     * Nhận diện server: ưu tiên server có tập khớp cả slug + embed đang phát;
+     * không thì server duy nhất chứa slug.
+     */
+    private fun resolveWebServer(detail: NguoncFilmDetail?): Pair<NguoncServer, Int>? {
+        val servers = detail?.episodes.orEmpty()
+        var srv = servers.firstOrNull { s -> s.items.any { it.slug == episodeSlug && it.embed == embedUrl } }
+        if (srv == null) {
+            val bySlug = servers.filter { s -> s.items.any { it.slug == episodeSlug } }
+            if (bySlug.size == 1) srv = bySlug[0]
+        }
+        val found = srv ?: return null
+        val idx = found.items.indexOfFirst { it.slug == episodeSlug }
+        if (idx < 0) return null
+        return found to idx
+    }
+
+    private fun loadWebEpisode(item: NguoncEpisodeItem) {
+        if (item.embed.isBlank()) {
+            Toast.makeText(this, "Tập này chưa có nguồn phát", Toast.LENGTH_SHORT).show()
+            return
+        }
+        saveCurrentProgress()
+        episodeSlug = item.slug
+        episodeTitle = if (item.name.all { it.isDigit() }) "Tập ${item.name}" else item.name
+        embedUrl = item.embed
+        tvEpisodeTitle.text = episodeTitle
+        startPositionMs = 0L
+        currentPositionMs = 0L
+        currentDurationMs = 0L
+        hasSeekedToStart = false
+        hasJsControl = false
+        try { loadingBar.visibility = View.VISIBLE } catch (_: Throwable) {}
+        val extraHeaders = mapOf(
+            "Referer" to NguonC_REFERER,
+            "Origin" to "https://phim.nguonc.com"
+        )
+        webView?.loadUrl(embedUrl, extraHeaders)
+        Toast.makeText(this, "Đang chuyển sang $episodeTitle", Toast.LENGTH_SHORT).show()
+        showOsd()
+    }
+
+    private fun switchWebEpisodeByDelta(delta: Int) {
+        if (filmSlug.isBlank() || episodeSlug.isBlank()) {
+            Toast.makeText(this, "Nội dung này không có danh sách tập", Toast.LENGTH_SHORT).show()
+            return
+        }
+        lifecycleScope.launch {
+            val detail = withContext(Dispatchers.IO) {
+                NguoncRepository.fetchFilmDetail(filmSlug, this@WebPlayerActivity)
+            }
+            val resolved = resolveWebServer(detail)
+            if (resolved == null) {
+                Toast.makeText(this@WebPlayerActivity, "Không xác định được server đang xem", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            val (srv, idx) = resolved
+            val target = srv.items.getOrNull(idx + delta)
+            if (target == null) {
+                Toast.makeText(
+                    this@WebPlayerActivity,
+                    if (delta < 0) "Đã là tập đầu tiên" else "Đã hết tập của phim này",
+                    Toast.LENGTH_SHORT
+                ).show()
+                return@launch
+            }
+            loadWebEpisode(target)
+        }
+    }
+
+    private fun showWebEpisodeListDialog() {
+        if (filmSlug.isBlank() || episodeSlug.isBlank()) {
+            Toast.makeText(this, "Không có danh sách tập cho nội dung này", Toast.LENGTH_SHORT).show()
+            return
+        }
+        lifecycleScope.launch {
+            val detail = withContext(Dispatchers.IO) {
+                NguoncRepository.fetchFilmDetail(filmSlug, this@WebPlayerActivity)
+            }
+            val srv = resolveWebServer(detail)?.first
+                ?: detail?.episodes?.firstOrNull { s -> s.items.any { it.slug == episodeSlug } }
+            if (srv == null || srv.items.isEmpty()) {
+                Toast.makeText(this@WebPlayerActivity, "Không tải được danh sách tập", Toast.LENGTH_SHORT).show()
+                return@launch
+            }
+            val curIdx = srv.items.indexOfFirst { it.slug == episodeSlug }.coerceAtLeast(0)
+            lateinit var dlg: AlertDialog
+            val rv = RecyclerView(this@WebPlayerActivity).apply {
+                layoutManager = GridLayoutManager(this@WebPlayerActivity, 5)
+                val pad = (16 * resources.displayMetrics.density).toInt()
+                setPadding(pad, pad / 2, pad, pad / 2)
+                clipToPadding = false
+                layoutParams = ViewGroup.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT,
+                    (300 * resources.displayMetrics.density).toInt()
+                )
+                adapter = WebEpisodeAdapter(srv.items, episodeSlug) { item ->
+                    dlg.dismiss()
+                    loadWebEpisode(item)
+                }
+            }
+            dlg = AlertDialog.Builder(this@WebPlayerActivity, R.style.Theme_KenhLive_Dialog)
+                .setTitle("$filmTitle · ${srv.serverName}")
+                .setView(rv)
+                .setNegativeButton("Đóng", null)
+                .create()
+            dlg.show()
+            rv.scrollToPosition(curIdx)
+            rv.post {
+                (rv.findViewHolderForAdapterPosition(curIdx)?.itemView
+                    ?: rv.layoutManager?.findViewByPosition(curIdx))?.requestFocus()
+            }
+        }
+    }
+
+    /** Nhãn chip tập rút gọn "Tập N" (cùng chuẩn với EpisodePickerDialog). */
+    private fun webEpisodeChipLabel(raw: String): String {
+        val name = raw.trim()
+        if (name.isEmpty()) return "Tập ?"
+        if (name.all { it.isDigit() }) return "Tập $name"
+        val trailingNum = Regex("(\\d+)\\s*$").find(name)?.groupValues?.get(1)
+        if (trailingNum != null && (name.contains("tập", true) || name.contains("tap", true) ||
+                name.contains("ep", true) || name.length <= 22)) {
+            trailingNum.toIntOrNull()?.let { return "Tập $it" }
+        }
+        return if (name.length > 18) name.substring(0, 17) + "…" else name
+    }
+
+    private inner class WebEpisodeAdapter(
+        private val items: List<NguoncEpisodeItem>,
+        private val currentSlug: String?,
+        private val onPick: (NguoncEpisodeItem) -> Unit
+    ) : RecyclerView.Adapter<WebEpisodeAdapter.VH>() {
+
+        inner class VH(v: View) : RecyclerView.ViewHolder(v) {
+            val tv: TextView = v.findViewById(R.id.tvEpisodeName)
+        }
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
+            val v = LayoutInflater.from(parent.context)
+                .inflate(R.layout.item_episode_chip, parent, false)
+            return VH(v)
+        }
+
+        override fun onBindViewHolder(holder: VH, position: Int) {
+            val item = items[position]
+            val isCurrent = item.slug == currentSlug
+            holder.tv.text = webEpisodeChipLabel(item.name)
+            if (isCurrent) {
+                holder.tv.setBackgroundResource(R.drawable.bg_badge_hd)
+                holder.tv.setTextColor(android.graphics.Color.WHITE)
+            } else {
+                holder.tv.setBackgroundResource(R.drawable.bg_badge_glass)
+                holder.tv.setTextColor(0xFFE2E8F0.toInt())
+            }
+            holder.itemView.setOnClickListener { onPick(item) }
+            holder.itemView.setOnFocusChangeListener { v, hasFocus ->
+                v.animate().scaleX(if (hasFocus) 1.08f else 1.0f)
+                    .scaleY(if (hasFocus) 1.08f else 1.0f).setDuration(100).start()
+                if (hasFocus) holder.tv.setTextColor(android.graphics.Color.WHITE)
+                else if (!isCurrent) holder.tv.setTextColor(0xFFE2E8F0.toInt())
+            }
+        }
+
+        override fun getItemCount(): Int = items.size
     }
 
     private fun saveCurrentProgress() {

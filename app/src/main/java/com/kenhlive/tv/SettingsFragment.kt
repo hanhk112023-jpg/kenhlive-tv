@@ -157,6 +157,12 @@ class SettingsFragment : Fragment() {
                     Toast.makeText(ctx, getString(R.string.settings_about_body), Toast.LENGTH_LONG).show()
                 },
 
+                SettingsAdapter.Item.Section("TRÌNH PHÁT"),
+                SettingsAdapter.Item.Row(
+                    R.drawable.ic_play, "Bước tua khi xem phim",
+                    value = PlayerPrefs.seekStepSec(ctx).toString() + " giây"
+                ) { pickSeekStep() },
+
                 SettingsAdapter.Item.Section(getString(R.string.settings_section_storage)),
                 SettingsAdapter.Item.Row(
                     R.drawable.ic_info, getString(R.string.settings_storage_usage),
@@ -264,6 +270,18 @@ class SettingsFragment : Fragment() {
                 append("Xóa bộ nhớ đệm không làm mất lịch sử xem và cài đặt.")
             }
             dlg.setMessage(msg)
+        }
+    }
+
+    /** Bước tua dùng cho D-pad ◄/►, chạm đúp và thanh điều khiển trong cả 2 trình phát. */
+    private fun pickSeekStep() {
+        val opts = PlayerPrefs.SEEK_STEP_OPTIONS_SEC
+        val names = opts.map { "$it giây" }.toTypedArray()
+        val cur = opts.indexOf(PlayerPrefs.seekStepSec(requireContext())).coerceAtLeast(0)
+        singleChoice(names, cur) { i ->
+            PlayerPrefs.setSeekStepSec(requireContext(), opts[i])
+            Toast.makeText(requireContext(), "Đã đặt bước tua: ${opts[i]} giây", Toast.LENGTH_SHORT).show()
+            rebuild(focusRow = if (DeviceMode.isTv) lastFocusedRow else -1)
         }
     }
 
