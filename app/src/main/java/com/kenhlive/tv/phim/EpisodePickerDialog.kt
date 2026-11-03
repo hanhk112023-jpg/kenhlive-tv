@@ -76,8 +76,12 @@ object EpisodePickerDialog {
                 btnFavorite.setCompoundDrawablesWithIntrinsicBounds(
                     if (isFav) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark, 0, 0, 0
                 )
-                // Hiển thị nút Xóa Lịch Sử nếu phim có tiến độ xem hoặc đang lưu
-                btnDeleteHistory.visibility = if (hasProg || isFav) View.VISIBLE else View.GONE
+                // Chỉ hiện nút Xóa Lịch Sử khi THẬT SỰ có tiến độ/lịch sử để xoá.
+                // Trước đây điều kiện gồm cả isFav: phim đã lưu (yêu thích) thì nút
+                // không bao giờ biến mất sau khi xoá (deleteProgress giữ nguyên mục
+                // yêu thích), bấm xoá báo thành công nhưng trạng thái đứng yên —
+                // người dùng thấy như xoá lịch sử bị lỗi. (v0.1.4)
+                btnDeleteHistory.visibility = if (hasProg) View.VISIBLE else View.GONE
             }
         }
 

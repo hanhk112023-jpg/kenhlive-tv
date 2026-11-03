@@ -663,8 +663,11 @@ object WatchHistoryManager {
                 put(COL_PROGRESS_PCT, 0)
             }
             db.update(TABLE_FAVORITES, cv, "$COL_SLUG = ?", arrayOf(slug))
-            // 4. Đồng bộ lại sang SharedPreferences & JSON vault
-            triggerBackupAsync()
+            // 4. Xả vault NGAY (không chờ debounce 5 phút / xuống nền): nếu app bị
+            // force-stop hoặc máy mất điện trước lần xả nền, vault cũ (kể cả bản ở
+            // Downloads còn qua gỡ cài) sẽ khôi phục lại đúng phim vừa xoá ở lần mở
+            // sau khi bảng đang trống — xoá xong phim "hồi sinh". (v0.1.4)
+            flushBackupNow()
             Log.d(TAG, "Đã xóa hoàn tất lịch sử xem của phim: $slug")
         } catch (e: Exception) {
             Log.e(TAG, "deleteProgress error: ${e.message}")
@@ -921,7 +924,9 @@ object WatchHistoryManager {
             db.delete(TABLE_HISTORY, null, null)
             db.delete(TABLE_EPISODES, null, null)
             db.delete(TABLE_FAVORITES, null, null)
-            triggerBackupAsync()
+            // Xả vault ngay như deleteProgress — tránh vault cũ khôi phục lại toàn bộ
+            // lịch sử vừa xoá khi app bị tắt đột ngột trước lần xả nền. (v0.1.4)
+            flushBackupNow()
         } catch (_: Exception) {}
     }
 
@@ -951,6 +956,17 @@ object WatchHistoryManager {
     /** Xả sao lưu ngay bất kể debounce (dùng khi app xuống nền/đóng hoặc nơi gọi cần bền vững tức thì). */
     fun flushBackupAsync() {
         ioScope.launch { runBackupIfDirty() }
+    }
+
+    /**
+     * Xả sao lưu ĐỒNG BỘ ngay tại thread đang gọi (phải đang ở IO): dùng cho các thao
+     * tác xoá dữ liệu — vault phải phản ánh trạng thái sau xoá trước khi hàm xoá
+     * trả về, nếu không một lần tắt app đột ngột sẽ để lại vault cũ và mục vừa xoá
+     * bị khôi phục ở lần mở sau. (v0.1.4)
+     */
+    private fun flushBackupNow() {
+        backupDirty = true
+        runBackupIfDirty()
     }
 
     /**

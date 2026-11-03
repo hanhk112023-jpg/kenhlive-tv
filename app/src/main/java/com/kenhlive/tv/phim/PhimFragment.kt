@@ -403,8 +403,10 @@ class PhimFragment : Fragment() {
             options.add(favText)
             actions.add { toggleFilmFavorite(film) }
 
-            // 3. Xóa khỏi lịch sử / tiếp tục xem nếu có tiến độ
-            if (hasProg || isFav) {
+            // 3. Xóa khỏi lịch sử / tiếp tục xem — chỉ khi thật sự có tiến độ để xoá
+            // (trước đây hiện cả với phim chỉ-đã-lưu: bấm xoá báo thành công nhưng
+            // không có gì thay đổi vì deleteProgress giữ mục yêu thích). (v0.1.4)
+            if (hasProg) {
                 options.add("Xóa khỏi Lịch Sử & Tiến Độ Xem")
                 actions.add {
                     viewLifecycleOwner.lifecycleScope.launch {
