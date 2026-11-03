@@ -1,0 +1,63 @@
+# Mobilerun pilot config for KenhLive — AI UI regression tests on Android TV emulator.
+# Model id is injected at CI runtime (token __MODEL__ replaced by the Preflight-picked
+# vision model from the Meteor gateway). API key comes from env OPENAI_API_KEY
+# (CI passes the existing METEOR_API_KEY secret — the gateway is OpenAI-compatible,
+# so provider OpenAILike + base_url works without any new key).
+
+_version: 7
+
+agent:
+  max_steps: 60
+  reasoning: true
+  streaming: false
+  vision_only: false
+  after_sleep_action: 1.0
+  wait_for_stable_ui: 0.5
+  fast_agent:
+    vision: true
+  manager:
+    vision: true
+  executor:
+    vision: true
+  app_cards:
+    enabled: false
+
+llm_profiles:
+  manager:
+    provider: OpenAILike
+    model: __MODEL__
+    temperature: 0.2
+    api_key_source: env
+    base_url: http://meteor.pikamc.vn:25155/v1
+    api_base: http://meteor.pikamc.vn:25155/v1
+  executor:
+    provider: OpenAILike
+    model: __MODEL__
+    temperature: 0.1
+    api_key_source: env
+    base_url: http://meteor.pikamc.vn:25155/v1
+    api_base: http://meteor.pikamc.vn:25155/v1
+  fast_agent:
+    provider: OpenAILike
+    model: __MODEL__
+    temperature: 0.2
+    api_key_source: env
+    base_url: http://meteor.pikamc.vn:25155/v1
+    api_base: http://meteor.pikamc.vn:25155/v1
+  app_opener:
+    provider: OpenAILike
+    model: __MODEL__
+    temperature: 0.0
+    api_key_source: env
+    base_url: http://meteor.pikamc.vn:25155/v1
+    api_base: http://meteor.pikamc.vn:25155/v1
+  structured_output:
+    provider: OpenAILike
+    model: __MODEL__
+    temperature: 0.0
+    api_key_source: env
+    base_url: http://meteor.pikamc.vn:25155/v1
+    api_base: http://meteor.pikamc.vn:25155/v1
+
+device:
+  serial: null
