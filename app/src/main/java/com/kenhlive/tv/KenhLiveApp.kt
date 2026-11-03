@@ -45,7 +45,43 @@ class KenhLiveApp : Application(), ImageLoaderFactory {
                     .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
                     .header("Referer", "https://colatv.org/")
                     .build()
-                chain.proceed(req)
+                val host = req.url.host
+                val isPhimImg = host.equals("phimimg.com", ignoreCase = true) ||
+                    host.endsWith(".phimimg.com", ignoreCase = true)
+                if (!isPhimImg) {
+                    chain.proceed(req)
+                } else {
+                    // Host ảnh phimimg.com hay lỗi trên máy cũ/mạng yếu: nếu lần tải đầu ném
+                    // IOException hoặc trả HTTP >= 400 thì thử lại MỘT lần với cùng đường dẫn
+                    // trên phimapi.com (phục vụ cùng kho ảnh). Host khác giữ nguyên hành vi.
+                    var firstError: java.io.IOException? = null
+                    var firstResponse: okhttp3.Response? = null
+                    try {
+                        firstResponse = chain.proceed(req)
+                    } catch (e: java.io.IOException) {
+                        firstError = e
+                    }
+                    if (firstError == null && firstResponse != null && firstResponse.code < 400) {
+                        firstResponse
+                    } else {
+                        // Đóng response lỗi trước khi retry để không rò kết nối
+                        firstResponse?.close()
+                        val apiHost = if (host.equals("phimimg.com", ignoreCase = true)) {
+                            "phimapi.com"
+                        } else {
+                            host.removeSuffix("phimimg.com") + "phimapi.com"
+                        }
+                        val retryReq = req.newBuilder()
+                            .url(req.url.newBuilder().host(apiHost).build())
+                            .header("Referer", "https://phimapi.com/")
+                            .build()
+                        try {
+                            chain.proceed(retryReq)
+                        } catch (e: java.io.IOException) {
+                            throw (firstError ?: e)
+                        }
+                    }
+                }
             }
             .connectTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
             .readTimeout(15, java.util.concurrent.TimeUnit.SECONDS)
@@ -72,15 +108,18 @@ class KenhLiveApp : Application(), ImageLoaderFactory {
 
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
-        if (level >= TRIM_MEMORY_BACKGROUND || level >= TRIM_MEMORY_RUNNING_LOW || level >= TRIM_MEMORY_UI_HIDDEN) {
+        // CHỈ xả memory cache ảnh khi hệ thống báo cạn kiệt thật sự (TRIM_MEMORY_COMPLETE).
+        // Điều kiện cũ (>= TRIM_MEMORY_RUNNING_LOW / UI_HIDDEN / BACKGROUND) khớp gần như MỌI
+        // callback trim: trên TV box 1GB các callback này bắn liên tục, khiến Coil memory cache
+        // bị xoá không ngừng -> poster không bao giờ kịp sống trong cache, thẻ phim hiện trống.
+        // Cache danh sách phim (NguoncRepository) rất nhẹ nên không xoá ở đây nữa.
+        if (level >= TRIM_MEMORY_COMPLETE) {
             coil.Coil.imageLoader(this).memoryCache?.clear()
-            com.kenhlive.tv.phim.NguoncRepository.clearCache()
         }
     }
 
     override fun onLowMemory() {
         super.onLowMemory()
         coil.Coil.imageLoader(this).memoryCache?.clear()
-        com.kenhlive.tv.phim.NguoncRepository.clearCache()
     }
 }

@@ -42,6 +42,16 @@ object Enhancer {
     fun buildTrackSelector(ctx: Context): DefaultTrackSelector {
         val ts = DefaultTrackSelector(ctx)
         applyVideo(ts, EnhanceSettings.videoQuality(ctx))
+        // Máy yếu (RAM thấp): chốt trần cứng 720p SAU applyVideo — giải mã 1080p/4K là
+        // gánh nặng lớn nhất trên TV box 1GB RAM (CPU/GPU + băng thông bộ nhớ). Trần này
+        // chỉ là MAX: người dùng đã chọn mức thấp hơn trong applyVideo thì vẫn giữ nguyên.
+        if (KenhLiveApp.isLowRam(ctx)) {
+            try {
+                val b = ts.buildUponParameters()
+                b.setMaxVideoSize(1280, 720)
+                ts.setParameters(b.build())
+            } catch (_: Exception) { /* giữ tham số của applyVideo */ }
+        }
         return ts
     }
 

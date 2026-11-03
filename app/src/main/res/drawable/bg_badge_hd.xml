@@ -1,9 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<shape xmlns:android="http://schemas.android.com/apk/res/android"
-    android:shape="rectangle">
-    <solid android:color="#20FF6500" />
-    <stroke
-        android:width="1dp"
-        android:color="#80FF6500" />
-    <corners android:radius="6dp" />
-</shape>
+<selector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:enterFadeDuration="0"
+    android:exitFadeDuration="0">
+    <!-- Focused + Selected: vòng focus cam 2.5dp @color/kl_focus_ring, giữ tông cam của badge HD -->
+    <item android:state_focused="true" android:state_selected="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#33FF6500" />
+            <stroke android:width="2.5dp" android:color="@color/kl_focus_ring" />
+            <corners android:radius="6dp" />
+        </shape>
+    </item>
+    <!-- Focused: vòng focus cam 2.5dp + nền cam sáng hơn -->
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="#33FF6500" />
+            <stroke android:width="2.5dp" android:color="@color/kl_focus_ring" />
+            <corners android:radius="6dp" />
+        </shape>
+    </item>
+    <!-- Bình thường: giữ nguyên diện mạo cũ (badge không focusable dùng trạng thái này) -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#20FF6500" />
+            <stroke android:width="1dp" android:color="#80FF6500" />
+            <corners android:radius="6dp" />
+        </shape>
+    </item>
+</selector>

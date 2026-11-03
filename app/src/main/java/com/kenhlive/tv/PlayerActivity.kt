@@ -107,6 +107,12 @@ class PlayerActivity : AppCompatActivity() {
     private var tvSeekCurrent: TextView? = null
     private var tvSeekTotal: TextView? = null
     private var seekDragging: Boolean = false
+    // Guard chống "tua tới giật lại" trên máy yếu: sau seekTo(), player còn báo vị trí CŨ
+    // một lúc (đang buffering). Ghi lại đích + thời điểm của lần tua do người dùng để
+    // (a) lần tua tiếp theo lấy đích cũ làm gốc thay vì vị trí cũ player báo về,
+    // (b) runnable cập nhật thanh tua không kéo núm ngược về vị trí cũ trong lúc chờ.
+    private var lastSeekTargetMs: Long = -1L
+    private var lastSeekAtMs: Long = 0L
     // Thanh điều khiển VOD trên TV (hiện cùng overlay khi bấm OK)
     private var vodControlBar: View? = null
     private var btnBarStop: Button? = null
@@ -123,7 +129,19 @@ class PlayerActivity : AppCompatActivity() {
             if (row.visibility != View.VISIBLE) return
             if (!seekDragging) {
                 val dur = p.duration
-                val pos = p.currentPosition.coerceAtLeast(0L)
+                var pos = p.currentPosition.coerceAtLeast(0L)
+                // Guard chống giật ngược: trong 2s sau lần tua của người dùng, nếu player
+                // vẫn báo vị trí xa đích (>1.5s) thì giữ hiển thị tại đích đã chọn — không
+                // kéo núm seek ngược. Player bắt kịp (|pos-đích| <= 1.5s) hoặc hết cửa sổ
+                // thì hiển thị vị trí thật và xoá guard để không ảnh hưởng lần sau.
+                if (lastSeekTargetMs >= 0L) {
+                    val inWindow = android.os.SystemClock.uptimeMillis() - lastSeekAtMs < 2000L
+                    if (inWindow && kotlin.math.abs(pos - lastSeekTargetMs) > 1500L) {
+                        pos = lastSeekTargetMs
+                    } else {
+                        lastSeekTargetMs = -1L
+                    }
+                }
                 if (dur > 0L) {
                     seekVod?.max = (dur / 1000L).toInt().coerceAtLeast(1)
                     seekVod?.progress = (pos / 1000L).toInt()
@@ -488,7 +506,8 @@ class PlayerActivity : AppCompatActivity() {
                 val p = player ?: return false
                 if (e.x < screenW / 2f) {
                     // Chạm đúp bên trái: Tua lùi theo bước đã cài đặt (mặc định 10s)
-                    val target = (p.currentPosition - seekStepMs()).coerceAtLeast(0L)
+                    val target = (guardedSeekBase(p) - seekStepMs()).coerceAtLeast(0L)
+                    noteUserSeek(target)
                     p.seekTo(target)
                     showGestureFeedback(R.drawable.ic_back, 0, "-${seekStepMs() / 1000}s")
                 } else {
@@ -496,11 +515,13 @@ class PlayerActivity : AppCompatActivity() {
                     // (Trước đây VOD cũng seekToDefaultPosition() = quay về 00:00, mất vị trí đang xem.)
                     if (isVodMode || !p.isCurrentMediaItemLive) {
                         val dur = p.duration
+                        val base = guardedSeekBase(p)
                         val target = if (dur > 0L) {
-                            (p.currentPosition + seekStepMs()).coerceAtMost(dur)
+                            (base + seekStepMs()).coerceAtMost(dur)
                         } else {
-                            p.currentPosition + seekStepMs()
+                            base + seekStepMs()
                         }
+                        noteUserSeek(target)
                         p.seekTo(target)
                         showGestureFeedback(R.drawable.ic_play, 100, "+${seekStepMs() / 1000}s")
                     } else {
@@ -1540,6 +1561,9 @@ class PlayerActivity : AppCompatActivity() {
         seekVod = findViewById(R.id.seekVod)
         tvSeekCurrent = findViewById(R.id.tvSeekCurrent)
         tvSeekTotal = findViewById(R.id.tvSeekTotal)
+        // Tiến trình của thanh tua tính bằng GIÂY → bước phím D-pad trên thanh = đúng
+        // bước tua người dùng đã chọn trong Cài đặt (10/20/30s).
+        seekVod?.keyProgressIncrement = PlayerPrefs.seekStepSec(this)
         seekVod?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
             override fun onProgressChanged(sb: SeekBar?, progress: Int, fromUser: Boolean) {
                 if (fromUser) tvSeekCurrent?.text = fmtPlaybackTime(progress * 1000L)
@@ -1552,6 +1576,7 @@ class PlayerActivity : AppCompatActivity() {
             override fun onStopTrackingTouch(sb: SeekBar?) {
                 seekDragging = false
                 val target = (sb?.progress ?: 0) * 1000L
+                noteUserSeek(target)
                 player?.seekTo(target)
                 tvSeekCurrent?.text = fmtPlaybackTime(target)
                 hideOnce()
@@ -1562,12 +1587,31 @@ class PlayerActivity : AppCompatActivity() {
     /** Bước tua hiện tại (giây) theo cài đặt của người dùng — mặc định 10s. */
     private fun seekStepMs(): Long = PlayerPrefs.seekStepSec(this) * 1000L
 
+    /** Ghi lại một lần tua do người dùng chủ động (đích + thời điểm) cho guard chống giật ngược. */
+    private fun noteUserSeek(targetMs: Long) {
+        lastSeekTargetMs = targetMs
+        lastSeekAtMs = android.os.SystemClock.uptimeMillis()
+    }
+
+    /**
+     * Vị trí gốc để tính lần tua tiếp theo: nếu vừa tua chưa đầy 1.5s thì dùng ĐÍCH của lần
+     * trước — trên máy yếu player chưa kịp cập nhật currentPosition (vẫn báo vị trí cũ),
+     * lấy vị trí cũ làm gốc sẽ khiến video "tới rồi giật lại". Hết cửa sổ thì dùng vị trí thật.
+     */
+    private fun guardedSeekBase(p: Player): Long {
+        val fresh = lastSeekTargetMs >= 0L &&
+            android.os.SystemClock.uptimeMillis() - lastSeekAtMs < 1500L
+        return if (fresh) lastSeekTargetMs else p.currentPosition
+    }
+
     /** Tua theo bước đã cài đặt. Dùng chung: D-pad ◄/►, chạm đúp (phone), nút tua trên thanh điều khiển TV. */
     private fun seekByStep(dir: Int) {
         val p = player ?: return
         val step = seekStepMs()
+        val base = guardedSeekBase(p)
         if (dir < 0) {
-            val target = (p.currentPosition - step).coerceAtLeast(0L)
+            val target = (base - step).coerceAtLeast(0L)
+            noteUserSeek(target)
             p.seekTo(target)
             val m = target / 60000L
             val s = (target % 60000L) / 1000L
@@ -1575,7 +1619,8 @@ class PlayerActivity : AppCompatActivity() {
             saveVodProgress(target)
         } else {
             val dur = p.duration.coerceAtLeast(0L)
-            val target = if (dur > 0L) (p.currentPosition + step).coerceAtMost(dur) else p.currentPosition + step
+            val target = if (dur > 0L) (base + step).coerceAtMost(dur) else base + step
+            noteUserSeek(target)
             p.seekTo(target)
             val m = target / 60000L
             val s = (target % 60000L) / 1000L
@@ -1605,6 +1650,11 @@ class PlayerActivity : AppCompatActivity() {
         btnBarSeekFwd = findViewById(R.id.btnBarSeekFwd)
         btnBarNextEp = findViewById(R.id.btnBarNextEp)
         btnBarEpisodes = findViewById(R.id.btnBarEpisodes)
+        // Nút đầu tiên của thanh: hành vi là dừng phát + lưu tiến độ + THOÁT khỏi player,
+        // tức là nút "Thoát" chứ không phải "Dừng" (người dùng góp ý). Text khai trong XML
+        // là "Dừng" nên đặt lại nhãn + mô tả tại đây cho đúng bản chất.
+        btnBarStop?.text = "Thoát"
+        btnBarStop?.contentDescription = "Thoát"
         btnBarStop?.setOnClickListener {
             saveVodProgress()
             player?.stop()
@@ -1796,9 +1846,9 @@ class PlayerActivity : AppCompatActivity() {
                 holder.tv.setTextColor(0xFFE2E8F0.toInt())
             }
             holder.itemView.setOnClickListener { onPick(item) }
-            holder.itemView.setOnFocusChangeListener { v, hasFocus ->
-                v.animate().scaleX(if (hasFocus) 1.08f else 1.0f)
-                    .scaleY(if (hasFocus) 1.08f else 1.0f).setDuration(100).start()
+            holder.itemView.setOnFocusChangeListener { _, hasFocus ->
+                // Không scale animation: vòng focus cam của background lo phần nổi bật;
+                // animate trên view bị recycle gây chớp hình "tập ẩn tập hiện" (đồng bộ EpisodePickerDialog).
                 if (hasFocus) holder.tv.setTextColor(android.graphics.Color.WHITE)
                 else if (!isCurrent) holder.tv.setTextColor(0xFFE2E8F0.toInt())
             }
@@ -1812,7 +1862,12 @@ class PlayerActivity : AppCompatActivity() {
         if (channelSidebar?.visibility == View.VISIBLE) return
         quickChannelOsd?.visibility = View.GONE
         topOverlay?.visibility = View.VISIBLE
-        hint?.visibility = View.VISIBLE
+        // Dòng gợi ý phím chỉ hiện khi overlay KHÔNG kèm thanh điều khiển: trên TV xem VOD,
+        // thanh nút nằm đúng vị trí của dòng chữ nên hint sẽ đè/che nút bấm (góp ý người dùng).
+        // Đây là nơi DUY NHẤT trong file bật hint — mọi nơi khác chỉ tắt — nên đồng bộ tại
+        // đây + ngay tại điểm bật thanh (nhánh TV-VOD bên dưới) là khép kín.
+        val barWillShow = !DeviceMode.isPhone && isVodMode
+        hint?.visibility = if (barWillShow) View.GONE else View.VISIBLE
         if (DeviceMode.isPhone) {
             centerPlayPauseBtn?.visibility = View.VISIBLE
             phoneBottomBar?.visibility = View.VISIBLE
@@ -1832,6 +1887,9 @@ class PlayerActivity : AppCompatActivity() {
             // giữa màn hình không cần nữa vì đã có ngay trong thanh (bản v7.11-v7.13 dùng
             // nút giữa màn hình; người dùng góp ý muốn đủ tính năng như các trình phát TV).
             vodControlBar?.visibility = View.VISIBLE
+            // Thanh hiện ⇒ hint phải tắt (đồng bộ ngay tại điểm bật thanh, phòng khi
+            // logic phía trên thay đổi sau này).
+            hint?.visibility = View.GONE
             syncVodControlBar()
             centerPlayPauseBtn?.visibility = View.GONE
             val row = phoneSeekRow

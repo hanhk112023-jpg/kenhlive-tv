@@ -100,6 +100,24 @@ class PhimFragment : Fragment() {
     private var sections: List<PhimSection> = emptyList()
     private var selectedCategorySlug: String = "tat-ca"
 
+    // ===== Trạng thái CHẾ ĐỘ LƯỚI DỌC (chọn 1 danh mục cụ thể -> poster trải xuống, phân trang) =====
+    private var gridMode = false
+    private var gridSlug: String = ""
+    private val gridFilms = mutableListOf<NguoncFilm>()
+    private val gridSeenSlugs = HashSet<String>()
+    private var gridPage = 0
+    private var gridLastPageSize = 0
+    private var gridLoading = false
+    private var gridEndReached = false
+    // Tăng mỗi lần đổi filter/chế độ: kết quả tải trang về trễ của filter cũ bị bỏ qua
+    private var gridGeneration = 0
+
+    // Ngưỡng tiền tải: còn ~10 poster chưa hiển thị thì bắt đầu tải trang tiếp
+    private val gridPrefetchItems = 10
+    // Map filter -> API phân trang, bám đúng dispatch rail hiện tại trong loadFilmsByCategory
+    private val gridCountrySlugs = setOf("han-quoc", "trung-quoc", "au-my", "nhat-ban", "viet-nam", "thai-lan")
+    private val gridTypeSlugs = setOf("phim-bo", "phim-le", "hoat-hinh", "tv-shows")
+
     // Danh sách bộ lọc Apple Pills (Thiết kế tinh gọn, chuẩn giao diện OTT hiện đại, không dùng emoji ký tự)
     private val filterCategories = listOf(
         "tat-ca" to "Tất Cả",
@@ -165,6 +183,19 @@ class PhimFragment : Fragment() {
         mainList.layoutManager = LinearLayoutManager(requireContext())
         mainList.itemAnimator = null
 
+        // Chế độ lưới: cuộn gần cuối danh sách -> tự tải trang tiếp theo của danh mục
+        mainList.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(rv: RecyclerView, dx: Int, dy: Int) {
+                if (!gridMode || gridLoading || gridEndReached) return
+                val glm = rv.layoutManager as? GridLayoutManager ?: return
+                val total = rv.adapter?.itemCount ?: 0
+                if (total <= 0) return
+                if (glm.findLastVisibleItemPosition() >= total - 1 - gridPrefetchItems) {
+                    loadNextGridPage()
+                }
+            }
+        })
+
         btnRetry.setOnClickListener {
             loadFilmsByCategory(selectedCategorySlug)
         }
@@ -213,6 +244,12 @@ class PhimFragment : Fragment() {
             val lm = rvSearchGrid.layoutManager as? GridLayoutManager
             val target = DeviceMode.getGridSpanCount(requireContext(), defaultTv = 5, phonePortrait = 3, phoneLandscape = 5)
             if (lm != null && lm.spanCount != target) lm.spanCount = target
+        }
+        // Lưới danh mục (nếu đang ở chế độ lưới) cũng đổi số cột khi xoay máy
+        if (gridMode && ::mainList.isInitialized) {
+            val glm = mainList.layoutManager as? GridLayoutManager
+            val target = DeviceMode.getGridSpanCount(requireContext(), defaultTv = 5, phonePortrait = 3, phoneLandscape = 5)
+            if (glm != null && glm.spanCount != target) glm.spanCount = target
         }
     }
 
@@ -277,6 +314,8 @@ class PhimFragment : Fragment() {
     }
 
     private fun refreshContinueWatchingOnly() {
+        // Chế độ lưới có adapter/dữ liệu riêng: không dựng lại hub rail ở đây
+        if (gridMode) return
         viewLifecycleOwner.lifecycleScope.launch {
             if (selectedCategorySlug == "da-luu") {
                 loadFilmsByCategory("da-luu")
@@ -576,6 +615,14 @@ class PhimFragment : Fragment() {
         loadingView.visibility = View.VISIBLE
         errorLayout.visibility = View.GONE
 
+        // Danh mục duyệt phim cụ thể (loại / thể loại / quốc gia) -> LƯỚI DỌC phân trang.
+        // "Tất Cả" giữ hub rail; "Lịch Sử Xem" / "Tìm Kiếm" / "Mới Cập Nhật" giữ hành vi hiện tại.
+        if (isGridCategory(categorySlug)) {
+            loadGridCategory(categorySlug)
+            return
+        }
+        if (gridMode) exitGridMode()
+
         viewLifecycleOwner.lifecycleScope.launch {
             // Lấy danh sách lịch sử tiếp tục xem và danh sách phim đã lưu
             val history = withContext(Dispatchers.IO) {
@@ -788,6 +835,177 @@ class PhimFragment : Fragment() {
                     }
                 }
             }
+        }
+    }
+
+    // ===== CHẾ ĐỘ LƯỚI DỌC CHO 1 DANH MỤC CỤ THỂ =====
+
+    /**
+     * Filter có vào chế độ lưới không: mọi danh mục duyệt phim cụ thể (loại / thể loại / quốc gia).
+     * "tat-ca" (hub rail), "da-luu", "tim-kiem" và "phim-moi" giữ nguyên hành vi hiện tại.
+     */
+    private fun isGridCategory(slug: String): Boolean =
+        slug !in setOf("tat-ca", "da-luu", "tim-kiem", "phim-moi")
+
+    /**
+     * Map filter -> API phân trang, bám đúng dispatch hiện tại của các rail trong
+     * loadFilmsByCategory: quốc gia kiểm tra trước; nhóm loại đi qua fetchFilmsByType
+     * (batch isCategory=false); còn lại là thể loại qua fetchFilmsByCategory (isCategory=true).
+     */
+    private suspend fun fetchGridPage(slug: String, page: Int): List<NguoncFilm> {
+        val ctx = requireContext()
+        return when {
+            slug in gridCountrySlugs -> NguoncRepository.fetchFilmsByCountry(slug, page, ctx)
+            slug in gridTypeSlugs -> NguoncRepository.fetchFilmsByType(slug, page, ctx)
+            else -> NguoncRepository.fetchFilmsByCategory(slug, page, ctx)
+        }
+    }
+
+    /** Hành vi bấm 1 poster ở hub: có tiến độ xem dở thì phát tiếp, không thì mở hộp thoại phim. */
+    private fun onHubFilmClick(film: NguoncFilm) {
+        val progress = film.watchProgress
+        if (progress != null && progress.embedUrl.isNotBlank()) {
+            playEpisode(
+                film = film,
+                episode = NguoncEpisodeItem(
+                    name = progress.episodeName,
+                    slug = progress.episodeSlug,
+                    embed = progress.embedUrl,
+                    m3u8 = if (progress.embedUrl.contains(".m3u8")) progress.embedUrl else ""
+                ),
+                startPosMs = progress.positionMs
+            )
+        } else {
+            openFilmDialog(film)
+        }
+    }
+
+    private fun applyGridLayoutManager() {
+        val span = DeviceMode.getGridSpanCount(requireContext(), defaultTv = 5, phonePortrait = 3, phoneLandscape = 5)
+        val glm = GridLayoutManager(requireContext(), span)
+        glm.spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+            override fun getSpanSize(position: Int): Int {
+                val ad = mainList.adapter as? PhimMainAdapter ?: return glm.spanCount
+                // Poster chiếm 1 cột; HERO / FILTERS / ROW / LOADING chiếm trọn hàng
+                return if (ad.isPosterPosition(position)) 1 else glm.spanCount
+            }
+        }
+        mainList.layoutManager = glm
+        mainList.itemAnimator = null
+        // Máy yếu: giữ cache view vừa phải cho lưới, không preload quá đà
+        mainList.setItemViewCacheSize(10)
+    }
+
+    /** Thoát chế độ lưới về hub rail: khôi phục LinearLayoutManager, hủy các trang đang tải dở. */
+    private fun exitGridMode() {
+        gridMode = false
+        gridGeneration++
+        gridLoading = false
+        // Không clear gridFilms tại đây: adapter lưới cũ còn gắn tới khi adapter rail mới
+        // được set (bất đồng bộ) — clear ngay sẽ làm itemCount của nó tụt giữa chừng.
+        // Danh sách sẽ được làm mới ở lần vào lưới tiếp theo trong loadGridCategory.
+        mainList.layoutManager = LinearLayoutManager(requireContext())
+        mainList.setItemViewCacheSize(2)
+        mainList.scrollToPosition(0)
+    }
+
+    private fun setGridFooterVisible(visible: Boolean) {
+        val ad = mainList.adapter as? PhimMainAdapter ?: return
+        if (ad.gridFooterVisible == visible) return
+        ad.gridFooterVisible = visible
+        val pos = ad.posterStartIndex() + gridFilms.size
+        if (visible) ad.notifyItemInserted(pos) else ad.notifyItemRemoved(pos)
+    }
+
+    /** Vào chế độ lưới cho [slug]: bỏ hero, chỉ còn hàng FILTERS + poster phân trang từ trang 1. */
+    private fun loadGridCategory(slug: String) {
+        gridMode = true
+        gridSlug = slug
+        val gen = ++gridGeneration
+        gridFilms.clear()
+        gridSeenSlugs.clear()
+        gridPage = 0
+        gridLastPageSize = 0
+        gridEndReached = false
+        gridLoading = true
+
+        errorLayout.visibility = View.GONE
+        loadingView.visibility = View.GONE
+        mainList.visibility = View.VISIBLE
+        applyGridLayoutManager()
+        val adapter = PhimMainAdapter(
+            hero = null,
+            sections = emptyList(),
+            onFilmClick = { film -> onHubFilmClick(film) },
+            onHeroPlay = { film -> openHeroPlay(film) },
+            onFavoriteToggle = { film -> toggleFilmFavorite(film) },
+            onHeroNext = { cycleHeroNext() },
+            filterAdapter = filterAdapter,
+            onUp = { false },
+            gridFilms = gridFilms,
+            gridMode = true,
+            gridFooter = true
+        )
+        mainList.adapter = adapter
+        mainList.scrollToPosition(0)
+
+        viewLifecycleOwner.lifecycleScope.launch {
+            val films = withContext(Dispatchers.IO) { fetchGridPage(slug, 1) }
+            if (gen != gridGeneration || !gridMode || slug != gridSlug) return@launch
+            gridLoading = false
+            if (films.isEmpty()) {
+                mainList.visibility = View.GONE
+                errorLayout.visibility = View.VISIBLE
+                ivEmptyIll.visibility = View.GONE
+                tvErrorTitle.text = "Không thể tải kho phim"
+                tvErrorSub.text = "Kiểm tra kết nối mạng hoặc thử lại sau"
+                btnRetry.text = "Thử lại"
+                btnRetry.setOnClickListener { loadFilmsByCategory(selectedCategorySlug) }
+                return@launch
+            }
+            val fresh = films.filter { gridSeenSlugs.add(it.slug) }
+            gridFilms.addAll(fresh)
+            gridPage = 1
+            gridLastPageSize = films.size
+            setGridFooterVisible(false)
+            if (fresh.isNotEmpty()) {
+                adapter.notifyItemRangeInserted(adapter.posterStartIndex(), fresh.size)
+            }
+        }
+    }
+
+    /**
+     * Tải trang tiếp theo và NỐI vào lưới. Điều kiện dừng (bám quy ước repository,
+     * trang đầy = limit 36 của KKPhim): trang trả về rỗng, hoặc ít hơn trang trước,
+     * hoặc toàn bộ là phim trùng đã có.
+     */
+    private fun loadNextGridPage() {
+        if (!gridMode || gridLoading || gridEndReached) return
+        val slug = gridSlug
+        val gen = gridGeneration
+        val adapter = mainList.adapter as? PhimMainAdapter ?: return
+        gridLoading = true
+        setGridFooterVisible(true)
+        viewLifecycleOwner.lifecycleScope.launch {
+            val films = withContext(Dispatchers.IO) { fetchGridPage(slug, gridPage + 1) }
+            if (gen != gridGeneration || !gridMode || slug != gridSlug) return@launch
+            gridLoading = false
+            setGridFooterVisible(false)
+            if (films.isEmpty()) {
+                gridEndReached = true
+                return@launch
+            }
+            if (gridLastPageSize > 0 && films.size < gridLastPageSize) gridEndReached = true
+            gridLastPageSize = films.size
+            gridPage += 1
+            val fresh = films.filter { gridSeenSlugs.add(it.slug) }
+            if (fresh.isEmpty()) {
+                gridEndReached = true
+                return@launch
+            }
+            val start = adapter.posterStartIndex() + gridFilms.size
+            gridFilms.addAll(fresh)
+            adapter.notifyItemRangeInserted(start, fresh.size)
         }
     }
 
@@ -1069,14 +1287,23 @@ class PhimFragment : Fragment() {
         private val onFavoriteToggle: (NguoncFilm) -> Unit,
         private val onHeroNext: () -> Unit = {},
         private val onUp: () -> Boolean = { false },
-        private val filterAdapter: FilterAdapter? = null
+        private val filterAdapter: FilterAdapter? = null,
+        // Chế độ lưới dọc: danh sách poster dùng chung tham chiếu với PhimFragment để nối trang
+        private val gridFilms: List<NguoncFilm> = emptyList(),
+        private val gridMode: Boolean = false,
+        gridFooter: Boolean = false
     ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         companion object {
             private const val TYPE_HERO = 0
             private const val TYPE_ROW = 1
             private const val TYPE_FILTERS = 2
+            private const val TYPE_POSTER = 3
+            private const val TYPE_LOADING = 4
         }
+
+        /** Hàng "đang tải thêm" ở cuối lưới (chỉ có ý nghĩa khi gridMode = true). */
+        var gridFooterVisible: Boolean = gridFooter
 
         private val headerCount: Int
             get() = (if (hero != null) 1 else 0) + (if (filterAdapter != null) 1 else 0)
@@ -1089,8 +1316,17 @@ class PhimFragment : Fragment() {
         override fun getItemViewType(position: Int): Int = when {
             position == 0 && hero != null -> TYPE_HERO
             position == (if (hero != null) 1 else 0) && filterAdapter != null -> TYPE_FILTERS
+            gridMode && gridFooterVisible && position == headerCount + gridFilms.size -> TYPE_LOADING
+            gridMode && position >= headerCount -> TYPE_POSTER
             else -> TYPE_ROW
         }
+
+        /** Vị trí này có phải 1 poster trong lưới không (dùng cho spanSizeLookup của GridLayoutManager). */
+        fun isPosterPosition(position: Int): Boolean =
+            gridMode && position >= headerCount && position < headerCount + gridFilms.size
+
+        /** Chỉ số adapter của poster đầu tiên trong lưới. */
+        fun posterStartIndex(): Int = headerCount
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
             val inf = LayoutInflater.from(parent.context)
@@ -1102,6 +1338,28 @@ class PhimFragment : Fragment() {
                 TYPE_FILTERS -> {
                     val v = inf.inflate(R.layout.item_phim_filter_row, parent, false)
                     FilterRowVH(v)
+                }
+                TYPE_POSTER -> {
+                    val v = inf.inflate(R.layout.item_phim_grid_card, parent, false)
+                    GridPosterVH(v)
+                }
+                TYPE_LOADING -> {
+                    // Hàng spinner "đang tải thêm" dựng bằng code để khỏi thêm file layout
+                    val container = FrameLayout(parent.context).apply {
+                        layoutParams = RecyclerView.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            (64 * parent.context.resources.displayMetrics.density).toInt()
+                        )
+                        addView(
+                            ProgressBar(parent.context),
+                            FrameLayout.LayoutParams(
+                                ViewGroup.LayoutParams.WRAP_CONTENT,
+                                ViewGroup.LayoutParams.WRAP_CONTENT,
+                                android.view.Gravity.CENTER
+                            )
+                        )
+                    }
+                    LoadingVH(container)
                 }
                 else -> {
                     val v = inf.inflate(R.layout.item_phim_row, parent, false)
@@ -1115,6 +1373,11 @@ class PhimFragment : Fragment() {
                 holder.bind(hero, heroIdx, totalHero, onFilmClick, onHeroPlay, onFavoriteToggle, onHeroNext, onUp)
             } else if (holder is FilterRowVH) {
                 holder.bind(filterAdapter)
+            } else if (holder is GridPosterVH) {
+                val gridIdx = position - headerCount
+                if (gridIdx in gridFilms.indices) {
+                    holder.bind(gridFilms[gridIdx], onFilmClick, onFavoriteToggle)
+                }
             } else if (holder is RowVH) {
                 val sectionIdx = position - headerCount
                 if (sectionIdx in sections.indices) {
@@ -1123,7 +1386,9 @@ class PhimFragment : Fragment() {
             }
         }
 
-        override fun getItemCount(): Int = headerCount + sections.size
+        override fun getItemCount(): Int =
+            if (gridMode) headerCount + gridFilms.size + (if (gridFooterVisible) 1 else 0)
+            else headerCount + sections.size
     }
 
     private class HeroVH(v: View) : RecyclerView.ViewHolder(v) {
@@ -1405,6 +1670,74 @@ class PhimFragment : Fragment() {
 
         override fun getItemCount(): Int = films.size
     }
+
+    /**
+     * Thẻ poster trong CHẾ ĐỘ LƯỚI dọc: inflate item_phim_grid_card, logic hiển thị bám
+     * đúng thẻ rail (PhimCardAdapter): poster thumb, tên, năm · ngôn ngữ, badge tập,
+     * badge chất lượng; badge rating bị ẩn (không bịa điểm như adapter tìm kiếm cũ).
+     */
+    private class GridPosterVH(v: View) : RecyclerView.ViewHolder(v) {
+        val poster: ImageView = v.findViewById(R.id.gridPhimPoster)
+        val title: TextView = v.findViewById(R.id.gridPhimTitle)
+        val meta: TextView = v.findViewById(R.id.gridPhimMeta)
+        val ratingBadge: TextView = v.findViewById(R.id.gridPhimRatingBadge)
+        val qualityBadge: TextView = v.findViewById(R.id.gridPhimQualityBadge)
+        val episodeBadge: TextView = v.findViewById(R.id.gridPhimEpisodeBadge)
+
+        fun bind(
+            film: NguoncFilm,
+            onFilmClick: (NguoncFilm) -> Unit,
+            onFavoriteToggle: (NguoncFilm) -> Unit
+        ) {
+            title.text = film.name
+
+            // Giống thẻ rail: loại bỏ rating giả tạo -> ẩn badge điểm
+            ratingBadge.visibility = View.GONE
+
+            val progress = film.watchProgress
+            if (progress != null && (progress.progressPct > 0 || progress.positionMs > 0L)) {
+                val timeLabel = progress.formattedTimeOnly()
+                episodeBadge.text = if (timeLabel.isNotBlank()) {
+                    "${progress.episodeName} · $timeLabel"
+                } else {
+                    "${progress.episodeName} (${progress.progressPct}%)"
+                }
+                meta.text = progress.formattedProgress()
+            } else {
+                val epStr = film.currentEpisode.ifBlank {
+                    if (film.totalEpisodes.isNotBlank()) "Tập ${film.totalEpisodes}" else "Full"
+                }
+                episodeBadge.text = epStr
+                meta.text = "${film.year.ifBlank { "2026" }} · ${film.language.ifBlank { "Vietsub" }}"
+            }
+
+            qualityBadge.text = film.quality.ifBlank { "FHD" }
+
+            val posterUrl = film.thumbUrl.ifBlank { film.posterUrl }
+            poster.load(posterUrl) {
+                crossfade(false)
+                placeholder(R.drawable.thumb_round_bg)
+                error(R.drawable.thumb_round_bg)
+            }
+
+            itemView.setOnClickListener { onFilmClick(film) }
+            itemView.setOnLongClickListener {
+                onFavoriteToggle(film)
+                true
+            }
+
+            // TV focus dynamics (Netflix Zoom Effect) — như thẻ lưới tìm kiếm
+            itemView.setOnFocusChangeListener { v, hasFocus ->
+                v.animate().cancel()
+                v.animate().scaleX(if (hasFocus) 1.065f else 1f).scaleY(if (hasFocus) 1.065f else 1f)
+                    .setDuration(140).start()
+                v.elevation = if (hasFocus) 16f else 0f
+            }
+        }
+    }
+
+    /** ViewHolder rỗng cho hàng spinner tải thêm ở cuối lưới. */
+    private class LoadingVH(v: View) : RecyclerView.ViewHolder(v)
 
     private class NetflixSearchGridAdapter(
         private val films: List<NguoncFilm>,

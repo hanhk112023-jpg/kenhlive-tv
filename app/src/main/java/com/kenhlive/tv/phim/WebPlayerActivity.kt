@@ -781,9 +781,9 @@ class WebPlayerActivity : AppCompatActivity() {
                 holder.tv.setTextColor(0xFFE2E8F0.toInt())
             }
             holder.itemView.setOnClickListener { onPick(item) }
-            holder.itemView.setOnFocusChangeListener { v, hasFocus ->
-                v.animate().scaleX(if (hasFocus) 1.08f else 1.0f)
-                    .scaleY(if (hasFocus) 1.08f else 1.0f).setDuration(100).start()
+            holder.itemView.setOnFocusChangeListener { _, hasFocus ->
+                // Không scale animation: vòng focus cam của background lo phần nổi bật;
+                // animate trên view bị recycle gây chớp hình "tập ẩn tập hiện" (đồng bộ EpisodePickerDialog).
                 if (hasFocus) holder.tv.setTextColor(android.graphics.Color.WHITE)
                 else if (!isCurrent) holder.tv.setTextColor(0xFFE2E8F0.toInt())
             }

@@ -185,6 +185,11 @@ object EpisodePickerDialog {
                     if (foundIdx >= 0) selectedServerIndex = foundIdx
                 }
 
+                // Adapter lưới tập: tạo MỘT LẦN duy nhất cho cả vòng đời dialog.
+                // Đổi server / tải xong watched-slugs chỉ gọi update() — không tạo mới,
+                // không gán lại adapter (đó là nguyên nhân nhấp nháy "tập ẩn tập hiện").
+                var episodeAdapter: EpisodeAdapter? = null
+
                 fun renderChunksAndEpisodes() {
                     val currentServer = serverList.getOrNull(selectedServerIndex) ?: return
                     val serverItems = currentServer.items
@@ -201,6 +206,17 @@ object EpisodePickerDialog {
                             }
 
                             rvEpisodes.visibility = View.VISIBLE
+                            val existingAdapter = episodeAdapter
+                            if (existingAdapter != null) {
+                                // Adapter đã tồn tại: chỉ cập nhật dữ liệu qua update(),
+                                // KHÔNG tạo mới / gán lại (tránh rebind toàn bộ gây chớp hình).
+                                existingAdapter.update(
+                                    chunkItems,
+                                    watchedSlugs,
+                                    progress?.episodeSlug,
+                                    progress?.formattedTimeOnly().orEmpty()
+                                )
+                            } else {
                             val adapter = EpisodeAdapter(
                                 items = chunkItems,
                                 currentEpSlug = progress?.episodeSlug,
@@ -269,7 +285,9 @@ object EpisodePickerDialog {
                                     }
                                 }
                             )
+                            episodeAdapter = adapter
                             rvEpisodes.adapter = adapter
+                            }
                             if (DeviceMode.isTv) {
                                 // Xin focus SAU khi adapter đã gắn và cuộn tới tập đang xem dở.
                                 // (Bản cũ xin focus ở ngoài trước khi adapter tồn tại nên lệnh
@@ -340,6 +358,12 @@ object EpisodePickerDialog {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): VH {
             val v = LayoutInflater.from(parent.context).inflate(R.layout.item_episode_chip, parent, false)
+            // Layout gốc của chip là match_parent (để các ô trong lưới tập đều nhau tuyệt đối);
+            // hàng server ngang cần chip co theo nội dung nên ép lại WRAP_CONTENT tại đây.
+            v.layoutParams = RecyclerView.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
             return VH(v)
         }
 
@@ -366,8 +390,9 @@ object EpisodePickerDialog {
                 }
             }
 
-            holder.itemView.setOnFocusChangeListener { v, hasFocus ->
-                v.animate().scaleX(if (hasFocus) 1.08f else 1.0f).scaleY(if (hasFocus) 1.08f else 1.0f).setDuration(100).start()
+            // Không animate scale trên view bị recycle (gây chớp hình): vòng focus cam do
+            // background selector (bg_badge_glass/bg_badge_hd) tự hiển thị khi chip nhận focus.
+            holder.itemView.setOnFocusChangeListener { _, hasFocus ->
                 if (hasFocus) {
                     holder.tv.setTextColor(0xFFFF334B.toInt())
                 } else if (!isSel) {
@@ -380,18 +405,50 @@ object EpisodePickerDialog {
     }
 
     private class EpisodeAdapter(
-        private val items: List<NguoncEpisodeItem>,
+        items: List<NguoncEpisodeItem>,
         private var currentEpSlug: String?,
-        private val watchedEpSlugs: Set<String>,
+        watchedEpSlugs: Set<String>,
         private var currentEpTimeLabel: String = "",
         private val onClick: (NguoncEpisodeItem) -> Unit,
         private val onBookmark: (NguoncEpisodeItem) -> Unit
     ) : RecyclerView.Adapter<EpisodeAdapter.VH>() {
 
+        private var items: List<NguoncEpisodeItem> = items
+        private var watchedEpSlugs: Set<String> = watchedEpSlugs
+
+        /**
+         * Cập nhật toàn bộ dữ liệu (đổi server / tải xong watched-slugs) rồi notify MỘT lần.
+         * Adapter được tạo một lần duy nhất cho vòng đời dialog — không tạo mới, không gán lại
+         * vào RecyclerView, nên lưới tập không còn rebind/chớp "tập ẩn tập hiện".
+         */
+        fun update(
+            newItems: List<NguoncEpisodeItem>,
+            newWatchedSlugs: Set<String>,
+            newCurrentSlug: String?,
+            newTimeLabel: String = ""
+        ) {
+            items = newItems
+            watchedEpSlugs = newWatchedSlugs
+            currentEpSlug = newCurrentSlug
+            currentEpTimeLabel = newTimeLabel
+            notifyDataSetChanged()
+        }
+
         fun updateCurrent(slug: String, timeLabel: String = "") {
+            val oldPos = items.indexOfFirst { it.slug == currentEpSlug }
             currentEpSlug = slug
             if (timeLabel.isNotBlank()) currentEpTimeLabel = timeLabel
-            notifyDataSetChanged()
+            val newPos = items.indexOfFirst { it.slug == slug }
+            when {
+                oldPos >= 0 && newPos >= 0 && oldPos != newPos -> {
+                    // Cả tập "đang xem" cũ và mới đều phải vẽ lại (cũ mất highlight, mới nhận highlight)
+                    notifyItemChanged(oldPos)
+                    notifyItemChanged(newPos)
+                }
+                newPos >= 0 -> notifyItemChanged(newPos)
+                oldPos >= 0 -> notifyItemChanged(oldPos)
+                else -> notifyDataSetChanged()
+            }
         }
 
         /**
@@ -467,8 +524,9 @@ object EpisodePickerDialog {
                 true
             }
 
-            holder.itemView.setOnFocusChangeListener { v, hasFocus ->
-                v.animate().scaleX(if (hasFocus) 1.08f else 1.0f).scaleY(if (hasFocus) 1.08f else 1.0f).setDuration(100).start()
+            // Không animate scale trên view bị recycle (gây chớp hình): focus chỉ đổi màu chữ,
+            // vòng focus cam do background selector (bg_badge_glass/bg_badge_hd) tự hiển thị.
+            holder.itemView.setOnFocusChangeListener { _, hasFocus ->
                 if (hasFocus) {
                     holder.tv.setTextColor(Color.WHITE)
                 } else if (isCurrent) {
