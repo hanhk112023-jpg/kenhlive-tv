@@ -16,7 +16,11 @@
     <dimen name="rail_collapsed_w">68dp</dimen>
     <dimen name="hero_h">340dp</dimen>
     <dimen name="hero_side_margin">@dimen/sp_screen_margin</dimen>
-    <dimen name="phim_hero_h">430dp</dimen>
+    <!-- Sửa 2026-11-04: 430 -> 380dp. Với 430dp, hero + hàng DANH MỤC vượt quá
+         chiều cao 1080 của TV nên pill bị cắt mất nửa dưới ngay ở màn hình đầu
+         tiên (ảnh 02 run 41804848530). 380dp vẫn giữ hero điện ảnh nhưng để
+         hàng pill hiện trọn vẹn trước khi người dùng cuộn. -->
+    <dimen name="phim_hero_h">380dp</dimen>
     <dimen name="hero_pad_b">26dp</dimen>
     <dimen name="card_w">338dp</dimen>
     <dimen name="card_thumb_h">182dp</dimen>
