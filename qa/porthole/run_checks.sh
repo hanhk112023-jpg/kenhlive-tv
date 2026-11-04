@@ -197,6 +197,18 @@ porthole key 23
 sleep 2
 shot 11e-player-menu.png
 foc 11e-player-focused.json
+porthole dump-ui > "$OUT/player-menu-ui.json" 2>/dev/null || true
+# Menu live chập chờn theo thời gian overlay (run 3 được, run 4 trượt):
+# nếu dump không có tiêu đề "Tùy Chọn Phát" thì thử lại 1 lần OK OK ngay
+# rồi chụp lại, thay vì chấp nhận ảnh video trơn.
+if ! grep -q "Tùy Chọn Phát" "$OUT/player-menu-ui.json" 2>/dev/null; then
+  echo "Dialog Tuy Chon Phat chua mo - thu lai OK OK"
+  porthole key 23
+  porthole key 23
+  sleep 2
+  shot 11f-player-menu-retry.png
+  foc 11f-player-focused.json
+fi
 shot 11d-menu-focus.png
 foc 11d-menu-focused.json
 # BACK: menu chưa chắc đã mở (2 run trước đều trượt), nên chỉ BACK 3 lần:
@@ -300,6 +312,11 @@ ensure_app 15-ensure-app.png
 if porthole focus-on "CÀI ĐẶT" --select; then ok SETTINGS "focus-on CAI DAT + select OK"; else ok SETTINGS "FAIL"; fi
 sleep 5
 shot 15-settings.png
+# Bắt log crash NGAY sau khi chụp, TRƯỚC khi foc/dump-ui (dump-ui của
+# Porthole xả hàng trăm dòng uiautomator vào logcat và đẩy log crash ra
+# khỏi buffer — đó là lý do run 4 không bắt được khoảnh khắc rời foreground).
+echo "kenhlive pid sau Cai dat: $(adb shell pidof com.kenhlive.tv 2>/dev/null)" > "$OUT/settings-log.txt" || true
+adb logcat -d -s AndroidRuntime 2>/dev/null | tail -40 >> "$OUT/settings-log.txt" || true
 foc 15-settings-focused.json
 porthole dump-ui > "$OUT/settings-ui.json" 2>/dev/null || echo "dump settings-ui failed"
 porthole key 4
@@ -330,24 +347,45 @@ sleep 12
 shot 18-vod-player.png
 foc 18-vod-player-focused.json
 porthole dump-ui > "$OUT/vod-player-ui.json" 2>/dev/null || echo "dump vod-player-ui failed"
-# OK hiện overlay VOD, focus phải về nút Phát/Dừng ở thanh dưới.
+# OK hiện overlay VOD, focus về nút Phát/Dừng ở thanh dưới, rồi sang trái
+# 3 lần tới Cài Đặt và OK mở menu — TẤT CẢ liền nhau, không sleep/foc ở
+# giữa, vì run trước sleep 1s giữa các phím + foc đã làm overlay tự ẩn
+# quá 3,5s nên OK cuối chỉ là "hiện overlay" chứ không phải "mở menu".
+# Dialog Cài Đặt mở rồi sẽ đứng yên nên chụp sau 2s vẫn được.
 porthole key 23
-sleep 2
-shot 18b-vod-overlay.png
-foc 18b-vod-focused.json
-# Từ Phát/Dừng sang trái 3 lần: Tua lại, Tập trước, Cài Đặt — rồi OK mở menu Cài Đặt VOD.
 porthole remote dpad_left || porthole key 21
-sleep 1
 porthole remote dpad_left || porthole key 21
-sleep 1
 porthole remote dpad_left || porthole key 21
-sleep 1
-shot 18c-vod-settings-focus.png
-foc 18c-vod-focused.json
 porthole key 23
 sleep 2
 shot 18d-vod-settings-menu.png
 foc 18d-vod-focused.json
+porthole dump-ui > "$OUT/vod-settings-ui.json" 2>/dev/null || true
+# Thử lại 1 lần nếu dialog chưa mở (dump không có mục "Bước tua" đặc trưng
+# của dialog Cài Đặt VOD): cùng chuỗi nhanh như trên, rồi chụp lại.
+if ! grep -q "Bước tua" "$OUT/vod-settings-ui.json" 2>/dev/null; then
+  echo "Dialog Cai Dat VOD chua mo - thu lai chuoi OK, trai x3, OK"
+  porthole key 23
+  porthole remote dpad_left || porthole key 21
+  porthole remote dpad_left || porthole key 21
+  porthole remote dpad_left || porthole key 21
+  porthole key 23
+  sleep 2
+  shot 18e-vod-settings-retry.png
+  foc 18e-vod-focused.json
+fi
+# Chụp lại focus Cài Đặt: đóng menu (nếu đang mở), hiện overlay, sang trái
+# 3 lần ngay rồi chụp ngay — không foc trước khi chụp để khỏi hết hạn overlay.
+porthole key 4
+sleep 1
+porthole key 23
+porthole remote dpad_left || porthole key 21
+porthole remote dpad_left || porthole key 21
+porthole remote dpad_left || porthole key 21
+shot 18c-vod-settings-focus.png
+foc 18c-vod-focused.json
+shot 18b-vod-overlay.png
+foc 18b-vod-focused.json
 # BACK: đóng menu, ẩn overlay, thoát player về Phim, rồi BACK kép về hub chính.
 porthole key 4
 sleep 1
