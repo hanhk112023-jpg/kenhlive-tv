@@ -194,6 +194,108 @@ sleep 3
 shot 12-player-back.png
 foc 12-player-focused.json
 
+echo; echo "=== PHẦN 2 — TOÀN APP: dừng video 1, quay video 2 (vượt trần 175s) ==="
+# screenrecord của Android tối đa 175s nên phần 1 đã gần hết; dừng video 1,
+# kéo về test-run-part1.mp4, rồi quay video 2 cho phần còn lại của app.
+adb shell 'kill -2 $(pidof screenrecord)' 2>/dev/null || true
+sleep 3
+kill "$REC_PID" 2>/dev/null || true
+adb pull /sdcard/test-run.mp4 "$OUT/test-run-part1.mp4" >> "$OUT/record.log" 2>&1 || true
+adb shell rm -f /sdcard/test-run.mp4
+adb shell screenrecord --size 1280x720 --bit-rate 4000000 --time-limit 175 /sdcard/test-run.mp4 > "$OUT/record2.log" 2>&1 &
+REC_PID=$!
+sleep 2
+
+echo; echo "=== 13. Tìm kiếm (từ hub chính) ==="
+if porthole focus-on "TÌM KIẾM" --select; then ok SEARCH "focus-on TIM KIEM + select OK"; else ok SEARCH "FAIL - khong focus-on duoc TIM KIEM"; fi
+sleep 5
+shot 13-search.png
+foc 13-search-focused.json
+porthole dump-ui > "$OUT/search-ui.json" 2>/dev/null || echo "dump search-ui failed"
+porthole key 4
+sleep 1
+porthole key 4
+sleep 3
+shot 13b-hub.png
+foc 13b-focused.json
+
+echo; echo "=== 14. Lịch thi đấu (từ hub chính) ==="
+if porthole focus-on "LỊCH THI ĐẤU" --select; then ok SCHEDULE "focus-on LICH THI DAU + select OK"; else ok SCHEDULE "FAIL"; fi
+sleep 5
+shot 14-schedule.png
+foc 14-schedule-focused.json
+porthole dump-ui > "$OUT/schedule-ui.json" 2>/dev/null || echo "dump schedule-ui failed"
+porthole key 4
+sleep 1
+porthole key 4
+sleep 3
+shot 14b-hub.png
+foc 14b-focused.json
+
+echo; echo "=== 15. Cài đặt (từ hub chính) ==="
+if porthole focus-on "CÀI ĐẶT" --select; then ok SETTINGS "focus-on CAI DAT + select OK"; else ok SETTINGS "FAIL"; fi
+sleep 5
+shot 15-settings.png
+foc 15-settings-focused.json
+porthole dump-ui > "$OUT/settings-ui.json" 2>/dev/null || echo "dump settings-ui failed"
+porthole key 4
+sleep 1
+porthole key 4
+sleep 3
+shot 15b-hub.png
+foc 15b-focused.json
+
+echo; echo "=== 16-18. Vào lại Phim, mở dialog, bấm tập -> trình phát VOD ==="
+if porthole focus-on "PHIM TRUYỆN" --select; then ok OPEN_PHIM2 "focus-on PHIM TRUYEN + select OK"; else ok OPEN_PHIM2 "FAIL"; fi
+if porthole wait-for "Tất Cả"; then ok PHIM2_LOADED "thay pill Tat Ca"; else ok PHIM2_LOADED "FAIL - khong thay pill Tat Ca"; fi
+sleep 6
+shot 16-phim.png
+porthole remote dpad_down || porthole key 20
+sleep 1
+shot 16b-card.png
+foc 16b-card-focused.json
+porthole key 23
+sleep 5
+shot 17-vod-dialog.png
+foc 17-vod-dialog-focused.json
+# Focus lúc này ở chip Tập 1 (như các run trước) — bấm OK để phát VOD.
+porthole key 23
+sleep 12
+shot 18-vod-player.png
+foc 18-vod-player-focused.json
+porthole dump-ui > "$OUT/vod-player-ui.json" 2>/dev/null || echo "dump vod-player-ui failed"
+# OK hiện overlay VOD, focus phải về nút Phát/Dừng ở thanh dưới.
+porthole key 23
+sleep 2
+shot 18b-vod-overlay.png
+foc 18b-vod-focused.json
+# Từ Phát/Dừng sang trái 3 lần: Tua lại, Tập trước, Cài Đặt — rồi OK mở menu Cài Đặt VOD.
+porthole remote dpad_left || porthole key 21
+sleep 1
+porthole remote dpad_left || porthole key 21
+sleep 1
+porthole remote dpad_left || porthole key 21
+sleep 1
+shot 18c-vod-settings-focus.png
+foc 18c-vod-focused.json
+porthole key 23
+sleep 2
+shot 18d-vod-settings-menu.png
+foc 18d-vod-focused.json
+# BACK: đóng menu, ẩn overlay, thoát player về Phim, rồi BACK kép về hub chính.
+porthole key 4
+sleep 1
+porthole key 4
+sleep 1
+porthole key 4
+sleep 3
+porthole key 4
+sleep 1
+porthole key 4
+sleep 3
+shot 19-final-hub.png
+foc 19-final-focused.json
+
 echo; echo "=== Kiểm tra crash ==="
 if adb shell pidof com.kenhlive.tv > /dev/null 2>&1; then ok APP_ALIVE "tiến trình đang chạy"; else ok APP_ALIVE "FAIL — tiến trình đã chết"; fi
 adb logcat -d -t 600 2>/dev/null | grep -iE "FATAL EXCEPTION|AndroidRuntime.*FATAL" | head -5 > "$OUT/crashes.txt" || true
@@ -203,10 +305,10 @@ echo; echo "=== Dừng quay video ==="
 adb shell 'kill -2 $(pidof screenrecord)' 2>/dev/null || true
 sleep 3
 kill "$REC_PID" 2>/dev/null || true
-adb pull /sdcard/test-run.mp4 "$OUT/test-run.mp4" >> "$OUT/record.log" 2>&1 || true
-if [ -s "$OUT/test-run.mp4" ]; then
-  ls -la "$OUT/test-run.mp4"
+adb pull /sdcard/test-run.mp4 "$OUT/test-run-part2.mp4" >> "$OUT/record.log" 2>&1 || true
+if [ -s "$OUT/test-run-part2.mp4" ]; then
+  ls -la "$OUT/test-run-part2.mp4"
 else
-  echo "KHÔNG có file video — xem record.log"
+  echo "KHÔNG có file video phần 2 — xem record.log"
 fi
 echo "checks done"
