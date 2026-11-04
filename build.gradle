@@ -5,9 +5,10 @@ plugins {
 }
 
 // ---------------------------------------------------------------------------
-// CI DIAGNOSTICS: khi build FAIL trong GitHub Actions (có GITHUB_TOKEN),
-// gửi log lỗi compile/resource về nhánh arena dưới dạng file ci-diag/failure.log
-// (không đụng workflow — token CI tự đẩy lên branch chẩn đoán).
+// CI DIAGNOSTICS (Tier 1): khi build FAIL trong GitHub Actions, chỉ ghi
+// log lỗi vào GITHUB_STEP_SUMMARY. Không còn đẩy log lên nhánh khác bằng
+// token, vì log chẩn đoán có thể chứa secret và việc đẩy từ trong build
+// là kênh rò rỉ khó kiểm soát.
 // ---------------------------------------------------------------------------
 if (System.getenv('GITHUB_REPOSITORY') != null) {
     def errBuf = new StringBuilder()
@@ -44,38 +45,6 @@ if (System.getenv('GITHUB_REPOSITORY') != null) {
                 }
             }
         } catch (ignored) { }
-        def token = System.getenv('GITHUB_TOKEN')
-        if (token == null) return
-        def repo = System.getenv('GITHUB_REPOSITORY')
-        def branch = System.getenv('DIAG_BRANCH') ?: 'arena/01a094ce-kenhlive-tv'
-        def path = 'ci-diag/failure.log'
-        def text = "run=${System.getenv('GITHUB_RUN_ID')}\nfailure=${result.failure}\n---- console ----\n${detail}"
-        try {
-            def base = "https://api.github.com/repos/${repo}/contents/${path}"
-            // lay sha hien tai (neu co)
-            String sha = null
-            def g = new URL("${base}?ref=${branch}").openConnection()
-            g.setRequestProperty('Authorization', 'Bearer ' + token)
-            g.setRequestProperty('User-Agent', 'gradle-diag')
-            g.setRequestProperty('Accept', 'application/vnd.github+json')
-            if (g.responseCode == 200) {
-                def obj = new groovy.json.JsonSlurper().parse(g.inputStream)
-                sha = obj.sha
-            }
-            def body = [
-                message: "ci: build failure log run ${System.getenv('GITHUB_RUN_ID')}",
-                content: text.getBytes('UTF-8').encodeBase64().toString(),
-                branch : branch
-            ]
-            if (sha) body.sha = sha
-            def c = new URL(base).openConnection()
-            c.requestMethod = 'PUT'
-            c.doOutput = true
-            c.setRequestProperty('Authorization', 'Bearer ' + token)
-            c.setRequestProperty('User-Agent', 'gradle-diag')
-            c.setRequestProperty('Accept', 'application/vnd.github+json')
-            c.outputStream.withWriter('UTF-8') { w -> w.write(groovy.json.JsonOutput.toJson(body)) }
-            c.responseCode
-        } catch (ignored) { }
+        // Tier 1: dừng tại đây — không đẩy log lên nhánh khác.
     }
 }
