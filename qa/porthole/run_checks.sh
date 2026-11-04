@@ -325,6 +325,11 @@ porthole key 4
 sleep 3
 shot 15b-hub.png
 foc 15b-focused.json
+# Log crash sau khi THOÁT Cài đặt (run 5: crash xảy ra ở nhịp focus-navigation
+# sau ảnh Cài đặt, không phải ngay sau ảnh — settings-log.txt chụp sớm đã
+# bỏ lỡ). Chụp AndroidRuntime ngay sau 15b, trước dump-ui ở bước Phim2.
+echo "kenhlive pid sau thoat Cai dat: $(adb shell pidof com.kenhlive.tv 2>/dev/null)" > "$OUT/settings-exit-log.txt" || true
+adb logcat -d -s AndroidRuntime 2>/dev/null | tail -40 >> "$OUT/settings-exit-log.txt" || true
 
 echo; echo "=== 16-18. Vào lại Phim, mở dialog, bấm tập -> trình phát VOD ==="
 ensure_app 16-ensure-app.png
