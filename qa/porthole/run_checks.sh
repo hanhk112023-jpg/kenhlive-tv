@@ -145,6 +145,39 @@ sleep 3
 shot 10-hub-final.png
 foc 10-focused.json
 
+echo; echo "=== Mở trình phát live từ hub Thể Thao, test thanh trên gọn mới ==="
+# Lúc này vẫn ở hub Thể Thao, focus ở nút [OK] Xem ngay (như ảnh 10 các run
+# trước). Bấm OK để mở PlayerActivity. Các bước sau không làm fail run nếu
+# luồng live chưa tải kịp — chỉ ghi screenshot + focused + dump-ui để soi tay.
+# Lưu ý: video screenrecord giới hạn 175s nên phần trình phát này có thể nằm
+# ngoài video, nhưng screenshot/focused/dump-ui vẫn là bằng chứng chính.
+porthole key 23
+sleep 12
+shot 11-player.png
+foc 11-player-focused.json
+porthole dump-ui > "$OUT/player-ui.json" 2>/dev/null || echo "dump player-ui failed"
+# Overlay tự ẩn sau ~3.5s nên bấm OK lần nữa để hiện lại thanh trên, focus
+# lúc này phải về nút Tùy chọn phát (sau sửa: nút Chất lượng đã ẩn khỏi thanh).
+porthole key 23
+sleep 2
+shot 11b-player-overlay.png
+foc 11b-player-focused.json
+# Bấm OK trên nút Tùy chọn phát để mở menu gọn mới.
+porthole key 23
+sleep 2
+shot 11c-player-menu.png
+foc 11c-player-focused.json
+# BACK: đóng menu, ẩn overlay, thoát player về hub Thể Thao (BACK thừa ở hub
+# chỉ hiện toast, không thoát app, nên 3 lần BACK là an toàn).
+porthole key 4
+sleep 1
+porthole key 4
+sleep 1
+porthole key 4
+sleep 3
+shot 12-player-back.png
+foc 12-player-focused.json
+
 echo; echo "=== Kiểm tra crash ==="
 if adb shell pidof com.kenhlive.tv > /dev/null 2>&1; then ok APP_ALIVE "tiến trình đang chạy"; else ok APP_ALIVE "FAIL — tiến trình đã chết"; fi
 adb logcat -d -t 600 2>/dev/null | grep -iE "FATAL EXCEPTION|AndroidRuntime.*FATAL" | head -5 > "$OUT/crashes.txt" || true
