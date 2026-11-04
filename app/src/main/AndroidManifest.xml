@@ -23,11 +23,11 @@
         <package android:name="com.android.permissioncontroller" />
     </queries>
 
+    <!-- Tier 1: tắt Android Auto Backup. Lịch sử xem và update_state
+         không được sao lưu tự động lên tài khoản Google; app đã có cơ
+         chế snapshot nội bộ riêng cho lịch sử xem. -->
     <application
         android:name=".KenhLiveApp"
-        <!-- Tier 1: tắt Android Auto Backup. Lịch sử xem và update_state
-             không được sao lưu tự động lên tài khoản Google; app đã có cơ
-             chế snapshot nội bộ riêng cho lịch sử xem. -->
         android:allowBackup="false"
         android:largeHeap="true"
         android:hardwareAccelerated="true"
