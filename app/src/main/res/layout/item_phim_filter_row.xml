@@ -5,6 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
+    android:clipChildren="false"
+    android:clipToPadding="false"
     android:background="@color/kl_bg_deep"
     android:paddingLeft="@dimen/sp_screen_margin"
     android:paddingRight="@dimen/sp_screen_margin"
@@ -24,8 +26,10 @@
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvFilterRow"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginTop="6dp"
+        android:layout_height="56dp"
+        android:layout_marginTop="12dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
         android:clipToPadding="false"
         android:clipChildren="false"
         android:scrollbars="none" />
