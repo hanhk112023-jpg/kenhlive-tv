@@ -63,6 +63,18 @@ internal fun unwrapDirectM3u8(embed: String): String {
     }
 }
 
+/**
+ * CDN đã biết trong code của repo (xuất hiện dưới dạng https:// trong
+ * fallback/API của chính repo). Luồng .m3u8 bị "săn" từ WebView chỉ được
+ * chuyển sang player native khi host là host của trang embed, subdomain
+ * của nó, hoặc một host trong danh sách này. Host khác thì ở lại WebView,
+ * không chuyển giao — đó là fallback an toàn, không làm hỏng phát lại.
+ */
+private val KNOWN_STREAM_CDN_HOSTS = setOf(
+    "live.canthotv.vn", "liveh12.vtvprime.vn", "liveh34.vtvprime.vn",
+    "1011154949.vnns.net", "freem3u.xyz", "phimapi.com", "phimimg.com"
+)
+
 /** Domain quảng cáo/tracker thuần (không phải CDN dùng chung) — chặn ở tầng mạng của WebView. */
 private val AD_HOSTS = listOf(
     "doubleclick.net", "googlesyndication.com", "googleadservices.com", "adservice.google.com",
@@ -135,9 +147,26 @@ class WebPlayerActivity : AppCompatActivity() {
     // (phát native = không quảng cáo của trang embed, giống trải nghiệm iOS).
     private var nativeHandoffDone: Boolean = false
     private var sniffedStreamUrl: String = ""
-    // Số lần khung chính đã nhảy sang domain lạ so với domain embed gốc: chỉ thả
-    // 1 lần redirect hợp lệ của nhà cung cấp, các lần sau coi là quảng cáo chiếm trang.
-    private var crossDomainNavCount: Int = 0
+
+    private fun embedHost(): String = try {
+        Uri.parse(embedUrl).host?.lowercase(Locale.ROOT).orEmpty()
+    } catch (_: Throwable) { "" }
+
+    /**
+     * Luồng bị săn chỉ được chấp nhận khi: là https, là .m3u8, và host là
+     * host của trang embed (hoặc subdomain của nó) hoặc CDN đã biết.
+     * Không đạt thì ở lại WebView, không chuyển sang native.
+     */
+    private fun isAllowedSniffedStreamUrl(url: String): Boolean {
+        if (!isHlsUrl(url)) return false
+        val uri = try { Uri.parse(url) } catch (_: Throwable) { return false }
+        if (uri.scheme?.lowercase(Locale.ROOT) != "https") return false
+        val host = uri.host?.lowercase(Locale.ROOT).orEmpty()
+        if (host.isEmpty()) return false
+        val embed = embedHost()
+        if (embed.isNotEmpty() && (host == embed || host.endsWith(".$embed"))) return true
+        return KNOWN_STREAM_CDN_HOSTS.any { host == it || host.endsWith(".$it") }
+    }
     // JS có tìm thấy <video>/JWPlayer điều khiển được không (kể cả trong iframe cùng nguồn).
     // Nếu không, phím D-pad được trả lại cho WebView để trình phát của nhà cung cấp tự xử lý.
     private var hasJsControl: Boolean = false
@@ -302,10 +331,16 @@ class WebPlayerActivity : AppCompatActivity() {
     /** Chuyển sang trình phát native đúng 1 lần — điểm đến của cả hai đường săn luồng. */
     private fun handoffToNative(url: String) {
         if (nativeHandoffDone || isFinishing) return
+        // Cổng kiểm soát duy nhất cho luồng bị săn: không đạt allowlist thì
+        // không đánh dấu done, để ứng viên hợp lệ sau đó vẫn có thể handoff.
+        // Chỉ log host, không log toàn bộ URL (URL có thể chứa token).
+        if (!isAllowedSniffedStreamUrl(url)) return
         nativeHandoffDone = true
         handler.removeCallbacks(progressTrackerRunnable)
         try { webView?.stopLoading() } catch (_: Throwable) {}
-        android.util.Log.i("WebPlayerActivity", "Native handoff: $url")
+        try {
+            android.util.Log.i("WebPlayerActivity", "Native handoff: host=${Uri.parse(url).host}")
+        } catch (_: Throwable) {}
         launchNativePlayerAndFinish(url)
     }
 
@@ -316,6 +351,9 @@ class WebPlayerActivity : AppCompatActivity() {
      */
     private fun onStreamCandidate(url: String) {
         if (nativeHandoffDone || mainFrameLoadFailed) return
+        // Ứng viên không đạt allowlist không được lưu, để không chặn ứng viên
+        // hợp lệ đến sau.
+        if (!isAllowedSniffedStreamUrl(url)) return
         if (sniffedStreamUrl.isNotEmpty()) return
         sniffedStreamUrl = url
         handler.postDelayed({
@@ -367,10 +405,9 @@ class WebPlayerActivity : AppCompatActivity() {
         }
     }
 
-    /** Đặt lại trạng thái săn luồng + bộ đếm nhảy domain khi đổi tập hoặc thử lại. */
+    /** Đặt lại trạng thái săn luồng khi đổi tập hoặc thử lại. */
     private fun resetStreamHunt() {
         sniffedStreamUrl = ""
-        crossDomainNavCount = 0
     }
 
     private fun showFallbackError(host: FrameLayout) {
@@ -422,10 +459,16 @@ class WebPlayerActivity : AppCompatActivity() {
         s.javaScriptEnabled = true
         s.domStorageEnabled = true
         s.databaseEnabled = true
+        // mediaPlaybackRequiresUserGesture=false là có chủ đích ở đây: đây là
+        // trình phát TV toàn màn hình, onPageFinished chủ động autoplay và
+        // D-pad không có cử chỉ chạm như mobile. Không áp dụng cho WebView khác.
         s.mediaPlaybackRequiresUserGesture = false
         s.allowFileAccess = false
         s.allowContentAccess = false
-        s.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+        // Tier 0: không còn ALWAYS_ALLOW. Không có embed nào trong code đã đọc
+        // chứng minh được là bắt buộc mixed content; nếu một embed chứng minh
+        // được thì giới hạn theo host đó, không mở lại toàn WebView.
+        s.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
         s.useWideViewPort = true
         s.loadWithOverviewMode = true
         s.cacheMode = WebSettings.LOAD_DEFAULT
@@ -574,22 +617,19 @@ class WebPlayerActivity : AppCompatActivity() {
             override fun shouldOverrideUrlLoading(view: WebView?, request: WebResourceRequest?): Boolean {
                 val nextUrl = request?.url?.toString() ?: return false
                 if (nextUrl.startsWith("http://") || nextUrl.startsWith("https://")) {
-                    // Chặn quảng cáo "chiếm trang": khung chính nhảy sang domain lạ
-                    // (thường khi bấm Play trúng lớp quảng cáo trong suốt). Cùng domain
-                    // hoặc sub-domain của trang embed thì thả; nhảy lạ lần đầu được thả
-                    // (vài nhà cung cấp redirect 1 lần sang domain player thật), từ lần
-                    // thứ hai trở đi chặn đứng.
+                    // Tier 0: chặn nhảy domain lạ ngay từ lần đầu. Cùng domain
+                    // hoặc sub-domain của trang embed thì thả; domain khác thì
+                    // chặn, kể cả khi đó là redirect 1 lần của nhà cung cấp.
+                    // Hệ quả: nhà cung cấp nào redirect sang domain player thật
+                    // sẽ cần được thêm vào allowlist sau khi chứng minh host.
                     if (request?.isForMainFrame == true) {
                         val nextHost = request.url.host?.lowercase().orEmpty()
-                        val embedHost = try { Uri.parse(embedUrl).host?.lowercase().orEmpty() } catch (_: Throwable) { "" }
-                        if (nextHost.isNotEmpty() && embedHost.isNotEmpty() &&
-                            nextHost != embedHost && !nextHost.endsWith(".$embedHost") && !embedHost.endsWith(".$nextHost")
+                        val embed = embedHost()
+                        if (nextHost.isNotEmpty() && embed.isNotEmpty() &&
+                            nextHost != embed && !nextHost.endsWith(".$embed") && !embed.endsWith(".$nextHost")
                         ) {
-                            crossDomainNavCount++
-                            if (crossDomainNavCount > 1) {
-                                android.util.Log.w("WebPlayerActivity", "Blocked cross-domain nav to $nextHost")
-                                return true
-                            }
+                            android.util.Log.w("WebPlayerActivity", "Blocked cross-domain nav to $nextHost")
+                            return true
                         }
                     }
                     return false
