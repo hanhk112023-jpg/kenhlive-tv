@@ -467,8 +467,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ===== debug hooks (CI screenshot / QA) =====
+    // ===== debug hooks (CI screenshot / QA) — Tier 0: chỉ chạy ở bản debug.
+    // Bản release gọi handleDebugIntent sẽ bị chặn ngay, kể cả khi intent
+    // bên ngoài mang extra "open" (MainActivity là launcher, exported=true).
     private fun handleDebugIntent(i: Intent?) {
+        if (!BuildConfig.DEBUG) return
         i?.getStringExtra("open")?.let { target ->
             when (target) {
                 "mv" -> showTab(TAB_HUB, animate = false)
