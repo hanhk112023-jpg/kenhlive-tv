@@ -62,22 +62,49 @@ class ScheduleAdapter(
         val rv = hostRv
         var focusedId: String? = null
         var focusedPos = -1
+        // Crash run toàn app lần 3: FATAL EXCEPTION tại dòng getChildAdapterPosition
+        // trong submitList khi mở tab Lịch. findFocus() trả về view sâu nhất
+        // (vd TextView trong card), không phải item trực tiếp của RecyclerView,
+        // và code khôi phục focus chạy trong lúc list đang thay đổi — cả hai
+        // đều không được phép làm crash cả app. Vì vậy: chỉ lấy vị trí qua
+        // item trực tiếp (đi ngược parent tới khi gặp rv), và bọc toàn bộ
+        // phần khôi phục focus trong try-catch — focus có lỗi thì bỏ qua,
+        // không bao giờ được làm submitList crash nữa.
         if (rv != null && rv.hasFocus()) {
-            val f = rv.findFocus()
-            if (f != null) {
-                val p = rv.getChildAdapterPosition(f)
-                if (p != RecyclerView.NO_POSITION) {
-                    focusedPos = p
-                    focusedId = (currentList.getOrNull(p) as? ScheduleMatch)?.scheduleId
+            try {
+                val f = rv.findFocus()
+                val direct = f?.let { directChildOf(rv, it) }
+                if (direct != null) {
+                    val p = rv.getChildAdapterPosition(direct)
+                    if (p != RecyclerView.NO_POSITION) {
+                        focusedPos = p
+                        focusedId = (currentList.getOrNull(p) as? ScheduleMatch)?.scheduleId
+                    }
                 }
+            } catch (_: Exception) {
+                focusedPos = -1
+                focusedId = null
             }
         }
         super.submitList(list) {
             commitCallback?.run()
             if (rv != null && focusedPos >= 0) {
-                restoreFocusAfterSubmit(rv, focusedId, focusedPos)
+                try {
+                    restoreFocusAfterSubmit(rv, focusedId, focusedPos)
+                } catch (_: Exception) {
+                    // Bỏ qua lỗi khôi phục focus, không crash app.
+                }
             }
         }
+    }
+
+    /** Đi ngược cây parent từ `view` tới item trực tiếp của `rv`, hoặc null. */
+    private fun directChildOf(rv: RecyclerView, view: View): View? {
+        var cur: View? = view
+        while (cur != null && cur.parent !== rv) {
+            cur = cur.parent as? View
+        }
+        return cur
     }
 
     private fun restoreFocusAfterSubmit(rv: RecyclerView, focusedId: String?, focusedPos: Int) {
