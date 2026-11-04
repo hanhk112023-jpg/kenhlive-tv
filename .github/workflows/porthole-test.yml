@@ -59,7 +59,19 @@ jobs:
           fi
           nohup mihomo -f /tmp/mihomo_ci.yaml -d /tmp/mihomo_ci > /tmp/mihomo.log 2>&1 &
           sleep 4
-          echo "exit IP: $(curl -sS -m 15 -x http://127.0.0.1:7891 https://api.ipify.org || echo '?')"
+          # Chờ proxy sẵn sàng và chứng minh nó qua được HTTPS trước khi tốn thời gian chạy emulator:
+          # vòng lặp tối đa ~90s gọi ipify; nếu mihomo chết (subscription/node hỏng) thì fail-fast kèm log.
+          READY=0
+          for i in $(seq 1 9); do
+            if curl -sS -m 12 -x http://127.0.0.1:7891 https://api.ipify.org > /tmp/exit_ip.txt 2>/tmp/curl_err.txt; then READY=1; break; fi
+            echo "proxy chưa sẵn sàng (lần $i): $(cat /tmp/curl_err.txt)"; sleep 10
+          done
+          if [ "$READY" != "1" ]; then
+            echo "::error::Proxy VN không qua được HTTPS sau 90s — xem mihomo log bên dưới"
+            tail -30 /tmp/mihomo.log || true
+            exit 1
+          fi
+          echo "Proxy OK, exit IP: $(cat /tmp/exit_ip.txt)"
 
       - name: KVM permissions
         run: |
