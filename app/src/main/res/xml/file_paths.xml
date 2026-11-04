@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
-    <!-- BUG v4.9.0: getExternalFilesDir(DIRECTORY_DOWNLOADS)/updates = files/Download/updates
-         nhưng khai báo cũ path="updates/" → FileProvider ném IllegalArgumentException
-         → installer không mở được (toast 'mở trình quản lý tệp'). Sửa gốc đúng + phủ rộng. -->
+    <!-- Tier 1: chỉ còn đường APK cập nhật. Các path "." cũ (ext_files,
+         sdcard, int_files, cache) cho phép FileProvider mở bất kỳ file nào
+         trong các thư mục đó; không có code nào trong repo dùng FileProvider
+         ngoài UpdateManager mở APK ở Download/updates, nên xóa cho tới khi
+         có nhu cầu thật được chứng minh. -->
     <external-files-path name="updates" path="Download/updates/" />
-    <external-files-path name="ext_files" path="." />
-    <external-path name="sdcard" path="." />
-    <files-path name="int_files" path="." />
-    <cache-path name="cache" path="." />
 </paths>
