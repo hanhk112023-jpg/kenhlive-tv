@@ -1867,9 +1867,9 @@ class PhimFragment : Fragment() {
             // TV focus dynamics (Netflix Zoom Effect)
             holder.itemView.setOnFocusChangeListener { v, hasFocus ->
                 v.animate().cancel()
-                v.animate().scaleX(if (hasFocus) 1.075f else 1f).scaleY(if (hasFocus) 1.075f else 1f)
+                v.animate().scaleX(if (hasFocus) 1.10f else 1f).scaleY(if (hasFocus) 1.10f else 1f)
                     .setDuration(140).start()
-                v.elevation = if (hasFocus) 14f else 0f
+                v.elevation = if (hasFocus) 20f else 0f
             }
         }
 
@@ -1950,9 +1950,9 @@ class PhimFragment : Fragment() {
             // TV focus dynamics (Netflix Zoom Effect) — như thẻ lưới tìm kiếm
             itemView.setOnFocusChangeListener { v, hasFocus ->
                 v.animate().cancel()
-                v.animate().scaleX(if (hasFocus) 1.065f else 1f).scaleY(if (hasFocus) 1.065f else 1f)
+                v.animate().scaleX(if (hasFocus) 1.08f else 1f).scaleY(if (hasFocus) 1.08f else 1f)
                     .setDuration(140).start()
-                v.elevation = if (hasFocus) 16f else 0f
+                v.elevation = if (hasFocus) 20f else 0f
             }
         }
     }
@@ -2029,9 +2029,9 @@ class PhimFragment : Fragment() {
             // TV focus dynamics (Netflix Zoom Effect)
             holder.itemView.setOnFocusChangeListener { v, hasFocus ->
                 v.animate().cancel()
-                v.animate().scaleX(if (hasFocus) 1.065f else 1f).scaleY(if (hasFocus) 1.065f else 1f)
+                v.animate().scaleX(if (hasFocus) 1.08f else 1f).scaleY(if (hasFocus) 1.08f else 1f)
                     .setDuration(140).start()
-                v.elevation = if (hasFocus) 16f else 0f
+                v.elevation = if (hasFocus) 20f else 0f
             }
         }
 
