@@ -27,6 +27,11 @@ import javax.crypto.spec.SecretKeySpec
  */
 object Tv360Resolver {
     private const val TAG = "Tv360Resolver"
+    // Tier 1: đây là CHỖ DUY NHẤT chứa khóa TV360, và nó là khóa frontend
+    // công khai của TV360 (nằm trong code web client của nhà cung cấp), KHÔNG
+    // phải credential người dùng — không xoay khóa người dùng vì mục này.
+    // ECB/SHA-1 bên dưới chỉ được giữ để tương thích với định dạng mã hóa
+    // hiện tại của TV360; KHÔNG dùng ECB/SHA-1 cho dữ liệu do chính app mã hóa.
     private const val SECRET_KEY_SEED = "eNdtOeNDeNcRyPteDsCREt#2022"
     private const val CACHE_TTL_MS = 45 * 60 * 1000L // 45 phút
 
@@ -90,7 +95,7 @@ object Tv360Resolver {
         val now = System.currentTimeMillis()
         val cached = streamCache[channelId]
         if (cached != null && cached.second > now) {
-            Log.d(TAG, "Cache hit for channel $channelId: ${cached.first}")
+            Log.d(TAG, "Cache hit for channel $channelId")
             return@withContext cached.first
         }
 
@@ -98,7 +103,7 @@ object Tv360Resolver {
             val resolvedUrl = fetchStreamFromApi(channelId)
             if (!resolvedUrl.isNullOrBlank()) {
                 streamCache[channelId] = Pair(resolvedUrl, now + CACHE_TTL_MS)
-                Log.d(TAG, "Successfully resolved TV360 channel $channelId -> $resolvedUrl")
+                Log.d(TAG, "Successfully resolved TV360 channel $channelId (host=${try { java.net.URI(resolvedUrl).host } catch (_: Throwable) { "unknown" }})")
                 return@withContext resolvedUrl
             }
         } catch (e: Exception) {
@@ -108,7 +113,7 @@ object Tv360Resolver {
         // Nếu TV360 trả về lỗi hoặc cần đăng nhập, dùng link fallback chất lượng cao
         val fallback = FALLBACK_STREAMS[channelId]
         if (!fallback.isNullOrBlank()) {
-            Log.i(TAG, "Using verified fallback stream for channel $channelId: $fallback")
+            Log.i(TAG, "Using verified fallback stream for channel $channelId (host=${try { java.net.URI(fallback).host } catch (_: Throwable) { "unknown" }})")
             return@withContext fallback
         }
 
