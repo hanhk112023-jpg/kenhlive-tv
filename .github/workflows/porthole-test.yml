@@ -8,6 +8,10 @@ name: Porthole Test
 on:
   workflow_dispatch:
 
+# Tier 1: job porthole chỉ đọc code và upload artifact, không cần ghi contents.
+permissions:
+  contents: read
+
 jobs:
   porthole:
     runs-on: ubuntu-latest
