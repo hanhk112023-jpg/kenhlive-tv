@@ -361,6 +361,16 @@ class PhimFragment : Fragment() {
             if (historyFilms.isNotEmpty()) {
                 newSections.add(0, PhimSection("TIẾP TỤC XEM", historyFilms, isContinueWatching = true))
             }
+            // Sửa 2026-11-04 (focus): trước đây hàm này LUÔN thay mainList.adapter
+            // ngay cả khi dữ liệu tiếp tục xem / đã lưu không đổi — ViewHolder của
+            // thẻ đang focus bị hủy và tạo lại, focus + hiệu ứng phóng to rơi rụng
+            // (đây là nguyên nhân chính của "đóng dialog xong thẻ thu nhỏ nhưng
+            // vẫn viền cam"). Không đổi thì giữ nguyên adapter, focus không động vào.
+            val sectionsUnchanged = sections.size == newSections.size &&
+                sections.zip(newSections).all { (old, new) ->
+                    old.title == new.title && old.films.map { it.slug } == new.films.map { it.slug }
+                }
+            if (sectionsUnchanged) return@launch
             sections = newSections
             // Giữ vị trí cuộn dọc của danh sách chính qua lần thay adapter này (04-H3):
             // trước đây mỗi lần quay lại tab / đóng dialog là danh sách nhảy về hero.
@@ -397,8 +407,12 @@ class PhimFragment : Fragment() {
             if (mainLmState != null) {
                 (mainList.layoutManager as? LinearLayoutManager)?.onRestoreInstanceState(mainLmState)
             }
+            // Sau khi thay adapter, KHÔNG gọi ensurePhimFocus() nữa: hàm đó nhảy
+            // về nút hero khi chưa thấy focus, cướp mất thẻ vừa mở dialog. Nếu
+            // đang chờ khôi phục poster thì khôi phục đúng thẻ đó, còn không
+            // thì giữ nguyên focus hiện tại.
             mainList.postDelayed({
-                ensurePhimFocus()
+                if (pendingPosterRestore != null) restorePosterFocusDelayed()
             }, 100L)
         }
     }
@@ -1121,29 +1135,41 @@ class PhimFragment : Fragment() {
         return PosterFocusTarget(film.slug, sectionPos, cardIdx)
     }
 
-    /** Thử đưa focus về poster đã chụp; kết thúc khi đạt đích hoặc hết lượt thử (~5s). */
+    /** Thử đưa focus về poster đã chụp; kết thúc khi đạt đích hoặc hết lượt thử (~5s).
+     *  Sửa 2026-11-04 (focus): bản cũ coi "focus đang ở BẤT KỲ poster nào trong
+     *  carousel" là đã khôi phục, nên nếu sau khi đóng dialog focus rơi sang thẻ
+     *  khác / pill / hero thì vẫn dừng retry, thẻ gốc không bao giờ nhận lại focus
+     *  thật. Giờ chỉ chấp nhận đúng thẻ đã chụp (cùng sectionPos + cardIdx).
+     *  Ngoài ra, nếu thẻ đích đã có focus nhưng hiệu ứng phóng to bị mất (do
+     *  adapter bị thay sau khi đóng dialog, listener focus gắn lại sau khi view
+     *  đã focus nên không chạy), ép chạy lại listener bằng clearFocus +
+     *  requestFocus để scale 1.075 + viền cam quay lại cùng focus thật. */
     private fun tryRestorePosterFocus(attempt: Int) {
         val target = pendingPosterRestore ?: return
         if (!isAdded || !::mainList.isInitialized) { pendingPosterRestore = null; return }
-        val focused = view?.findFocus()
-        // Focus đã nằm ở một poster trong carousel (không phải nút hero) -> coi như đã khôi phục
-        if (focused != null && focused.id != R.id.btnHeroPlay) {
-            var v: View? = focused
-            var inCarousel = false
-            while (v != null) {
-                val p = v.parent as? View ?: break
-                if (p === mainList) { inCarousel = true; break }
-                v = p
-            }
-            if (inCarousel) { pendingPosterRestore = null; return }
-        }
         val rowVh = mainList.findViewHolderForAdapterPosition(target.sectionPos) as? RowVH
         val carousel = rowVh?.carousel
         val card = carousel?.let {
             it.findViewHolderForAdapterPosition(target.cardIdx)?.itemView
                 ?: it.layoutManager?.findViewByPosition(target.cardIdx)
         }
-        if (card != null && card.requestFocus()) { pendingPosterRestore = null; return }
+        if (card != null) {
+            if (card.hasFocus()) {
+                // Đã đúng thẻ nhưng có thể mất hiệu ứng: chạy lại focus listener.
+                card.clearFocus()
+                card.post {
+                    if (pendingPosterRestore != null) {
+                        if (card.requestFocus()) {
+                            pendingPosterRestore = null
+                        } else {
+                            mainList.postDelayed({ tryRestorePosterFocus(0) }, 200)
+                        }
+                    }
+                }
+                return
+            }
+            if (card.requestFocus()) { pendingPosterRestore = null; return }
+        }
         carousel?.scrollToPosition(target.cardIdx)
         mainList.scrollToPosition(target.sectionPos)
         if (attempt >= 24) { pendingPosterRestore = null; return }
@@ -1309,11 +1335,18 @@ class PhimFragment : Fragment() {
             holder.tv.text = title
             val isSelected = slug == selectedSlug
 
+            // Sửa 2026-11-04 (selected vs focused): bản cũ gán cho pill CHƯA chọn
+            // một drawable tĩnh (sl_apple_pill, kính mờ) nên khi focus pill đó chỉ
+            // phóng to 1.08 mà không đổi màu/viền — từ xa gần như không thấy focus.
+            // Giờ pill chưa chọn dùng selector: chưa focus = kính mờ, focus = kính
+            // sáng + viền trắng 2dp. Pill ĐÃ chọn khi chưa focus dùng cam trầm
+            // (#CC7A00 trong bg_apple_pill_focused), khi focus mới lên cam sáng
+            // #FF9F0A + viền trắng 2.5dp, nên chỉ có đúng một điểm sáng nhất là focus.
             if (isSelected) {
                 holder.tv.setBackgroundResource(R.drawable.sl_apple_pill_selected)
                 holder.tv.setTextColor(0xFF000000.toInt())
             } else {
-                holder.tv.setBackgroundResource(R.drawable.sl_apple_pill)
+                holder.tv.setBackgroundResource(R.drawable.sl_apple_pill_unselected)
                 holder.tv.setTextColor(0xFFFFFFFF.toInt())
             }
 
@@ -1331,8 +1364,9 @@ class PhimFragment : Fragment() {
                 } else false
             }
 
-            // TV focus animation
+            // TV focus animation (cancel để không dồn animation khi bấm nhanh)
             holder.itemView.setOnFocusChangeListener { v, hasFocus ->
+                v.animate().cancel()
                 v.animate().scaleX(if (hasFocus) 1.08f else 1f).scaleY(if (hasFocus) 1.08f else 1f)
                     .setDuration(120).start()
             }
@@ -1624,8 +1658,18 @@ class PhimFragment : Fragment() {
             } else {
                 spotlightCounter?.visibility = View.GONE
             }
-            desc.text = film.description.ifBlank {
-                "${film.originalName.ifBlank { film.name }} — Siêu phẩm điện ảnh hấp dẫn chất lượng cao, trọn bộ vietsub và thuyết minh sắc nét trên KenhLive TV."
+            // Sửa 2026-11-04 (hero nhảy nội dung): bản cũ khi chưa có mô tả thật
+            // lại hiện một câu marketing mặc định + ảnh rạp chiếu, rồi 1-2 giây
+            // sau mới giật sang mô tả cốt truyện thật và ảnh phim (video 00:54-00:59).
+            // Giờ không bịa mô tả nữa: chưa có thì ẩn dòng mô tả, có mô tả thật
+            // mới hiện, nên hero không đổi chiều cao / đổi chữ sau khi tải.
+            // Backdrop cũng vậy: không có ảnh thật thì giữ nền đen của hero thay
+            // vì ảnh rạp chiếu mặc định gây cảm giác "giật" sang ảnh phim.
+            if (film.description.isBlank()) {
+                desc.visibility = View.GONE
+            } else {
+                desc.visibility = View.VISIBLE
+                desc.text = film.description
             }
 
             // Tự động nạp chi tiết mô tả đầy đủ từ API KKPhim nếu ban đầu còn ngắn
@@ -1636,6 +1680,7 @@ class PhimFragment : Fragment() {
                     }
                     if (detail != null && detail.film.description.isNotBlank()) {
                         desc.text = detail.film.description
+                        desc.visibility = View.VISIBLE
                         if (detail.film.categories.isNotEmpty()) {
                             genre?.text = detail.film.categories.take(2).joinToString(" · ")
                         }
@@ -1648,12 +1693,14 @@ class PhimFragment : Fragment() {
             val imgUrl = film.thumbUrl.ifBlank { film.posterUrl }
             if (imgUrl.isNotBlank()) {
                 backdrop.load(imgUrl) {
-                    crossfade(if (DeviceMode.lowRam) false else true)
-                    placeholder(R.drawable.hero_fallback_phim)
+                    crossfade(false)
+                    // Không dùng ảnh rạp chiếu làm placeholder nữa: ảnh đó hiện 1-2s
+                    // rồi mới thay bằng ảnh phim thật, tạo cảm giác hero "giật".
+                    // Chưa tải xong thì backdrop để trống trên nền đen của hero.
                     error(R.drawable.hero_fallback_phim)
                 }
             } else {
-                backdrop.setImageResource(R.drawable.hero_fallback_phim)
+                backdrop.setImageDrawable(null)
             }
 
             (itemView.context as? androidx.appcompat.app.AppCompatActivity)?.lifecycleScope?.launch {
