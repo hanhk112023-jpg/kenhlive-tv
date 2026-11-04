@@ -99,6 +99,9 @@ echo; echo "=== Dump UI o trang thai phim hub ==="
 porthole dump-ui > "$OUT/phim-ui.json" 2>/dev/null || echo "dump phim-ui failed"
 
 echo; echo "=== BACK ve hub chinh, roi vao hub The Thao ==="
+# Phim hub can BACK kep trong cua so ngan: BACK 1 hien toast "Nhan BACK lan nua", BACK 2 moi ve hub chinh.
+porthole key 4
+sleep 1
 porthole key 4
 sleep 3
 shot 08-hub-back.png
