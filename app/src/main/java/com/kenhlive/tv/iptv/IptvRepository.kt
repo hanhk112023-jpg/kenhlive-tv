@@ -172,12 +172,23 @@ object IptvRepository {
             result.addAll(curatedVn)
         }
 
-        // 2. Bổ sung các kênh mở rộng từ nguồn online (nếu có và không trùng)
+        // 2. Bổ sung các kênh mở rộng từ nguồn online (nếu có và không trùng).
+        // Tier 1: khử trùng bằng HashSet thay vì quét tuyến tính O(n*m) trên
+        // result mỗi kênh online — cùng tiêu chí cũ (tên không phân biệt hoa
+        // thường HOẶC url trùng), cùng thứ tự kênh, chỉ đổi độ phức tạp.
         if (!cachedVn.isNullOrBlank() && cachedVn != localVnText) {
             val onlineVn = parseM3u(cachedVn!!, defaultGroup = "Việt Nam", isVn = true, filterSports = false)
+            val seenNames = result.map { it.name.lowercase(Locale.ROOT) }.toHashSet()
+            val seenUrls = result.map { it.url }.toHashSet()
             for (ch in onlineVn) {
-                if (result.none { it.name.equals(ch.name, ignoreCase = true) || it.url == ch.url }) {
+                // Đúng ngữ nghĩa cũ: bỏ qua khi tên (không phân biệt hoa
+                // thường) HOẶC url đã có; chỉ khi cả hai đều mới mới thêm,
+                // và thêm key vào cả hai tập để kênh sau vẫn kiểm tra O(1).
+                val nameKey = ch.name.lowercase(Locale.ROOT)
+                if (!seenNames.contains(nameKey) && !seenUrls.contains(ch.url)) {
                     result.add(ch)
+                    seenNames.add(nameKey)
+                    seenUrls.add(ch.url)
                 }
             }
         }
