@@ -168,6 +168,28 @@ object EpisodePickerDialog {
             dialog.dismiss()
         }
 
+        // Sửa 2026-11-04 (D-pad trong dialog): nút ở hàng cuối nằm lệch phải so
+        // với lưới tập bên trái, nên focus search mặc định khi bấm UP từ nút có
+        // thể không tìm được ô tập nào và đứng yên. Ép UP từ hàng nút về ô tập
+        // cuối cùng của lưới (nếu lưới đã có dữ liệu).
+        val focusLastEpisode: () -> Boolean = {
+            val count = rvEpisodes.adapter?.itemCount ?: 0
+            if (count <= 0) false else {
+                val v = rvEpisodes.findViewHolderForAdapterPosition(count - 1)?.itemView
+                    ?: rvEpisodes.layoutManager?.findViewByPosition(count - 1)
+                v?.requestFocus() == true
+            }
+        }
+        val upToEpisodes = View.OnKeyListener { _, keyCode, event ->
+            if (event.action == android.view.KeyEvent.ACTION_DOWN &&
+                keyCode == android.view.KeyEvent.KEYCODE_DPAD_UP) {
+                focusLastEpisode()
+            } else false
+        }
+        btnClose.setOnKeyListener(upToEpisodes)
+        btnFavorite.setOnKeyListener(upToEpisodes)
+        btnDeleteHistory.setOnKeyListener(upToEpisodes)
+
         // Lưới tập: TV 5 cột, phone dọc 3 cột, phone ngang 5 cột
         val spanCount = DeviceMode.getGridSpanCount(context, defaultTv = 5, phonePortrait = 3, phoneLandscape = 5)
         rvEpisodes.layoutManager = GridLayoutManager(context, spanCount)
@@ -300,7 +322,8 @@ object EpisodePickerDialog {
                                             ).show()
                                         }
                                     }
-                                }
+                                },
+                                onLastRowDown = { btnClose.requestFocus() }
                             )
                             episodeAdapter = adapter
                             rvEpisodes.adapter = adapter
@@ -417,9 +440,12 @@ object EpisodePickerDialog {
                 }
             }
 
-            // Không animate scale trên view bị recycle (gây chớp hình): vòng focus cam do
-            // background selector (bg_badge_glass/bg_badge_hd) tự hiển thị khi chip nhận focus.
-            holder.itemView.setOnFocusChangeListener { _, hasFocus ->
+            // Vòng focus cam do background selector tự hiển thị; thêm phóng to nhẹ
+            // để di chuyển giữa các server nhìn thấy rõ (đồng bộ với chip tập).
+            holder.itemView.setOnFocusChangeListener { v, hasFocus ->
+                v.animate().cancel()
+                v.animate().scaleX(if (hasFocus) 1.06f else 1f).scaleY(if (hasFocus) 1.06f else 1f)
+                    .setDuration(120).start()
                 if (hasFocus) {
                     holder.tv.setTextColor(0xFFFF334B.toInt())
                 } else if (!isSel) {
@@ -437,7 +463,8 @@ object EpisodePickerDialog {
         watchedEpSlugs: Set<String>,
         private var currentEpTimeLabel: String = "",
         private val onClick: (NguoncEpisodeItem) -> Unit,
-        private val onBookmark: (NguoncEpisodeItem) -> Unit
+        private val onBookmark: (NguoncEpisodeItem) -> Unit,
+        private val onLastRowDown: () -> Boolean = { false }
     ) : RecyclerView.Adapter<EpisodeAdapter.VH>() {
 
         private var items: List<NguoncEpisodeItem> = items
@@ -551,9 +578,17 @@ object EpisodePickerDialog {
                 true
             }
 
-            // Không animate scale trên view bị recycle (gây chớp hình): focus chỉ đổi màu chữ,
-            // vòng focus cam do background selector (bg_badge_glass/bg_badge_hd) tự hiển thị.
-            holder.itemView.setOnFocusChangeListener { _, hasFocus ->
+            // Sửa 2026-11-04 (D-pad trong dialog): bản cũ chỉ đổi màu chữ khi focus
+            // (trắng trên nền đã sáng, chip nhỏ) nên di chuyển giữa các tập gần như
+            // không nhìn thấy. Giờ thêm phóng to 1.06 + elevation giống thẻ phim,
+            // giữ vòng cam của selector nền. Đồng thời, bấm DOWN ở hàng cuối của
+            // lưới thì chuyển thẳng sang nút Đóng thay vì trông cậy vào focus
+            // search mặc định (nút lệch phải, hay không tìm được đích).
+            holder.itemView.setOnFocusChangeListener { v, hasFocus ->
+                v.animate().cancel()
+                v.animate().scaleX(if (hasFocus) 1.06f else 1f).scaleY(if (hasFocus) 1.06f else 1f)
+                    .setDuration(120).start()
+                v.elevation = if (hasFocus) 8f else 0f
                 if (hasFocus) {
                     holder.tv.setTextColor(Color.WHITE)
                 } else if (isCurrent) {
@@ -563,6 +598,17 @@ object EpisodePickerDialog {
                 } else {
                     holder.tv.setTextColor(0xFFE2E8F0.toInt())
                 }
+            }
+            holder.itemView.setOnKeyListener { _, keyCode, event ->
+                if (event.action == android.view.KeyEvent.ACTION_DOWN &&
+                    keyCode == android.view.KeyEvent.KEYCODE_DPAD_DOWN) {
+                    val span = (holder.itemView.parent as? RecyclerView)
+                        ?.layoutManager as? GridLayoutManager
+                    val spanCount = span?.spanCount ?: 5
+                    if (holder.bindingAdapterPosition >= itemCount - spanCount) {
+                        onLastRowDown()
+                    } else false
+                } else false
             }
         }
 
