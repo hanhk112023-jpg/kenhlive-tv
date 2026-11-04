@@ -1,23 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Thẻ phim: thường = viền mờ rất nhẹ (poster tự nổi, không đóng khung xám);
-     focus = viền cam thương hiệu 2.5dp + nền nâng nhẹ. Bo góc 12dp đồng bộ poster. -->
+<!-- Sửa 2026-11-04: thẻ phim GÓC VUÔNG, KHÔNG dùng khung/viền nữa.
+     Focus nhận biết bằng hiệu ứng nổi trong code (scale + elevation),
+     không phải bằng stroke. Vì vậy cả 2 trạng thái đều không có stroke,
+     chỉ khác nền một chút để thẻ focus sáng hơn khi nổi lên.
+     Góc vuông 0dp đồng bộ poster (thumb_round_bg). -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:state_focused="true">
         <shape android:shape="rectangle">
-            <corners android:radius="12dp" />
-            <solid android:color="#FF161922" />
-            <stroke
-                android:width="2.5dp"
-                android:color="#FF9F0A" />
+            <corners android:radius="0dp" />
+            <solid android:color="#FF1E222E" />
         </shape>
     </item>
     <item>
         <shape android:shape="rectangle">
-            <corners android:radius="12dp" />
+            <corners android:radius="0dp" />
             <solid android:color="#FF0E1015" />
-            <stroke
-                android:width="1dp"
-                android:color="#22FFFFFF" />
         </shape>
     </item>
 </selector>
