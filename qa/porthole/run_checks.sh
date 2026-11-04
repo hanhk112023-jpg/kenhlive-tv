@@ -33,6 +33,14 @@ sleep 2
 echo; echo "=== Mở KenhLive ==="
 porthole launch com.kenhlive.tv || adb shell monkey -p com.kenhlive.tv -c android.intent.category.LAUNCHER 1
 sleep 12
+# Khi mạng chạy, app có thể hiện CẢ hộp cập nhật (trên cùng) lẫn hộp THÔNG BÁO Telegram bên dưới.
+# Đóng hộp cập nhật trước bằng nút ĐỂ SAU, rồi mới đóng hộp Telegram.
+if porthole wait-for "Có bản mới"; then
+  porthole focus-on "ĐỂ SAU" --select && ok UPDATE_POPUP "đã bấm ĐỂ SAU hộp cập nhật" || ok UPDATE_POPUP "FAIL — không bấm được ĐỂ SAU"
+  sleep 2
+else
+  ok UPDATE_POPUP "không có hộp cập nhật"
+fi
 # Lần mở đầu tiên app hiện hộp THÔNG BÁO Telegram — đóng trước khi điều hướng.
 if porthole wait-for "THÔNG BÁO"; then
   porthole focus-on "ĐÃ HIỂU / ĐÓNG" --select && ok WELCOME_POPUP "đã đóng hộp thông báo đầu phiên" || ok WELCOME_POPUP "FAIL — không đóng được hộp thông báo"
