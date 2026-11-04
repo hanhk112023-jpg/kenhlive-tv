@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Tier 0: cleartext bị tắt toàn app.
+     Không có domain-config nào ở đây là cố ý: khi rà code, không có literal
+     http:// nào trong Kotlin và mọi API/host cố định trong code đều đã là
+     https, nên không chứng minh được host nào bắt buộc phải dùng HTTP.
+     Hệ quả cần biết trước khi review/merge: luồng/phát/ảnh http-only từ
+     playlist bên ngoài sẽ lỗi thay vì chạy qua cleartext như trước.
+     Chỉ thêm <domain-config cleartextTrafficPermitted="true"> cho một host
+     cụ thể sau khi chứng minh được host đó không hỗ trợ HTTPS, và ghi rõ
+     lý do + ngày rà soát lại ngay trong file này. -->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
