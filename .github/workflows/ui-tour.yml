@@ -4,6 +4,10 @@ name: UI-Tour
 on:
   workflow_dispatch:
 
+# Tier 1: job tour chỉ đọc code và upload artifact, không cần ghi contents.
+permissions:
+  contents: read
+
 jobs:
   tour:
     runs-on: ubuntu-latest
