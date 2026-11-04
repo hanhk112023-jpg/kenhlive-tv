@@ -25,7 +25,10 @@
 
     <application
         android:name=".KenhLiveApp"
-        android:allowBackup="true"
+        <!-- Tier 1: tắt Android Auto Backup. Lịch sử xem và update_state
+             không được sao lưu tự động lên tài khoản Google; app đã có cơ
+             chế snapshot nội bộ riêng cho lịch sử xem. -->
+        android:allowBackup="false"
         android:largeHeap="true"
         android:hardwareAccelerated="true"
         android:icon="@mipmap/ic_launcher"
