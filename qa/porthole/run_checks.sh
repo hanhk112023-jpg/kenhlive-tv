@@ -147,28 +147,44 @@ foc 10-focused.json
 
 echo; echo "=== Mở trình phát live từ hub Thể Thao, test thanh trên gọn mới ==="
 # Lúc này vẫn ở hub Thể Thao, focus ở nút [OK] Xem ngay (như ảnh 10 các run
-# trước). Bấm OK để mở PlayerActivity. Các bước sau không làm fail run nếu
-# luồng live chưa tải kịp — chỉ ghi screenshot + focused + dump-ui để soi tay.
-# Lưu ý: video screenrecord giới hạn 175s nên phần trình phát này có thể nằm
-# ngoài video, nhưng screenshot/focused/dump-ui vẫn là bằng chứng chính.
+# trước). Bấm OK KHÔNG vào thẳng player mà mở dialog chọn phòng (run
+# d148e6c đã chứng minh: 11 là dialog phòng, 11b mới là player). Các bước
+# sau không làm fail run nếu luồng live chưa tải kịp — chỉ ghi screenshot +
+# focused + dump-ui để soi tay. Lưu ý: video screenrecord giới hạn 175s nên
+# phần trình phát này có thể nằm ngoài video, nhưng screenshot/focused/
+# dump-ui vẫn là bằng chứng chính.
+# Bước 1: OK từ hub -> dialog chọn phòng.
+porthole key 23
+sleep 5
+shot 11-room.png
+foc 11-room-focused.json
+# Bước 2: OK trên phòng đầu (CR Bưởi) -> PlayerActivity, chờ tải luồng.
 porthole key 23
 sleep 12
-shot 11-player.png
-foc 11-player-focused.json
-porthole dump-ui > "$OUT/player-ui.json" 2>/dev/null || echo "dump player-ui failed"
-# Overlay tự ẩn sau ~3.5s nên bấm OK lần nữa để hiện lại thanh trên, focus
-# lúc này phải về nút Tùy chọn phát (sau sửa: nút Chất lượng đã ẩn khỏi thanh).
-porthole key 23
-sleep 2
-shot 11b-player-overlay.png
+shot 11b-player.png
 foc 11b-player-focused.json
-# Bấm OK trên nút Tùy chọn phát để mở menu gọn mới.
+porthole dump-ui > "$OUT/player-ui.json" 2>/dev/null || echo "dump player-ui failed"
+# Bước 3: bấm OK để hiện lại thanh trên (overlay tự ẩn sau ~3.5s), focus
+# lúc này ở nút Quay lại. Sang phải 1 lần phải tới nút Tùy chọn phát (⋮)
+# ở góc phải, vì Danh sách kênh không hiện ở thể thao và các nút chi tiết
+# đã gom vào menu.
 porthole key 23
 sleep 2
-shot 11c-player-menu.png
+shot 11c-player-overlay.png
 foc 11c-player-focused.json
+porthole remote dpad_right || porthole key 22
+sleep 1
+shot 11d-menu-focus.png
+foc 11d-menu-focused.json
+# Bước 4: OK trên nút Tùy chọn phát -> mở menu gọn mới showTvMoreOptions.
+porthole key 23
+sleep 2
+shot 11e-player-menu.png
+foc 11e-player-focused.json
 # BACK: đóng menu, ẩn overlay, thoát player về hub Thể Thao (BACK thừa ở hub
-# chỉ hiện toast, không thoát app, nên 3 lần BACK là an toàn).
+# chỉ hiện toast, không thoát app, nên 4 lần BACK là an toàn).
+porthole key 4
+sleep 1
 porthole key 4
 sleep 1
 porthole key 4
