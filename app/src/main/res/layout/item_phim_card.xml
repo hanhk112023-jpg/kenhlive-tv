@@ -13,6 +13,7 @@
     android:clickable="true"
     android:descendantFocusability="blocksDescendants"
     android:clipToPadding="false"
+    android:clipToOutline="true"
     android:padding="4dp">
 
     <!-- Poster Container (2:3 Cinema Proportions) -->
@@ -25,6 +26,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scaleType="centerCrop"
+            android:clipToOutline="true"
+            android:outlineProvider="background"
             android:background="@drawable/thumb_round_bg"
             android:contentDescription="Poster phim" />
 
