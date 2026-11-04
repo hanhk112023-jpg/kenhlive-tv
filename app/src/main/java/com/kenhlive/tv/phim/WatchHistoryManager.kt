@@ -1148,13 +1148,18 @@ object WatchHistoryManager {
         importLegacyJsonVaultIfNeeded()
         if (databaseHasData()) {
             snapshotDatabase()
+            // Sau migration, dọn vault JSON cũ ở mọi nơi, kể cả Downloads
+            // công cộng (cleanupLegacyJsonVault xóa cả 3 file + SharedPreferences).
+            appContext?.let { cleanupLegacyJsonVault(it) }
         }
     }
 
     /**
      * NHẬP MỘT LẦN từ vault JSON cũ (chỉ còn dùng khi nâng cấp từ bản trước v0.1.5 mà
-     * chưa từng có snapshot .db): đọc JSON từ SharedPreferences/file nội bộ/Downloads
-     * rồi ghi vào SQLite; xong việc, bản snapshot .db sẽ thay thế hẳn cơ chế này.
+     * chưa từng có snapshot .db): chỉ đọc từ thư mục app-private và
+     * SharedPreferences, KHÔNG đọc từ Downloads công cộng (Tier 1: lịch sử xem
+     * không được đọc từ thư mục công cộng mà app khác có thể đọc/ghi).
+     * Xong việc, bản snapshot .db sẽ thay thế hẳn cơ chế này.
      */
     private fun importLegacyJsonVaultIfNeeded() {
         val helper = dbHelper ?: return
@@ -1173,19 +1178,11 @@ object WatchHistoryManager {
             // Nếu cơ sở dữ liệu đã có dữ liệu thì không cần khôi phục
             if (favCount > 0 || histCount > 0) return
 
-            // Tìm kiếm nguồn backup theo thứ tự ưu tiên
+            // Tìm kiếm nguồn backup theo thứ tự ưu tiên — chỉ app-private,
+            // không còn bước đọc từ Downloads công cộng (Tier 1).
             var jsonString: String? = null
 
-            // 1. Thử đọc từ Downloads Public (bền vững nhất sau khi gỡ cài lại)
-            try {
-                val pubDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-                val pubFile = File(pubDir, BACKUP_FILE_NAME)
-                if (pubFile.exists() && pubFile.length() > 10) {
-                    jsonString = pubFile.readText()
-                }
-            } catch (_: Throwable) {}
-
-            // 2. Thử đọc từ External App Storage
+            // 1. Thử đọc từ External App Storage
             if (jsonString.isNullOrBlank()) {
                 try {
                     val extDir = app.getExternalFilesDir(null)
@@ -1196,7 +1193,7 @@ object WatchHistoryManager {
                 } catch (_: Throwable) {}
             }
 
-            // 3. Thử đọc từ Internal Storage File
+            // 2. Thử đọc từ Internal Storage File
             if (jsonString.isNullOrBlank()) {
                 val internalFile = File(app.filesDir, BACKUP_FILE_NAME)
                 if (internalFile.exists() && internalFile.length() > 10) {
@@ -1204,7 +1201,7 @@ object WatchHistoryManager {
                 }
             }
 
-            // 4. Thử đọc từ SharedPreferences
+            // 3. Thử đọc từ SharedPreferences
             if (jsonString.isNullOrBlank()) {
                 val sp = app.getSharedPreferences(PREFS_BACKUP, Context.MODE_PRIVATE)
                 jsonString = sp.getString(KEY_VAULT_JSON, null)
