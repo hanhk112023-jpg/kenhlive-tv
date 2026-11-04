@@ -50,6 +50,9 @@
     </LinearLayout>
 
     <!-- Horizontal Carousel List -->
+    <!-- Sửa 2026-11-04: thẻ cuối ở mép phải trước đây bị cắt cứng. Thêm fading
+         edge ngang để mép phải mờ dần thay vì cắt dọc, và giữ padding phải bằng
+         lề màn hình để khi cuộn tới cuối, thẻ cuối vẫn hiện trọn vẹn. -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rowCarousel"
         android:layout_width="match_parent"
@@ -60,6 +63,8 @@
         android:paddingRight="@dimen/sp_screen_margin"
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
+        android:fadingEdge="horizontal"
+        android:fadingEdgeLength="32dp"
         android:scrollbars="none" />
 
 </LinearLayout>
