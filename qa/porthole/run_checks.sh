@@ -220,6 +220,20 @@ if grep -q "Ở LẠI" "$OUT/12-player-focused.json" 2>/dev/null; then
   shot 12b-hub-clean.png
   foc 12b-focused.json
 fi
+# Run lần 3: menu live ĐÃ mở thật nên BACK 3 chỉ tới hub Thể Thao (BACK 1
+# đóng menu, BACK 2 thoát player, BACK 3 ở Thể Thao mới hiện toast), chứ
+# không tới hub chính. Nếu 12 vẫn là Thể Thao (dump có heroPlay mà không
+# có cardSports của hub chính) thì BACK kép về hub chính rồi chụp lại.
+porthole dump-ui > "$OUT/12-ui.json" 2>/dev/null || true
+if grep -q "heroPlay" "$OUT/12-ui.json" 2>/dev/null && ! grep -q "cardSports" "$OUT/12-ui.json" 2>/dev/null; then
+  echo "12 van la hub The Thao (menu da mo nen BACK 3 thieu 1 nhip) - BACK kep ve hub chinh"
+  porthole key 4
+  sleep 1
+  porthole key 4
+  sleep 3
+  shot 12b-hub-clean.png
+  foc 12b-focused.json
+fi
 
 echo; echo "=== PHẦN 2 — TOÀN APP: dừng video 1, quay video 2 (vượt trần 175s) ==="
 # screenrecord của Android tối đa 175s nên phần 1 đã gần hết; dừng video 1,
@@ -243,6 +257,16 @@ if grep -q "Ở LẠI" "$OUT/part2-start-focused.json" 2>/dev/null; then
 fi
 
 echo; echo "=== 13. Tìm kiếm (từ hub chính) ==="
+ensure_app part2-ensure-app.png
+porthole dump-ui > "$OUT/part2-ui.json" 2>/dev/null || true
+if grep -q "heroPlay" "$OUT/part2-ui.json" 2>/dev/null && ! grep -q "cardSports" "$OUT/part2-ui.json" 2>/dev/null; then
+  echo "Dau phan 2 van la hub The Thao - BACK kep ve hub chinh truoc khi Tim kiem"
+  porthole key 4
+  sleep 1
+  porthole key 4
+  sleep 3
+  shot part2-hub-clean.png
+fi
 if porthole focus-on "TÌM KIẾM" --select; then ok SEARCH "focus-on TIM KIEM + select OK"; else ok SEARCH "FAIL - khong focus-on duoc TIM KIEM"; fi
 sleep 5
 shot 13-search.png
@@ -262,7 +286,8 @@ sleep 5
 shot 14-schedule.png
 foc 14-schedule-focused.json
 porthole dump-ui > "$OUT/schedule-ui.json" 2>/dev/null || echo "dump schedule-ui failed"
-adb logcat -d -t 300 2>/dev/null | grep -iE "kenhlive|FATAL|Killing|LowMemory|onTrimMemory" | tail -30 > "$OUT/schedule-log.txt" || true
+adb logcat -d -t 500 2>/dev/null > "$OUT/schedule-log-full.txt" || true
+adb logcat -d -t 300 2>/dev/null | grep -iE "kenhlive|FATAL|Killing|LowMemory|onTrimMemory|Exception" | tail -50 > "$OUT/schedule-log.txt" || true
 porthole key 4
 sleep 1
 porthole key 4
@@ -290,6 +315,7 @@ if porthole focus-on "PHIM TRUYỆN" --select; then ok OPEN_PHIM2 "focus-on PHIM
 if porthole wait-for "Tất Cả"; then ok PHIM2_LOADED "thay pill Tat Ca"; else ok PHIM2_LOADED "FAIL - khong thay pill Tat Ca"; fi
 sleep 6
 shot 16-phim.png
+adb logcat -d -t 500 2>/dev/null > "$OUT/phim2-log-full.txt" || true
 porthole remote dpad_down || porthole key 20
 sleep 1
 shot 16b-card.png
