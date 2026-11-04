@@ -22,15 +22,22 @@ porthole list || true
 echo; echo "=== Mở KenhLive ==="
 porthole launch com.kenhlive.tv || adb shell monkey -p com.kenhlive.tv -c android.intent.category.LAUNCHER 1
 sleep 12
+# Lần mở đầu tiên app hiện hộp THÔNG BÁO Telegram — đóng trước khi điều hướng.
+if porthole wait-for "THÔNG BÁO"; then
+  porthole focus-on "ĐÃ HIỂU / ĐÓNG" --select && ok WELCOME_POPUP "đã đóng hộp thông báo đầu phiên" || ok WELCOME_POPUP "FAIL — không đóng được hộp thông báo"
+  sleep 2
+else
+  ok WELCOME_POPUP "không có hộp thông báo (đã từng đóng)"
+fi
 shot 01-hub.png
 foc 01-focused.json
 
-echo; echo "=== Vào hub Phim (focus-on ô 'Phim') ==="
-if porthole focus-on "Phim" --select; then ok OPEN_PHIM "focus-on Phim + select OK"; else
+echo; echo "=== Vào hub Phim (focus-on ô 'PHIM TRUYỆN') ==="
+if porthole focus-on "PHIM TRUYỆN" --select; then ok OPEN_PHIM "focus-on PHIM TRUYỆN + select OK"; else
   porthole dump-ui > "$OUT/hub-ui.json" 2>/dev/null || true
-  ok OPEN_PHIM "FAIL — không focus-on được ô Phim (xem hub-ui.json)"
+  ok OPEN_PHIM "FAIL — không focus-on được ô PHIM TRUYỆN (xem hub-ui.json)"
 fi
-if porthole wait-for "DANH MỤC"; then ok PHIM_LOADED "thấy hàng DANH MỤC"; else ok PHIM_LOADED "FAIL — không thấy DANH MỤC"; fi
+if porthole wait-for "Tất Cả"; then ok PHIM_LOADED "thấy pill Tất Cả (hub phim đã tải)"; else ok PHIM_LOADED "FAIL — không thấy pill Tất Cả"; fi
 sleep 6
 shot 02-phim-hub.png
 
