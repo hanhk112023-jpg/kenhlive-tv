@@ -23,6 +23,13 @@ echo; echo "=== Chẩn đoán mạng: phimapi qua proxy VN và trực tiếp (ph
 curl -sS -m 25 -x http://127.0.0.1:7891 -o /dev/null -w "phimapi VIA PROXY: HTTP %{http_code}\n" "https://phimapi.com/v1/api/danh-sach/phim-moi-cap-nhat?page=1&limit=1" || echo "phimapi VIA PROXY: CURL FAIL"
 curl -sS -m 25 -o /dev/null -w "phimapi DIRECT: HTTP %{http_code}\n" "https://phimapi.com/v1/api/danh-sach/phim-moi-cap-nhat?page=1&limit=1" || echo "phimapi DIRECT: CURL FAIL"
 
+echo; echo "=== Bắt đầu quay video toàn bộ quá trình test ==="
+# record chạy nền với trần 420s (đủ cho toàn bộ kịch bản ~3 phút); dừng sớm bằng SIGINT ở cuối.
+porthole record "$OUT/test-run.mp4" --duration 420s > "$OUT/record.log" 2>&1 &
+REC_PID=$!
+echo "recording pid=$REC_PID"
+sleep 2
+
 echo; echo "=== Mở KenhLive ==="
 porthole launch com.kenhlive.tv || adb shell monkey -p com.kenhlive.tv -c android.intent.category.LAUNCHER 1
 sleep 12
@@ -80,4 +87,10 @@ echo; echo "=== Kiểm tra crash ==="
 if adb shell pidof com.kenhlive.tv > /dev/null 2>&1; then ok APP_ALIVE "tiến trình đang chạy"; else ok APP_ALIVE "FAIL — tiến trình đã chết"; fi
 adb logcat -d -t 600 2>/dev/null | grep -iE "FATAL EXCEPTION|AndroidRuntime.*FATAL" | head -5 > "$OUT/crashes.txt" || true
 adb logcat -d 2>/dev/null | grep -iE "phimapi|kkphim|UnknownHost|SSLHandshake|ConnectException|SocketTimeout|Unable to resolve host" | head -40 > "$OUT/netlog.txt" || true
+
+echo; echo "=== Dừng quay video ==="
+kill -INT "$REC_PID" 2>/dev/null || true
+wait "$REC_PID" 2>/dev/null || true
+sleep 2
+ls -la "$OUT/test-run.mp4" 2>/dev/null || echo "KHÔNG có file video — xem record.log"
 echo "checks done"
