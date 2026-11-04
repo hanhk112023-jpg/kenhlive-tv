@@ -6,11 +6,15 @@ on:
     tags: ['v*']
   workflow_dispatch:
 
+# Tier 1: quyền mặc định ở cấp workflow là read. Chỉ job build cần
+# contents:write, vì bước tạo Release khi tag cần ghi release.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
