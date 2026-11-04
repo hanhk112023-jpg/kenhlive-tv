@@ -13,6 +13,10 @@ on:
         required: false
         default: ''
 
+# Tier 1: job pilot chỉ đọc code và upload artifact, không cần ghi contents.
+permissions:
+  contents: read
+
 jobs:
   pilot:
     runs-on: ubuntu-latest
