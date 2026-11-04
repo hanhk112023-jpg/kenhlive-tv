@@ -1,0 +1,29 @@
+name: Vision Analyze
+
+# Gui toan bo anh screenshot cua mot luot Porthole cho Gemini 3.8 Flash (Meteor)
+# phan tich truc quan. Chay doc lap, khong dung emulator.
+on:
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: 'Run id cua luot Porthole chua artifact porthole-report'
+        required: true
+
+jobs:
+  vision:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Phan tich anh bang Gemini 3.8 Flash
+        env:
+          METEOR_API_KEY: ${{ secrets.METEOR_API_KEY }}
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+          OUT_DIR: qa/vision-out
+        run: python3 qa/vision/analyze.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vision-report
+          path: qa/vision-out/
