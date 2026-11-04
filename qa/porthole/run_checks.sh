@@ -11,6 +11,18 @@ echo "Porthole checks — $(date -u +%FT%TZ)"
 ok() { echo "RESULT $1: $2"; }
 shot() { porthole screenshot -o "$OUT/$1" || echo "screenshot $1 failed"; }
 foc() { porthole focused -q > "$OUT/$1" 2>/dev/null || echo "focused $1 failed"; }
+# Nếu app đã rời foreground (run trước: bước Lịch thi đấu xong rơi ra launcher
+# Android TV rồi các bước sau toàn bấm trong launcher/YouTube), mở lại app
+# trước khi làm bước tiếp theo, thay vì tiếp tục bấm mù trong launcher.
+ensure_app() {
+  porthole dump-ui > "$OUT/_cur.json" 2>/dev/null || true
+  if ! grep -q "kenhlive" "$OUT/_cur.json" 2>/dev/null; then
+    echo "App khong con foreground (dump khong co kenhlive) - mo lai KenhLive"
+    porthole launch com.kenhlive.tv || adb shell monkey -p com.kenhlive.tv -c android.intent.category.LAUNCHER 1
+    sleep 8
+    shot "$1"
+  fi
+}
 
 echo; echo "=== Attach Porthole vào emulator đang chạy ==="
 AVD=$(adb emu avd name 2>/dev/null | head -1 | tr -d '\r')
@@ -174,14 +186,19 @@ porthole key 23
 porthole remote dpad_right || porthole key 22
 shot 11c-player-overlay.png
 foc 11c-player-focused.json
-shot 11d-menu-focus.png
-foc 11d-menu-focused.json
 # Bước 4: OK trên nút Tùy chọn phát -> mở menu gọn mới showTvMoreOptions.
-# Menu là dialog, mở rồi sẽ đứng yên nên chụp sau 2s vẫn được.
+# Bài học run trước: shot/foc giữa dpad_right và OK làm overlay tự ẩn quá
+# 3,5s nên OK sau đó lại chỉ là "hiện overlay", không phải "bấm nút".
+# Vì vậy bấm OK 2 lần liền nhau, không shot/foc ở giữa: lần 1 nếu overlay
+# đã ẩn thì chỉ hiện overlay + focus menu, lần 2 chắc chắn bấm khi overlay
+# đang hiện. Menu là dialog, mở rồi sẽ đứng yên nên chụp sau 2s vẫn được.
+porthole key 23
 porthole key 23
 sleep 2
 shot 11e-player-menu.png
 foc 11e-player-focused.json
+shot 11d-menu-focus.png
+foc 11d-menu-focused.json
 # BACK: menu chưa chắc đã mở (2 run trước đều trượt), nên chỉ BACK 3 lần:
 # thoát player -> Thể Thao (toast) -> hub chính, dừng ở hub sạch, KHÔNG
 # bấm BACK thứ 4 ở hub (sẽ mở dialog "Thoát KênhLive?" và kẹt phần 2).
@@ -239,11 +256,13 @@ shot 13b-hub.png
 foc 13b-focused.json
 
 echo; echo "=== 14. Lịch thi đấu (từ hub chính) ==="
+ensure_app 14-ensure-app.png
 if porthole focus-on "LỊCH THI ĐẤU" --select; then ok SCHEDULE "focus-on LICH THI DAU + select OK"; else ok SCHEDULE "FAIL"; fi
 sleep 5
 shot 14-schedule.png
 foc 14-schedule-focused.json
 porthole dump-ui > "$OUT/schedule-ui.json" 2>/dev/null || echo "dump schedule-ui failed"
+adb logcat -d -t 300 2>/dev/null | grep -iE "kenhlive|FATAL|Killing|LowMemory|onTrimMemory" | tail -30 > "$OUT/schedule-log.txt" || true
 porthole key 4
 sleep 1
 porthole key 4
@@ -252,6 +271,7 @@ shot 14b-hub.png
 foc 14b-focused.json
 
 echo; echo "=== 15. Cài đặt (từ hub chính) ==="
+ensure_app 15-ensure-app.png
 if porthole focus-on "CÀI ĐẶT" --select; then ok SETTINGS "focus-on CAI DAT + select OK"; else ok SETTINGS "FAIL"; fi
 sleep 5
 shot 15-settings.png
@@ -265,6 +285,7 @@ shot 15b-hub.png
 foc 15b-focused.json
 
 echo; echo "=== 16-18. Vào lại Phim, mở dialog, bấm tập -> trình phát VOD ==="
+ensure_app 16-ensure-app.png
 if porthole focus-on "PHIM TRUYỆN" --select; then ok OPEN_PHIM2 "focus-on PHIM TRUYEN + select OK"; else ok OPEN_PHIM2 "FAIL"; fi
 if porthole wait-for "Tất Cả"; then ok PHIM2_LOADED "thay pill Tat Ca"; else ok PHIM2_LOADED "FAIL - khong thay pill Tat Ca"; fi
 sleep 6
