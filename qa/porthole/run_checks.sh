@@ -85,15 +85,44 @@ sleep 1
 foc 05-card.json
 shot 05-card.png
 
-echo; echo "=== Mở hộp thoại phim, BACK, kiểm tra focus còn sống ==="
+echo; echo "=== Mở hộp thoại phim, test D-pad trong dialog, BACK, kiểm tra focus còn sống ==="
 porthole key 23
 sleep 5
 shot 06-dialog.png
 foc 06-focused.json
+# Test D-pad thật trong dialog (sửa focus 2026-11-04): sang phải, xuống hàng cuối,
+# xuống nữa phải sang nút Đóng, lên lại lưới tập. Các bước này không làm fail run
+# nếu focus khác dự kiến — chỉ ghi screenshot + focused để soi tay sau.
+porthole remote dpad_right || porthole key 22
+sleep 1
+shot 06b-dialog-right.png
+foc 06b-focused.json
+porthole remote dpad_down || porthole key 20
+sleep 1
+shot 06c-dialog-down.png
+foc 06c-focused.json
+porthole remote dpad_down || porthole key 20
+sleep 1
+shot 06d-dialog-close.png
+foc 06d-focused.json
+porthole remote dpad_up || porthole key 19
+sleep 1
+shot 06e-dialog-up.png
+foc 06e-focused.json
 porthole key 4
 sleep 2
 foc 07-after-back.json
 shot 07-after-back.png
+# Sau khi đóng dialog, focus phải còn sống và di chuyển được sang thẻ bên cạnh
+# (đây chính là lỗi báo cáo 01:43-02:27: thẻ thu nhỏ, không sang được thẻ khác).
+porthole remote dpad_right || porthole key 22
+sleep 1
+shot 07b-card-right.png
+foc 07b-focused.json
+porthole remote dpad_left || porthole key 21
+sleep 1
+shot 07c-card-left.png
+foc 07c-focused.json
 
 echo; echo "=== Dump UI o trang thai phim hub ==="
 porthole dump-ui > "$OUT/phim-ui.json" 2>/dev/null || echo "dump phim-ui failed"
