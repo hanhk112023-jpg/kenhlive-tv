@@ -8,6 +8,10 @@ on:
         type: boolean
         default: false
 
+# Tier 1: job QA chỉ đọc code và upload artifact, không cần ghi contents.
+permissions:
+  contents: read
+
 jobs:
   qa:
     runs-on: ubuntu-latest
