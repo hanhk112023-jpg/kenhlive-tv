@@ -423,8 +423,13 @@ class PlayerActivity : AppCompatActivity() {
 
             // Thanh tua VOD được nối ở wireVodSeekBar() phía dưới (dùng chung phone + TV)
         } else {
-            // Trên TV: Giữ nguyên bố cục đầy đủ cho remote
-            phoneMenuBtn?.visibility = View.GONE
+            // Trên TV: thanh trên chỉ còn Quay lại + Danh sách kênh (IPTV) + 1 nút
+            // Tùy chọn phát. Các nút chi tiết (chất lượng, âm thanh, tỉ lệ, hẹn giờ,
+            // kênh âm thanh, tăng âm, thống kê) gom vào menu showTvMoreOptions(),
+            // theo đúng mẫu menu đã có trên điện thoại, để remote không phải đi
+            // qua 9-10 icon không chữ.
+            phoneMenuBtn?.visibility = View.VISIBLE
+            phoneMenuBtn?.setOnClickListener { showTvMoreOptions() }
             phoneBottomBar?.visibility = View.GONE
             centerPlayPauseBtn?.visibility = View.GONE
 
@@ -441,13 +446,35 @@ class PlayerActivity : AppCompatActivity() {
         if (isVodMode && !DeviceMode.isPhone) {
             // TV + VOD: gom các nút chỉnh thông số rời rạc trên topOverlay (Chất lượng /
             // Âm thanh / Tỷ lệ / Kênh âm thanh) vào nút Cài Đặt trong thanh điều khiển
-            // VOD -> ẩn khỏi topOverlay cho thoáng màn hình. Chế độ live thể thao/IPTV
-            // giữ nguyên vì đó là điều khiển chính ở live. Phone giữ nguyên như cũ vì
-            // thanh điều khiển VOD (nơi chứa nút Cài Đặt) chỉ có trên TV.
+            // VOD -> ẩn khỏi topOverlay cho thoáng màn hình. Hẹn giờ / Tăng âm /
+            // Thống kê cũng ẩn khỏi thanh trên và chuyển vào cùng menu Cài Đặt đó
+            // (showVodSettingsDialog), nên thanh trên VOD chỉ còn Quay lại + tiêu đề.
+            // Phone giữ nguyên như cũ vì thanh điều khiển VOD (nơi chứa nút Cài Đặt)
+            // chỉ có trên TV.
             qualityBtn.visibility = View.GONE
             audioBtn?.visibility = View.GONE
             aspectBtn?.visibility = View.GONE
             audioTrackBtn?.visibility = View.GONE
+            sleepBtn?.visibility = View.GONE
+            audioBoostBtn?.visibility = View.GONE
+            statsBtn?.visibility = View.GONE
+            // VOD không cần nút menu trên thanh trên nữa: Hẹn giờ / Tăng âm /
+            // Thống kê đã vào menu Cài Đặt của thanh dưới, thanh trên VOD chỉ
+            // còn Quay lại + tiêu đề.
+            phoneMenuBtn?.visibility = View.GONE
+        }
+
+        if (!isVodMode && !DeviceMode.isPhone) {
+            // TV + Live (thể thao / IPTV): gom toàn bộ nút chi tiết trên topOverlay
+            // vào 1 nút Tùy chọn phát ở trên. Thanh trên live chỉ còn Quay lại +
+            // Danh sách kênh (IPTV) + Tùy chọn phát.
+            qualityBtn.visibility = View.GONE
+            audioBtn?.visibility = View.GONE
+            aspectBtn?.visibility = View.GONE
+            sleepBtn?.visibility = View.GONE
+            audioTrackBtn?.visibility = View.GONE
+            audioBoostBtn?.visibility = View.GONE
+            statsBtn?.visibility = View.GONE
         }
 
         // Thanh tua VOD dùng chung cho cả phone và TV
@@ -737,6 +764,67 @@ class PlayerActivity : AppCompatActivity() {
         d.show()
         d.window?.setLayout(
             (resources.displayMetrics.widthPixels * 0.90).toInt(),
+            ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        hideOnce()
+    }
+
+    /**
+     * Menu Tùy chọn phát cho TV (live): 1 nút duy nhất trên thanh trên, thay cho
+     * 7 nút icon rời rạc trước đây. Mỗi mục gọi ĐÚNG handler của nút cũ, có ghi
+     * giá trị hiện tại trong nhãn (tỉ lệ, chế độ âm thanh, mức tăng âm, hẹn giờ)
+     * để nhìn từ xa vẫn biết đang ở trạng thái nào, như menu điện thoại đã làm.
+     * Danh sách kênh không đưa vào đây vì nó đã là nút riêng trên thanh trên
+     * ở chế độ IPTV; Đổi nguồn chỉ có ở thể thao (không phải IPTV).
+     */
+    private fun showTvMoreOptions() {
+        val options = mutableListOf<String>()
+        val actions = mutableListOf<() -> Unit>()
+
+        options.add("Chất lượng")
+        actions.add { showSettingsDialog(video = true) }
+
+        options.add("Tỉ lệ: ${aspectNames[currentAspectIdx]}")
+        actions.add { cycleAspectRatio() }
+
+        val aqNames = arrayOf(
+            getString(R.string.aq_standard), getString(R.string.aq_bass), getString(R.string.aq_dialog),
+            getString(R.string.aq_night), getString(R.string.aq_auto)
+        )
+        val curAq = EnhanceSettings.audioMode(this).coerceIn(0, aqNames.size - 1)
+        options.add("Âm thanh: ${aqNames[curAq]}")
+        actions.add { showSettingsDialog(video = false) }
+
+        val boostLabels = arrayOf("Tắt", "+3dB", "+6dB", "+9dB")
+        options.add("Khuếch đại âm lượng: ${boostLabels[audioBoostLevel]}")
+        actions.add { cycleAudioBoost() }
+
+        options.add("Kênh âm thanh (Ngôn ngữ)")
+        actions.add { showAudioTrackDialog() }
+
+        val timerLabel = if (sleepMinutesLeft > 0) "Còn $sleepMinutesLeft phút" else "Chưa đặt"
+        options.add("Hẹn giờ tắt ($timerLabel)")
+        actions.add { showSleepTimerDialog() }
+
+        options.add("Thông số kỹ thuật (Stats)")
+        actions.add { toggleStatsHud() }
+
+        if (!isIptvMode) {
+            options.add("🔄 Đổi nguồn phát (${currentSportsSource.displayName})")
+            actions.add { showServerPickerDialog() }
+        }
+
+        val d = AlertDialog.Builder(this, R.style.Theme_KenhLive_Dialog)
+            .setTitle("⚙️ Tùy Chọn Phát")
+            .setItems(options.toTypedArray()) { d, which ->
+                d.dismiss()
+                actions[which].invoke()
+            }
+            .setNegativeButton(R.string.dialog_close, null)
+            .create()
+        d.show()
+        d.window?.setLayout(
+            (resources.displayMetrics.widthPixels * 0.72).toInt(),
             ViewGroup.LayoutParams.WRAP_CONTENT
         )
         hideOnce()
@@ -1701,12 +1789,17 @@ class PlayerActivity : AppCompatActivity() {
      */
     private fun showVodSettingsDialog() {
         val step = PlayerPrefs.seekStepSec(this)
+        val boostLabels = arrayOf("Tắt", "+3dB", "+6dB", "+9dB")
+        val timerLabel = if (sleepMinutesLeft > 0) "Còn $sleepMinutesLeft phút" else "Chưa đặt"
         val items = arrayOf(
             "Chất lượng",
             "Âm thanh",
             "Kênh âm thanh",
             "Tỷ lệ khung hình",
-            "Bước tua: ${step}s"
+            "Bước tua: ${step}s",
+            "Hẹn giờ tắt ($timerLabel)",
+            "Khuếch đại âm lượng: ${boostLabels[audioBoostLevel]}",
+            "Thông số kỹ thuật (Stats)"
         )
         AlertDialog.Builder(this, R.style.Theme_KenhLive_Dialog)
             .setTitle("Cài Đặt")
@@ -1717,6 +1810,9 @@ class PlayerActivity : AppCompatActivity() {
                     2 -> showAudioTrackDialog()
                     3 -> cycleAspectRatio()
                     4 -> showSeekStepDialog()
+                    5 -> showSleepTimerDialog()
+                    6 -> cycleAudioBoost()
+                    7 -> toggleStatsHud()
                 }
             }
             .setNegativeButton(R.string.dialog_close, null)
@@ -2171,7 +2267,10 @@ class PlayerActivity : AppCompatActivity() {
                 } else if (isIptvMode && findViewById<View>(R.id.channelListBtn)?.visibility == View.VISIBLE) {
                     findViewById<View>(R.id.channelListBtn)
                 } else {
-                    findViewById<View>(R.id.qualityBtn) ?: findViewById<View>(R.id.backBtn)
+                    // Live TV: nút Chất lượng đã gom vào menu, không còn trên thanh
+                    // trên nữa nên focus OK phải về nút Tùy chọn phát, không phải
+                    // một nút đã GONE (trước đây requestFocus vào nút ẩn sẽ mất focus).
+                    findViewById<View>(R.id.phoneMenuBtn) ?: findViewById<View>(R.id.backBtn)
                 }
                 targetBtn?.requestFocus()
                 return true
