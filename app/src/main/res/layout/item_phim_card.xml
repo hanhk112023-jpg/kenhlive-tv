@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Sửa 2026-11-04: chiều cao 248 -> 268dp để tiêu đề 2 dòng không bị đè meta,
+     tiêu đề 1 dòng -> 2 dòng để tên dài không còn cắt cụt và không "nhảy chữ"
+     giữa lúc phóng to / thu nhỏ khi focus. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="148dp"
-    android:layout_height="248dp"
+    android:layout_height="268dp"
     android:layout_marginRight="14dp"
     android:layout_marginBottom="8dp"
     android:orientation="vertical"
@@ -103,7 +106,7 @@
         android:layout_marginRight="5dp"
         android:textSize="13sp"
         android:textStyle="bold"
-        android:maxLines="1"
+        android:maxLines="2"
         android:ellipsize="end"
         android:textColor="#F8FAFC" />
 
