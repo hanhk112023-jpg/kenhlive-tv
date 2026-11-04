@@ -15,7 +15,7 @@
         android:gravity="center_vertical"
         android:paddingLeft="@dimen/sp_screen_margin"
         android:paddingRight="@dimen/sp_screen_margin"
-        android:layout_marginBottom="10dp">
+        android:layout_marginBottom="12dp">
 
         <View
             android:id="@+id/rowAccentDot"
@@ -59,10 +59,11 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:clipToPadding="false"
+        android:clipChildren="false"
         android:paddingLeft="@dimen/sp_screen_margin"
         android:paddingRight="@dimen/sp_screen_margin"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
+        android:paddingTop="16dp"
+        android:paddingBottom="12dp"
         android:fadingEdge="horizontal"
         android:fadingEdgeLength="32dp"
         android:scrollbars="none" />
