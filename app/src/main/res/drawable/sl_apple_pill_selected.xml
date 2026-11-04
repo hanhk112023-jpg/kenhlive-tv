@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pill danh mục ĐÃ CHỌN: nền cam thương hiệu; khi focus thêm viền trắng dày. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true" android:drawable="@drawable/bg_apple_pill_selected_focus" />
+    <item android:drawable="@drawable/bg_apple_pill_focused" />
+</selector>

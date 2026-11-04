@@ -59,7 +59,7 @@
     <!-- TV: giữ nguyên kích thước D-pad hiện tại (phone phóng to ở values/) -->
     <dimen name="episode_chip_h">36dp</dimen>
     <dimen name="episode_chip_min_w">60dp</dimen>
-    <dimen name="phim_pill_h">32dp</dimen>
+    <dimen name="phim_pill_h">36dp</dimen>
     <dimen name="iptv_group_chip_h">36dp</dimen>
     <dimen name="iptv_search_w">220dp</dimen>
     <dimen name="iptv_search_h">36dp</dimen>

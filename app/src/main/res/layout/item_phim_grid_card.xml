@@ -42,7 +42,7 @@
             android:textStyle="bold"
             android:textColor="#FBBF24" />
 
-        <!-- Top Right Quality Badge (Netflix Red Accent) -->
+        <!-- Top Right Quality Badge (glass, đồng bộ thẻ rail) -->
         <TextView
             android:id="@+id/gridPhimQualityBadge"
             style="@style/KL.Text.Meta"
@@ -50,7 +50,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="top|right"
             android:layout_margin="6dp"
-            android:background="@drawable/bg_netflix_top10_badge"
+            android:background="@drawable/bg_quality_glass"
             android:paddingLeft="6dp"
             android:paddingRight="6dp"
             android:paddingTop="2dp"

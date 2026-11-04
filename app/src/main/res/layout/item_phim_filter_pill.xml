@@ -6,10 +6,10 @@
     android:layout_marginRight="8dp"
     android:background="@drawable/sl_apple_pill"
     android:gravity="center"
-    android:paddingLeft="14dp"
-    android:paddingRight="14dp"
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp"
     android:textColor="#FFFFFF"
-    android:textSize="12sp"
+    android:textSize="12.5sp"
     android:textStyle="bold"
     android:focusable="true"
     android:clickable="true" />

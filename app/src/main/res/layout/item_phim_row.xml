@@ -21,7 +21,7 @@
             android:id="@+id/rowAccentDot"
             android:layout_width="4dp"
             android:layout_height="18dp"
-            android:background="@drawable/bg_netflix_top10_badge" />
+            android:background="@drawable/bg_kl_accent" />
 
         <TextView
             android:id="@+id/rowTitle"

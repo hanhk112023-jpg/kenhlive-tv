@@ -51,6 +51,14 @@ data class PhimSection(
  * - Thiết kế tối giản chuẩn Apple TV & iOS: Thẻ kính mờ bo góc 16dp, gradient phản chiếu, thanh tiến độ mỏng.
  * - Hỗ trợ đa thiết bị: D-pad focus mượt mà trên TV, cử chỉ vuốt chạm nhanh trên Mobile.
  */
+/**
+ * Tên hiển thị trên THẺ phim: API trả một số phim kèm cả tên gốc sau dấu " / "
+ * (vd "Từng Bước Bên Nhau / Tên Gốc") — trên thẻ hẹp chỉ lấy tên chính cho gọn,
+ * tránh bị cắt thành "... / Tì...". Hero và hộp thoại vẫn dùng tên đầy đủ.
+ */
+internal fun cardTitle(name: String): String =
+    name.substringBefore(" / ").trim().ifBlank { name }
+
 class PhimFragment : Fragment() {
 
     private var filterAdapter: FilterAdapter? = null
@@ -1302,7 +1310,7 @@ class PhimFragment : Fragment() {
             val isSelected = slug == selectedSlug
 
             if (isSelected) {
-                holder.tv.setBackgroundResource(R.drawable.bg_apple_pill_focused)
+                holder.tv.setBackgroundResource(R.drawable.sl_apple_pill_selected)
                 holder.tv.setTextColor(0xFF000000.toInt())
             } else {
                 holder.tv.setBackgroundResource(R.drawable.sl_apple_pill)
@@ -1750,7 +1758,7 @@ class PhimFragment : Fragment() {
 
         override fun onBindViewHolder(holder: CardVH, position: Int) {
             val film = films[position]
-            holder.title.text = film.name
+            holder.title.text = cardTitle(film.name)
 
             // Loại bỏ rating giả tạo từ hashCode - giữ card sạch sẽ chuẩn điện ảnh
             holder.ratingBadge?.visibility = View.GONE
@@ -1839,7 +1847,7 @@ class PhimFragment : Fragment() {
             onFilmClick: (NguoncFilm) -> Unit,
             onFilmLongClick: (NguoncFilm) -> Unit
         ) {
-            title.text = film.name
+            title.text = cardTitle(film.name)
 
             // Giống thẻ rail: loại bỏ rating giả tạo -> ẩn badge điểm
             ratingBadge.visibility = View.GONE
@@ -1927,7 +1935,7 @@ class PhimFragment : Fragment() {
 
         override fun onBindViewHolder(holder: GridVH, position: Int) {
             val film = films[position]
-            holder.title.text = film.name
+            holder.title.text = cardTitle(film.name)
 
             // KHÔNG bịa điểm rating từ hashCode tên phim (05-H3): không có dữ liệu
             // đánh giá thật -> ẩn badge, nhất quán với GridPosterVH và thẻ rail

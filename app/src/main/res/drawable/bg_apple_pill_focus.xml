@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pill danh mục khi ĐANG ĐƯỢC FOCUS (chưa chọn): kính sáng + viền trắng rõ,
+     khác hẳn trạng thái ĐÃ CHỌN (cam đặc) để nhìn từ xa không nhầm hai trạng thái. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <corners android:radius="24dp" />
+    <solid android:color="#47FFFFFF" />
+    <stroke
+        android:width="2dp"
+        android:color="#FFFFFFFF" />
+</shape>
