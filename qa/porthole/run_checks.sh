@@ -24,10 +24,13 @@ curl -sS -m 25 -x http://127.0.0.1:7891 -o /dev/null -w "phimapi VIA PROXY: HTTP
 curl -sS -m 25 -o /dev/null -w "phimapi DIRECT: HTTP %{http_code}\n" "https://phimapi.com/v1/api/danh-sach/phim-moi-cap-nhat?page=1&limit=1" || echo "phimapi DIRECT: CURL FAIL"
 
 echo; echo "=== Bắt đầu quay video toàn bộ quá trình test ==="
-# record chạy nền với trần 420s (đủ cho toàn bộ kịch bản ~3 phút); dừng sớm bằng SIGINT ở cuối.
-porthole record "$OUT/test-run.mp4" --duration 420s > "$OUT/record.log" 2>&1 &
+# QUAN TRỌNG: record ghi file theo đường dẫn TUYỆT ĐỐI phía server (cwd của porthole server
+# là thư mục gốc repo, không phải cwd của script này) — phải canonical hoá trước khi truyền.
+REC_PATH="$(cd "$(dirname "$OUT")" && pwd)/$(basename "$OUT")/test-run.mp4"
+# Trần 420s đủ cho toàn bộ kịch bản (~3 phút); dừng sớm bằng SIGINT ở cuối.
+porthole record "$REC_PATH" --duration 420s > "$OUT/record.log" 2>&1 &
 REC_PID=$!
-echo "recording pid=$REC_PID"
+echo "recording pid=$REC_PID path=$REC_PATH"
 sleep 2
 
 echo; echo "=== Mở KenhLive ==="
