@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Pill ĐÃ chọn khi CHƯA focus: cam trầm #CC7A00 (sửa 2026-11-04) thay cho
+     cam sáng #FF9F0A như trước, để trạng thái "đã chọn" không sáng bằng trạng
+     thái "đang focus" (cam sáng + viền trắng 2.5dp trong bg_apple_pill_selected_focus).
+     Chữ đen vẫn đọc rõ trên cả hai tông cam. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
     <corners android:radius="24dp" />
-    <solid android:color="#FF9F0A" />
+    <solid android:color="#CC7A00" />
     <stroke
         android:width="1dp"
-        android:color="#FFFFFFFF" />
+        android:color="#66FFFFFF" />
 </shape>
