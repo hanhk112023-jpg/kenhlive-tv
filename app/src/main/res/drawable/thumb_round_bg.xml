@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Sửa 2026-11-04: poster thẻ phim GÓC VUÔNG (0dp), đồng bộ thẻ vuông
+     bg_netflix_card, không còn bo 10dp lệch khung như trước. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <solid android:color="#0D1117" />
-    <corners android:radius="10dp" />
+    <corners android:radius="0dp" />
 </shape>
