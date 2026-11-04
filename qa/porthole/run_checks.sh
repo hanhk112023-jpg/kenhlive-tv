@@ -23,14 +23,15 @@ echo; echo "=== Chẩn đoán mạng: phimapi qua proxy VN và trực tiếp (ph
 curl -sS -m 25 -x http://127.0.0.1:7891 -o /dev/null -w "phimapi VIA PROXY: HTTP %{http_code}\n" "https://phimapi.com/v1/api/danh-sach/phim-moi-cap-nhat?page=1&limit=1" || echo "phimapi VIA PROXY: CURL FAIL"
 curl -sS -m 25 -o /dev/null -w "phimapi DIRECT: HTTP %{http_code}\n" "https://phimapi.com/v1/api/danh-sach/phim-moi-cap-nhat?page=1&limit=1" || echo "phimapi DIRECT: CURL FAIL"
 
-echo; echo "=== Bắt đầu quay video toàn bộ quá trình test ==="
-# QUAN TRỌNG: record ghi file theo đường dẫn TUYỆT ĐỐI phía server (cwd của porthole server
-# là thư mục gốc repo, không phải cwd của script này) — phải canonical hoá trước khi truyền.
-REC_PATH="$(cd "$(dirname "$OUT")" && pwd)/$(basename "$OUT")/test-run.mp4"
-# Trần 420s đủ cho toàn bộ kịch bản (~3 phút); dừng sớm bằng SIGINT ở cuối.
-porthole record "$REC_PATH" --duration 420s > "$OUT/record.log" 2>&1 &
+echo; echo "=== Bắt đầu quay video toàn bộ quá trình test (adb screenrecord) ==="
+# porthole record đã hỏng 2 lượt liên tiếp (run 7+8: record.log rỗng, không có file video)
+# vì nó bám vào luồng H.264 của Porthole — stream chưa sẵn sàng là chết lặng không một dòng lỗi.
+# Quay thẳng bằng screenrecord của chính emulator: độc lập, xác định. Trần 175s của Android
+# vừa đủ kịch bản (~90-120s sau khi mở app); bắt đầu ngay trước khi mở app.
+adb shell rm -f /sdcard/test-run.mp4
+adb shell screenrecord --size 1280x720 --bit-rate 4000000 --time-limit 175 /sdcard/test-run.mp4 > "$OUT/record.log" 2>&1 &
 REC_PID=$!
-echo "recording pid=$REC_PID path=$REC_PATH"
+echo "screenrecord host-pid=$REC_PID (file trên emulator: /sdcard/test-run.mp4)"
 sleep 2
 
 echo; echo "=== Mở KenhLive ==="
@@ -100,8 +101,13 @@ adb logcat -d -t 600 2>/dev/null | grep -iE "FATAL EXCEPTION|AndroidRuntime.*FAT
 adb logcat -d 2>/dev/null | grep -iE "phimapi|kkphim|UnknownHost|SSLHandshake|ConnectException|SocketTimeout|Unable to resolve host" | head -40 > "$OUT/netlog.txt" || true
 
 echo; echo "=== Dừng quay video ==="
-kill -INT "$REC_PID" 2>/dev/null || true
-wait "$REC_PID" 2>/dev/null || true
-sleep 2
-ls -la "$OUT/test-run.mp4" 2>/dev/null || echo "KHÔNG có file video — xem record.log"
+adb shell 'kill -2 $(pidof screenrecord)' 2>/dev/null || true
+sleep 3
+kill "$REC_PID" 2>/dev/null || true
+adb pull /sdcard/test-run.mp4 "$OUT/test-run.mp4" >> "$OUT/record.log" 2>&1 || true
+if [ -s "$OUT/test-run.mp4" ]; then
+  ls -la "$OUT/test-run.mp4"
+else
+  echo "KHÔNG có file video — xem record.log"
+fi
 echo "checks done"
