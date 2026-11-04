@@ -7,30 +7,47 @@ android {
     namespace 'com.kenhlive.tv'
     compileSdk 34
 
-    // BUG-01: keystore KHÔNG còn trong git — CI cung cấp qua secret KEYSTORE_B64 (file) +
-    // KEYSTORE_PASSWORD (pass). Build local thiếu secret -> tự sinh keystore tạm (dev-only,
-    // chữ ký khác — chỉ dùng test, không phát hành).
+    // Tier 1: keystore thật KHÔNG có trong git — CI cung cấp qua secret
+    // KEYSTORE_B64 (file) + KEYSTORE_PASSWORD (pass). Không còn tự sinh
+    // keystore, không còn mật khẩu mặc định. Bản debug dùng keystore debug
+    // mặc định của AGP; bản release chỉ ký được khi có keystore thật và
+    // mật khẩu thật, nếu không task đóng gói release sẽ fail rõ ràng ở dưới.
     def ksFile = rootProject.file('keystore/kenhlive.jks')
     def ksB64 = (System.getenv('KEYSTORE_B64') ?: '').trim()
     if (ksB64) {
         ksFile.parentFile.mkdirs()
         ksFile.bytes = Base64.decoder.decode(ksB64)
-    } else if (!ksFile.exists()) {
-        ksFile.parentFile.mkdirs()
-        ['keytool', '-genkeypair', '-alias', 'kenhlive', '-keyalg', 'RSA', '-keysize', '2048',
-         '-validity', '3650', '-dname', 'CN=KenhLive Dev',
-         '-storepass', 'android', '-keypass', 'android', '-keystore', ksFile.absolutePath].execute().waitFor()
     }
-    def ksPass = System.getenv('KEYSTORE_PASSWORD') ?: 'android'
+    def ksPass = (System.getenv('KEYSTORE_PASSWORD') ?: '').trim()
+    // Release signing chỉ sẵn sàng khi có cả file keystore và mật khẩu thật.
+    // Lưu ý: file keystore đặt tay ở local (không commit) cũng được chấp nhận,
+    // nhưng mật khẩu vẫn bắt buộc phải qua biến môi trường.
+    def releaseSigningReady = ksFile.exists() && !ksPass.isEmpty()
     signingConfigs {
-        kenhlive {
+        kenhliveRelease {
             storeFile ksFile
             storePassword ksPass
             keyAlias 'kenhlive'
             keyPassword ksPass
-            enableV1Signing true   // BUG-01 fix: đủ bộ ký, chống downgrade APK
+            enableV1Signing true
             enableV2Signing true
             enableV3Signing true
+        }
+    }
+    // Fail-closed cho release: task đóng gói release kiểm tra trước khi chạy.
+    // Debug và các task khác không bị ảnh hưởng khi thiếu keystore release.
+    tasks.configureEach { t ->
+        if (t.name.startsWith('package') && t.name.contains('Release')) {
+            t.doFirst {
+                if (!releaseSigningReady) {
+                    throw new GradleException(
+                        'Release signing is not configured: provide a real keystore ' +
+                        'via KEYSTORE_B64 (CI) or keystore/kenhlive.jks (local, not in git) ' +
+                        'AND set KEYSTORE_PASSWORD. Refusing to build an unsigned or ' +
+                        'default-password release APK.'
+                    )
+                }
+            }
         }
     }
 
@@ -63,13 +80,16 @@ android {
         debug {
             minifyEnabled false
             shrinkResources false
-            signingConfig signingConfigs.kenhlive
+            // Tách debug/release: debug dùng keystore debug mặc định của AGP.
+            signingConfig signingConfigs.debug
         }
         release {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.kenhlive   // BUG-02: release ký đàng hoàng (trước unsigned)
+            // Release chỉ dùng keystore thật; thiếu thì task package*Release
+            // fail rõ ràng ở khối kiểm tra trên, không ký mù bằng keystore tạm.
+            signingConfig signingConfigs.kenhliveRelease
         }
     }
     compileOptions {
