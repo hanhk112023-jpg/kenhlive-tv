@@ -83,6 +83,29 @@ object IptvRepository {
     const val URL_VN = "https://iptv-org.github.io/iptv/countries/vn.m3u"
     const val URL_SPORTS = "https://iptv-org.github.io/iptv/categories/sports.m3u"
 
+    /**
+     * Host đã chứng minh trong code là phục vụ được qua HTTPS (đều xuất hiện
+     * dưới dạng https:// trong API/fallback của chính repo). Chỉ những host
+     * này mới được nâng http:// lên https:// khi parse playlist; host khác
+     * giữ nguyên và sẽ lỗi ở tầng cleartext nếu là http, đúng chủ đích Tier 0.
+     */
+    private val KNOWN_HTTPS_HOSTS = setOf(
+        "tv360.vn", "live.canthotv.vn", "liveh12.vtvprime.vn", "liveh34.vtvprime.vn",
+        "1011154949.vnns.net", "freem3u.xyz", "iptv-org.github.io", "epgshare01.online",
+        "phimapi.com", "phimimg.com", "vnres.co", "json.vnres.co"
+    )
+
+    /** Nâng http:// lên https:// chỉ cho host trong KNOWN_HTTPS_HOSTS, còn lại giữ nguyên. */
+    internal fun upgradeToHttps(url: String): String {
+        if (!url.startsWith("http://", ignoreCase = true)) return url
+        val host = try {
+            java.net.URI(url).host?.lowercase(Locale.ROOT).orEmpty()
+        } catch (_: Exception) { "" }
+        if (host.isEmpty()) return url
+        val known = KNOWN_HTTPS_HOSTS.any { host == it || host.endsWith(".$it") }
+        return if (known) "https://" + url.substringAfter("://") else url
+    }
+
     // Danh sách mã quốc gia Châu Âu & thương hiệu thể thao lớn
     private val EU_COUNTRIES = setOf(
         "UK", "GB", "ES", "FR", "DE", "IT", "PT", "NL", "BE", "CH", "AT", "SE", "NO", "DK", "FI", "PL", "RO", "CZ"
@@ -290,8 +313,8 @@ object IptvRepository {
                             id = curId.ifEmpty { curName },
                             name = curName,
                             group = curGroup,
-                            logo = curLogo,
-                            url = trimmed,
+                            logo = upgradeToHttps(curLogo),
+                            url = upgradeToHttps(trimmed),
                             isVn = isVn,
                             country = curCountry
                         )
