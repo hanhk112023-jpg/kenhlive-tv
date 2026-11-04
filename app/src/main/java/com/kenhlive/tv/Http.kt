@@ -49,6 +49,14 @@ object Http {
 
     fun get(): OkHttpClient = client ?: error("Http.init() must be called from Application")
 
+    /**
+     * Độ trễ retry thuần, tách riêng để unit test được mà không cần mạng:
+     * lần thử thứ i (bắt đầu từ 0) chờ baseMs * (i + 1). Các hàm retry bên
+     * dưới dùng đúng helper này, không tự tính lại, để test và code không lệch.
+     */
+    internal fun retryDelayMs(attemptIndex: Int, baseMs: Long): Long =
+        baseMs * (attemptIndex + 1L)
+
     /** Client kết nối trực tiếp không qua proxy (bỏ qua ProxySelector / http_proxy hệ thống) */
     fun getDirect(): OkHttpClient = get().newBuilder().proxy(java.net.Proxy.NO_PROXY).build()
 
@@ -97,7 +105,7 @@ object Http {
                 return getLongOnce(url)
             } catch (e: Exception) {
                 last = e
-                if (i < attempts - 1) Thread.sleep(500L * (i + 1))
+                if (i < attempts - 1) Thread.sleep(retryDelayMs(i, 500L))
             }
         }
         throw last ?: IOException("network error")
@@ -154,7 +162,7 @@ object Http {
             } catch (e: Exception) {
                 ApiHealth.record(url, ok = false, latencyMs = System.currentTimeMillis() - started, error = e.message)
                 last = e
-                if (i < attempts - 1) Thread.sleep(300L * (i + 1))
+                if (i < attempts - 1) Thread.sleep(retryDelayMs(i, 300L))
             }
         }
         throw last ?: IOException("network error")
@@ -169,7 +177,7 @@ object Http {
                 return getOnce(url)
             } catch (e: Exception) {
                 last = e
-                if (i < attempts - 1) Thread.sleep(400L * (i + 1))
+                if (i < attempts - 1) Thread.sleep(retryDelayMs(i, 400L))
             }
         }
         throw last ?: IOException("network error")
