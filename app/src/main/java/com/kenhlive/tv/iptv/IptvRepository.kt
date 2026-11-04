@@ -1,6 +1,7 @@
 package com.kenhlive.tv.iptv
 
 import android.content.Context
+import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
@@ -94,6 +95,10 @@ object IptvRepository {
         "1011154949.vnns.net", "freem3u.xyz", "iptv-org.github.io", "epgshare01.online",
         "phimapi.com", "phimimg.com", "vnres.co", "json.vnres.co"
     )
+
+    // Host stream lạ chỉ cảnh báo một lần mỗi host trong một phiên chạy, để
+    // logcat không bị spam khi playlist có hàng trăm kênh cùng host lạ.
+    private val warnedUnknownStreamHosts = mutableSetOf<String>()
 
     /** Nâng http:// lên https:// chỉ cho host trong KNOWN_HTTPS_HOSTS, còn lại giữ nguyên. */
     internal fun upgradeToHttps(url: String): String {
@@ -308,6 +313,15 @@ object IptvRepository {
             } else if (!trimmed.startsWith("#")) {
                 if (curName.isNotEmpty() && !trimmed.contains("dethich.pw", ignoreCase = true) &&
                     (trimmed.startsWith("http://", true) || trimmed.startsWith("https://", true) || trimmed.startsWith("tv360://", true))) {
+                    // Tier 1: cảnh báo host stream ngoài danh sách đã biết.
+                    // Chỉ log tên kênh + host, không log toàn bộ URL (có thể chứa token).
+                    try {
+                        val streamHost = java.net.URI(upgradeToHttps(trimmed)).host?.lowercase(Locale.ROOT).orEmpty()
+                        val knownStream = KNOWN_HTTPS_HOSTS.any { streamHost == it || streamHost.endsWith(".$it") }
+                        if (streamHost.isNotEmpty() && !knownStream && warnedUnknownStreamHosts.add(streamHost)) {
+                            Log.w("IptvRepository", "Unknown stream host for channel $curName: $streamHost")
+                        }
+                    } catch (_: Exception) { }
                     list.add(
                         IptvChannel(
                             id = curId.ifEmpty { curName },
