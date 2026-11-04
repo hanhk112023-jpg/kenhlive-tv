@@ -319,6 +319,17 @@ echo "kenhlive pid sau Cai dat: $(adb shell pidof com.kenhlive.tv 2>/dev/null)" 
 adb logcat -d -s AndroidRuntime 2>/dev/null | tail -40 >> "$OUT/settings-log.txt" || true
 foc 15-settings-focused.json
 porthole dump-ui > "$OUT/settings-ui.json" 2>/dev/null || echo "dump settings-ui failed"
+# Kiểm chứng "hàng cuối cắt mép dưới" (run 3/5/6): danh sách Cài đặt có
+# 15 mục (4 section + 11 hàng) nên ở vị trí đầu, hàng "Kiểm tra cập nhật"
+# bị cắt ở mép dưới là bình thường của danh sách cuộn — chỉ thành lỗi nếu
+# bấm DOWN tới cuối mà hàng cuối vẫn không hiện trọn. Bấm DOWN 10 lần từ
+# hàng đầu tới hàng cuối (Tình trạng API) rồi chụp, để xem hàng cuối khi
+# focus có hiện trọn vẹn không.
+for _ in 1 2 3 4 5 6 7 8 9 10; do porthole key 20; sleep 1; done
+sleep 2
+shot 15c-settings-bottom.png
+foc 15c-settings-bottom-focused.json
+porthole dump-ui > "$OUT/settings-bottom-ui.json" 2>/dev/null || echo "dump settings-bottom-ui failed"
 porthole key 4
 sleep 1
 porthole key 4
