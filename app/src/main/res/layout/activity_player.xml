@@ -158,17 +158,17 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingLeft="20dp"
-            android:paddingRight="20dp"
-            android:paddingTop="18dp"
-            android:paddingBottom="20dp">
+            android:paddingLeft="28dp"
+            android:paddingRight="28dp"
+            android:paddingTop="20dp"
+            android:paddingBottom="22dp">
 
             <ImageButton
                 android:id="@+id/backBtn"
                 style="@style/KL.IconButton"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:src="@drawable/ic_back"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/kl_p_back"
                 android:contentDescription="@string/cd_back" />
 
             <LinearLayout
@@ -183,7 +183,7 @@
                     style="@style/KL.Text.Title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textSize="18sp"
+                    android:textSize="20sp"
                     android:textColor="#FFFFFF"
                     android:textStyle="bold"
                     android:maxLines="1"
@@ -211,10 +211,10 @@
             <ImageButton
                 android:id="@+id/channelListBtn"
                 style="@style/KL.IconButton"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:layout_marginLeft="10dp"
-                android:src="@drawable/ic_nav_tv"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginLeft="12dp"
+                android:src="@drawable/kl_p_channels"
                 android:contentDescription="Danh sách kênh"
                 android:visibility="gone" />
 
@@ -304,10 +304,10 @@
             <ImageButton
                 android:id="@+id/phoneMenuBtn"
                 style="@style/KL.IconButton"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:layout_marginLeft="10dp"
-                android:src="@drawable/ic_more_vert"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginLeft="12dp"
+                android:src="@drawable/kl_p_options"
                 android:contentDescription="Tùy chọn phát"
                 android:visibility="gone" />
         </LinearLayout>
@@ -320,7 +320,7 @@
         android:layout_height="64dp"
         android:layout_gravity="center"
         android:background="@drawable/bg_play_pause_circle"
-        android:src="@drawable/ic_pause"
+        android:src="@drawable/kl_p_pause"
         android:scaleType="centerInside"
         android:padding="16dp"
         android:contentDescription="Phát/Tạm dừng"
@@ -436,15 +436,15 @@
     <LinearLayout
         android:id="@+id/vodControlBar"
         android:layout_width="match_parent"
-        android:layout_height="68dp"
+        android:layout_height="76dp"
         android:layout_gravity="bottom"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:background="@drawable/bg_overlay_bottom"
-        android:paddingLeft="28dp"
-        android:paddingRight="28dp"
-        android:paddingTop="6dp"
-        android:paddingBottom="6dp"
+        android:paddingLeft="32dp"
+        android:paddingRight="32dp"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
         android:visibility="gone">
 
         <Button
@@ -453,11 +453,11 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:background="@drawable/kl2_card_glass"
-            android:drawableTop="@drawable/ic_nav_settings"
-            android:drawablePadding="2dp"
+            android:drawableTop="@drawable/kl_p_settings"
+            android:drawablePadding="4dp"
             android:text="Cài Đặt"
             android:textColor="#FFFFFF"
-            android:textSize="10.5sp"
+            android:textSize="12sp"
             android:focusable="true" />
 
         <Button
@@ -465,13 +465,13 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_marginLeft="8dp"
+            android:layout_marginLeft="10dp"
             android:background="@drawable/kl2_card_glass"
-            android:drawableTop="@drawable/ic_skip_prev"
-            android:drawablePadding="2dp"
+            android:drawableTop="@drawable/kl_p_skip_prev"
+            android:drawablePadding="4dp"
             android:text="Tập trước"
             android:textColor="#FFFFFF"
-            android:textSize="10.5sp"
+            android:textSize="12sp"
             android:focusable="true" />
 
         <Button
@@ -479,13 +479,13 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_marginLeft="8dp"
+            android:layout_marginLeft="10dp"
             android:background="@drawable/kl2_card_glass"
-            android:drawableTop="@drawable/ic_seek_back"
-            android:drawablePadding="2dp"
+            android:drawableTop="@drawable/kl_p_seek_back"
+            android:drawablePadding="4dp"
             android:text="Tua lại"
             android:textColor="#FFFFFF"
-            android:textSize="10.5sp"
+            android:textSize="12sp"
             android:focusable="true" />
 
         <Button
@@ -493,13 +493,13 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_marginLeft="8dp"
+            android:layout_marginLeft="10dp"
             android:background="@drawable/kl2_card_glass"
-            android:drawableTop="@drawable/ic_pause"
-            android:drawablePadding="2dp"
+            android:drawableTop="@drawable/kl_p_pause"
+            android:drawablePadding="4dp"
             android:text="Tạm dừng"
             android:textColor="#FFFFFF"
-            android:textSize="10.5sp"
+            android:textSize="12sp"
             android:focusable="true" />
 
         <Button
@@ -507,13 +507,13 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_marginLeft="8dp"
+            android:layout_marginLeft="10dp"
             android:background="@drawable/kl2_card_glass"
-            android:drawableTop="@drawable/ic_seek_fwd"
-            android:drawablePadding="2dp"
+            android:drawableTop="@drawable/kl_p_seek_fwd"
+            android:drawablePadding="4dp"
             android:text="Tua tới"
             android:textColor="#FFFFFF"
-            android:textSize="10.5sp"
+            android:textSize="12sp"
             android:focusable="true" />
 
         <Button
@@ -521,13 +521,13 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_marginLeft="8dp"
+            android:layout_marginLeft="10dp"
             android:background="@drawable/kl2_card_glass"
-            android:drawableTop="@drawable/ic_skip_next"
-            android:drawablePadding="2dp"
+            android:drawableTop="@drawable/kl_p_skip_next"
+            android:drawablePadding="4dp"
             android:text="Tập tiếp"
             android:textColor="#FFFFFF"
-            android:textSize="10.5sp"
+            android:textSize="12sp"
             android:focusable="true" />
 
         <Button
@@ -535,13 +535,13 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_marginLeft="8dp"
+            android:layout_marginLeft="10dp"
             android:background="@drawable/kl2_card_glass"
-            android:drawableTop="@drawable/ic_cats"
-            android:drawablePadding="2dp"
+            android:drawableTop="@drawable/kl_p_episodes"
+            android:drawablePadding="4dp"
             android:text="Danh sách tập"
             android:textColor="#FFFFFF"
-            android:textSize="10.5sp"
+            android:textSize="12sp"
             android:focusable="true" />
     </LinearLayout>
 
@@ -765,7 +765,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:scaleType="fitCenter"
-                android:src="@drawable/ic_nav_tv" />
+                android:src="@drawable/kl_p_channels" />
         </FrameLayout>
 
         <!-- Thông tin Kênh & EPG -->
@@ -865,7 +865,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="📊 STATS FOR NERDS"
+                android:text="STATS FOR NERDS"
                 android:textColor="@color/kl_brand"
                 android:textSize="12sp"
                 android:textStyle="bold"

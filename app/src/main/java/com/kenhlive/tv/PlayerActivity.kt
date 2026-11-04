@@ -576,10 +576,10 @@ class PlayerActivity : AppCompatActivity() {
                         }
                         noteUserSeek(target)
                         p.seekTo(target)
-                        showGestureFeedback(R.drawable.ic_play, 100, "+${seekStepMs() / 1000}s")
+                        showGestureFeedback(R.drawable.kl_p_play, 100, "+${seekStepMs() / 1000}s")
                     } else {
                         p.seekToDefaultPosition()
-                        showGestureFeedback(R.drawable.ic_play, 100, "TRỰC TIẾP")
+                        showGestureFeedback(R.drawable.kl_p_play, 100, "TRỰC TIẾP")
                     }
                 }
                 return true
@@ -685,11 +685,11 @@ class PlayerActivity : AppCompatActivity() {
         val p = player ?: return
         if (p.isPlaying) {
             p.pause()
-            centerPlayPauseBtn?.setImageResource(R.drawable.ic_play)
+            centerPlayPauseBtn?.setImageResource(R.drawable.kl_p_play)
             Toast.makeText(this, "Tạm dừng", Toast.LENGTH_SHORT).show()
         } else {
             p.play()
-            centerPlayPauseBtn?.setImageResource(R.drawable.ic_pause)
+            centerPlayPauseBtn?.setImageResource(R.drawable.kl_p_pause)
             Toast.makeText(this, "Tiếp tục phát", Toast.LENGTH_SHORT).show()
         }
         showOverlay()
@@ -725,7 +725,7 @@ class PlayerActivity : AppCompatActivity() {
 
         // Đổi server cho chế độ thể thao
         if (!isIptvMode) {
-            options.add("🔄 Đổi nguồn phát (${currentSportsSource.displayName})")
+            options.add("Đổi nguồn phát (${currentSportsSource.displayName})")
             actions.add { showServerPickerDialog() }
         }
 
@@ -754,7 +754,7 @@ class PlayerActivity : AppCompatActivity() {
         }
 
         val d = AlertDialog.Builder(this, R.style.Theme_KenhLive_Dialog)
-            .setTitle("⚙️ Tùy Chọn Phát")
+            .setTitle("Tùy Chọn Phát")
             .setItems(options.toTypedArray()) { d, which ->
                 d.dismiss()
                 actions[which].invoke()
@@ -810,12 +810,12 @@ class PlayerActivity : AppCompatActivity() {
         actions.add { toggleStatsHud() }
 
         if (!isIptvMode) {
-            options.add("🔄 Đổi nguồn phát (${currentSportsSource.displayName})")
+            options.add("Đổi nguồn phát (${currentSportsSource.displayName})")
             actions.add { showServerPickerDialog() }
         }
 
         val d = AlertDialog.Builder(this, R.style.Theme_KenhLive_Dialog)
-            .setTitle("⚙️ Tùy Chọn Phát")
+            .setTitle("Tùy Chọn Phát")
             .setItems(options.toTypedArray()) { d, which ->
                 d.dismiss()
                 actions[which].invoke()
@@ -1044,10 +1044,10 @@ class PlayerActivity : AppCompatActivity() {
         if (ch.logo.isNotEmpty()) {
             osdChannelLogo?.load(ch.logo) {
                 crossfade(true)
-                error(R.drawable.ic_nav_tv)
+                error(R.drawable.kl_p_channels)
             }
         } else {
-            osdChannelLogo?.setImageResource(R.drawable.ic_nav_tv)
+            osdChannelLogo?.setImageResource(R.drawable.kl_p_channels)
         }
 
         val epg = EpgRepository.getCurrentAndNext(ch.id, ch.name)
@@ -1098,11 +1098,11 @@ class PlayerActivity : AppCompatActivity() {
                 if (ch.logo.isNotEmpty()) {
                     holder.ivLogo.load(ch.logo) {
                         crossfade(true)
-                        error(R.drawable.ic_nav_tv)
-                        placeholder(R.drawable.ic_nav_tv)
+                        error(R.drawable.kl_p_channels)
+                        placeholder(R.drawable.kl_p_channels)
                     }
                 } else {
-                    holder.ivLogo.setImageResource(R.drawable.ic_nav_tv)
+                    holder.ivLogo.setImageResource(R.drawable.kl_p_channels)
                 }
 
                 holder.itemView.setOnClickListener {
@@ -1251,11 +1251,11 @@ class PlayerActivity : AppCompatActivity() {
                 if (ch.logo.isNotEmpty()) {
                     holder.ivLogo.load(ch.logo) {
                         crossfade(true)
-                        error(R.drawable.ic_nav_tv)
-                        placeholder(R.drawable.ic_nav_tv)
+                        error(R.drawable.kl_p_channels)
+                        placeholder(R.drawable.kl_p_channels)
                     }
                 } else {
-                    holder.ivLogo.setImageResource(R.drawable.ic_nav_tv)
+                    holder.ivLogo.setImageResource(R.drawable.kl_p_channels)
                 }
 
                 holder.itemView.setOnClickListener {
@@ -1442,7 +1442,7 @@ class PlayerActivity : AppCompatActivity() {
             p.addListener(object : Player.Listener {
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
                     if (DeviceMode.isPhone) {
-                        centerPlayPauseBtn?.setImageResource(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
+                        centerPlayPauseBtn?.setImageResource(if (isPlaying) R.drawable.kl_p_pause else R.drawable.kl_p_play)
                     }
                     if (isVodMode) {
                         if (isPlaying) {
@@ -1765,7 +1765,7 @@ class PlayerActivity : AppCompatActivity() {
             p.seekTo(target)
             val m = target / 60000L
             val s = (target % 60000L) / 1000L
-            showGestureFeedback(R.drawable.ic_play, 100, String.format(Locale.US, "+%ds (%02d:%02d)", step / 1000L, m, s))
+            showGestureFeedback(R.drawable.kl_p_play, 100, String.format(Locale.US, "+%ds (%02d:%02d)", step / 1000L, m, s))
             saveVodProgress(target)
         }
         hideOnce()
@@ -1774,7 +1774,7 @@ class PlayerActivity : AppCompatActivity() {
     private fun syncVodControlBar() {
         val playing = player?.isPlaying == true
         btnBarPlayPause?.setCompoundDrawablesWithIntrinsicBounds(
-            0, if (playing) R.drawable.ic_pause else R.drawable.ic_play, 0, 0
+            0, if (playing) R.drawable.kl_p_pause else R.drawable.kl_p_play, 0, 0
         )
         btnBarPlayPause?.text = if (playing) "Tạm dừng" else "Phát"
         val step = PlayerPrefs.seekStepSec(this)
@@ -2062,7 +2062,7 @@ class PlayerActivity : AppCompatActivity() {
             centerPlayPauseBtn?.visibility = View.VISIBLE
             phoneBottomBar?.visibility = View.VISIBLE
             val isPlaying = player?.isPlaying == true
-            centerPlayPauseBtn?.setImageResource(if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play)
+            centerPlayPauseBtn?.setImageResource(if (isPlaying) R.drawable.kl_p_pause else R.drawable.kl_p_play)
             // Thanh tua chỉ dành cho phim VOD (luồng live không tua được)
             if (isVodMode) {
                 phoneSeekRow?.visibility = View.VISIBLE
