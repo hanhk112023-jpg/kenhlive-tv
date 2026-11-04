@@ -164,27 +164,27 @@ sleep 12
 shot 11b-player.png
 foc 11b-player-focused.json
 porthole dump-ui > "$OUT/player-ui.json" 2>/dev/null || echo "dump player-ui failed"
-# Bước 3: bấm OK để hiện lại thanh trên (overlay tự ẩn sau ~3.5s), focus
-# lúc này ở nút Quay lại. Sang phải 1 lần phải tới nút Tùy chọn phát (⋮)
+# Bước 3: bấm OK để hiện lại thanh trên (overlay tự ẩn sau ~3.5s, mà chụp
+# qua Porthole chậm hơn thời gian đó nên run trước toàn chụp được video trơn).
+# Vì vậy KHÔNG sleep 2s nữa: OK xong sang phải ngay, chụp ngay, rồi OK mở menu.
+# Focus lúc này ở nút Quay lại. Sang phải 1 lần phải tới nút Tùy chọn phát (⋮)
 # ở góc phải, vì Danh sách kênh không hiện ở thể thao và các nút chi tiết
 # đã gom vào menu.
 porthole key 23
-sleep 2
+porthole remote dpad_right || porthole key 22
 shot 11c-player-overlay.png
 foc 11c-player-focused.json
-porthole remote dpad_right || porthole key 22
-sleep 1
 shot 11d-menu-focus.png
 foc 11d-menu-focused.json
 # Bước 4: OK trên nút Tùy chọn phát -> mở menu gọn mới showTvMoreOptions.
+# Menu là dialog, mở rồi sẽ đứng yên nên chụp sau 2s vẫn được.
 porthole key 23
 sleep 2
 shot 11e-player-menu.png
 foc 11e-player-focused.json
-# BACK: đóng menu, ẩn overlay, thoát player về hub Thể Thao (BACK thừa ở hub
-# chỉ hiện toast, không thoát app, nên 4 lần BACK là an toàn).
-porthole key 4
-sleep 1
+# BACK: menu chưa chắc đã mở (2 run trước đều trượt), nên chỉ BACK 3 lần:
+# thoát player -> Thể Thao (toast) -> hub chính, dừng ở hub sạch, KHÔNG
+# bấm BACK thứ 4 ở hub (sẽ mở dialog "Thoát KênhLive?" và kẹt phần 2).
 porthole key 4
 sleep 1
 porthole key 4
@@ -193,6 +193,16 @@ porthole key 4
 sleep 3
 shot 12-player-back.png
 foc 12-player-focused.json
+# Phòng thủ: nếu 12 vẫn là dialog thoát (focus "Ở LẠI") thì bấm OK để đóng
+# dialog, về hub sạch trước khi sang phần 2. Nếu không phải dialog thì
+# không bấm gì thêm, tránh mở lại Thể Thao.
+if grep -q "Ở LẠI" "$OUT/12-player-focused.json" 2>/dev/null; then
+  echo "12 la dialog thoat - bam OK tren O LAI de ve hub sach"
+  porthole key 23
+  sleep 2
+  shot 12b-hub-clean.png
+  foc 12b-focused.json
+fi
 
 echo; echo "=== PHẦN 2 — TOÀN APP: dừng video 1, quay video 2 (vượt trần 175s) ==="
 # screenrecord của Android tối đa 175s nên phần 1 đã gần hết; dừng video 1,
@@ -205,6 +215,15 @@ adb shell rm -f /sdcard/test-run.mp4
 adb shell screenrecord --size 1280x720 --bit-rate 4000000 --time-limit 175 /sdcard/test-run.mp4 > "$OUT/record2.log" 2>&1 &
 REC_PID=$!
 sleep 2
+
+echo; echo "=== Phòng thủ phần 2: nếu còn dialog thoát thì đóng trước ==="
+porthole focused -q > "$OUT/part2-start-focused.json" 2>/dev/null || true
+if grep -q "Ở LẠI" "$OUT/part2-start-focused.json" 2>/dev/null; then
+  echo "Dau phan 2 van la dialog thoat - bam OK tren O LAI"
+  porthole key 23
+  sleep 2
+  shot part2-hub-clean.png
+fi
 
 echo; echo "=== 13. Tìm kiếm (từ hub chính) ==="
 if porthole focus-on "TÌM KIẾM" --select; then ok SEARCH "focus-on TIM KIEM + select OK"; else ok SEARCH "FAIL - khong focus-on duoc TIM KIEM"; fi
