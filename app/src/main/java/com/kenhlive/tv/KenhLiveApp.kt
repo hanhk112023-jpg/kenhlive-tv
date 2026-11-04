@@ -45,6 +45,13 @@ class KenhLiveApp : Application(), ImageLoaderFactory {
             // Máy người dùng thật không đặt proxy nên hành vi ngoài đời không đổi.
             .addInterceptor { chain ->
                 val original = chain.request()
+                // Tier 1: Coil chỉ tải ảnh qua HTTPS. Ảnh http bị từ chối ngay,
+                // không chờ tầng cleartext của hệ thống. Timeout đã có ở dưới
+                // (connect/read 15s); kích thước ảnh còn được giới hạn bởi
+                // cache disk/memory và downsample theo view size ở Builder.
+                if (original.url.scheme.lowercase() != "https") {
+                    throw java.io.IOException("Coil: only https image URLs are allowed")
+                }
                 val host0 = original.url.host
                 // Referer phải khớp host ảnh (v0.1.2): bản cũ gắn Referer colatv.org cho
                 // MỌI request ảnh — CDN ảnh kiểm tra referer chéo domain sẽ trả 403.
@@ -61,7 +68,16 @@ class KenhLiveApp : Application(), ImageLoaderFactory {
                 val isPhimImg = host.equals("phimimg.com", ignoreCase = true) ||
                     host.endsWith(".phimimg.com", ignoreCase = true)
                 if (!isPhimImg) {
-                    chain.proceed(req)
+                    // Tier 1: giới hạn kích thước ảnh đơn lẻ 5 MB (poster/logo
+                    // bình thường nhỏ hơn nhiều); vượt quá thì từ chối, không
+                    // để một ảnh lạ chiếm RAM/disk cache.
+                    val resp = chain.proceed(req)
+                    val len = resp.body?.contentLength() ?: -1L
+                    if (len > 5L * 1024 * 1024) {
+                        resp.close()
+                        throw java.io.IOException("Coil: image too large")
+                    }
+                    resp
                 } else {
                     // Host ảnh phimimg.com hay lỗi trên máy cũ/mạng yếu: nếu lần tải đầu ném
                     // IOException hoặc trả HTTP >= 400 thì thử lại MỘT lần với cùng đường dẫn
