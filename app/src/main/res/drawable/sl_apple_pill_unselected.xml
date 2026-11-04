@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pill danh mục CHƯA chọn: tách rõ focused và unfocused (sửa 2026-11-04).
+     Chưa focus: kính mờ như cũ. Focus: kính sáng + viền trắng 2dp, để từ xa
+     vẫn thấy rõ con trỏ đang ở pill nào, không chỉ phóng to 1.08. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true" android:drawable="@drawable/bg_apple_pill_focus" />
+    <item android:drawable="@drawable/bg_apple_pill" />
+</selector>
