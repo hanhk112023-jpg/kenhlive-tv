@@ -19,6 +19,10 @@ porthole start "$AVD" --detach -q || porthole start --detach -q || echo "porthol
 sleep 5
 porthole list || true
 
+echo; echo "=== Chẩn đoán mạng: phimapi qua proxy VN và trực tiếp (phía host runner) ==="
+curl -sS -m 25 -x http://127.0.0.1:7891 -o /dev/null -w "phimapi VIA PROXY: HTTP %{http_code}\n" "https://phimapi.com/v1/api/danh-sach/phim-moi-cap-nhat?page=1&limit=1" || echo "phimapi VIA PROXY: CURL FAIL"
+curl -sS -m 25 -o /dev/null -w "phimapi DIRECT: HTTP %{http_code}\n" "https://phimapi.com/v1/api/danh-sach/phim-moi-cap-nhat?page=1&limit=1" || echo "phimapi DIRECT: CURL FAIL"
+
 echo; echo "=== Mở KenhLive ==="
 porthole launch com.kenhlive.tv || adb shell monkey -p com.kenhlive.tv -c android.intent.category.LAUNCHER 1
 sleep 12
@@ -37,7 +41,13 @@ if porthole focus-on "PHIM TRUYỆN" --select; then ok OPEN_PHIM "focus-on PHIM 
   porthole dump-ui > "$OUT/hub-ui.json" 2>/dev/null || true
   ok OPEN_PHIM "FAIL — không focus-on được ô PHIM TRUYỆN (xem hub-ui.json)"
 fi
-if porthole wait-for "Tất Cả"; then ok PHIM_LOADED "thấy pill Tất Cả (hub phim đã tải)"; else ok PHIM_LOADED "FAIL — không thấy pill Tất Cả"; fi
+if porthole wait-for "Tất Cả"; then ok PHIM_LOADED "thấy pill Tất Cả (hub phim đã tải)"; else
+  # Có thể rơi vào màn lỗi tải (nút THỬ LẠI đang focus) — bấm thử lại một lần rồi chờ lại.
+  echo "Chưa thấy pill Tất Cả — thử bấm THỬ LẠI (OK) rồi chờ lại 12s"
+  porthole key 23 || true
+  sleep 12
+  if porthole wait-for "Tất Cả"; then ok PHIM_LOADED "thấy pill Tất Cả sau THỬ LẠI"; else ok PHIM_LOADED "FAIL — không thấy pill Tất Cả kể cả sau THỬ LẠI"; fi
+fi
 sleep 6
 shot 02-phim-hub.png
 
@@ -69,4 +79,5 @@ shot 07-after-back.png
 echo; echo "=== Kiểm tra crash ==="
 if adb shell pidof com.kenhlive.tv > /dev/null 2>&1; then ok APP_ALIVE "tiến trình đang chạy"; else ok APP_ALIVE "FAIL — tiến trình đã chết"; fi
 adb logcat -d -t 600 2>/dev/null | grep -iE "FATAL EXCEPTION|AndroidRuntime.*FATAL" | head -5 > "$OUT/crashes.txt" || true
+adb logcat -d 2>/dev/null | grep -iE "phimapi|kkphim|UnknownHost|SSLHandshake|ConnectException|SocketTimeout|Unable to resolve host" | head -40 > "$OUT/netlog.txt" || true
 echo "checks done"
