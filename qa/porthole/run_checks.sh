@@ -95,6 +95,24 @@ sleep 2
 foc 07-after-back.json
 shot 07-after-back.png
 
+echo; echo "=== Dump UI o trang thai phim hub ==="
+porthole dump-ui > "$OUT/phim-ui.json" 2>/dev/null || echo "dump phim-ui failed"
+
+echo; echo "=== BACK ve hub chinh, roi vao hub The Thao ==="
+porthole key 4
+sleep 3
+shot 08-hub-back.png
+foc 08-focused.json
+if porthole focus-on "THỂ THAO" --select; then ok OPEN_SPORTS "focus-on THE THAO + select OK"; else ok OPEN_SPORTS "FAIL - khong focus-on duoc THE THAO"; fi
+sleep 8
+shot 09-sports.png
+foc 09-focused.json
+porthole dump-ui > "$OUT/sports-ui.json" 2>/dev/null || echo "dump sports-ui failed"
+porthole key 4
+sleep 3
+shot 10-hub-final.png
+foc 10-focused.json
+
 echo; echo "=== Kiểm tra crash ==="
 if adb shell pidof com.kenhlive.tv > /dev/null 2>&1; then ok APP_ALIVE "tiến trình đang chạy"; else ok APP_ALIVE "FAIL — tiến trình đã chết"; fi
 adb logcat -d -t 600 2>/dev/null | grep -iE "FATAL EXCEPTION|AndroidRuntime.*FATAL" | head -5 > "$OUT/crashes.txt" || true
