@@ -452,10 +452,14 @@
             android:focusable="true"
             android:clickable="true">
 
+            <!-- Sửa 2026-11-04: icon Telegram trước đây không tint nên giữ màu
+                 xanh dương gốc, nhìn như một viền focus xanh riêng, trong khi các
+                 nút hub khác đều tint trắng và focus chung bằng pill cam. -->
             <ImageView
                 android:layout_width="18dp"
                 android:layout_height="18dp"
                 android:src="@drawable/ic_telegram"
+                android:tint="@color/white"
                 android:contentDescription="Báo lỗi Telegram" />
 
             <TextView
