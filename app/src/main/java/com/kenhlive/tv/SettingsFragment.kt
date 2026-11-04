@@ -45,8 +45,27 @@ class SettingsFragment : Fragment() {
             // không đủ: người dùng di chuyển focus giữa các lần rebuild mà không kích hoạt rebuild nào)
             rv.viewTreeObserver.addOnGlobalFocusChangeListener { _, newFocus ->
                 if (newFocus != null) {
-                    val pos = rv.getChildAdapterPosition(newFocus)
-                    if (pos != RecyclerView.NO_POSITION) lastFocusedRow = pos
+                    // Crash run toàn app lần 5: ClassCastException
+                    // LinearLayout$LayoutParams -> RecyclerView$LayoutParams tại
+                    // dòng getChildAdapterPosition này, khi focus di chuyển qua
+                    // một view không phải item trực tiếp của RecyclerView
+                    // (vd view con sâu trong hàng, hoặc view của hierarchy khác
+                    // trong lúc điều hướng focus). Vì vậy chỉ lấy vị trí qua
+                    // item trực tiếp (đi ngược parent tới khi gặp rv), và bọc
+                    // try-catch — lỗi ghi nhớ hàng focus không bao giờ được
+                    // làm crash cả app nữa, giống bản vá ScheduleAdapter.
+                    try {
+                        var cur: View? = newFocus
+                        while (cur != null && cur.parent !== rv) {
+                            cur = cur.parent as? View
+                        }
+                        if (cur != null) {
+                            val pos = rv.getChildAdapterPosition(cur)
+                            if (pos != RecyclerView.NO_POSITION) lastFocusedRow = pos
+                        }
+                    } catch (_: Exception) {
+                        // Bỏ qua, giữ nguyên lastFocusedRow cũ.
+                    }
                 }
             }
         }
