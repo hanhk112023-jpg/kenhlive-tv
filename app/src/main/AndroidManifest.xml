@@ -63,10 +63,11 @@
             </intent-filter>
         </activity>
 
-        <!-- Player activity -->
+        <!-- Player activity: Tier 0 — không export, chỉ app tự gọi nội bộ.
+             Không có intent-filter nào cần app khác gọi Player/MultiView. -->
         <activity
             android:name=".PlayerActivity"
-            android:exported="true"
+            android:exported="false"
             android:supportsPictureInPicture="true"
             android:resizeableActivity="true"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|density" />
@@ -78,10 +79,10 @@
             android:screenOrientation="sensorLandscape"
             android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden|density" />
 
-        <!-- Multiview (TV 2x2) -->
+        <!-- Multiview (TV 2x2): Tier 0 — không export, lý do như PlayerActivity. -->
         <activity
             android:name=".MultiViewActivity"
-            android:exported="true"
+            android:exported="false"
             android:configChanges="orientation|screenSize|keyboardHidden" />
     </application>
 </manifest>
