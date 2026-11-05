@@ -501,8 +501,10 @@ class PhimFragment : Fragment() {
                     if (nowFav) R.drawable.ic_bookmark_filled else R.drawable.ic_bookmark, 0, 0, 0
                 )
             }
-            if (selectedCategorySlug == "da-luu" || selectedCategorySlug == "tat-ca") {
+            if (selectedCategorySlug == "da-luu") {
                 loadFilmsByCategory(selectedCategorySlug)
+            } else {
+                heroFavBtn?.post { heroFavBtn.requestFocus() }
             }
         }
     }

@@ -293,7 +293,8 @@
                     android:paddingTop="11dp"
                     android:paddingBottom="11dp"
                     android:clickable="true"
-                    android:focusable="true">
+                    android:focusable="true"
+                    android:nextFocusLeft="@id/heroPlay">
 
                     <ImageView
                         android:layout_width="14dp"

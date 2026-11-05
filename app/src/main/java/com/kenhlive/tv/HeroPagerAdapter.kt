@@ -281,6 +281,7 @@ class HeroPagerAdapter(
                     true // Nuốt triệt để để Android FocusFinder không tự nhảy chéo xuống Card 2
                 }
                 android.view.KeyEvent.KEYCODE_DPAD_UP -> true
+                android.view.KeyEvent.KEYCODE_DPAD_LEFT -> true // Nuốt DPAD_LEFT để không rơi vào trạng thái NONE
                 else -> false
             }
         }

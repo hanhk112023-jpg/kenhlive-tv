@@ -2086,9 +2086,9 @@ class PlayerActivity : AppCompatActivity() {
         hideOnce()
     }
 
-    private fun hideOnce() {
+    private fun hideOnce(delayMs: Long = if (DeviceMode.isTv) 8000L else 4000L) {
         handler.removeCallbacks(hideOverlay)
-        handler.postDelayed(hideOverlay, 3500)
+        handler.postDelayed(hideOverlay, delayMs)
     }
 
     override fun dispatchKeyEvent(e: KeyEvent): Boolean {
@@ -2238,12 +2238,12 @@ class PlayerActivity : AppCompatActivity() {
             }
             // Bấm OK hoặc phím điều hướng khi đang xem phim VOD:
             // - TV: mở thanh điều khiển đầy đủ (Cài Đặt / Tập trước / Tua / Phát / Tập tiếp /
-            //   Danh sách tập), focus ngay vào nút Phát/Dừng (hoặc Cài Đặt) trong thanh.
+            //   Danh sách tập), focus ngay vào nút Cài Đặt (btnBarSettings) ở đầu thanh.
             // - Điện thoại: Bấm OK -> Dừng/Tiếp tục phát ngay (v7.11); phím khác -> hiện overlay.
             if (isVodMode && (isOkKey || e.keyCode == KeyEvent.KEYCODE_DPAD_DOWN || e.keyCode == KeyEvent.KEYCODE_DPAD_UP || e.keyCode == KeyEvent.KEYCODE_MENU)) {
                 if (DeviceMode.isTv) {
                     showOverlay()
-                    val target = btnBarPlayPause ?: btnBarSettings
+                    val target = btnBarSettings ?: btnBarPlayPause
                     target?.requestFocus()
                     vodControlBar?.post { target?.requestFocus() }
                 } else if (isOkKey) {
@@ -2256,7 +2256,7 @@ class PlayerActivity : AppCompatActivity() {
             // Bấm OK hoặc phím khác khi overlay đang ẩn -> Hiện overlay điều khiển
             showOverlay()
             val targetBtn = if (isVodMode && DeviceMode.isTv) {
-                btnBarPlayPause ?: btnBarSettings ?: centerPlayPauseBtn
+                btnBarSettings ?: btnBarPlayPause ?: centerPlayPauseBtn
             } else if (isVodMode) {
                 centerPlayPauseBtn
             } else if (isIptvMode && findViewById<View>(R.id.channelListBtn)?.visibility == View.VISIBLE) {
@@ -2273,7 +2273,7 @@ class PlayerActivity : AppCompatActivity() {
         if (isDown && (topOverlay?.visibility == View.VISIBLE || vodControlBar?.visibility == View.VISIBLE)) {
             hideOnce()
             if (currentFocus == null) {
-                val target = if (isVodMode) (btnBarPlayPause ?: btnBarSettings)
+                val target = if (isVodMode) (btnBarSettings ?: btnBarPlayPause)
                              else findViewById<View>(R.id.phoneMenuBtn) ?: findViewById<View>(R.id.backBtn)
                 target?.requestFocus()
                 if (isOkKey) return true

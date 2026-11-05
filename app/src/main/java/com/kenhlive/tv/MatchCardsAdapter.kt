@@ -328,11 +328,8 @@ class MatchCardsAdapter(
             h.timeBadge?.visibility = View.GONE
         } else if (isTrulyLive) {
             h.liveBadge?.visibility = View.VISIBLE
-            if (g.liveClock.isNotBlank()) {
-                h.liveBadge?.text = "● ${g.liveClock}"
-            } else {
-                h.liveBadge?.text = "● LIVE"
-            }
+            val validClock = g.liveClock.isNotBlank() && !g.liveClock.equals("null", ignoreCase = true)
+            h.liveBadge?.text = "● LIVE"
             h.liveBadge?.setBackgroundResource(R.drawable.bg_badge_live_red)
             h.liveBadge?.setTextColor(android.graphics.Color.WHITE)
 
@@ -347,7 +344,7 @@ class MatchCardsAdapter(
             }
 
             if (h.timeBadge != null) {
-                if (g.liveClock.isNotBlank()) {
+                if (validClock) {
                     h.timeBadge.text = g.liveClock
                     h.timeBadge.visibility = View.VISIBLE
                 } else {
@@ -360,12 +357,13 @@ class MatchCardsAdapter(
             h.liveBadge?.setBackgroundResource(R.drawable.bg_badge_countdown)
             h.liveBadge?.setTextColor(android.graphics.Color.parseColor("#F59E0B")) // Hổ Phách Amber
 
+            val validKickoff = kickoff.isNotBlank() && !kickoff.equals("null", ignoreCase = true)
             h.score?.setBackgroundResource(R.drawable.bg_score_pill)
             h.score?.setTextColor(android.graphics.Color.parseColor("#94A3B8"))
-            h.score?.text = if (kickoff.isNotBlank()) kickoff else "VS"
+            h.score?.text = if (validKickoff) kickoff else "VS"
 
             if (h.timeBadge != null) {
-                if (kickoff.isNotBlank()) {
+                if (validKickoff) {
                     h.timeBadge.text = kickoff
                     h.timeBadge.visibility = View.VISIBLE
                 } else {
