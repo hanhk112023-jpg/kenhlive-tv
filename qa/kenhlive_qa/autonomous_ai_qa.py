@@ -819,6 +819,51 @@ Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn b�
                 action_type = "COMPLETE_MISSION"
                 action_param = ""
 
+        elif m_id == "MISSION_PLAYER_SETTINGS_DIALOG":
+            if step == 0:
+                action_type = "KEY"
+                action_param = "DPAD_DOWN"
+                thought = "Mở thanh điều khiển của trình phát VOD"
+            elif step == 1:
+                action_type = "KEY"
+                action_param = "DPAD_LEFT"
+                thought = "Di chuyển focus sang nút CÀI ĐẶT ở đầu thanh điều khiển"
+            elif step == 2:
+                action_type = "KEY"
+                action_param = "DPAD_LEFT"
+                thought = "Di chuyển tiếp sang nút CÀI ĐẶT ở đầu thanh điều khiển"
+            elif step == 3:
+                action_type = "KEY"
+                action_param = "ENTER"
+                thought = "Bấm OK mở Dialog Cài Đặt Trình Phát Thống Nhất"
+            elif step == 4:
+                action_type = "KEY"
+                action_param = "DPAD_DOWN"
+                thought = "Duyệt qua các nhóm cài đặt trong Dialog (Hình ảnh -> Âm thanh)"
+            elif step == 5:
+                action_type = "KEY"
+                action_param = "DPAD_DOWN"
+                thought = "Duyệt tiếp xuống nhóm Tỉ lệ khung hình"
+            elif step == 6:
+                action_type = "KEY"
+                action_param = "DPAD_RIGHT"
+                thought = "Thử chọn một chip tỉ lệ khung hình mới"
+            elif step == 7:
+                action_type = "KEY"
+                action_param = "ENTER"
+                thought = "Bấm OK áp dụng tỉ lệ khung hình mới ngay trong Dialog"
+            elif step == 8:
+                action_type = "KEY"
+                action_param = "BACK"
+                thought = "Bấm BACK để đóng Dialog Cài Đặt Trình Phát"
+            elif step == 9:
+                action_type = "KEY"
+                action_param = "DOUBLE_BACK"
+                thought = "Thoát trình phát VOD về lại màn hình chính"
+            else:
+                action_type = "COMPLETE_MISSION"
+                action_param = ""
+
         elif m_id == "MISSION_SEARCH_AND_SETTINGS_FEEDBACK":
             if step == 0:
                 action_type = "SWITCH_TAB"
@@ -1062,16 +1107,20 @@ class AndroidTVDevice:
 
         # 0. Kiểm tra màn hình đen / rỗng hoàn toàn (Dead Blank Screen)
         if png_bytes and self.is_blank(png_bytes) and "MainActivity" in current_activity:
-            blank_key = f"BLANK:{current_activity}"
-            if blank_key not in self._reported_anomaly_keys:
-                self._reported_anomaly_keys.add(blank_key)
-                anomalies.append({
-                    "area": "Hiển thị Màn Hình (Deep Probe)",
-                    "severity": "CRITICAL",
-                    "issue": f"Màn hình đen / rỗng hoàn toàn (Dead Blank Screen) tại {current_activity}",
-                    "detail": "Độ biến thiên pixel stddev < 4.0 và mean < 2.0 sau khi nạp",
-                    "suggestion": "Kiểm tra render lifecycle, layout xml hoặc sự cố crash UI background"
-                })
+            # Xác thực 2 lần để tránh bắt nhầm frame chuyển cảnh (transition) hoặc loading đen thoáng qua
+            time.sleep(1.5)
+            recheck_png = self.screencap_bytes()
+            if recheck_png and self.is_blank(recheck_png):
+                blank_key = f"BLANK:{current_activity}"
+                if blank_key not in self._reported_anomaly_keys:
+                    self._reported_anomaly_keys.add(blank_key)
+                    anomalies.append({
+                        "area": "Hiển thị Màn Hình (Deep Probe)",
+                        "severity": "CRITICAL",
+                        "issue": f"Màn hình đen / rỗng hoàn toàn (Dead Blank Screen) tại {current_activity}",
+                        "detail": "Độ biến thiên pixel stddev < 4.0 và mean < 2.0 kéo dài hơn 1.5s sau khi nạp",
+                        "suggestion": "Kiểm tra render lifecycle, layout xml hoặc sự cố crash UI background"
+                    })
 
         # 1. Ghi nhận lịch sử bước focus để phát hiện Focus Trap (Kẹt nút D-pad)
         vis_texts = tuple(t for _, t in ui_state.get("all_visible_texts", [])[:15])

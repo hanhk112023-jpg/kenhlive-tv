@@ -2236,42 +2236,48 @@ class PlayerActivity : AppCompatActivity() {
                 showQuickOsd(currentChannelIndex + 1)
                 return true
             }
-            // Bấm OK khi đang xem phim VOD:
+            // Bấm OK hoặc phím điều hướng khi đang xem phim VOD:
             // - TV: mở thanh điều khiển đầy đủ (Cài Đặt / Tập trước / Tua / Phát / Tập tiếp /
-            //   Danh sách tập) như các trình phát TV, focus vào nút Phát/Dừng trong thanh.
-            // - Điện thoại: Dừng/Tiếp tục phát ngay (hành vi từ v7.11).
-            if (isOkKey && isVodMode) {
+            //   Danh sách tập), focus ngay vào nút Phát/Dừng (hoặc Cài Đặt) trong thanh.
+            // - Điện thoại: Bấm OK -> Dừng/Tiếp tục phát ngay (v7.11); phím khác -> hiện overlay.
+            if (isVodMode && (isOkKey || e.keyCode == KeyEvent.KEYCODE_DPAD_DOWN || e.keyCode == KeyEvent.KEYCODE_DPAD_UP || e.keyCode == KeyEvent.KEYCODE_MENU)) {
                 if (DeviceMode.isTv) {
                     showOverlay()
-                    btnBarPlayPause?.requestFocus()
-                } else {
+                    val target = btnBarPlayPause ?: btnBarSettings
+                    target?.requestFocus()
+                    vodControlBar?.post { target?.requestFocus() }
+                } else if (isOkKey) {
                     togglePlayPause()
+                } else {
+                    showOverlay()
                 }
                 return true
             }
             // Bấm OK hoặc phím khác khi overlay đang ẩn -> Hiện overlay điều khiển
             showOverlay()
-            if (isOkKey) {
-                val targetBtn = if (isVodMode && DeviceMode.isTv) {
-                    btnBarPlayPause ?: centerPlayPauseBtn
-                } else if (isVodMode) {
-                    centerPlayPauseBtn
-                } else if (isIptvMode && findViewById<View>(R.id.channelListBtn)?.visibility == View.VISIBLE) {
-                    findViewById<View>(R.id.channelListBtn)
-                } else {
-                    // Live TV: nút Chất lượng đã gom vào menu, không còn trên thanh
-                    // trên nữa nên focus OK phải về nút Tùy chọn phát, không phải
-                    // một nút đã GONE (trước đây requestFocus vào nút ẩn sẽ mất focus).
-                    findViewById<View>(R.id.phoneMenuBtn) ?: findViewById<View>(R.id.backBtn)
-                }
-                targetBtn?.requestFocus()
-                return true
+            val targetBtn = if (isVodMode && DeviceMode.isTv) {
+                btnBarPlayPause ?: btnBarSettings ?: centerPlayPauseBtn
+            } else if (isVodMode) {
+                centerPlayPauseBtn
+            } else if (isIptvMode && findViewById<View>(R.id.channelListBtn)?.visibility == View.VISIBLE) {
+                findViewById<View>(R.id.channelListBtn)
+            } else {
+                findViewById<View>(R.id.phoneMenuBtn) ?: findViewById<View>(R.id.backBtn)
             }
+            targetBtn?.requestFocus()
+            vodControlBar?.post { targetBtn?.requestFocus() }
+            return true
         }
 
-        // 6. Nếu overlay đang hiện, gia hạn thời gian tự ẩn
-        if (isDown && topOverlay?.visibility == View.VISIBLE) {
+        // 6. Nếu overlay đang hiện, gia hạn thời gian tự ẩn và bảo đảm luôn có view giữ focus
+        if (isDown && (topOverlay?.visibility == View.VISIBLE || vodControlBar?.visibility == View.VISIBLE)) {
             hideOnce()
+            if (currentFocus == null) {
+                val target = if (isVodMode) (btnBarPlayPause ?: btnBarSettings)
+                             else findViewById<View>(R.id.phoneMenuBtn) ?: findViewById<View>(R.id.backBtn)
+                target?.requestFocus()
+                if (isOkKey) return true
+            }
         }
 
         // 7. Phím BACK: Luôn xử lý đóng dialog / HUD / overlay / thoát player
