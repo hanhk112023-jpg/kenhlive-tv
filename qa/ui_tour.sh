@@ -16,8 +16,16 @@ adb shell settings put system user_rotation 0
 adb shell wm size 1920x1080
 adb shell wm density 320
 adb install -r app/build/outputs/apk/debug/app-debug.apk >/dev/null 2>&1
-adb logcat -c
+# --- Launcher riêng cho test (module :testlauncher) ---
+# Google TV launcher mặc định có sẵn YouTube: app thoát ra là script bấm mù
+# mở YouTube ("not supported"). Cài launcher test, đặt làm HOME duy nhất và
+# disable YouTube để test không bao giờ lạc sang app khác.
+adb install -r testlauncher/build/outputs/apk/debug/testlauncher-debug.apk >/dev/null 2>&1
+adb shell pm disable-user com.google.android.youtube.tv >/dev/null 2>&1 || true
+adb shell pm disable-user com.google.android.youtube.tv.kids >/dev/null 2>&1 || true
+adb shell cmd package set-home-activity com.kenhlive.testlauncher/com.kenhlive.testlauncher.TestLauncherActivity >/dev/null 2>&1 || true
 adb shell am force-stop com.kenhlive.tv; sleep 1
+adb logcat -c
 
 TL=$OUT/timeline.txt; : > $TL
 T0=$(date +%s)
@@ -26,6 +34,17 @@ mark()  { echo "$(($(date +%s)-T0))s|$1|$(focus)" >> $TL; }
 key()   { adb shell input keyevent $1; }
 foc()   { local X=$(adb shell "uiautomator dump /sdcard/f.xml >/dev/null 2>&1; cat /sdcard/f.xml" 2>/dev/null | tr '>' '\n' | grep 'focused="true"' | grep -o 'bounds="[^"]*"' | head -1); echo "$(($(date +%s)-T0))s|FOCU $X" >> $TL; }
 go()    { local n="$1" c="$2" w="$3"; key "$c"; sleep "$w"; mark "$n"; }
+
+# Guard: app phải còn ở foreground trước khi bấm tiếp. Nếu đã rớt ra launcher
+# test (app thoát/crash), mở lại app thay vì bấm mù lên launcher/YouTube.
+fg_app() { adb shell dumpsys window 2>/dev/null | grep -m1 -o 'com.kenhlive.tv/[^ ]*' || echo ''; }
+ensure_app_fg() {
+  if [ -z "$(fg_app)" ]; then
+    echo "$(($(date +%s)-T0))s|FG-LOST: app khong con foreground, mo lai" >> $TL
+    adb shell am start -W -n com.kenhlive.tv/.MainActivity --ei tab 6 >/dev/null 2>&1
+    sleep 3
+  fi
+}
 
 # 1. KHỞI CHẠY QUAY VIDEO DUY NHẤT (Single-pass continuous 720p 2.5Mbps recording chuẩn CI Android TV)
 adb shell rm -f /sdcard/rec.mp4

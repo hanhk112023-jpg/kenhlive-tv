@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KenhLive Test Launcher</string>
+    <string name="open_kenhlive">Mở KenhLive TV</string>
+    <string name="hint">OK mở app · BACK ở lại màn hình này</string>
+</resources>
