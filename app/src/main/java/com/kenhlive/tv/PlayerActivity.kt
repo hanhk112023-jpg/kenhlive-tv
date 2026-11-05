@@ -2082,11 +2082,18 @@ class PlayerActivity : AppCompatActivity() {
                 handler.removeCallbacks(seekUpdateRunnable)
                 handler.post(seekUpdateRunnable)
             }
+            // TV: Tự động bắt focus ngay vào nút Cài Đặt ở đầu thanh để người dùng remote D-pad thấy ngay
+            vodControlBar?.post {
+                val cur = currentFocus
+                if (cur == null || (cur !== btnBarSettings && cur !== btnBarPlayPause && cur !== btnBarSeekBack && cur !== btnBarSeekFwd && cur !== btnBarPrevEp && cur !== btnBarNextEp && cur !== btnBarEpisodes && cur !== seekVod)) {
+                    btnBarSettings?.requestFocus()
+                }
+            }
         }
         hideOnce()
     }
 
-    private fun hideOnce(delayMs: Long = if (DeviceMode.isTv) 8000L else 4000L) {
+    private fun hideOnce(delayMs: Long = if (DeviceMode.isTv) 45000L else 4000L) {
         handler.removeCallbacks(hideOverlay)
         handler.postDelayed(hideOverlay, delayMs)
     }

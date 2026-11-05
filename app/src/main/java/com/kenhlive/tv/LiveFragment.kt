@@ -257,13 +257,13 @@ class LiveFragment : Fragment() {
                 )
                 if (gvMatches.isNotEmpty()) {
                     val gvHasLive = gvMatches.any { MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }
-                    val gvTitle = if (gvHasLive) "🔵 Giờ Vàng TV · Trực Tiếp & Lịch Đấu" else "🔵 Giờ Vàng TV · Lịch Thi Đấu"
+                    val gvTitle = if (gvHasLive) "Giờ Vàng TV · Trực Tiếp & Lịch Đấu" else "Giờ Vàng TV · Lịch Thi Đấu"
                     items.add(SportAdapter.RailItem(gvMatches, emptyList(), title = gvTitle))
                 }
 
                 // 3. Dòng 5: LỊCH THI ĐẤU & SẮP LÊN SÓNG HÔM NAY (Phân biệt rõ ràng với trận đang live)
                 if (allUpcomingMatches.isNotEmpty() || upFiltered.isNotEmpty()) {
-                    items.add(SportAdapter.RailItem(allUpcomingMatches, upFiltered, title = "⏳ Lịch Thi Đấu & Sắp Lên Sóng Hôm Nay"))
+                    items.add(SportAdapter.RailItem(allUpcomingMatches, upFiltered, title = "Lịch Thi Đấu & Sắp Lên Sóng Hôm Nay"))
                 }
 
                 // 4. Dòng 3: NGOẠI HẠNG ANH & CÚP CHÂU ÂU (Tuyển tập các giải đấu đỉnh cao)
@@ -272,7 +272,7 @@ class LiveFragment : Fragment() {
                     euroKeywords.any { g.league.contains(it, ignoreCase = true) || g.matchTitle.contains(it, ignoreCase = true) }
                 }
                 if (euroMatches.isNotEmpty()) {
-                    items.add(SportAdapter.RailItem(euroMatches, emptyList(), title = "⚽ Ngoại Hạng Anh & Cúp Châu Âu"))
+                    items.add(SportAdapter.RailItem(euroMatches, emptyList(), title = "Ngoại Hạng Anh & Cúp Châu Âu"))
                 }
 
                 // 5. Dòng 4: BÌNH LUẬN VIÊN SÔI ĐỘNG
@@ -288,7 +288,7 @@ class LiveFragment : Fragment() {
                     it.category == "Bóng chuyền"
                 }
                 if (otherSports.isNotEmpty()) {
-                    items.add(SportAdapter.RailItem(otherSports, emptyList(), title = "🏀 Bóng Rổ NBA & Môn Thể Thao Khác"))
+                    items.add(SportAdapter.RailItem(otherSports, emptyList(), title = "Bóng Rổ NBA & Môn Thể Thao Khác"))
                 }
             }
             leagueLabels[selLeague] == "Socolive" -> {
@@ -296,32 +296,32 @@ class LiveFragment : Fragment() {
                 val sUp = socoGroups.filter { !MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }
                 items.add(SportAdapter.HeroItem(socoGroups))
                 if (!DeviceMode.isTv) items.add(0, SportAdapter.ChipsItem(leagueLabels, selLeague))
-                if (sLive.isNotEmpty()) items.add(SportAdapter.RailItem(sLive, emptyList(), title = "🔥 Đang Trực Tiếp · Socolive"))
-                if (sUp.isNotEmpty() || upFiltered.isNotEmpty()) items.add(SportAdapter.RailItem(sUp, upFiltered, title = "⏳ Sắp Lên Sóng · Socolive"))
+                if (sLive.isNotEmpty()) items.add(SportAdapter.RailItem(sLive, emptyList(), title = "Đang Trực Tiếp · Socolive"))
+                if (sUp.isNotEmpty() || upFiltered.isNotEmpty()) items.add(SportAdapter.RailItem(sUp, upFiltered, title = "Sắp Lên Sóng · Socolive"))
             }
             leagueLabels[selLeague] == "ColaTV" -> {
                 val cLive = colaGroups.filter { MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }.sortedByDescending { it.totalViewers }
                 val cUp = colaGroups.filter { !MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }
                 items.add(SportAdapter.HeroItem(colaGroups))
                 if (!DeviceMode.isTv) items.add(0, SportAdapter.ChipsItem(leagueLabels, selLeague))
-                if (cLive.isNotEmpty()) items.add(SportAdapter.RailItem(cLive, emptyList(), title = "🔥 Đang Trực Tiếp · ColaTV"))
-                if (cUp.isNotEmpty() || upFiltered.isNotEmpty()) items.add(SportAdapter.RailItem(cUp, upFiltered, title = "⏳ Sắp Lên Sóng · ColaTV"))
+                if (cLive.isNotEmpty()) items.add(SportAdapter.RailItem(cLive, emptyList(), title = "Đang Trực Tiếp · ColaTV"))
+                if (cUp.isNotEmpty() || upFiltered.isNotEmpty()) items.add(SportAdapter.RailItem(cUp, upFiltered, title = "Sắp Lên Sóng · ColaTV"))
             }
             leagueLabels[selLeague] == "Gà Vàng 33" -> {
                 val gLive = gavang33Groups.filter { MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }.sortedByDescending { it.totalViewers }
                 val gUp = gavang33Groups.filter { !MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }
                 items.add(SportAdapter.HeroItem(gavang33Groups))
                 if (!DeviceMode.isTv) items.add(0, SportAdapter.ChipsItem(leagueLabels, selLeague))
-                if (gLive.isNotEmpty()) items.add(SportAdapter.RailItem(gLive, emptyList(), title = "🔥 Đang Trực Tiếp · Gà Vàng 33"))
-                if (gUp.isNotEmpty() || upFiltered.isNotEmpty()) items.add(SportAdapter.RailItem(gUp, upFiltered, title = "⏳ Sắp Lên Sóng · Gà Vàng 33"))
+                if (gLive.isNotEmpty()) items.add(SportAdapter.RailItem(gLive, emptyList(), title = "Đang Trực Tiếp · Gà Vàng 33"))
+                if (gUp.isNotEmpty() || upFiltered.isNotEmpty()) items.add(SportAdapter.RailItem(gUp, upFiltered, title = "Sắp Lên Sóng · Gà Vàng 33"))
             }
             leagueLabels[selLeague] == "Giờ Vàng" -> {
                 val gvLive = giovangGroups.filter { MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }.sortedByDescending { it.totalViewers }
                 val gvUp = giovangGroups.filter { !MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }
                 items.add(SportAdapter.HeroItem(giovangGroups))
                 if (!DeviceMode.isTv) items.add(0, SportAdapter.ChipsItem(leagueLabels, selLeague))
-                if (gvLive.isNotEmpty()) items.add(SportAdapter.RailItem(gvLive, emptyList(), title = "🔥 Đang Trực Tiếp · Giờ Vàng TV"))
-                if (gvUp.isNotEmpty() || upFiltered.isNotEmpty()) items.add(SportAdapter.RailItem(gvUp, upFiltered, title = "⏳ Sắp Lên Sóng · Giờ Vàng TV"))
+                if (gvLive.isNotEmpty()) items.add(SportAdapter.RailItem(gvLive, emptyList(), title = "Đang Trực Tiếp · Giờ Vàng TV"))
+                if (gvUp.isNotEmpty() || upFiltered.isNotEmpty()) items.add(SportAdapter.RailItem(gvUp, upFiltered, title = "Sắp Lên Sóng · Giờ Vàng TV"))
             }
             else -> {
                 val target = leagueLabels[selLeague]
@@ -335,10 +335,10 @@ class LiveFragment : Fragment() {
                 if (!DeviceMode.isTv) items.add(0, SportAdapter.ChipsItem(leagueLabels, selLeague))
 
                 if (fLive.isNotEmpty()) {
-                    items.add(SportAdapter.RailItem(fLive, emptyList(), title = "🔥 Trực Tiếp · $target"))
+                    items.add(SportAdapter.RailItem(fLive, emptyList(), title = "Trực Tiếp · $target"))
                 }
                 if (fUp.isNotEmpty() || upFiltered.isNotEmpty()) {
-                    items.add(SportAdapter.RailItem(fUp, upFiltered, title = "⏳ Sắp Diễn Ra · $target"))
+                    items.add(SportAdapter.RailItem(fUp, upFiltered, title = "Sắp Diễn Ra · $target"))
                 }
             }
         }

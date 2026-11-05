@@ -1139,16 +1139,32 @@ class AndroidTVDevice:
                     "WebPlayerActivity" not in current_activity and
                     not ui_state.get("has_dialog", False) and
                     ui_state.get("focusable_count", 0) > 3):
-                trap_key = f"TRAP:{current_activity}:{focused_sig}:{s3[2]}"
-                if trap_key not in self._reported_anomaly_keys:
-                    self._reported_anomaly_keys.add(trap_key)
-                    anomalies.append({
-                        "area": "Điều hướng Focus TV (Deep Probe)",
-                        "severity": "MEDIUM",
-                        "issue": f"Nghi vấn kẹt Focus (Focus Trap) tại '{focused_sig}' khi bấm {s3[2]}",
-                        "detail": f"Gửi phím {s3[2]} liên tiếp nhưng tiêu điểm và nội dung màn hình giữ nguyên tại {focused_sig} trên {current_activity}",
-                        "suggestion": "Kiểm tra cấu hình nextFocus hoặc ranh giới cuộn của RecyclerView"
-                    })
+                # Không tính là trap nếu đang ở mép màn hình và bấm phím hướng ra mép (ví dụ nút ở biên trái bấm DPAD_LEFT)
+                is_edge_bump = False
+                if focused_bounds:
+                    m_b = re.findall(r"-?\d+", focused_bounds)
+                    if len(m_b) >= 4:
+                        x1, y1, x2, y2 = map(int, m_b[:4])
+                        if s3[2] in ("DPAD_LEFT", "LEFT") and x1 < 350:
+                            is_edge_bump = True
+                        elif s3[2] in ("DPAD_RIGHT", "RIGHT") and x2 > 1570:
+                            is_edge_bump = True
+                        elif s3[2] in ("DPAD_UP", "UP") and y1 < 200:
+                            is_edge_bump = True
+                        elif s3[2] in ("DPAD_DOWN", "DOWN") and y2 > 880:
+                            is_edge_bump = True
+
+                if not is_edge_bump:
+                    trap_key = f"TRAP:{current_activity}:{focused_sig}:{s3[2]}"
+                    if trap_key not in self._reported_anomaly_keys:
+                        self._reported_anomaly_keys.add(trap_key)
+                        anomalies.append({
+                            "area": "Điều hướng Focus TV (Deep Probe)",
+                            "severity": "MEDIUM",
+                            "issue": f"Nghi vấn kẹt Focus (Focus Trap) tại '{focused_sig}' khi bấm {s3[2]}",
+                            "detail": f"Gửi phím {s3[2]} liên tiếp nhưng tiêu điểm và nội dung màn hình giữ nguyên tại {focused_sig} trên {current_activity}",
+                            "suggestion": "Kiểm tra cấu hình nextFocus hoặc ranh giới cuộn của RecyclerView"
+                        })
 
         # 2. Kiểm tra Off-screen Focus Leak & Zero-size View Focus
         if focused_bounds:
