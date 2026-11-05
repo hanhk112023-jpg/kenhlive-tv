@@ -504,8 +504,8 @@ class PlayerActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btnPlayerReport)?.setOnClickListener {
             com.kenhlive.tv.ui.FeedbackDialog.show(this@PlayerActivity)
         }
-        qualityBtn.setOnClickListener { showSettingsDialog(video = true) }
-        audioBtn.setOnClickListener { showSettingsDialog(video = false) }
+        qualityBtn.setOnClickListener { showSettingsDialog() }
+        audioBtn.setOnClickListener { showSettingsDialog() }
         aspectBtn?.setOnClickListener { cycleAspectRatio() }
         sleepBtn?.setOnClickListener { showSleepTimerDialog() }
         audioTrackBtn?.setOnClickListener { showAudioTrackDialog() }
@@ -721,7 +721,7 @@ class PlayerActivity : AppCompatActivity() {
         )
         val curAq = EnhanceSettings.audioMode(this).coerceIn(0, aqNames.size - 1)
         options.add("Âm thanh: ${aqNames[curAq]}")
-        actions.add { showSettingsDialog(video = false) }
+        actions.add { showSettingsDialog() }
 
         // Đổi server cho chế độ thể thao
         if (!isIptvMode) {
@@ -782,7 +782,7 @@ class PlayerActivity : AppCompatActivity() {
         val actions = mutableListOf<() -> Unit>()
 
         options.add("Chất lượng")
-        actions.add { showSettingsDialog(video = true) }
+        actions.add { showSettingsDialog() }
 
         options.add("Tỉ lệ: ${aspectNames[currentAspectIdx]}")
         actions.add { cycleAspectRatio() }
@@ -793,7 +793,7 @@ class PlayerActivity : AppCompatActivity() {
         )
         val curAq = EnhanceSettings.audioMode(this).coerceIn(0, aqNames.size - 1)
         options.add("Âm thanh: ${aqNames[curAq]}")
-        actions.add { showSettingsDialog(video = false) }
+        actions.add { showSettingsDialog() }
 
         val boostLabels = arrayOf("Tắt", "+3dB", "+6dB", "+9dB")
         options.add("Khuếch đại âm lượng: ${boostLabels[audioBoostLevel]}")
@@ -1499,18 +1499,21 @@ class PlayerActivity : AppCompatActivity() {
         if (player == null && url.isNotBlank()) initPlayer()
     }
 
-    // ===== dialog hình & âm: chip chọn trực tiếp, focus được cho remote =====
-    private fun showSettingsDialog(video: Boolean) {
+    // ===== Dialog cài đặt thống nhất: Hình ảnh + Âm thanh + Tỉ lệ + Bước tua =====
+    // Trước đây: nút Hình ảnh / Âm thanh mở 2 dialog giống hệt nhau chỉ hiện 1 phần,
+    // menu Cài đặt của thanh VOD lại là list chữ rời rạc (đổi chất lượng phải nhảy 2 dialog).
+    // Nay: 1 dialog duy nhất, 4 nhóm luôn hiện, chọn là áp dụng ngay + cập nhật nhãn trạng thái.
+    private fun showSettingsDialog() {
         dialog?.dismiss()
         val v = LayoutInflater.from(this).inflate(R.layout.dialog_player_settings, null)
         val videoBox = v.findViewById<LinearLayout>(R.id.videoOptions)
         val audioBox = v.findViewById<LinearLayout>(R.id.audioOptions)
-        // Mỗi nút trên thanh công cụ mở đúng phần của nó. Trước đây nút Hình ảnh và nút Âm thanh
-        // đều mở nguyên dialog 2 phần giống hệt nhau -> người dùng tưởng 2 nút trùng chức năng.
-        v.findViewById<View>(R.id.videoHeader).visibility = if (video) View.VISIBLE else View.GONE
-        videoBox.visibility = if (video) View.VISIBLE else View.GONE
-        v.findViewById<View>(R.id.audioHeader).visibility = if (video) View.GONE else View.VISIBLE
-        v.findViewById<View>(R.id.audioScroll).visibility = if (video) View.GONE else View.VISIBLE
+        val aspectBox = v.findViewById<LinearLayout>(R.id.aspectOptions)
+        val seekBox = v.findViewById<LinearLayout>(R.id.seekOptions)
+        val videoStatus = v.findViewById<TextView>(R.id.videoStatus)
+        val audioStatus = v.findViewById<TextView>(R.id.audioStatus)
+        val aspectStatus = v.findViewById<TextView>(R.id.aspectStatus)
+        val seekStatus = v.findViewById<TextView>(R.id.seekStatus)
 
         val vqNames = arrayOf(
             getString(R.string.vq_auto), getString(R.string.vq_high), getString(R.string.vq_stable)
@@ -1519,6 +1522,14 @@ class PlayerActivity : AppCompatActivity() {
             getString(R.string.aq_standard), getString(R.string.aq_bass), getString(R.string.aq_dialog),
             getString(R.string.aq_night), getString(R.string.aq_auto)
         )
+        val seekOptions = PlayerPrefs.SEEK_STEP_OPTIONS_SEC
+        val seekNames = seekOptions.map { "${it}s" }.toTypedArray()
+
+        videoStatus.text = "Đang chọn: ${vqNames[EnhanceSettings.videoQuality(this)]}"
+        audioStatus.text = "Đang chọn: ${aqNames[EnhanceSettings.audioMode(this)]}"
+        aspectStatus.text = "Đang chọn: ${aspectNames[currentAspectIdx]}"
+        seekStatus.text = "Đang chọn: ${PlayerPrefs.seekStepSec(this)}s"
+
         val d = AlertDialog.Builder(this, R.style.Theme_KenhLive_Dialog)
             .setView(v)
             .setNegativeButton(R.string.dialog_close, null)
@@ -1526,16 +1537,17 @@ class PlayerActivity : AppCompatActivity() {
             .create()
         dialog = d
 
-        buildChips(videoBox, vqNames, EnhanceSettings.videoQuality(this), audioBox, isUpRow = true, dialog = d) { i ->
+        buildChips(videoBox, vqNames, EnhanceSettings.videoQuality(this), isLastRow = false, dialog = d) { i ->
             if (i != EnhanceSettings.videoQuality(this)) {
                 EnhanceSettings.setVideoQuality(this, i)
                 (player?.trackSelector as? androidx.media3.exoplayer.trackselection.DefaultTrackSelector)
                     ?.let { Enhancer.applyVideo(it, i) }
                 Toast.makeText(this, getString(R.string.player_video_changed, vqNames[i]), Toast.LENGTH_SHORT).show()
                 markSelection(videoBox, i)
+                videoStatus.text = "Đang chọn: ${vqNames[i]}"
             }
         }
-        buildChips(audioBox, aqNames, EnhanceSettings.audioMode(this), videoBox, isUpRow = false, dialog = d) { i ->
+        buildChips(audioBox, aqNames, EnhanceSettings.audioMode(this), isLastRow = false, dialog = d) { i ->
             if (i != EnhanceSettings.audioMode(this)) {
                 EnhanceSettings.setAudioMode(this, i)
                 val sid = player?.audioSessionId ?: 0
@@ -1543,6 +1555,28 @@ class PlayerActivity : AppCompatActivity() {
                 val suffix = if (sid == 0) getString(R.string.player_audio_pending) else ""
                 Toast.makeText(this, getString(R.string.player_audio_changed, aqNames[i]) + suffix, Toast.LENGTH_SHORT).show()
                 markSelection(audioBox, i)
+                audioStatus.text = "Đang chọn: ${aqNames[i]}"
+            }
+        }
+        buildChips(aspectBox, aspectNames, currentAspectIdx, isLastRow = false, dialog = d) { i ->
+            if (i != currentAspectIdx) {
+                currentAspectIdx = i
+                findViewById<PlayerView>(R.id.playerView)?.resizeMode = aspectModes[i]
+                getSharedPreferences(PREFS_PLAYER, MODE_PRIVATE).edit().putInt(KEY_ASPECT_IDX, i).apply()
+                Toast.makeText(this, "Tỉ lệ màn hình: ${aspectNames[i]}", Toast.LENGTH_SHORT).show()
+                markSelection(aspectBox, i)
+                aspectStatus.text = "Đang chọn: ${aspectNames[i]}"
+            }
+        }
+        buildChips(seekBox, seekNames, seekOptions.indexOf(PlayerPrefs.seekStepSec(this)).coerceAtLeast(0), isLastRow = true, dialog = d) { i ->
+            val sec = seekOptions[i]
+            if (sec != PlayerPrefs.seekStepSec(this)) {
+                PlayerPrefs.setSeekStepSec(this, sec)
+                seekVod?.keyProgressIncrement = sec
+                syncVodControlBar()
+                Toast.makeText(this, "Bước tua: ${sec}s", Toast.LENGTH_SHORT).show()
+                markSelection(seekBox, i)
+                seekStatus.text = "Đang chọn: ${sec}s"
             }
         }
 
@@ -1551,16 +1585,14 @@ class PlayerActivity : AppCompatActivity() {
             closeBtn?.isFocusable = true
             closeBtn?.setOnKeyListener { _, keyCode, event ->
                 if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_UP) {
-                    val box = if (video) videoBox else audioBox
-                    val sel = if (video) EnhanceSettings.videoQuality(this@PlayerActivity) else EnhanceSettings.audioMode(this@PlayerActivity)
-                    box.getChildAt(sel.coerceAtMost(box.childCount - 1))?.requestFocus()
+                    val idx = seekOptions.indexOf(PlayerPrefs.seekStepSec(this@PlayerActivity)).coerceAtLeast(0)
+                    seekBox.getChildAt(idx.coerceAtMost(seekBox.childCount - 1))?.requestFocus()
                     return@setOnKeyListener true
                 }
                 false
             }
-            val targetBox = if (video) videoBox else audioBox
-            val idx = if (video) EnhanceSettings.videoQuality(this) else EnhanceSettings.audioMode(this)
-            targetBox.getChildAt(idx)?.requestFocus()
+            val idx = EnhanceSettings.videoQuality(this)
+            videoBox.getChildAt(idx.coerceAtMost(videoBox.childCount - 1))?.requestFocus()
         }
         d.show()
         d.window?.setLayout(
@@ -1571,7 +1603,7 @@ class PlayerActivity : AppCompatActivity() {
 
     private fun buildChips(
         box: LinearLayout, names: Array<String>, selected: Int,
-        otherBox: LinearLayout, isUpRow: Boolean, dialog: AlertDialog? = null, onPick: (Int) -> Unit
+        isLastRow: Boolean, dialog: AlertDialog? = null, onPick: (Int) -> Unit
     ) {
         box.removeAllViews()
         val inf = LayoutInflater.from(this)
@@ -1582,27 +1614,11 @@ class PlayerActivity : AppCompatActivity() {
             chip.isSelected = isSel
             chip.setOnClickListener { onPick(i) }
             chip.setOnKeyListener { _, keyCode, event ->
-                if (event.action == KeyEvent.ACTION_DOWN) {
-                    if (otherBox.visibility != View.VISIBLE &&
-                        (keyCode == KeyEvent.KEYCODE_DPAD_DOWN || keyCode == KeyEvent.KEYCODE_DPAD_UP)) {
-                        // Dialog chỉ còn 1 hàng chip: DOWN -> nút Đóng, UP -> giữ nguyên vị trí
-                        if (keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-                            dialog?.getButton(AlertDialog.BUTTON_NEGATIVE)?.requestFocus()
-                        }
-                        return@setOnKeyListener true
-                    }
-                    if (isUpRow && keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-                        val targetIdx = i.coerceAtMost(otherBox.childCount - 1)
-                        otherBox.getChildAt(targetIdx)?.requestFocus()
-                        return@setOnKeyListener true
-                    } else if (!isUpRow && keyCode == KeyEvent.KEYCODE_DPAD_UP) {
-                        val targetIdx = i.coerceAtMost(otherBox.childCount - 1)
-                        otherBox.getChildAt(targetIdx)?.requestFocus()
-                        return@setOnKeyListener true
-                    } else if (!isUpRow && keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
-                        dialog?.getButton(AlertDialog.BUTTON_NEGATIVE)?.requestFocus()
-                        return@setOnKeyListener true
-                    }
+                // Hàng cuối: DOWN -> nút Đóng. Các hàng khác để focus search mặc định
+                // của Android tự di chuyển dọc (hàng trên <-> hàng dưới).
+                if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_DOWN && isLastRow) {
+                    dialog?.getButton(AlertDialog.BUTTON_NEGATIVE)?.requestFocus()
+                    return@setOnKeyListener true
                 }
                 false
             }
@@ -1788,15 +1804,13 @@ class PlayerActivity : AppCompatActivity() {
      * Chất lượng = qualityBtn, Âm thanh = audioBtn, Tỷ lệ khung hình = aspectBtn.
      */
     private fun showVodSettingsDialog() {
-        val step = PlayerPrefs.seekStepSec(this)
         val boostLabels = arrayOf("Tắt", "+3dB", "+6dB", "+9dB")
         val timerLabel = if (sleepMinutesLeft > 0) "Còn $sleepMinutesLeft phút" else "Chưa đặt"
+        // Hình ảnh / Âm thanh / Tỉ lệ / Bước tua đã gộp vào dialog cài đặt thống nhất
+        // (showSettingsDialog) — không lặp lại ở đây để tránh 2 nơi chỉnh cùng 1 thông số.
         val items = arrayOf(
-            "Chất lượng",
-            "Âm thanh",
+            "Hình ảnh, âm thanh & hiển thị",
             "Kênh âm thanh",
-            "Tỷ lệ khung hình",
-            "Bước tua: ${step}s",
             "Hẹn giờ tắt ($timerLabel)",
             "Khuếch đại âm lượng: ${boostLabels[audioBoostLevel]}",
             "Thông số kỹ thuật (Stats)"
@@ -1805,34 +1819,12 @@ class PlayerActivity : AppCompatActivity() {
             .setTitle("Cài Đặt")
             .setItems(items) { _, which ->
                 when (which) {
-                    0 -> showSettingsDialog(video = true)
-                    1 -> showSettingsDialog(video = false)
-                    2 -> showAudioTrackDialog()
-                    3 -> cycleAspectRatio()
-                    4 -> showSeekStepDialog()
-                    5 -> showSleepTimerDialog()
-                    6 -> cycleAudioBoost()
-                    7 -> toggleStatsHud()
+                    0 -> showSettingsDialog()
+                    1 -> showAudioTrackDialog()
+                    2 -> showSleepTimerDialog()
+                    3 -> cycleAudioBoost()
+                    4 -> toggleStatsHud()
                 }
-            }
-            .setNegativeButton(R.string.dialog_close, null)
-            .show()
-        hideOnce()
-    }
-
-    /** Chọn bước tua 10/20/30s — ghi qua PlayerPrefs như màn Cài đặt của app. */
-    private fun showSeekStepDialog() {
-        val options = PlayerPrefs.SEEK_STEP_OPTIONS_SEC
-        val labels = options.map { "${it}s" }.toTypedArray()
-        val checked = options.indexOf(PlayerPrefs.seekStepSec(this)).coerceAtLeast(0)
-        AlertDialog.Builder(this, R.style.Theme_KenhLive_Dialog)
-            .setTitle("Bước tua")
-            .setSingleChoiceItems(labels, checked) { d, which ->
-                PlayerPrefs.setSeekStepSec(this, options[which])
-                // Áp dụng ngay: bước phím trên seekbar + nhãn 2 nút Tua trên thanh.
-                seekVod?.keyProgressIncrement = options[which]
-                syncVodControlBar()
-                d.dismiss()
             }
             .setNegativeButton(R.string.dialog_close, null)
             .show()

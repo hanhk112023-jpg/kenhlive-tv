@@ -52,8 +52,12 @@
     <string name="player_net_error">Mạng lỗi — thoát ra vào lại sau</string>
     <string name="player_stream_error">Stream lỗi: %1$s</string>
     <string name="player_quality_title">Chất lượng hình &amp; âm</string>
+    <string name="player_settings_title">Cài đặt trình phát</string>
+    <string name="player_settings_subtitle">Chọn để áp dụng ngay</string>
     <string name="player_video_label">Hình ảnh</string>
     <string name="player_audio_label">Âm thanh</string>
+    <string name="player_display_label">Tỉ lệ khung hình</string>
+    <string name="player_seek_label">Bước tua</string>
     <string name="player_video_changed">Hình: %1$s</string>
     <string name="player_audio_changed">Âm: %1$s</string>
     <string name="player_audio_pending"> — áp dụng khi có âm thanh</string>

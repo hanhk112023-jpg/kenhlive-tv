@@ -22,8 +22,8 @@ object EnhanceSettings {
     const val AQ_AUTO = 4
 
     private fun sp(ctx: Context) = ctx.getSharedPreferences(PREF, Context.MODE_PRIVATE)
-    fun videoQuality(ctx: Context) = sp(ctx).getInt("vq", VQ_AUTO)
-    fun audioMode(ctx: Context) = sp(ctx).getInt("aq", AQ_AUTO)
+    fun videoQuality(ctx: Context) = sp(ctx).getInt("vq", VQ_AUTO).coerceIn(VQ_AUTO, VQ_STABLE)
+    fun audioMode(ctx: Context) = sp(ctx).getInt("aq", AQ_AUTO).coerceIn(AQ_STANDARD, AQ_AUTO)
     fun setVideoQuality(ctx: Context, v: Int) = sp(ctx).edit().putInt("vq", v).apply()
     fun setAudioMode(ctx: Context, v: Int) = sp(ctx).edit().putInt("aq", v).apply()
 }
