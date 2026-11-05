@@ -165,8 +165,9 @@ object DataNormalizer {
             val s1 = m.groupValues[1].toIntOrNull()
             val s2 = m.groupValues[2].toIntOrNull()
             if (s1 != null && s2 != null) {
-                // Loại trừ nếu trùng khớp định dạng giờ thi đấu (ví dụ: 17:00, 19:30, 20:45)
-                val isClockTime = fullMatch.contains(":") && s1 in 0..23 && s2 in 0..59 && m.groupValues[2].length == 2 && (s1 >= 10 || s2 > 10)
+                // Loại trừ nếu trùng khớp định dạng giờ thi đấu (ví dụ: 17:00, 19:30, 20:45, 23:30) hoặc số bàn thắng phi thực tế (> 15)
+                val isClockTime = (fullMatch.contains(":") || fullMatch.contains("-")) &&
+                    ((s1 in 0..23 && s2 in 0..59 && m.groupValues[2].length == 2 && (s1 >= 10 || s2 >= 15)) || s1 > 15 || s2 > 15)
                 if (!isClockTime) {
                     hostScore = s1
                     guestScore = s2

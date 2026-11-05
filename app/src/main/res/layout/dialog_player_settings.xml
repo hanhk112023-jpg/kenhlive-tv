@@ -1,220 +1,227 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:background="@drawable/kl2_dialog_bg"
-    android:paddingLeft="24dp"
-    android:paddingRight="24dp"
-    android:paddingTop="22dp"
-    android:paddingBottom="20dp">
+    android:fillViewport="true"
+    android:scrollbars="none"
+    android:background="@drawable/kl2_dialog_bg">
 
-    <!-- Tiêu đề Dialog -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:orientation="vertical"
+        android:paddingLeft="24dp"
+        android:paddingRight="24dp"
+        android:paddingTop="18dp"
+        android:paddingBottom="16dp">
+
+        <!-- Tiêu đề Dialog -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <View
+                android:layout_width="4dp"
+                android:layout_height="20dp"
+                android:background="@drawable/kl2_section_bar"
+                android:layout_marginRight="10dp" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    style="@style/KL.Text.Section"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="#FFFFFF"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:text="@string/player_settings_title" />
+
+                <TextView
+                    style="@style/KL.Text.Meta"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="#94A3B8"
+                    android:textSize="12sp"
+                    android:text="@string/player_settings_subtitle" />
+            </LinearLayout>
+        </LinearLayout>
 
         <View
-            android:layout_width="4dp"
-            android:layout_height="20dp"
-            android:background="@drawable/kl2_section_bar"
-            android:layout_marginRight="10dp" />
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="8dp"
+            android:background="#1A1F29" />
 
-        <LinearLayout
-            android:layout_width="0dp"
+        <!-- Nhóm: Chất lượng hình ảnh -->
+        <TextView
+            android:id="@+id/videoHeader"
+            style="@style/KL.Text.Meta"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
+            android:textColor="@color/kl_brand"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.08"
+            android:text="@string/player_video_label" />
 
-            <TextView
-                style="@style/KL.Text.Section"
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/videoOptions"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#FFFFFF"
-                android:textSize="17sp"
-                android:textStyle="bold"
-                android:text="@string/player_settings_title" />
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
 
-            <TextView
-                style="@style/KL.Text.Meta"
+        <TextView
+            android:id="@+id/videoStatus"
+            style="@style/KL.Text.Meta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="#64748B"
+            android:textSize="11sp"
+            android:text="" />
+
+        <!-- Nhóm: Chế độ âm thanh -->
+        <TextView
+            android:id="@+id/audioHeader"
+            style="@style/KL.Text.Meta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:textColor="@color/kl_brand"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.08"
+            android:text="@string/player_audio_label" />
+
+        <HorizontalScrollView
+            android:id="@+id/audioScroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/audioOptions"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:textColor="#94A3B8"
-                android:textSize="12sp"
-                android:text="@string/player_settings_subtitle" />
-        </LinearLayout>
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <TextView
+            android:id="@+id/audioStatus"
+            style="@style/KL.Text.Meta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="#64748B"
+            android:textSize="11sp"
+            android:text="" />
+
+        <!-- Nhóm: Tỉ lệ khung hình -->
+        <TextView
+            android:id="@+id/aspectHeader"
+            style="@style/KL.Text.Meta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:textColor="@color/kl_brand"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.08"
+            android:text="@string/player_display_label" />
+
+        <HorizontalScrollView
+            android:id="@+id/aspectScroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/aspectOptions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <TextView
+            android:id="@+id/aspectStatus"
+            style="@style/KL.Text.Meta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="#64748B"
+            android:textSize="11sp"
+            android:text="" />
+
+        <!-- Nhóm: Bước tua -->
+        <TextView
+            android:id="@+id/seekHeader"
+            style="@style/KL.Text.Meta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:textColor="@color/kl_brand"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:letterSpacing="0.08"
+            android:text="@string/player_seek_label" />
+
+        <HorizontalScrollView
+            android:id="@+id/seekScroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:id="@+id/seekOptions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <TextView
+            android:id="@+id/seekStatus"
+            style="@style/KL.Text.Meta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="4dp"
+            android:textColor="#64748B"
+            android:textSize="11sp"
+            android:text="" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="10dp"
+            android:layout_marginBottom="8dp"
+            android:background="#1A1F29" />
+
+        <TextView
+            style="@style/KL.Text.Meta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="#64748B"
+            android:textSize="11.5sp"
+            android:text="@string/player_hint_tv" />
+
     </LinearLayout>
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginTop="14dp"
-        android:layout_marginBottom="12dp"
-        android:background="#1A1F29" />
-
-    <!-- Nhóm: Chất lượng hình ảnh -->
-    <TextView
-        android:id="@+id/videoHeader"
-        style="@style/KL.Text.Meta"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textColor="@color/kl_brand"
-        android:textSize="12sp"
-        android:textStyle="bold"
-        android:letterSpacing="0.08"
-        android:text="@string/player_video_label" />
-
-    <HorizontalScrollView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:scrollbars="none">
-
-        <LinearLayout
-            android:id="@+id/videoOptions"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal" />
-    </HorizontalScrollView>
-
-    <TextView
-        android:id="@+id/videoStatus"
-        style="@style/KL.Text.Meta"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:textColor="#64748B"
-        android:textSize="11sp"
-        android:text="" />
-
-    <!-- Nhóm: Chế độ âm thanh -->
-    <TextView
-        android:id="@+id/audioHeader"
-        style="@style/KL.Text.Meta"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:textColor="@color/kl_brand"
-        android:textSize="12sp"
-        android:textStyle="bold"
-        android:letterSpacing="0.08"
-        android:text="@string/player_audio_label" />
-
-    <HorizontalScrollView
-        android:id="@+id/audioScroll"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:scrollbars="none">
-
-        <LinearLayout
-            android:id="@+id/audioOptions"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal" />
-    </HorizontalScrollView>
-
-    <TextView
-        android:id="@+id/audioStatus"
-        style="@style/KL.Text.Meta"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:textColor="#64748B"
-        android:textSize="11sp"
-        android:text="" />
-
-    <!-- Nhóm: Tỉ lệ khung hình -->
-    <TextView
-        android:id="@+id/aspectHeader"
-        style="@style/KL.Text.Meta"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:textColor="@color/kl_brand"
-        android:textSize="12sp"
-        android:textStyle="bold"
-        android:letterSpacing="0.08"
-        android:text="@string/player_display_label" />
-
-    <HorizontalScrollView
-        android:id="@+id/aspectScroll"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:scrollbars="none">
-
-        <LinearLayout
-            android:id="@+id/aspectOptions"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal" />
-    </HorizontalScrollView>
-
-    <TextView
-        android:id="@+id/aspectStatus"
-        style="@style/KL.Text.Meta"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:textColor="#64748B"
-        android:textSize="11sp"
-        android:text="" />
-
-    <!-- Nhóm: Bước tua -->
-    <TextView
-        android:id="@+id/seekHeader"
-        style="@style/KL.Text.Meta"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:textColor="@color/kl_brand"
-        android:textSize="12sp"
-        android:textStyle="bold"
-        android:letterSpacing="0.08"
-        android:text="@string/player_seek_label" />
-
-    <HorizontalScrollView
-        android:id="@+id/seekScroll"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:scrollbars="none">
-
-        <LinearLayout
-            android:id="@+id/seekOptions"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal" />
-    </HorizontalScrollView>
-
-    <TextView
-        android:id="@+id/seekStatus"
-        style="@style/KL.Text.Meta"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:textColor="#64748B"
-        android:textSize="11sp"
-        android:text="" />
-
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="10dp"
-        android:background="#1A1F29" />
-
-    <TextView
-        style="@style/KL.Text.Meta"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:textColor="#64748B"
-        android:textSize="11.5sp"
-        android:text="@string/player_hint_tv" />
-
-</LinearLayout>
+</ScrollView>

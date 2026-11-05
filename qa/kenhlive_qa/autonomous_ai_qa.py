@@ -1246,12 +1246,14 @@ class AndroidTVDevice:
                             "detail": f"View {r_id} hiển thị '{clean_txt}' thay vì tên giải đấu hợp lệ",
                             "suggestion": "Lọc sạch bracket thời gian trong DataNormalizer.parseMatch"
                         })
-            # 5b. Bị gán nhầm giờ thi đấu thành tỷ số ảo (ví dụ 17:00 thành tỷ số 17 - 0 hoặc 17:00)
+            # 5b. Bị gán nhầm giờ thi đấu thành tỷ số ảo khi hiển thị định dạng tỷ số (ví dụ '17 : 0' hoặc '23 : 30')
+            # Lưu ý: Thẻ trận SẮP ĐÁ hiển thị giờ thi đấu chuẩn HH:mm (ví dụ '23:30', '19:45' không có khoảng trắng)
+            # ở center pill là tính năng chuẩn, chỉ coi là lỗi khi có định dạng tỷ số có khoảng trắng 'X : Y' hoặc số bàn thắng phi thực tế (> 15).
             if "cardScore" in r_id or "score" in r_id.lower():
-                m_score = re.match(r"^(\d{1,2})\s*[-:]\s*(\d{1,2})$", clean_txt)
+                m_score = re.match(r"^(\d{1,2})\s+[:\-]\s+(\d{1,2})$", clean_txt)
                 if m_score:
                     s1, s2 = int(m_score.group(1)), int(m_score.group(2))
-                    if (s1 >= 10 and s2 == 0) or (s1 in (17, 18, 19, 20, 21, 22, 23) and s2 in (0, 15, 30, 45)):
+                    if s1 > 15 or s2 > 15 or (s1 in (17, 18, 19, 20, 21, 22, 23) and s2 in (0, 15, 30, 45)):
                         fake_key = f"FAKE_SCORE_FROM_TIME:{r_id}:{clean_txt}"
                         if fake_key not in self._reported_anomaly_keys:
                             self._reported_anomaly_keys.add(fake_key)

@@ -61,7 +61,7 @@
         android:textColor="@color/kl_brand"
         android:maxLines="1"
         android:ellipsize="end"
-        android:maxWidth="180dp" />
+        android:maxWidth="420dp" />
 
     <ImageView
         android:id="@+id/rowChevron"
