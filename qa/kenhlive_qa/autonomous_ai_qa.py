@@ -1472,6 +1472,13 @@ class AutonomousQASuite:
                 max_steps=7
             ),
             QAMission(
+                "MISSION_PLAYER_SETTINGS_DIALOG",
+                "Dialog Cai Dat Trinh Phat Thong Nhat (Hinh anh/Am thanh/Ti le/Buoc tua)",
+                "Mo phim VOD dang phat, mo thanh dieu khien, bam nut CAI DAT dau tien de mo dialog cai dat. Kiem tra dialog co 4 nhom theo chieu doc: Hinh anh (3 chip), Am thanh (5 chip), Ti le khung hinh (4 chip), Buoc tua (3 chip); moi nhom co dong trang thai 'Dang chon: ...'; dung 1 chip moi nhom co dau check; chon chip Ti le khac phai ap dung ngay (toast + dong trang thai cap nhat) ma khong dong dialog; D-pad XUONG tu nhom Buoc tua phai toi nut Dong; BACK dong dialog va van o trong player.",
+                "Dialog hien du 4 nhom, chip to de doc (focus ro), chon la ap dung ngay, focus xuong nut Dong chuan, BACK dong dialog khong thoat player, khong crash.",
+                max_steps=10
+            ),
+            QAMission(
                 "MISSION_SEARCH_AND_SETTINGS_FEEDBACK",
                 "Tìm Kiếm Thông Minh & Cài Đặt (Hộp Thoại Báo Lỗi Telegram QR @kenhlivetv)",
                 "Duyệt Tab Tìm kiếm (Tab 3), nhập từ khóa; chuyển sang Tab Cài đặt (Tab 4), mở mục 'Liên hệ & Báo lỗi', kiểm tra FeedbackDialog hiển thị mã QR Telegram và thông tin @kenhlivetv.",
