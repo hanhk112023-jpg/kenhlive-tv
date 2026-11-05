@@ -1840,10 +1840,9 @@ class PlayerActivity : AppCompatActivity() {
         btnBarSeekFwd = findViewById(R.id.btnBarSeekFwd)
         btnBarNextEp = findViewById(R.id.btnBarNextEp)
         btnBarEpisodes = findViewById(R.id.btnBarEpisodes)
-        // Nút đầu tiên của thanh: Cài Đặt — gom Chất lượng / Âm thanh / Tỷ lệ khung hình /
-        // Bước tua vào một menu. Nút "Thoát" cũ bị bỏ vì trùng chức năng phím BACK cứng
-        // trên remote (thoát vẫn qua BACK; onPause/onDestroy vẫn lưu tiến độ như trước).
-        btnBarSettings?.setOnClickListener { showVodSettingsDialog() }
+        // Nút đầu tiên của thanh: Cài Đặt — mở trực tiếp Dialog Cài Đặt Trình Phát Thống Nhất
+        // (Hình ảnh, Âm thanh, Tỉ lệ, Bước tua) chuẩn 10-foot Android TV.
+        btnBarSettings?.setOnClickListener { showSettingsDialog() }
         btnBarPrevEp?.setOnClickListener { switchEpisodeByDelta(-1); hideOnce() }
         btnBarSeekBack?.setOnClickListener { seekByStep(-1) }
         btnBarPlayPause?.setOnClickListener { togglePlayPause() }
@@ -2283,7 +2282,10 @@ class PlayerActivity : AppCompatActivity() {
                 val target = if (isVodMode) (btnBarSettings ?: btnBarPlayPause)
                              else findViewById<View>(R.id.phoneMenuBtn) ?: findViewById<View>(R.id.backBtn)
                 target?.requestFocus()
-                if (isOkKey) return true
+                if (isOkKey) {
+                    target?.performClick()
+                    return true
+                }
             }
         }
 

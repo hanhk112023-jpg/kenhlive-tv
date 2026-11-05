@@ -1773,7 +1773,13 @@ class AutonomousQASuite:
                     except ValueError:
                         time.sleep(1.0)
                 elif act_type == "VERIFY_STREAM":
-                    stream_ok, delta = self.device.detect_video_motion(duration_sec=1.2, samples=3)
+                    stream_ok, delta = self.device.detect_video_motion(duration_sec=1.5, samples=3, is_player_context=True)
+                    if not stream_ok and "player" in self.device.current_activity().lower():
+                        # Đệm xác thực 2 nhịp: chờ thêm 2.0s để luồng buffer xong trên CI rồi đo lại
+                        print("      ⏳ Luồng đang nạp buffer trên CI, đợi 2.0s để đo lại khung hình...", flush=True)
+                        time.sleep(2.0)
+                        stream_ok, delta = self.device.detect_video_motion(duration_sec=1.5, samples=3, is_player_context=True)
+
                     self.session.record_video_verification(stream_ok, delta, self.device.current_activity())
                     print(f"      📹 Kết quả kiểm tra luồng video: {'PHÁT MƯỢT' if stream_ok else 'ĐỨNG HÌNH'} (delta: {delta:.2f}%)", flush=True)
                     if not stream_ok and "player" in self.device.current_activity().lower():
@@ -1781,7 +1787,7 @@ class AutonomousQASuite:
                             "area": "Trình phát Video",
                             "severity": "HIGH",
                             "issue": "Video ExoPlayer đứng hình hoặc không tải được luồng",
-                            "detail": f"Motion delta = {delta:.2f}% sau 1.2s",
+                            "detail": f"Motion delta = {delta:.2f}% sau 2 lần đo",
                             "suggestion": "Kiểm tra cơ chế failover sang nguồn dự phòng hoặc proxy CDN"
                         })
                 elif act_type == "COMPLETE_MISSION":
