@@ -102,19 +102,49 @@ for f in qa/mobilerun/scenarios/*.txt; do
   fi
   name=$(basename "$f" .txt)
   echo "== Scenario: $name =="
-  timeout 1200 mobilerun run "$(cat "$f")" \
-    -c qa/mobilerun/config.runtime.yaml \
-    --vision --reasoning --steps 45 \
-    --save-trajectory action \
-    > "$OUT/$name.log" 2>&1
-  code=$?
-  adb exec-out screencap -p > "$OUT/$name-final.png" 2>/dev/null || true
-  if [ "$code" -eq 0 ]; then
-    echo "- ✅ $name — agent reported success (log: $name.log)" >> "$SUMMARY"
+  # QA standard (xem qa/QA_STANDARD.md): ket qua phai doc tu ket luan PASS/FAIL
+  # cua agent trong log, KHONG chi tu exit code cua mobilerun (exit 0 ke ca khi
+  # agent ket luan FAIL). Scenario nao FAIL hoac loi ha tang -> chay lai 1 lan
+  # (attempt 2) roi moi chot ket qua; ghi ro RETRIED trong summary.
+  attempt=1
+  verdict="UNKNOWN"
+  code=0
+  while [ $attempt -le 2 ]; do
+    timeout 1200 mobilerun run "$(cat "$f")" \
+      -c qa/mobilerun/config.runtime.yaml \
+      --vision --reasoning --steps 45 \
+      --save-trajectory action \
+      > "$OUT/$name.log" 2>&1
+    code=$?
+    adb exec-out screencap -p > "$OUT/$name-final.png" 2>/dev/null || true
+    if grep -qaE "TEST RESULT: FAIL|Result: FAIL|^FAIL$" "$OUT/$name.log"; then
+      verdict="FAIL"
+    elif grep -qaE "TEST RESULT: PASS|Goal achieved: PASS|Goal achieved: TEST RESULT: PASS" "$OUT/$name.log"; then
+      verdict="PASS"
+    elif [ $code -eq 0 ]; then
+      verdict="UNKNOWN(exit0)"
+    else
+      verdict="UNKNOWN(exit$code)"
+    fi
+    echo "   attempt $attempt: exit=$code verdict=$verdict"
+    # PASS thi dung; FAIL/UNKNOWN thi quet lai 1 lan
+    [ "$verdict" = "PASS" ] && break
+    [ $attempt -eq 2 ] && break
+    echo "   -> quet lai scenario $name (attempt 2)..."
+    attempt=2
+    cp "$OUT/$name.log" "$OUT/$name.attempt1.log"
+  done
+  if [ "$verdict" = "PASS" ]; then
+    if [ $attempt -eq 2 ]; then
+      echo "- ✅ $name — PASS sau khi quet lai (attempt 2, log: $name.log, attempt1: $name.attempt1.log)" >> "$SUMMARY"
+    else
+      echo "- ✅ $name — PASS (log: $name.log)" >> "$SUMMARY"
+    fi
+  elif [ "$verdict" = "FAIL" ]; then
+    echo "- ❌ $name — FAIL xac nhan sau ${attempt} lan chay (log: $name.log)" >> "$SUMMARY"
   else
-    echo "- ❌ $name — exit code $code (log: $name.log)" >> "$SUMMARY"
+    echo "- ⚠️ $name — KHONG CO KET LUAN RO RANG ($verdict, exit=$code, log: $name.log) — can quet lai thu cong" >> "$SUMMARY"
   fi
-  echo "   exit=$code"
 done
 
 # Best effort: collect saved trajectories next to the logs.

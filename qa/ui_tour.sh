@@ -54,8 +54,18 @@ sleep 2
 
 # 2. MỞ APP TẠI CỔNG CHỌN (HOME HUB - TAB 6)
 mark "MO APP: Menu Chon 3 Card Home Hub"
-adb shell am start -W -n com.kenhlive.tv/.MainActivity --ei tab 6 >/dev/null 2>&1
+adb shell am start -W -n com.kenhlive.tv/.MainActivity --ei tab 6 > $OUT/am_start.log 2>&1
 sleep 4
+# Fail-fast (QA standard): app phai foreground. Neu van o launcher thi dung
+# quay tiep (ban dau quay 3 phut man hinh launcher/YouTube vo nghia) — luu
+# am start + logcat de biet app crash/ko khoi dong duoc.
+if [ -z "$(fg_app)" ]; then
+  echo "$(($(date +%s)-T0))s|FAIL-FAST: KenhLive khong foreground sau am start" >> $TL
+  cat $OUT/am_start.log >> $TL
+  adb logcat -d -t 200 >> $OUT/logcat_crash.txt 2>/dev/null || true
+  adb exec-out screencap -p > $OUT/00_failfast_not_foreground.png
+  exit 1
+fi
 adb exec-out screencap -p > $OUT/01_home_hub.png
 
 # Duyệt qua các card trên Home Hub
@@ -103,6 +113,7 @@ go "OK: vao muc Phim Truyen" 23 5; foc
 adb exec-out screencap -p > $OUT/08_phim_netflix_home.png
 mark "KHO PHIM NETFLIX: Billboard 4K & Apple Pills"
 
+ensure_app_fg
 # ================= 4b. KIỂM THỬ GIAO DIỆN TÌM KIẾM NETFLIX FULL-SCREEN GRID =================
 # Từ "Tất Cả", nhấn RIGHT sang "Lịch Sử Xem", nhấn tiếp RIGHT sang "Tìm Kiếm"
 go "RIGHT: tu Tat Ca sang Lich Su Xem" 22 1; foc
@@ -157,6 +168,7 @@ go "BACK lan 2 (ve Menu Chon)" 4 2
 adb exec-out screencap -p > $OUT/15_returned_hub_from_phim.png
 mark "DA QUAY VE MENU CHON TU PHIM TRUYEN"
 
+ensure_app_fg
 # ================= 5. VÀO MỤC THỂ THAO =================
 go "LEFT: chuyen sang the TRUYEN HINH" 21 1; foc
 go "LEFT: chuyen sang the THE THAO" 21 1; foc
