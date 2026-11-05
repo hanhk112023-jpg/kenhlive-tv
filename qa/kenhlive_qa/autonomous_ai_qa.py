@@ -279,7 +279,8 @@ NGUYÊN TẮC BỘ NHỚ PHIÊN & SĂN LỖI SÂU (Deep Bug Hunting & Session Me
             "model": model,
             "messages": messages,
             "max_tokens": max_tokens,
-            "temperature": 0.1
+            "temperature": 0.1,
+            "stream": False
         }
         if user:
             payload["user"] = user
@@ -302,7 +303,28 @@ NGUYÊN TẮC BỘ NHỚ PHIÊN & SĂN LỖI SÂU (Deep Bug Hunting & Session Me
         for attempt in range(3):
             try:
                 with urllib.request.urlopen(req, timeout=timeout) as resp:
-                    data = json.loads(resp.read().decode("utf-8"))
+                    raw_text = resp.read().decode("utf-8")
+                    # Xử lý gateway tự động stream SSE (data: {...}) dù không yêu cầu stream
+                    if raw_text.strip().startswith("data:"):
+                        parts = []
+                        for line in raw_text.splitlines():
+                            line = line.strip()
+                            if line.startswith("data:"):
+                                data_chunk = line[5:].strip()
+                                if data_chunk == "[DONE]":
+                                    break
+                                try:
+                                    chunk = json.loads(data_chunk)
+                                    choices = chunk.get("choices") or []
+                                    if choices:
+                                        delta = choices[0].get("delta") or choices[0].get("message") or {}
+                                        t = delta.get("content") or delta.get("reasoning_content") or ""
+                                        if t:
+                                            parts.append(t)
+                                except Exception:
+                                    pass
+                        return "".join(parts).strip()
+                    data = json.loads(raw_text)
                     choices = data.get("choices") or []
                     if not choices:
                         return ""
@@ -434,8 +456,12 @@ Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn b�
         action_param = "DPAD_DOWN"
         defect = None
 
-        # Kiểm tra mất focus
-        if not state.get("has_focus_ring") and state.get("focused_sig") == "NONE":
+        # Kiểm tra mất focus: loại trừ màn hình phát video PlayerActivity/WebPlayerActivity
+        # vì khi phát video toàn màn hình, thanh điều khiển OSD tự ẩn sau 3.5s là thiết kế chuẩn TV,
+        # không phải lỗi mất focus.
+        is_player = "PlayerActivity" in (state.get("activity") or "") or "WebPlayerActivity" in (state.get("activity") or "")
+        is_playing = state.get("video_motion_playing") or False
+        if not is_player and not is_playing and not state.get("has_focus_ring") and state.get("focused_sig") == "NONE":
             defect = {
                 "area": "Điều hướng D-pad",
                 "severity": "HIGH",
@@ -1061,7 +1087,9 @@ class AndroidTVDevice:
                     s1[1] == s2[1] == s3[1] and
                     s2[2] in dpad_dirs and s3[2] in dpad_dirs and s2[2] == s3[2] and
                     "PlayerActivity" not in current_activity and
-                    "WebPlayerActivity" not in current_activity):
+                    "WebPlayerActivity" not in current_activity and
+                    not ui_state.get("has_dialog", False) and
+                    ui_state.get("focusable_count", 0) > 3):
                 trap_key = f"TRAP:{current_activity}:{focused_sig}:{s3[2]}"
                 if trap_key not in self._reported_anomaly_keys:
                     self._reported_anomaly_keys.add(trap_key)
