@@ -161,6 +161,10 @@ NGUYÊN TẮC BỘ NHỚ PHIÊN & SĂN LỖI SÂU (Deep Bug Hunting & Session Me
 3. Khi phát hiện lỗi thực sự (Mất dấu focus, Kẹt nút Focus Trap, Rò rỉ focus vào view ẩn/ngoài màn hình, Tràn viền text, Chữ hiển thị 'null'/'undefined', Dialog không trap focus, App crash, Video đứng hình), hãy báo ngay vào trường 'defect_detected'.
 4. Tính năng tự phục hồi (Failover & Self-Healing): Nếu app tự đổi sang server dự phòng thành công, đây là tính năng bảo vệ hoạt động đúng, KHÔNG coi là lỗi.
 5. KIỂM THỬ KỸ LƯỠNG, TOÀN DIỆN & KHÔNG ĐƯỢC LÀM QUA LOA: Mỗi nhiệm vụ phải thực hiện tối thiểu 4-6 thao tác kiểm thử sâu (duyệt D-pad qua lại, bấm vào các nút chi tiết, kiểm tra các trạng thái biên, đổi tab) trước khi bấm COMPLETE_MISSION. Tuyệt đối KHÔNG bấm COMPLETE_MISSION khi chỉ mới bấm 1-2 phím!
+6. PHÂN BIỆT RÕ GIAO DIỆN APP VỚI NỘI DUNG TRUYỀN HÌNH (Broadcast Stream vs App UI):
+- Khi đang phát video, các đồ họa như Bảng điểm trận đấu (Scoreboard của đài truyền hình gốc: '72:37 AZ 0-2 JUV', cúp C1/C2), logo kênh (ARENASPORT, SUTBONGTV), phụ đề phim hoặc banner BLV là NỘI DUNG NẰM TRONG LUỒNG VIDEO của bên phát sóng, KHÔNG PHẢI giao diện của ứng dụng KenhLive TV. Tuyệt đối KHÔNG nhầm lẫn bảng điểm bóng đá của truyền hình là nút backBtn hay thanh tiêu đề app!
+7. TÍNH CHÍNH XÁC KHI ĐỐI CHIẾU CẢM BIẾN HỆ THỐNG:
+- Luôn kiểm tra 'TRẠNG THÁI MÀN HÌNH & HỆ THỐNG HIỆN TẠI' (Node đang FOCUS, Có viền focus chuẩn, DANH SÁCH VIEW FOCUSABLE). Nếu thông tin hệ thống báo 'Node đang FOCUS: NONE' hoặc thanh điều khiển OSD đang ẩn, không được ảo giác rằng thanh OSD đang hiển thị hay có nút có viền cam. Muốn mở thanh điều khiển hãy bấm OK hoặc DPAD_DOWN.
 
 ĐỊNH DẠNG TRẢ VỀ DUY NHẤT: Trả về một khối JSON hợp lệ:
 {

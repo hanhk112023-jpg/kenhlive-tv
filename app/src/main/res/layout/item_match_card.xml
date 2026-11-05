@@ -87,7 +87,10 @@
             android:paddingLeft="9dp"
             android:paddingRight="9dp"
             android:paddingTop="3dp"
-            android:paddingBottom="3dp" />
+            android:paddingBottom="3dp"
+            android:maxLines="1"
+            android:singleLine="true"
+            android:ellipsize="none" />
     </LinearLayout>
 
     <!-- Row 2: Trung tâm trận đấu (FotMob / Stadium Style: Team Host | Score Board | Team Guest) -->

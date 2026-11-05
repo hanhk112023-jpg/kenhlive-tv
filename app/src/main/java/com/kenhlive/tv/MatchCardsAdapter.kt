@@ -347,6 +347,8 @@ class MatchCardsAdapter(
                 if (validClock) {
                     h.timeBadge.text = g.liveClock
                     h.timeBadge.visibility = View.VISIBLE
+                    // Khi có đồng hồ live (Hiệp đấu + phút), ẩn nhãn đài để nhường chỗ cho timeBadge và tránh tràn viền cắt chữ ● LIVE
+                    h.provider?.visibility = View.GONE
                 } else {
                     h.timeBadge.visibility = View.GONE
                 }

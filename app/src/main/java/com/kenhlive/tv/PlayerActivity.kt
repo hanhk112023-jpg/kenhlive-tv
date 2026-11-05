@@ -2092,7 +2092,7 @@ class PlayerActivity : AppCompatActivity() {
         hideOnce()
     }
 
-    private fun hideOnce(delayMs: Long = if (DeviceMode.isTv) 45000L else 4000L) {
+    private fun hideOnce(delayMs: Long = if (DeviceMode.isTv) 300_000L else 4000L) {
         handler.removeCallbacks(hideOverlay)
         handler.postDelayed(hideOverlay, delayMs)
     }
@@ -2251,7 +2251,12 @@ class PlayerActivity : AppCompatActivity() {
                     showOverlay()
                     val target = btnBarSettings ?: btnBarPlayPause
                     target?.requestFocus()
-                    vodControlBar?.post { target?.requestFocus() }
+                    vodControlBar?.post {
+                        target?.requestFocus()
+                        if (isOkKey) {
+                            target?.performClick()
+                        }
+                    }
                 } else if (isOkKey) {
                     togglePlayPause()
                 } else {
@@ -2278,6 +2283,13 @@ class PlayerActivity : AppCompatActivity() {
         // 6. Nếu overlay đang hiện, gia hạn thời gian tự ẩn và bảo đảm luôn có view giữ focus
         if (isDown && (topOverlay?.visibility == View.VISIBLE || vodControlBar?.visibility == View.VISIBLE)) {
             hideOnce()
+            if (isOkKey) {
+                val cur = currentFocus
+                if (cur != null && (cur === btnBarSettings || cur === btnBarPlayPause || cur === btnBarSeekBack || cur === btnBarSeekFwd || cur === btnBarPrevEp || cur === btnBarNextEp || cur === btnBarEpisodes)) {
+                    cur.performClick()
+                    return true
+                }
+            }
             if (currentFocus == null) {
                 val target = if (isVodMode) (btnBarSettings ?: btnBarPlayPause)
                              else findViewById<View>(R.id.phoneMenuBtn) ?: findViewById<View>(R.id.backBtn)
