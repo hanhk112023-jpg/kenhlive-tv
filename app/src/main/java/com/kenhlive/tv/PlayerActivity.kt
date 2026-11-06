@@ -348,7 +348,22 @@ class PlayerActivity : AppCompatActivity() {
         channelSidebar = findViewById(R.id.channelSidebar)
         sidebarList = findViewById(R.id.sidebarChannelList)
         findViewById<TextView>(R.id.playerTitle).text = name
-        findViewById<TextView>(R.id.playerSub).visibility = View.VISIBLE
+
+        // Subtitle header: VOD hiển thị tập phim / phim (chữ xám nhẹ), Live hiển thị nhãn LIVE đỏ
+        val subTv = findViewById<TextView>(R.id.playerSub)
+        if (isVodMode) {
+            if (episodeTitle.isNotBlank()) {
+                subTv.text = episodeTitle
+                subTv.setTextColor(0xFF94A3B8.toInt())
+                subTv.visibility = View.VISIBLE
+            } else {
+                subTv.visibility = View.GONE
+            }
+        } else {
+            subTv.text = getString(R.string.sched_live)
+            subTv.setTextColor(resources.getColor(R.color.kl_live, theme))
+            subTv.visibility = View.VISIBLE
+        }
 
         // Binding Quick Channel OSD
         quickChannelOsd = findViewById(R.id.quickChannelOsd)

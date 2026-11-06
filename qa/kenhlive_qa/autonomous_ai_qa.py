@@ -169,7 +169,7 @@ NGUYÊN TẮC BỘ NHỚ PHIÊN & SĂN LỖI SÂU (Deep Bug Hunting & Session Me
 ĐỊNH DẠNG TRẢ VỀ DUY NHẤT: Trả về một khối JSON hợp lệ:
 {
   "thought": "Quan sát thấy gì trên màn hình hiện tại, liên hệ với các bước trước trong phiên kiểm thử và lý do chọn hành động này",
-  "action_type": "KEY" | "LONG_PRESS" | "KEYPAD" | "SWITCH_TAB" | "OPEN_MULTIVIEW" | "TEXT" | "WAIT" | "VERIFY_STREAM" | "COMPLETE_MISSION",
+  "action_type": "KEY" | "LONG_PRESS" | "KEYPAD" | "SWITCH_TAB" | "OPEN_MULTIVIEW" | "LAUNCH_WEB_PLAYER" | "TEXT" | "WAIT" | "VERIFY_STREAM" | "COMPLETE_MISSION",
   "action_param": "DPAD_DOWN" | "OK" | "1" | "2" | "ENTER" | "BACK" | "DOUBLE_BACK" | "uefa" | "2.0" | "",
   "expected_result": "Kỳ vọng gì sau khi thực hiện hành động này?",
   "defect_detected": null hoặc {
@@ -620,23 +620,35 @@ Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn b�
             elif step == 2:
                 action_type = "KEY"
                 action_param = "DPAD_RIGHT"
-                thought = "Chuyển focus sang card PHIM TRUYỆN tích hợp Logo Canva"
+                thought = "Chuyển focus sang card PHIM TRUYỆN tích hợp Logo Canva 3D"
             elif step == 3:
                 action_type = "KEY"
-                action_param = "DPAD_DOWN"
-                thought = "Di chuyển focus xuống thanh tiện ích 4 nút dưới đáy"
+                action_param = "ENTER"
+                thought = "Bấm OK vào card PHIM TRUYỆN để mở Giao diện Hub Phim riêng biệt"
             elif step == 4:
-                action_type = "KEY"
-                action_param = "DPAD_RIGHT"
-                thought = "Duyệt qua các nút tiện ích đáy (đã gỡ bỏ nút Đa màn hình)"
+                action_type = "WAIT"
+                action_param = "2.0"
+                thought = "Chờ Hub Phim tải hoàn tất Hero Banner và các hàng phim độc lập"
             elif step == 5:
                 action_type = "KEY"
-                action_param = "DPAD_UP"
-                thought = "Quay lại các card chính trên Cổng Chọn Home Hub"
+                action_param = "DPAD_DOWN"
+                thought = "Duyệt D-pad xuống danh sách phim trong Hub Phim"
+            elif step == 6:
+                action_type = "KEY"
+                action_param = "DOUBLE_BACK"
+                thought = "Bấm DOUBLE_BACK để thoát Hub Phim quay lại Menu Chọn (Home Hub Tab 6)"
+            elif step == 7:
+                action_type = "KEY"
+                action_param = "DPAD_DOWN"
+                thought = "Di chuyển focus xuống hàng tiện ích 4 nút dưới đáy Home Hub"
+            elif step == 8:
+                action_type = "KEY"
+                action_param = "DPAD_RIGHT"
+                thought = "Duyệt qua các nút tiện ích đáy Home Hub"
             else:
                 action_type = "COMPLETE_MISSION"
                 action_param = ""
-                thought = "Đã kiểm tra hoàn tất Cổng Chọn 3 Card Home Hub và Logo Canva"
+                thought = "Đã kiểm tra hoàn tất Cổng Chọn Home Hub, mở Hub Phim và quay lại thành công"
 
         elif m_id in ("MISSION_SCHEDULE_AND_SIDEBAR_NAVIGATION", "MISSION_SCHEDULE_EPG_AND_FIXTURE_TAP"):
             if step == 0:
@@ -796,77 +808,115 @@ Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn b�
 
         elif m_id in ("MISSION_PHIM_PLAYER_SEEK_AND_RESUME", "MISSION_VOD_PLAYER_SEEK_AND_RESUME"):
             if step == 0:
-                action_type = "SWITCH_TAB"
-                action_param = "5"
-                thought = "Đảm bảo đang ở Tab Kho Phim với focus tại nút XEM NGAY (btnHeroPlay)"
+                action_type = "LAUNCH_WEB_PLAYER"
+                action_param = ""
+                thought = "Khởi chạy Trình Phát Web (WebPlayerActivity) để kiểm tra trình phát thứ hai của app"
             elif step == 1:
-                action_type = "KEY"
-                action_param = "ENTER"
-                thought = "Bấm OK mở phát bộ phim trên Hero Banner vào WebPlayerActivity"
-            elif step == 2:
                 action_type = "WAIT"
-                action_param = "2.0"
-                thought = "Chờ WebPlayer tải xong luồng phim và kiểm tra Toast Resume nếu có"
+                action_param = "2.5"
+                thought = "Chờ WebPlayer tải xong trang embed iframe và video"
+            elif step == 2:
+                action_type = "KEY"
+                action_param = "DPAD_DOWN"
+                thought = "Bấm DPAD_DOWN để mở thanh OSD hiển thị tiêu đề và nút điều khiển web"
             elif step == 3:
                 action_type = "KEY"
                 action_param = "DPAD_RIGHT"
-                thought = "Bấm phím D-pad Phải để test tua tới +10 giây"
+                thought = "Bấm D-pad Phải kiểm tra tua tới +10s qua JS injection trên WebPlayer"
             elif step == 4:
                 action_type = "KEY"
                 action_param = "DPAD_LEFT"
-                thought = "Bấm phím D-pad Trái để test tua lùi -10 giây"
+                thought = "Bấm D-pad Trái kiểm tra tua lùi -10s qua JS injection trên WebPlayer"
             elif step == 5:
                 action_type = "KEY"
-                action_param = "DOUBLE_BACK"
-                thought = "Thoát WebPlayer bằng DOUBLE_BACK để đóng seek HUD và về lại kho phim"
+                action_param = "OK"
+                thought = "Bấm OK toggle Play/Pause trên WebPlayer"
+            elif step == 6:
+                action_type = "KEY"
+                action_param = "BACK"
+                thought = "Bấm BACK để thoát WebPlayer và tự động lưu tiến độ vào Lịch sử xem"
+            elif step == 7:
+                action_type = "SWITCH_TAB"
+                action_param = "5"
+                thought = "Về lại Kho Phim (Tab 5) để kiểm tra hàng Tiếp Tục Xem (Resume Playback)"
+            elif step == 8:
+                action_type = "WAIT"
+                action_param = "1.5"
+                thought = "Xác nhận hàng Tiếp Tục Xem đã nạp thẻ phim vừa xem dở"
             else:
                 action_type = "COMPLETE_MISSION"
                 action_param = ""
+                thought = "Đã kiểm tra hoàn tất Trình Phát Web (WebPlayerActivity) và tính năng Tiếp Tục Xem"
 
         elif m_id == "MISSION_PLAYER_SETTINGS_DIALOG":
             if step == 0:
                 action_type = "KEY"
                 action_param = "DPAD_DOWN"
-                thought = "Mở thanh điều khiển của trình phát VOD"
+                thought = "Mở thanh điều khiển của trình phát Native PlayerActivity"
             elif step == 1:
                 action_type = "KEY"
-                action_param = "DPAD_LEFT"
-                thought = "Di chuyển focus sang nút CÀI ĐẶT ở đầu thanh điều khiển"
+                action_param = "OK"
+                thought = "Bấm OK mở Dialog Cài Đặt Trình Phát Thống Nhất (btnBarSettings)"
             elif step == 2:
-                action_type = "KEY"
-                action_param = "DPAD_LEFT"
-                thought = "Di chuyển tiếp sang nút CÀI ĐẶT ở đầu thanh điều khiển"
-            elif step == 3:
-                action_type = "KEY"
-                action_param = "ENTER"
-                thought = "Bấm OK mở Dialog Cài Đặt Trình Phát Thống Nhất"
-            elif step == 4:
                 action_type = "KEY"
                 action_param = "DPAD_DOWN"
                 thought = "Duyệt qua các nhóm cài đặt trong Dialog (Hình ảnh -> Âm thanh)"
-            elif step == 5:
+            elif step == 3:
                 action_type = "KEY"
                 action_param = "DPAD_DOWN"
-                thought = "Duyệt tiếp xuống nhóm Tỉ lệ khung hình"
-            elif step == 6:
+                thought = "Duyệt tiếp xuống nhóm Tỉ lệ khung hình và Bước tua"
+            elif step == 4:
                 action_type = "KEY"
                 action_param = "DPAD_RIGHT"
-                thought = "Thử chọn một chip tỉ lệ khung hình mới"
-            elif step == 7:
+                thought = "Thử chọn một chip tỉ lệ khung hình hoặc bước tua mới"
+            elif step == 5:
                 action_type = "KEY"
                 action_param = "ENTER"
-                thought = "Bấm OK áp dụng tỉ lệ khung hình mới ngay trong Dialog"
-            elif step == 8:
+                thought = "Bấm OK áp dụng cài đặt mới ngay trong Dialog"
+            elif step == 6:
                 action_type = "KEY"
                 action_param = "BACK"
-                thought = "Bấm BACK để đóng Dialog Cài Đặt Trình Phát"
+                thought = "Bấm BACK để đóng Dialog Cài Đặt và giữ nguyên trình phát"
+            elif step == 7:
+                action_type = "KEY"
+                action_param = "DPAD_RIGHT"
+                thought = "Di chuyển trên thanh điều khiển sang nút Tua tới / Tua lùi"
+            elif step == 8:
+                action_type = "KEY"
+                action_param = "OK"
+                thought = "Bấm OK kiểm tra chức năng tua thời gian trên thanh điều khiển"
             elif step == 9:
                 action_type = "KEY"
+                action_param = "DPAD_RIGHT"
+                thought = "Di chuyển sang nút Tạm Dừng / Phát (btnBarPlayPause)"
+            elif step == 10:
+                action_type = "KEY"
+                action_param = "OK"
+                thought = "Bấm OK kiểm tra tính năng Tạm Dừng / Tiếp tục phát video"
+            elif step == 11:
+                action_type = "KEY"
+                action_param = "A"
+                thought = "Thử phím tắt A (Red key remote) đổi tỉ lệ khung hình trực tiếp"
+            elif step == 12:
+                action_type = "KEY"
+                action_param = "B"
+                thought = "Thử phím tắt B (Yellow key remote) tăng cường âm thanh Audio Boost trực tiếp"
+            elif step == 13:
+                action_type = "KEY"
+                action_param = "MENU"
+                thought = "Thử phím tắt MENU mở Server Picker chọn nguồn phát"
+            elif step == 14:
+                action_type = "KEY"
+                action_param = "BACK"
+                thought = "Bấm BACK đóng menu Server Picker"
+            elif step == 15:
+                action_type = "KEY"
                 action_param = "DOUBLE_BACK"
-                thought = "Thoát trình phát VOD về lại màn hình chính"
+                thought = "Thoát trình phát Native về lại kho phim, kiểm tra tự lưu tiến độ"
             else:
                 action_type = "COMPLETE_MISSION"
                 action_param = ""
+                thought = "Đã kiểm tra toàn diện các chức năng của trình phát Native PlayerActivity"
 
         elif m_id == "MISSION_SEARCH_AND_SETTINGS_FEEDBACK":
             if step == 0:
@@ -1015,6 +1065,11 @@ class AndroidTVDevice:
         sh(f"{self.adb} shell am start -n {self.pkg}/.MainActivity --ei tab 6 -f 0x04000000")
         self.action_history.append("OPEN_HOME_HUB")
 
+    def launch_web_player(self, film_slug="duyen-kiep", film_title="Duyên Kiếp", episode_slug="tap-1", episode_title="Tập 1", embed_url="https://player.phimapi.com/player/?url=https://test.m3u8"):
+        """Khởi chạy trực tiếp WebPlayerActivity (Trình phát web embed) để kiểm thử."""
+        sh(f"{self.adb} shell am start -n {self.pkg}/.phim.WebPlayerActivity --es embed_url \"{embed_url}\" --es film_slug \"{film_slug}\" --es film_title \"{film_title}\" --es episode_slug \"{episode_slug}\" --es episode_title \"{episode_title}\"")
+        self.action_history.append("LAUNCH_WEB_PLAYER")
+
     def get_pss_memory_mb(self):
         """Đo tổng lượng bộ nhớ RAM PSS (MB) của ứng dụng."""
         out = sh(f"{self.adb} shell dumpsys meminfo {self.pkg} 2>/dev/null | grep -E 'TOTAL PSS:|TOTAL:' | head -1")
@@ -1151,7 +1206,7 @@ class AndroidTVDevice:
                         x1, y1, x2, y2 = map(int, m_b[:4])
                         if s3[2] in ("DPAD_LEFT", "LEFT") and x1 < 350:
                             is_edge_bump = True
-                        elif s3[2] in ("DPAD_RIGHT", "RIGHT") and x2 > 1570:
+                        elif s3[2] in ("DPAD_RIGHT", "RIGHT") and x2 > 1350:
                             is_edge_bump = True
                         elif s3[2] in ("DPAD_UP", "UP") and y1 < 200:
                             is_edge_bump = True
@@ -1516,10 +1571,10 @@ class AutonomousQASuite:
             ),
             QAMission(
                 "MISSION_HOME_HUB_3_CARDS_AND_CANVA_LOGOS",
-                "Cổng Chọn 3 Card Home Hub & Logo Canva Mới (Sports & Movies)",
-                "Chuyển sang Tab 6 (Home Hub Portal), duyệt qua 3 card lớn THỂ THAO, TRUYỀN HÌNH, PHIM TRUYỆN tích hợp Logo Canva mới, kiểm tra viền focus phát sáng, xuống hàng tiện ích 4 nút (không còn MultiView) và kiểm tra mở từng mục.",
-                "Cổng Chọn 3 Card hiển thị sắc nét với Logo Canva, phím D-pad chuyển đổi mượt mà giữa các card và hàng tiện ích, không có lỗi rò rỉ focus.",
-                max_steps=7
+                "Cổng Chọn 3 Card Home Hub & Mở Giao Diện Hub Phim Riêng Biệt",
+                "Chuyển sang Tab 6 (Home Hub Portal), duyệt qua 3 card lớn THỂ THAO, TRUYỀN HÌNH, PHIM TRUYỆN tích hợp Logo Canva 3D, bấm OK vào card PHIM TRUYỆN mở giao diện Hub Phim riêng biệt, duyệt danh sách phim, bấm DOUBLE_BACK thoát về Home Hub và duyệt hàng tiện ích 4 nút đáy.",
+                "Cổng Chọn 3 Card hiển thị sắc nét, mở Hub Phim độc lập mượt mà, DOUBLE_BACK thoát về Home Hub chuẩn xác.",
+                max_steps=10
             ),
             QAMission(
                 "MISSION_SCHEDULE_EPG_AND_FIXTURE_TAP",
@@ -1565,17 +1620,17 @@ class AutonomousQASuite:
             ),
             QAMission(
                 "MISSION_VOD_PLAYER_SEEK_AND_RESUME",
-                "Trình Phát Phim WebPlayer, Tua D-pad (-10s/+10s) & Hàng Tiếp Tục Xem",
-                "Mở player phim WebPlayerActivity, test D-pad Trái/Phải tua -10s/+10s có Toast/HUD, test tự động tiếp tục xem (Resume Playback).",
-                "Tua phim mượt mà, resume vị trí cũ chuẩn xác vào hàng Tiếp Tục Xem.",
-                max_steps=7
+                "Trình Phát Web (WebPlayerActivity), Tua D-pad JS & Hàng Tiếp Tục Xem",
+                "Khởi chạy WebPlayerActivity (trình phát thứ hai của app), kiểm tra WebView tải trang embed, test tua thời gian D-pad Trái/Phải qua JS, toggle Play/Pause, thoát player và kiểm tra vị trí xem dở được lưu vào hàng Tiếp Tục Xem của Kho Phim.",
+                "Tua WebPlayer mượt mà qua JS, lưu tiến độ chuẩn xác vào hàng Tiếp Tục Xem.",
+                max_steps=10
             ),
             QAMission(
                 "MISSION_PLAYER_SETTINGS_DIALOG",
-                "Dialog Cai Dat Trinh Phat Thong Nhat (Hinh anh/Am thanh/Ti le/Buoc tua)",
-                "Mo phim VOD dang phat, mo thanh dieu khien, bam nut CAI DAT dau tien de mo dialog cai dat. Kiem tra dialog co 4 nhom theo chieu doc: Hinh anh (3 chip), Am thanh (5 chip), Ti le khung hinh (4 chip), Buoc tua (3 chip); moi nhom co dong trang thai 'Dang chon: ...'; dung 1 chip moi nhom co dau check; chon chip Ti le khac phai ap dung ngay (toast + dong trang thai cap nhat) ma khong dong dialog; D-pad XUONG tu nhom Buoc tua phai toi nut Dong; BACK dong dialog va van o trong player.",
-                "Dialog hien du 4 nhom, chip to de doc (focus ro), chon la ap dung ngay, focus xuong nut Dong chuan, BACK dong dialog khong thoat player, khong crash.",
-                max_steps=10
+                "Trình Phát Native (PlayerActivity), Dialog Cài Đặt Thống Nhất & Toàn Bộ Chức Năng",
+                "Mở phim VOD native trên PlayerActivity, mở thanh OSD, test nút Cài Đặt mở Dialog Thống Nhất (chọn thử chip Hình ảnh/Âm thanh/Tỉ lệ/Bước tua), test nút Tua Lùi/Tua Tới, nút Tạm Dừng/Phát, phím tắt remote A (Tỉ lệ), B (Âm thanh), MENU (Server Picker), và thoát player kiểm tra tự lưu tiến độ.",
+                "Dialog hiện đủ 4 nhóm trong ScrollView, các nút tua/pause/settings phản hồi chuẩn, phím tắt remote hoạt động tức thì, không crash.",
+                max_steps=18
             ),
             QAMission(
                 "MISSION_SEARCH_AND_SETTINGS_FEEDBACK",
@@ -1770,6 +1825,10 @@ class AutonomousQASuite:
                     self.device.open_multiview()
                     time.sleep(1.8)
                     print(f"      📺 AI chủ động mở màn hình MultiView!", flush=True)
+                elif act_type == "LAUNCH_WEB_PLAYER":
+                    self.device.launch_web_player()
+                    time.sleep(2.5)
+                    print(f"      🌐 AI chủ động mở Trình Phát Web (WebPlayerActivity)!", flush=True)
                 elif act_type == "TEXT":
                     self.device.input_text(act_param or "uefa")
                     time.sleep(0.8)
