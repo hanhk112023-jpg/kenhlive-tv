@@ -160,15 +160,20 @@
             android:gravity="center_vertical"
             android:paddingLeft="28dp"
             android:paddingRight="28dp"
-            android:paddingTop="20dp"
-            android:paddingBottom="22dp">
+            android:paddingTop="18dp"
+            android:paddingBottom="6dp">
 
             <TextView
                 android:id="@+id/backBtn"
                 style="@style/KL.TextBtn"
                 android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_height="40dp"
+                android:paddingLeft="16dp"
+                android:paddingRight="16dp"
                 android:text="◀ QUAY LẠI"
+                android:textSize="12sp"
+                android:maxLines="1"
+                android:ellipsize="end"
                 android:contentDescription="@string/cd_back" />
 
             <LinearLayout
@@ -207,93 +212,169 @@
                         android:visibility="gone" />
                 </LinearLayout>
             </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingLeft="28dp"
+            android:paddingRight="28dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="16dp">
 
             <TextView
                 android:id="@+id/channelListBtn"
                 style="@style/KL.TextBtn"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:text="DANH SÁCH KÊNH"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:layout_marginRight="8dp"
+                android:text="KÊNH"
+                android:textSize="11.5sp"
+                android:maxLines="1"
+                android:ellipsize="end"
                 android:gravity="center" />
 
             <TextView
                 android:id="@+id/qualityBtn"
                 style="@style/KL.TextBtn"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:layout_marginRight="8dp"
                 android:text="CHẤT LƯỢNG"
+                android:textSize="11.5sp"
+                android:maxLines="1"
+                android:ellipsize="end"
                 android:gravity="center" />
 
             <TextView
                 android:id="@+id/audioBtn"
                 style="@style/KL.TextBtn"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:layout_marginRight="8dp"
                 android:text="ÂM THANH"
+                android:textSize="11.5sp"
+                android:maxLines="1"
+                android:ellipsize="end"
                 android:gravity="center" />
 
             <TextView
                 android:id="@+id/aspectBtn"
                 style="@style/KL.TextBtn"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:layout_marginRight="8dp"
                 android:text="TỈ LỆ"
+                android:textSize="11.5sp"
+                android:maxLines="1"
+                android:ellipsize="end"
                 android:gravity="center" />
 
             <TextView
                 android:id="@+id/sleepBtn"
                 style="@style/KL.TextBtn"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:layout_marginRight="8dp"
                 android:text="HẸN GIỜ"
+                android:textSize="11.5sp"
+                android:maxLines="1"
+                android:ellipsize="end"
                 android:gravity="center" />
 
             <TextView
                 android:id="@+id/audioTrackBtn"
                 style="@style/KL.TextBtn"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:layout_marginRight="8dp"
                 android:text="KÊNH TIẾNG"
+                android:textSize="11.5sp"
+                android:maxLines="1"
+                android:ellipsize="end"
                 android:gravity="center" />
 
             <TextView
                 android:id="@+id/audioBoostBtn"
                 style="@style/KL.TextBtn"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:layout_marginRight="8dp"
                 android:text="TĂNG ÂM"
+                android:textSize="11.5sp"
+                android:maxLines="1"
+                android:ellipsize="end"
                 android:gravity="center" />
 
             <TextView
                 android:id="@+id/statsBtn"
                 style="@style/KL.TextBtn"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:layout_marginRight="8dp"
                 android:text="THÔNG SỐ"
+                android:textSize="11.5sp"
+                android:maxLines="1"
+                android:ellipsize="end"
                 android:gravity="center" />
 
             <TextView
                 android:id="@+id/multiBtn"
                 style="@style/KL.TextBtn"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:layout_marginRight="8dp"
                 android:text="ĐA MÀN HÌNH"
+                android:textSize="11.5sp"
+                android:maxLines="1"
+                android:ellipsize="end"
                 android:gravity="center" />
 
             <TextView
                 android:id="@+id/pipBtn"
                 style="@style/KL.TextBtn"
-                android:layout_width="44dp"
-                android:layout_height="44dp"
-                android:text="CỬA SỔ NHỎ"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
+                android:layout_marginRight="8dp"
+                android:text="PIP"
+                android:textSize="11.5sp"
+                android:maxLines="1"
+                android:ellipsize="end"
                 android:gravity="center" />
 
             <TextView
                 android:id="@+id/phoneMenuBtn"
                 style="@style/KL.TextBtn"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
+                android:layout_width="wrap_content"
+                android:layout_height="38dp"
+                android:paddingLeft="14dp"
+                android:paddingRight="14dp"
                 android:text="TÙY CHỌN"
+                android:textSize="11.5sp"
+                android:maxLines="1"
+                android:ellipsize="end"
                 android:gravity="center" />
         </LinearLayout>
     </LinearLayout>
@@ -422,19 +503,19 @@
             android:textSize="12sp" />
     </LinearLayout>
 
-    <!-- VOD CONTROL BAR (TV): thanh điều khiển phim khi bấm OK — Cài Đặt / Tập trước / Tua lại / Phát-Dừng / Tua tới / Tập tiếp / Danh sách tập -->
+    <!-- VOD CONTROL BAR: thanh điều khiển phim gọn, nút kính bo 14dp, focus viền cam -->
     <LinearLayout
         android:id="@+id/vodControlBar"
         android:layout_width="match_parent"
-        android:layout_height="76dp"
+        android:layout_height="84dp"
         android:layout_gravity="bottom"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:background="@drawable/bg_overlay_bottom"
-        android:paddingLeft="32dp"
-        android:paddingRight="32dp"
-        android:paddingTop="8dp"
-        android:paddingBottom="8dp"
+        android:paddingLeft="28dp"
+        android:paddingRight="28dp"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp"
         android:visibility="gone">
 
         <Button
@@ -442,12 +523,12 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="@drawable/kl2_card_glass"
+            android:background="@drawable/bg_player_control_btn"
             android:drawableTop="@drawable/kl_p_settings"
             android:drawablePadding="4dp"
             android:text="Cài Đặt"
             android:textColor="#FFFFFF"
-            android:textSize="12sp"
+            android:textSize="11.5sp"
             android:focusable="true" />
 
         <Button
@@ -456,12 +537,12 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:layout_marginLeft="10dp"
-            android:background="@drawable/kl2_card_glass"
+            android:background="@drawable/bg_player_control_btn"
             android:drawableTop="@drawable/kl_p_skip_prev"
             android:drawablePadding="4dp"
             android:text="Tập trước"
             android:textColor="#FFFFFF"
-            android:textSize="12sp"
+            android:textSize="11.5sp"
             android:focusable="true" />
 
         <Button
@@ -470,12 +551,12 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:layout_marginLeft="10dp"
-            android:background="@drawable/kl2_card_glass"
+            android:background="@drawable/bg_player_control_btn"
             android:drawableTop="@drawable/kl_p_seek_back"
             android:drawablePadding="4dp"
             android:text="Tua lại"
             android:textColor="#FFFFFF"
-            android:textSize="12sp"
+            android:textSize="11.5sp"
             android:focusable="true" />
 
         <Button
@@ -484,12 +565,12 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:layout_marginLeft="10dp"
-            android:background="@drawable/kl2_card_glass"
+            android:background="@drawable/bg_player_control_btn"
             android:drawableTop="@drawable/kl_p_pause"
             android:drawablePadding="4dp"
             android:text="Tạm dừng"
             android:textColor="#FFFFFF"
-            android:textSize="12sp"
+            android:textSize="11.5sp"
             android:focusable="true" />
 
         <Button
@@ -498,12 +579,12 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:layout_marginLeft="10dp"
-            android:background="@drawable/kl2_card_glass"
+            android:background="@drawable/bg_player_control_btn"
             android:drawableTop="@drawable/kl_p_seek_fwd"
             android:drawablePadding="4dp"
             android:text="Tua tới"
             android:textColor="#FFFFFF"
-            android:textSize="12sp"
+            android:textSize="11.5sp"
             android:focusable="true" />
 
         <Button
@@ -512,12 +593,12 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:layout_marginLeft="10dp"
-            android:background="@drawable/kl2_card_glass"
+            android:background="@drawable/bg_player_control_btn"
             android:drawableTop="@drawable/kl_p_skip_next"
             android:drawablePadding="4dp"
             android:text="Tập tiếp"
             android:textColor="#FFFFFF"
-            android:textSize="12sp"
+            android:textSize="11.5sp"
             android:focusable="true" />
 
         <Button
@@ -526,12 +607,12 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:layout_marginLeft="10dp"
-            android:background="@drawable/kl2_card_glass"
+            android:background="@drawable/bg_player_control_btn"
             android:drawableTop="@drawable/kl_p_episodes"
             android:drawablePadding="4dp"
             android:text="Danh sách tập"
             android:textColor="#FFFFFF"
-            android:textSize="12sp"
+            android:textSize="11.5sp"
             android:focusable="true" />
     </LinearLayout>
 
