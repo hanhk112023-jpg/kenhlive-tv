@@ -100,6 +100,33 @@ class IptvFragment : Fragment() {
         countText = view.findViewById(R.id.channelCountText)
         searchInput = view.findViewById(R.id.searchChannelInput)
 
+        // Ô tìm kiếm là EditText: trên TV nó nuốt DPAD_RIGHT nên focus không thể
+        // đi sang nút bên cạnh, làm "bẫy" điều hướng (Porthole phát hiện: focus_on
+        // btnIptvAddM3u thất bại sau 15 bước). Xử lý phím để focus thoát ra:
+        //   RIGHT -> nút Thêm M3U, LEFT/DOWN -> trả focus về lưới, UP -> hàng nhóm.
+        searchInput?.setOnKeyListener { v, keyCode, event ->
+            if (event.action == android.view.KeyEvent.ACTION_DOWN) {
+                when (keyCode) {
+                    android.view.KeyEvent.KEYCODE_DPAD_RIGHT -> {
+                        view.findViewById<View>(R.id.btnIptvAddM3u)?.requestFocus()
+                        true
+                    }
+                    android.view.KeyEvent.KEYCODE_DPAD_LEFT,
+                    android.view.KeyEvent.KEYCODE_DPAD_DOWN -> {
+                        v.clearFocus()
+                        gridList.requestFocus()
+                        true
+                    }
+                    android.view.KeyEvent.KEYCODE_DPAD_UP -> {
+                        v.clearFocus()
+                        groupList.requestFocus()
+                        true
+                    }
+                    else -> false
+                }
+            } else false
+        }
+
         heroPreviewBox = view.findViewById(R.id.heroPreviewBox)
         heroPlayerView = view.findViewById(R.id.heroPlayerView)
         heroChannelTitle = view.findViewById(R.id.heroChannelTitle)
@@ -789,6 +816,7 @@ class IptvFragment : Fragment() {
 
     private fun openChannel(ch: IptvChannel, index: Int) {
         val intent = Intent(requireContext(), PlayerActivity::class.java).apply {
+            putExtra("hub", PlayerActivity.Hub.TV)
             putExtra("url", ch.url)
             putExtra("name", ch.name)
             putExtra("pip", false)

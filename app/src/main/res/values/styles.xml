@@ -109,6 +109,18 @@
         <item name="android:clickable">true</item>
     </style>
 
+    <style name="KL.TextBtn" parent="">
+        <item name="android:background">@drawable/bg_text_btn</item>
+        <item name="android:textColor">#FFFFFF</item>
+        <item name="android:textSize">12sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:gravity">center</item>
+        <item name="android:paddingLeft">12dp</item>
+        <item name="android:paddingRight">12dp</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+    </style>
+
     <style name="KL.IconButton" parent="">
         <item name="android:background">@drawable/bg_icon_button</item>
         <item name="android:padding">10dp</item>

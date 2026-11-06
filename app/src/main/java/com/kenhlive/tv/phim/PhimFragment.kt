@@ -584,7 +584,7 @@ class PhimFragment : Fragment() {
             etSearchPhim.setSelection(initialKeyword.length)
             executeNetflixSearch(initialKeyword)
         } else if (rvSearchGrid.adapter == null || (rvSearchGrid.adapter?.itemCount ?: 0) == 0) {
-            tvSearchResultsStatus.text = "🔥 Phim & Anime Thịnh Hành Được Tìm Kiếm Nhiều Nhất"
+            tvSearchResultsStatus.text = "Phim & Anime Thịnh Hành Được Tìm Kiếm Nhiều Nhất"
             val initialList = if (featuredFilms.isNotEmpty()) featuredFilms else emptyList()
             if (initialList.isNotEmpty()) {
                 rvSearchGrid.visibility = View.VISIBLE
@@ -1265,6 +1265,7 @@ class PhimFragment : Fragment() {
             }
             if (directM3u8.isNotBlank()) {
                 val intent = Intent(ctx, com.kenhlive.tv.PlayerActivity::class.java)
+                    .putExtra("hub", com.kenhlive.tv.PlayerActivity.Hub.FILM)
                     .putExtra("url", directM3u8)
                     .putExtra("name", "${film.name} · $epTitle")
                     .putExtra("film_slug", film.slug)

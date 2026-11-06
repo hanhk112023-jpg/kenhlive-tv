@@ -353,7 +353,7 @@ class SettingsFragment : Fragment() {
                 append(
                     when {
                         e == null -> "⚪ "
-                        circuitOpen -> "🔴 "
+                        circuitOpen -> ""
                         e.ok -> "🟢 "
                         else -> "🟡 "
                     }

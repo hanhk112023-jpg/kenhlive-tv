@@ -305,6 +305,7 @@ class SearchFragment : Fragment() {
             startActivity(
                 Intent(requireContext(), PlayerActivity::class.java)
                     .putExtra("url", url)
+                    .putExtra("hub", PlayerActivity.Hub.SPORTS)
                     .putExtra("name", "${room.matchTitle} · ${room.blvName}")
             )
         }

@@ -235,7 +235,7 @@ class LiveFragment : Fragment() {
                 )
                 if (cMatches.isNotEmpty()) {
                     val cHasLive = cMatches.any { MatchCardsAdapter.isMatchLive(it, DataNormalizer.parseMatch(it.matchTitle, it.league)) }
-                    val cTitle = if (cHasLive) "🔴 ColaTV · Trực Tiếp & Lịch Đấu" else "🔴 ColaTV · Lịch Thi Đấu"
+                    val cTitle = if (cHasLive) "ColaTV · Trực Tiếp & Lịch Đấu" else "ColaTV · Lịch Thi Đấu"
                     items.add(SportAdapter.RailItem(cMatches, emptyList(), title = cTitle))
                 }
 
@@ -567,6 +567,7 @@ class LiveFragment : Fragment() {
             startActivity(
                 Intent(requireContext(), PlayerActivity::class.java)
                     .putExtra("url", url)
+                    .putExtra("hub", PlayerActivity.Hub.SPORTS)
                     .putExtra("name", "${room.matchTitle} · ${room.blvName}")
                     .putExtra("roomNum", room.roomNum)
                     .putExtra("matchTitle", room.matchTitle)

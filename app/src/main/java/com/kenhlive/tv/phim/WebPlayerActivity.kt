@@ -308,6 +308,7 @@ class WebPlayerActivity : AppCompatActivity() {
 
     private fun launchNativePlayerAndFinish(m3u8: String) {
         val pIntent = Intent(this, com.kenhlive.tv.PlayerActivity::class.java).apply {
+            putExtra("hub", com.kenhlive.tv.PlayerActivity.Hub.FILM)
             putExtra("url", m3u8)
             putExtra("name", "$filmTitle · $episodeTitle")
             putExtra("film_slug", filmSlug)

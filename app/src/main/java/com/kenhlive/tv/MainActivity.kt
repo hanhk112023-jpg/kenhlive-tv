@@ -505,6 +505,7 @@ class MainActivity : AppCompatActivity() {
                     startActivity(
                         Intent(this@MainActivity, PlayerActivity::class.java)
                             .putExtra("url", u)
+                            .putExtra("hub", PlayerActivity.Hub.SPORTS)
                             .putExtra("name", "${r.matchTitle} · ${r.blvName}")
                             .putExtra("pip", pip)
                     )

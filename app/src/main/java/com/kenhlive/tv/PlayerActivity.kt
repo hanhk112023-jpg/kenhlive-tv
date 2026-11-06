@@ -91,7 +91,7 @@ class PlayerActivity : AppCompatActivity() {
     }
     private val handler = Handler(Looper.getMainLooper())
     private var topOverlay: View? = null
-    private var centerPlayPauseBtn: ImageButton? = null
+    private var centerPlayPauseBtn: TextView? = null
     private var gestureFeedbackBox: View? = null
     private var gestureIcon: ImageView? = null
     private var gestureProgress: ProgressBar? = null
@@ -185,6 +185,7 @@ class PlayerActivity : AppCompatActivity() {
     private val audioFx = AudioEnhancer(this)
     private var url: String = ""
     private var streamRetries = 0
+    private val MAX_STREAM_RETRIES = 6
     private var dialog: AlertDialog? = null
 
     // Sports Multi-Source State (Socolive / ColaTV / Gà Vàng / Khán Đài)
@@ -199,6 +200,30 @@ class PlayerActivity : AppCompatActivity() {
     private var isIptvMode: Boolean = false
     private var currentChannelIndex: Int = 0
     private var pendingChannelIndex: Int = -1
+
+    // ===== HUB TRÌNH PHÁT RIÊNG =====
+    // Mỗi hub mở player với một "face" riêng: thanh điều khiển và các tính năng
+    // chỉ hiện đúng thứ hub đó cần, thay vì dồn mọi nút vào một màn hình.
+    //   SPORTS -> Thể thao: server, multiview, chuyển kênh
+    //   TV     -> Truyền hình: sidebar kênh, EPG, yêu thích, chuyển kênh
+    //   FILM   -> Phim truyện: tập, seek, lưu tiến độ, chất lượng
+    //   GENERIC-> Dùng chung (deep link / lịch trình / tìm kiếm)
+    object Hub {
+        const val SPORTS = "sports"
+        const val TV = "tv"
+        const val FILM = "film"
+        const val GENERIC = "generic"
+        fun from(s: String?): String = when (s) {
+            SPORTS, TV, FILM -> s
+            else -> GENERIC
+        }
+    }
+    private var hubKind: String = Hub.GENERIC
+
+    // Danh sách luồng dự phòng cho cùng một nội dung (nút "Đổi nguồn" trên thể thao,
+    // hoặc khi một link chết thì tự thử link kế tiếp). Mỗi hub tự nạp vào đây.
+    private val backupUrls = mutableListOf<String>()
+    private var backupIndex = -1
 
     // VOD Cinema State (Direct HLS 4K)
     private var isVodMode: Boolean = false
@@ -322,6 +347,12 @@ class PlayerActivity : AppCompatActivity() {
         setContentView(R.layout.activity_player)
 
         url = intent.getStringExtra("url") ?: ""
+        hubKind = Hub.from(intent.getStringExtra("hub"))
+        // Các link dự phòng, ngăn cách bằng dấu | (tránh trùng ký tự trong URL)
+        intent.getStringExtra("backup_urls")?.split('|')?.map { it.trim() }?.filter { it.isNotEmpty() }
+            ?.let { backupUrls.addAll(it) }
+        intent.getStringExtra("server_urls")?.split('|')?.map { it.trim() }?.filter { it.isNotEmpty() }
+            ?.let { backupUrls.addAll(it) }
         val name = intent.getStringExtra("name") ?: getString(R.string.player_default_name)
         isIptvMode = intent.getBooleanExtra("is_iptv", false)
         currentChannelIndex = intent.getIntExtra("current_index", 0)
@@ -394,17 +425,17 @@ class PlayerActivity : AppCompatActivity() {
         tvCarouselCount = findViewById(R.id.tvCarouselCount)
         tvCarouselEpgPreview = findViewById(R.id.tvCarouselEpgPreview)
 
-        val channelListBtn = findViewById<ImageButton>(R.id.channelListBtn)
-        val qualityBtn = findViewById<ImageButton>(R.id.qualityBtn)
-        val audioBtn = findViewById<ImageButton>(R.id.audioBtn)
-        val aspectBtn = findViewById<ImageButton>(R.id.aspectBtn)
-        val sleepBtn = findViewById<ImageButton>(R.id.sleepBtn)
-        val audioTrackBtn = findViewById<ImageButton>(R.id.audioTrackBtn)
-        val audioBoostBtn = findViewById<ImageButton>(R.id.audioBoostBtn)
-        val statsBtn = findViewById<ImageButton>(R.id.statsBtn)
-        val multiBtn = findViewById<ImageButton>(R.id.multiBtn)
-        val pipBtn = findViewById<ImageButton>(R.id.pipBtn)
-        val phoneMenuBtn = findViewById<ImageButton>(R.id.phoneMenuBtn)
+        val channelListBtn = findViewById<TextView>(R.id.channelListBtn)
+        val qualityBtn = findViewById<TextView>(R.id.qualityBtn)
+        val audioBtn = findViewById<TextView>(R.id.audioBtn)
+        val aspectBtn = findViewById<TextView>(R.id.aspectBtn)
+        val sleepBtn = findViewById<TextView>(R.id.sleepBtn)
+        val audioTrackBtn = findViewById<TextView>(R.id.audioTrackBtn)
+        val audioBoostBtn = findViewById<TextView>(R.id.audioBoostBtn)
+        val statsBtn = findViewById<TextView>(R.id.statsBtn)
+        val multiBtn = findViewById<TextView>(R.id.multiBtn)
+        val pipBtn = findViewById<TextView>(R.id.pipBtn)
+        val phoneMenuBtn = findViewById<TextView>(R.id.phoneMenuBtn)
 
         // Mobile vs TV UI Adaptations
         centerPlayPauseBtn = findViewById(R.id.centerPlayPauseBtn)
@@ -430,10 +461,10 @@ class PlayerActivity : AppCompatActivity() {
             phoneMenuBtn?.setOnClickListener { showPhoneMoreOptions() }
 
             centerPlayPauseBtn?.setOnClickListener { togglePlayPause() }
-            findViewById<ImageButton>(R.id.phoneAspectBtn)?.setOnClickListener { cycleAspectRatio() }
-            findViewById<ImageButton>(R.id.phoneRotateBtn)?.setOnClickListener { toggleScreenOrientation() }
+            findViewById<TextView>(R.id.phoneAspectBtn)?.setOnClickListener { cycleAspectRatio() }
+            findViewById<TextView>(R.id.phoneRotateBtn)?.setOnClickListener { toggleScreenOrientation() }
             phoneUnlockContainer = findViewById(R.id.phoneUnlockContainer)
-            findViewById<ImageButton>(R.id.phoneLockBtn)?.setOnClickListener { setScreenLock(true) }
+            findViewById<TextView>(R.id.phoneLockBtn)?.setOnClickListener { setScreenLock(true) }
             phoneUnlockContainer?.setOnClickListener { setScreenLock(false) }
 
             // Thanh tua VOD được nối ở wireVodSeekBar() phía dưới (dùng chung phone + TV)
@@ -498,10 +529,13 @@ class PlayerActivity : AppCompatActivity() {
         // Thanh điều khiển VOD trên TV (bấm OK để mở): Cài Đặt / Tập trước / Tua / Phát / Tập tiếp / Danh sách tập
         wireVodControlBar()
 
+        // Mỗi hub có một giao diện trình phát riêng (xem applyHubLayout)
+        applyHubLayout()
+
         initPlayer()
         val pv = findViewById<PlayerView>(R.id.playerView)
 
-        findViewById<ImageButton>(R.id.backBtn).setOnClickListener { finish() }
+        findViewById<TextView>(R.id.backBtn).setOnClickListener { finish() }
         findViewById<Button>(R.id.btnPlayerRetry)?.setOnClickListener {
             findViewById<View>(R.id.playerErrorBox)?.visibility = View.GONE
             findViewById<View>(R.id.bufferBox)?.visibility = View.VISIBLE
@@ -542,6 +576,65 @@ class PlayerActivity : AppCompatActivity() {
     // ================= MOBILE GESTURES & INTERACTIONS =================
     private var isDraggingGesture = false
     private var isBrightnessGesture = false
+
+    // ===== GIAO DIỆN TRÌNH PHÁT RIÊNG THEO HUB =====
+    // Thay vì một thanh điều khiển chung chứa cả 30 nút, mỗi hub chỉ hiện
+    // nhóm nút nó cần. Nhóm nút của hub nào cũng nằm trong layout, chỉ là
+    // ẩn/hiện lại — nên không phải viết lại activity.
+    private fun applyHubLayout() {
+        if (findViewById<View>(R.id.topOverlay) == null) return
+
+        // Nguyên tắc: hàm này CHỈ ẩn bớt những nút hub không dùng tới, không bật lại
+        // nút mà logic theo chế độ (VOD / live / phone) đã ẩn — tránh làm lộ nút
+        // không có tác dụng trong ngữ cảnh đó.
+        fun hide(vararg ids: Int) {
+            for (id in ids) findViewById<View>(id)?.visibility = View.GONE
+        }
+
+        when (hubKind) {
+            Hub.SPORTS -> {
+                // Thể thao: chỉ cần Quay lại + Tùy chọn phát + Multiview.
+                // Không có danh sách kênh IPTV, không có tua phim.
+                hide(R.id.channelListBtn, R.id.qualityBtn, R.id.audioBtn, R.id.aspectBtn,
+                     R.id.sleepBtn, R.id.audioTrackBtn, R.id.audioBoostBtn, R.id.statsBtn)
+                if (isVodMode) vodControlBar?.visibility = View.GONE
+                channelSidebar?.visibility = View.GONE
+            }
+            Hub.TV -> {
+                // Truyền hình: Quay lại + Danh sách kênh + Tùy chọn phát.
+                // Multiview và tua phim không thuộc hub này.
+                hide(R.id.multiBtn, R.id.qualityBtn, R.id.audioBtn, R.id.aspectBtn,
+                     R.id.sleepBtn, R.id.audioTrackBtn, R.id.audioBoostBtn, R.id.statsBtn)
+                if (isVodMode) vodControlBar?.visibility = View.GONE
+            }
+            Hub.FILM -> {
+                // Phim truyện: Quay lại + tiêu đề + thanh tua/tập ở dưới.
+                // Không danh sách kênh, không multiview.
+                hide(R.id.channelListBtn, R.id.multiBtn, R.id.qualityBtn, R.id.audioBtn,
+                     R.id.aspectBtn, R.id.sleepBtn, R.id.audioTrackBtn, R.id.audioBoostBtn,
+                     R.id.statsBtn)
+                channelSidebar?.visibility = View.GONE
+            }
+            else -> {
+                // Deep link / lịch trình / tìm kiếm: giữ nguyên như cũ.
+                if (hubKind != Hub.SPORTS) hide(R.id.multiBtn)
+            }
+        }
+
+        // Nhãn hub ở góc tiêu đề để người dùng biết đang ở "mặt" trình phát nào
+        val hubLabel = when (hubKind) {
+            Hub.SPORTS -> "THỂ THAO"
+            Hub.TV -> "TRUYỀN HÌNH"
+            Hub.FILM -> "PHIM TRUYỆN"
+            else -> ""
+        }
+        if (hubLabel.isNotEmpty()) {
+            val title = findViewById<TextView>(R.id.playerTitle)
+            if (title != null && !title.text.contains(hubLabel)) {
+                title.text = "$hubLabel · ${title.text}"
+            }
+        }
+    }
 
     private fun setupMobileGestures() {
         val pv = findViewById<PlayerView>(R.id.playerView) ?: return
@@ -700,11 +793,11 @@ class PlayerActivity : AppCompatActivity() {
         val p = player ?: return
         if (p.isPlaying) {
             p.pause()
-            centerPlayPauseBtn?.setImageResource(R.drawable.kl_p_play)
+            centerPlayPauseBtn?.text = "▶ PHÁT"
             Toast.makeText(this, "Tạm dừng", Toast.LENGTH_SHORT).show()
         } else {
             p.play()
-            centerPlayPauseBtn?.setImageResource(R.drawable.kl_p_pause)
+            centerPlayPauseBtn?.text = "❚❚ TẠM DỪNG"
             Toast.makeText(this, "Tiếp tục phát", Toast.LENGTH_SHORT).show()
         }
         showOverlay()
@@ -902,7 +995,7 @@ class PlayerActivity : AppCompatActivity() {
         val minutes = intArrayOf(0, 15, 30, 45, 60, 90, 120)
 
         AlertDialog.Builder(this, R.style.Theme_KenhLive_Dialog)
-            .setTitle("⏰ Hẹn Giờ Tắt TV")
+            .setTitle("Hẹn Giờ Tắt TV")
             .setItems(options) { d, which ->
                 val m = minutes[which]
                 handler.removeCallbacks(sleepTimerRunnable)
@@ -1380,15 +1473,39 @@ class PlayerActivity : AppCompatActivity() {
                             }
                         }
 
-                        // 3. Retry luồng thông thường nếu mạng chập chờn
-                        if (isNet && streamRetries < 2) {
+                        // 2b. Thử luồng dự phòng kế tiếp (nếu hub nào đó đưa danh sách link)
+                        if (backupUrls.isNotEmpty()) {
+                            val next = backupUrls.firstOrNull { it != url }
+                            if (next != null) {
+                                backupIndex = backupUrls.indexOf(next)
+                                url = next
+                                Toast.makeText(this@PlayerActivity, "Tự chuyển luồng dự phòng...", Toast.LENGTH_SHORT).show()
+                                prepareChannelUrl(next)
+                                return
+                            }
+                        }
+
+                        // 3. Retry luồng thông thường nếu mạng chập chờn.
+                        // Cấp số nhân 1.5s -> 3s -> 6s -> 12s (tối đa 6 lần) để không
+                        // dồn nhiều request vào lúc mạng đang chập chờn, và giữ
+                        // nguyên vị trí phát thay vì kéo về đầu.
+                        if (isNet && streamRetries < MAX_STREAM_RETRIES) {
+                            val wait = (1500L shl streamRetries.coerceAtMost(3)).coerceAtMost(12000L)
                             streamRetries++
                             Toast.makeText(
                                 this@PlayerActivity,
                                 getString(R.string.player_retry, streamRetries),
                                 Toast.LENGTH_SHORT
                             ).show()
-                            handler.postDelayed({ player?.prepare() }, 1500L * streamRetries)
+                            handler.postDelayed({
+                                val p = player ?: return@postDelayed
+                                if (isFinishing || isDestroyed) return@postDelayed
+                                val keep = p.currentPosition
+                                p.prepare()
+                                // VOD: giữ đúng chỗ đang xem, không reset về 00:00
+                                if (isVodMode && keep > 1000L) p.seekTo(keep)
+                                p.play()
+                            }, wait)
                         } else {
                             val msg = if (isNet) getString(R.string.player_net_error)
                             else getString(R.string.player_stream_error, error.errorCodeName)
@@ -1457,7 +1574,7 @@ class PlayerActivity : AppCompatActivity() {
             p.addListener(object : Player.Listener {
                 override fun onIsPlayingChanged(isPlaying: Boolean) {
                     if (DeviceMode.isPhone) {
-                        centerPlayPauseBtn?.setImageResource(if (isPlaying) R.drawable.kl_p_pause else R.drawable.kl_p_play)
+                        centerPlayPauseBtn?.text = if (isPlaying) "❚❚ TẠM DỪNG" else "▶ PHÁT"
                     }
                     if (isVodMode) {
                         if (isPlaying) {
@@ -1511,7 +1628,17 @@ class PlayerActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
-        if (player == null && url.isNotBlank()) initPlayer()
+        if (player == null && url.isNotBlank()) {
+            // Quay lại màn hình sau khi bị hệ thống dừng: dựng lại player và
+            // phát tiếp từ đúng chỗ đã lưu (không phát lại từ đầu).
+            streamRetries = 0
+            initPlayer()
+            if (isVodMode && startPositionMs > 1000L) {
+                player?.seekTo(startPositionMs)
+                hasSeekedToStart = true
+            }
+            player?.play()
+        }
     }
 
     // ===== Dialog cài đặt thống nhất: Hình ảnh + Âm thanh + Tỉ lệ + Bước tua =====
@@ -2068,7 +2195,7 @@ class PlayerActivity : AppCompatActivity() {
             centerPlayPauseBtn?.visibility = View.VISIBLE
             phoneBottomBar?.visibility = View.VISIBLE
             val isPlaying = player?.isPlaying == true
-            centerPlayPauseBtn?.setImageResource(if (isPlaying) R.drawable.kl_p_pause else R.drawable.kl_p_play)
+            centerPlayPauseBtn?.text = if (isPlaying) "❚❚ TẠM DỪNG" else "▶ PHÁT"
             // Thanh tua chỉ dành cho phim VOD (luồng live không tua được)
             if (isVodMode) {
                 phoneSeekRow?.visibility = View.VISIBLE
@@ -2405,10 +2532,16 @@ class PlayerActivity : AppCompatActivity() {
                 positionFromBackground = true
             }
         }
-        player?.stop()
-        player?.clearMediaItems()
-        player?.release()
-        player = null
+        // Chỉ dừng/nhả player khi thật sự rời màn hình, không phải khi chỉ bị che
+        // (điện thoại rung, hệ thống bật panel nhanh...). Nếu không, luồng live bị cắt.
+        if (!isFinishing && !inPip) {
+            player?.playWhenReady = false
+        } else {
+            player?.stop()
+            player?.clearMediaItems()
+            player?.release()
+            player = null
+        }
     }
 
     override fun onDestroy() {
@@ -2421,12 +2554,15 @@ class PlayerActivity : AppCompatActivity() {
         handler.removeCallbacks(autoRecoveryRunnable)
         handler.removeCallbacks(sleepTimerRunnable)
         handler.removeCallbacks(hideCarouselRunnable)
+        handler.removeCallbacks(seekUpdateRunnable)
         try { loudnessEnhancer?.release() } catch (_: Exception) {}
         loudnessEnhancer = null
+        audioFx.detach()
         player?.stop()
         player?.clearMediaItems()
         player?.release()
         player = null
+        backupUrls.clear()
     }
 
     private class CarouselVH(v: View) : RecyclerView.ViewHolder(v) {

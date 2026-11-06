@@ -207,6 +207,7 @@ class ScheduleFragment : Fragment() {
             startActivity(
                 Intent(requireContext(), PlayerActivity::class.java)
                     .putExtra("url", url)
+                    .putExtra("hub", PlayerActivity.Hub.SPORTS)
                     .putExtra("name", "${match.host} vs ${match.guest} · ${room.blvName}")
                     .putExtra("roomNum", room.roomNum)
                     .putExtra("matchTitle", "${match.host} vs ${match.guest}")
