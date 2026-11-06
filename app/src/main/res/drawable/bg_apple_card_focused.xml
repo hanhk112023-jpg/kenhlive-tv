@@ -4,11 +4,11 @@
     <corners android:radius="16dp" />
     <gradient
         android:angle="315"
-        android:startColor="#283550"
-        android:centerColor="#1B2335"
-        android:endColor="#141B2A"
+        android:startColor="#223044"
+        android:centerColor="#16202F"
+        android:endColor="#101826"
         android:type="linear" />
     <stroke
         android:width="2dp"
-        android:color="#FF9F0A" />
+        android:color="@color/kl_brand" />
 </shape>
