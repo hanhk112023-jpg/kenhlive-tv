@@ -141,6 +141,32 @@ if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
   } >> "$GITHUB_STEP_SUMMARY"
 fi
 
+# Đăng link vào issue cố định: log của job đang chạy KHÔNG đọc được qua API
+# (GitHub trả BlobNotFound tới khi job kết thúc), nên issue là kênh realtime duy nhất.
+if [ -n "${GH_TOKEN:-}" ] && [ -n "${ISSUE_NUMBER:-}" ] && [ -n "${GITHUB_REPOSITORY:-}" ]; then
+  NOW_VN=$(TZ=Asia/Ho_Chi_Minh date '+%H:%M:%S %d/%m/%Y')
+  BODY=$(python3 - "$LIVE_URL" "$NOW_VN" "$DURATION_MIN" << 'PY'
+import json,sys
+url,now,dur=sys.argv[1],sys.argv[2],sys.argv[3]
+print(json.dumps({"body":f"""### 🖥 Link điều khiển trực tiếp
+
+**{url}**
+
+- Bắt đầu: **{now}** (giờ VN) — sống **{dur} phút**
+- Mở trên điện thoại/máy tính: thấy màn hình Android TV thật, bấm ⬆⬇⬅➡ OK Back Home ngay trên web
+- Không cần AI, không cần cài gì
+"""}))
+PY
+)
+  CODE=$(curl -sS -m 20 -o /tmp/issue_resp.json -w '%{http_code}' -X POST \
+    -H "Authorization: token ${GH_TOKEN}" -H "Accept: application/vnd.github+json" \
+    "https://api.github.com/repos/${GITHUB_REPOSITORY}/issues/${ISSUE_NUMBER}/comments" \
+    -d "$BODY")
+  log "đăng link vào issue #${ISSUE_NUMBER}: HTTP ${CODE}"
+else
+  log "bỏ qua đăng issue (thiếu GH_TOKEN/ISSUE_NUMBER)"
+fi
+
 # Kiểm chứng tunnel thật sự phục vụ được (không chỉ có URL)
 for i in $(seq 1 15); do
   CODE=$(curl -sS -m 10 -o /dev/null -w '%{http_code}' "$LIVE_URL" 2>/dev/null || echo 000)
