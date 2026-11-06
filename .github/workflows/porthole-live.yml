@@ -1,0 +1,132 @@
+name: Porthole Live (điều khiển app qua web)
+
+# Đưa app KenhLive ra WEB: dựng emulator Android TV trên runner, chạy Porthole
+# (giolaq/porthole) phát màn hình ra trình duyệt, rồi mở một đường hầm công khai
+# (cloudflared quick tunnel) để mở link bằng điện thoại/máy tính và tự bấm D-pad.
+# KHÔNG dùng AI: mọi thao tác là người thật bấm trên web.
+
+on:
+  workflow_dispatch:
+    inputs:
+      duration:
+        description: 'Số phút giữ phiên web mở (mặc định 90)'
+        required: false
+        default: '90'
+      api_level:
+        description: 'API level của emulator'
+        required: false
+        default: '30'
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+
+      # Lấy APK debug mới nhất từ lần Build APK thành công gần nhất (nhanh hơn gradle ~5 phút).
+      - name: Tải APK từ Build APK gần nhất
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          API="https://api.github.com/repos/${{ github.repository }}"
+          RID=$(curl -sS -H "Authorization: token $GH_TOKEN" \
+            "$API/actions/workflows/build.yml/runs?branch=main&status=success&per_page=1" \
+            | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['workflow_runs'][0]['id'] if d['workflow_runs'] else '')")
+          [ -n "$RID" ] || { echo "::error::Không có run Build APK thành công"; exit 1; }
+          echo "Build run: $RID"
+          AID=$(curl -sS -H "Authorization: token $GH_TOKEN" "$API/actions/runs/$RID/artifacts" \
+            | python3 -c "
+          import json,sys
+          arts=json.load(sys.stdin).get('artifacts',[])
+          pick=[a for a in arts if 'debug' in a['name'].lower()]
+          pick=pick or arts
+          print(pick[0]['id'] if pick else '')
+          ")
+          [ -n "$AID" ] || { echo "::error::Không thấy artifact APK"; exit 1; }
+          echo "Artifact: $AID"
+          mkdir -p /tmp/apk && cd /tmp/apk
+          curl -sSL -H "Authorization: token $GH_TOKEN" -o apk.zip "$API/actions/artifacts/$AID/zip"
+          unzip -q -o apk.zip
+          APK=$(find /tmp/apk -name '*.apk' | head -1)
+          [ -n "$APK" ] || { echo "::error::Không giải nén được APK"; exit 1; }
+          cp "$APK" /tmp/app-debug.apk
+          ls -lh /tmp/app-debug.apk
+
+      - name: Set up proxy VN
+        env:
+          SUB_URL: ${{ secrets.YUNA_SUB_URL }}
+          STATIC_YAML: ${{ secrets.YUNA_PROXY_YAML }}
+        run: |
+          set -euo pipefail
+          if [ -z "$SUB_URL" ] && [ -z "$STATIC_YAML" ]; then
+            echo "Không có secret proxy — bỏ qua (app vẫn mở, chỉ nguồn phim có thể lỗi)"
+            exit 0
+          fi
+          MH=$(ls /usr/local/bin/mihomo 2>/dev/null || true)
+          if [ -z "$MH" ]; then
+            VER=v1.19.30
+            curl -sSL -o /tmp/mihomo.gz "https://github.com/MetaCubeX/mihomo/releases/download/${VER}/mihomo-linux-amd64-${VER}.gz"
+            gunzip -f /tmp/mihomo.gz && install -m 0750 /tmp/mihomo /usr/local/bin/mihomo
+          fi
+          if [ -n "$STATIC_YAML" ]; then
+            printf '%s\n' "$STATIC_YAML" > /tmp/mihomo_ci.yaml
+          else
+            curl -sSL -m 40 -H 'User-Agent: clash-verge/1.6.6' -o /tmp/sub_full.yaml "$SUB_URL"
+            python3 qa/ci_sub_to_yaml.py
+          fi
+          nohup mihomo -f /tmp/mihomo_ci.yaml -d /tmp/mihomo_ci > /tmp/mihomo.log 2>&1 &
+          sleep 4
+          if curl -sS -m 12 -x http://127.0.0.1:7891 https://api.ipify.org > /tmp/exit_ip.txt 2>/dev/null; then
+            echo "proxy VN OK, exit IP $(cat /tmp/exit_ip.txt)"
+            echo "7891" > /tmp/proxy_port.txt
+          else
+            echo "proxy không sẵn sàng — app chạy trực tiếp (nguồn phim có thể lỗi)"
+          fi
+
+      - name: KVM permissions
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Porthole + cloudflared
+        run: |
+          set -euo pipefail
+          npm install -g portholejs
+          porthole doctor || true
+          curl -sSL -o /tmp/cloudflared \
+            https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64
+          chmod +x /tmp/cloudflared
+          /tmp/cloudflared --version
+
+      - name: Dựng emulator + phát app ra web
+        uses: reactivecircus/android-emulator-runner@v2
+        env:
+          DURATION_MIN: ${{ inputs.duration }}
+        with:
+          api-level: ${{ inputs.api_level }}
+          arch: x86
+          target: android-tv
+          profile: tv_1080p
+          emulator-options: -no-window -no-audio -no-boot-anim -gpu swiftshader_indirect -no-snapshot
+          script: |
+            if [ -f /tmp/proxy_port.txt ]; then export PROXY_PORT=$(cat /tmp/proxy_port.txt); fi
+            bash qa/porthole/live_server.sh
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: porthole-live-log
+          path: /tmp/porthole-live/
+          if-no-files-found: ignore
+          retention-days: 3
