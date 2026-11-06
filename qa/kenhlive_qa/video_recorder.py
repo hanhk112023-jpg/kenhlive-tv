@@ -13,18 +13,18 @@ import time
 
 
 class VideoRecorder:
-    def __init__(self, serial=None, out_dir="/tmp/qa_report", max_total_seconds=1200):
+    def __init__(self, serial=None, out_dir="/tmp/qa_report", max_total_seconds=7200):
         self.serial = serial
         self.adb = f"adb -s {serial}" if serial else "adb"
-        self.out_dir = out_dir
-        os.makedirs(out_dir, exist_ok=True)
+        self.out_dir = os.path.abspath(out_dir)
+        os.makedirs(self.out_dir, exist_ok=True)
         self.max_total_seconds = max_total_seconds
         self.stop_event = threading.Event()
         self.worker_thread = None
         self.remote_chunks = []
         self.local_chunks = []
-        self.final_mp4 = os.path.join(out_dir, "full_qa_tour.mp4")
-        self.timelapse_mp4 = os.path.join(out_dir, "qa_timelapse.mp4")
+        self.final_mp4 = os.path.join(self.out_dir, "full_qa_tour.mp4")
+        self.timelapse_mp4 = os.path.join(self.out_dir, "qa_timelapse.mp4")
         self.is_recording = False
 
     def start(self):
@@ -106,17 +106,36 @@ class VideoRecorder:
                 concat_list = os.path.join(self.out_dir, "concat.txt")
                 with open(concat_list, "w") as f:
                     for c in self.local_chunks:
-                        f.write(f"file '{c}'\n")
+                        f.write(f"file '{os.path.abspath(c)}'\n")
                 cmd_concat = f"ffmpeg -y -f concat -safe 0 -i {concat_list} -c copy {raw_full}"
-                subprocess.run(cmd_concat, shell=True, capture_output=True)
+                res_concat = subprocess.run(cmd_concat, shell=True, capture_output=True)
+                if not os.path.exists(raw_full) or os.path.getsize(raw_full) < 2000 or res_concat.returncode != 0:
+                    print("⚠️ [VIDEO RECORDER] Concat stream-copy gặp lỗi timestamp, re-encode ghép toàn bộ chunks...", flush=True)
+                    cmd_concat_re = f"ffmpeg -y -f concat -safe 0 -i {concat_list} -c:v libx264 -preset veryfast -crf 26 -pix_fmt yuv420p {raw_full}"
+                    subprocess.run(cmd_concat_re, shell=True, capture_output=True)
                 if not os.path.exists(raw_full) or os.path.getsize(raw_full) < 2000:
                     raw_full = self.local_chunks[0]
 
-            # Kiểm tra kích thước file; nếu > 45MB thì re-encode CRF 27 để đảm bảo giới hạn tải 50MB
+            # Kiểm tra thời lượng và kích thước file
             raw_size = os.path.getsize(raw_full) if os.path.exists(raw_full) else 0
-            if raw_size > 45 * 1024 * 1024:
-                print(f"🎬 [VIDEO] File raw ({raw_size//(1024*1024)}MB) vượt 45MB, đang nén tối ưu CRF 27...", flush=True)
-                cmd_opt = f"ffmpeg -y -i {raw_full} -c:v libx264 -preset veryfast -crf 27 -pix_fmt yuv420p -movflags +faststart {self.final_mp4}"
+            
+            # Lấy thời lượng thực tế của raw_full
+            duration_sec = 0.0
+            try:
+                probe_res = subprocess.run(f"ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 {raw_full}", shell=True, capture_output=True, text=True)
+                duration_sec = float(probe_res.stdout.strip())
+            except Exception:
+                duration_sec = 0.0
+
+            print(f"🎬 [VIDEO] File raw hoàn chỉnh: {raw_size//(1024*1024)}MB, thời lượng: {duration_sec:.1f}s", flush=True)
+
+            # Nếu thời lượng dài (> 10 phút do thời gian chờ AI suy nghĩ), tự động tăng tốc 6x
+            # để video toàn cảnh trọn vẹn từ đầu đến cuối chỉ dài 5-8 phút, xem được toàn bộ các thao tác và < 40MB
+            if duration_sec > 600.0 or raw_size > 45 * 1024 * 1024:
+                speed_factor = max(4.0, min(8.0, duration_sec / 360.0))
+                pts_factor = 1.0 / speed_factor
+                print(f"🎬 [VIDEO] Tối ưu hóa thời lượng tour ({duration_sec:.0f}s -> {duration_sec*pts_factor:.0f}s, speed {speed_factor:.1f}x) để xem trọn vẹn mọi thao tác trên Telegram...", flush=True)
+                cmd_opt = f"ffmpeg -y -i {raw_full} -filter:v 'setpts={pts_factor:.4f}*PTS' -c:v libx264 -preset veryfast -crf 26 -pix_fmt yuv420p -movflags +faststart {self.final_mp4}"
                 subprocess.run(cmd_opt, shell=True, capture_output=True)
             else:
                 # Stream-copy nhanh kèm di chuyển moov atom lên đầu (+faststart) để xem online không cần đợi tải hết

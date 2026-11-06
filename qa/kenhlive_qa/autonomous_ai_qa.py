@@ -1753,10 +1753,8 @@ class AutonomousQASuite:
                 print(f"   🤖 [Session #{self.session.global_step_counter + 1} · {mission.name}] ({provider}) Thought: {thought[:90]}", flush=True)
                 print(f"      -> Action: {act_type} {act_param}", flush=True)
 
-                # Chụp screenshot tiêu biểu cho bước
-                step_shot = None
-                if step_num == 1 or act_type in ("SWITCH_TAB", "VERIFY_STREAM") or defect:
-                    step_shot = self._record_screen(f"step_{self.session.global_step_counter + 1:02d}_{mission.name.lower()[:10]}")
+                # Chụp screenshot cho từng bước để lưu trữ và xây dựng video tour trực quan
+                step_shot = self._record_screen(f"step_{self.session.global_step_counter + 1:03d}_{mission.name.lower()[:8]}")
 
                 # Ghi nhận vào Session Manager
                 self.session.record_step(
