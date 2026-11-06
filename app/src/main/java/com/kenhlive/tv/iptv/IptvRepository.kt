@@ -370,7 +370,7 @@ object IptvRepository {
                             Log.w("IptvRepository", "Unknown stream host for channel $curName: $streamHost")
                         }
                     } catch (_: Exception) { }
-                    val chId = if (curId.isNotBlank()) curId else "ch_${list.size}_${cleanName.hashCode()}"
+                    val chId = if (curId.isNotBlank()) curId else "ch_${list.size}_${curName.hashCode()}"
                     list.add(
                         IptvChannel(
                             id = chId,
