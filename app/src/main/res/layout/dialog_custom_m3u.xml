@@ -75,7 +75,7 @@
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:layout_marginTop="8dp"
-        android:background="@drawable/bg_search_input"
+        android:background="@drawable/search_input_bg"
         android:paddingLeft="14dp"
         android:paddingRight="14dp"
         android:hint="https://tinyurl.com/vmt47 hoặc link M3U của bạn"
