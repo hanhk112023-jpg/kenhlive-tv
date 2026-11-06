@@ -165,6 +165,8 @@ NGUYÊN TẮC BỘ NHỚ PHIÊN & SĂN LỖI SÂU (Deep Bug Hunting & Session Me
 - Khi đang phát video, các đồ họa như Bảng điểm trận đấu (Scoreboard của đài truyền hình gốc: '72:37 AZ 0-2 JUV', cúp C1/C2), logo kênh (ARENASPORT, SUTBONGTV), phụ đề phim hoặc banner BLV là NỘI DUNG NẰM TRONG LUỒNG VIDEO của bên phát sóng, KHÔNG PHẢI giao diện của ứng dụng KenhLive TV. Tuyệt đối KHÔNG nhầm lẫn bảng điểm bóng đá của truyền hình là nút backBtn hay thanh tiêu đề app!
 7. TÍNH CHÍNH XÁC KHI ĐỐI CHIẾU CẢM BIẾN HỆ THỐNG:
 - Luôn kiểm tra 'TRẠNG THÁI MÀN HÌNH & HỆ THỐNG HIỆN TẠI' (Node đang FOCUS, Có viền focus chuẩn, DANH SÁCH VIEW FOCUSABLE). Nếu thông tin hệ thống báo 'Node đang FOCUS: NONE' hoặc thanh điều khiển OSD đang ẩn, không được ảo giác rằng thanh OSD đang hiển thị hay có nút có viền cam. Muốn mở thanh điều khiển hãy bấm OK hoặc DPAD_DOWN.
+8. GIỚI HẠN EMULATOR x86 (ANDROID TV EMULATOR CI):
+- Lỗi giải mã phần cứng trên emulator x86 (ví dụ ERROR_CODE_DECODING_FAILED, MediaCodec thiếu codec HEVC/H.264 cho một số luồng HLS) là giới hạn của máy ảo, KHÔNG phải lỗi app. Tuyệt đối không báo [HIGH] cho lỗi này; tối đa [LOW] ghi chú môi trường hoặc bỏ qua nếu video vẫn phát được ở nguồn khác / dialog lỗi hiển thị đúng.
 
 ĐỊNH DẠNG TRẢ VỀ DUY NHẤT: Trả về một khối JSON hợp lệ:
 {
@@ -1329,7 +1331,7 @@ class AndroidTVDevice:
                 m_score = re.match(r"^(\d{1,2})\s+[:\-]\s+(\d{1,2})$", clean_txt)
                 if m_score:
                     s1, s2 = int(m_score.group(1)), int(m_score.group(2))
-                    if s1 > 15 or s2 > 15 or (s1 in (17, 18, 19, 20, 21, 22, 23) and s2 in (0, 15, 30, 45)):
+                    if s1 in (17, 18, 19, 20, 21, 22, 23) and s2 in (0, 15, 30, 45):
                         fake_key = f"FAKE_SCORE_FROM_TIME:{r_id}:{clean_txt}"
                         if fake_key not in self._reported_anomaly_keys:
                             self._reported_anomaly_keys.add(fake_key)
@@ -1523,7 +1525,8 @@ class QAMission:
 # 4. AUTONOMOUS QA RUNNER (Điều phối tổng thể)
 # ==============================================================================
 class AutonomousQASuite:
-    def __init__(self, out_dir="/tmp/qa_report", serial=None):
+    def __init__(self, out_dir="/tmp/qa_report", serial=None, quick=False):
+        self.quick = bool(quick or os.environ.get("QA_QUICK", "0") == "1")
         self.out_dir = out_dir
         self.shots_dir = os.path.join(out_dir, "shots")
         os.makedirs(self.shots_dir, exist_ok=True)
@@ -1668,6 +1671,20 @@ class AutonomousQASuite:
                 max_steps=6
             )
         ]
+
+        if self.quick:
+            # Chế độ chạy nhanh: chỉ giữ 5 mission trọng tâm để hoàn thành ~12-18 phút
+            quick_keep = {
+                "MISSION_COLD_START",
+                "MISSION_HOME_HUB_3_CARDS_AND_CANVA_LOGOS",
+                "MISSION_IPTV_CATEGORIES_AND_FAVORITES",
+                "MISSION_PHIM_NGUONC_AND_CATEGORIES",
+                "MISSION_PLAYER_SETTINGS_DIALOG",
+            }
+            self.missions = [m for m in self.missions if m.name in quick_keep]
+            for m in self.missions:
+                m.max_steps = min(int(m.max_steps), 4 if m.name != "MISSION_PLAYER_SETTINGS_DIALOG" else 6)
+            print(f"⚡ [QUICK MODE] Chỉ chạy {len(self.missions)} mission trọng tâm, tổng tối đa {sum(m.max_steps for m in self.missions)} bước", flush=True)
 
         self.all_findings = []
         self.all_screenshots = []

@@ -35,7 +35,7 @@ if not args.legacy:
     try:
         from autonomous_ai_qa import AutonomousQASuite
         print("🤖 [QA Mode] Đang khởi chạy 100% Autonomous AI QA Agent Suite...", flush=True)
-        suite = AutonomousQASuite(out_dir=args.out, serial=args.serial)
+        suite = AutonomousQASuite(out_dir=args.out, serial=args.serial, quick=args.quick)
         suite.run()
         sys.exit(0)
     except Exception as e:

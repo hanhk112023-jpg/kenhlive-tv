@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       quick:
-        description: 'Bỏ qua probe auto-refresh 3 phút'
+        description: 'Chế độ nhanh (~12-18 phút, 5 mission trọng tâm: Cold Start, Home Hub, IPTV/M3U, Phim, Player)'
         type: boolean
         default: false
 
