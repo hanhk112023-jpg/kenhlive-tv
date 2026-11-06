@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/kl2_dialog_bg"
+    android:paddingLeft="28dp"
+    android:paddingRight="28dp"
+    android:paddingTop="22dp"
+    android:paddingBottom="22dp">
+
+    <!-- Top Header Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/ic_nav_tv"
+            android:tint="@color/kl_brand"
+            android:contentDescription="IPTV M3U" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginLeft="14dp"
+            android:orientation="vertical">
+
+            <TextView
+                style="@style/KL.Text.Section"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="DANH SÁCH PHÁT M3U TÙY CHỈNH"
+                android:textColor="#FFFFFF"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:letterSpacing="0.04" />
+
+            <TextView
+                style="@style/KL.Text.Meta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="Tự do thêm nguồn kênh truyền hình M3U / M3U8 của bạn"
+                android:textColor="#94A3B8"
+                android:textSize="12sp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginBottom="14dp"
+        android:background="#1A1F29" />
+
+    <!-- Label -->
+    <TextView
+        style="@style/KL.Text.Meta"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="ĐƯỜNG DẪN LINK M3U HOẶC M3U8:"
+        android:textColor="@color/kl_brand"
+        android:textSize="11.5sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.06" />
+
+    <!-- Input Box -->
+    <EditText
+        android:id="@+id/edtM3uUrl"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/bg_search_input"
+        android:paddingLeft="14dp"
+        android:paddingRight="14dp"
+        android:hint="https://tinyurl.com/vmt47 hoặc link M3U của bạn"
+        android:textColorHint="#64748B"
+        android:textColor="#FFFFFF"
+        android:textSize="13.5sp"
+        android:singleLine="true"
+        android:inputType="textUri"
+        android:focusable="true" />
+
+    <!-- Quick action chips row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:id="@+id/btnM3uSample"
+            android:layout_width="wrap_content"
+            android:layout_height="34dp"
+            android:background="@drawable/bg_badge_glass"
+            android:gravity="center"
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
+            android:text="Gợi ý: tinyurl.com/vmt47"
+            android:textColor="@color/kl_cyan"
+            android:textSize="11.5sp"
+            android:textStyle="bold"
+            android:clickable="true"
+            android:focusable="true" />
+
+        <TextView
+            android:id="@+id/btnM3uClear"
+            android:layout_width="wrap_content"
+            android:layout_height="34dp"
+            android:layout_marginLeft="10dp"
+            android:background="@drawable/bg_badge_glass"
+            android:gravity="center"
+            android:paddingLeft="12dp"
+            android:paddingRight="12dp"
+            android:text="Xóa link"
+            android:textColor="#F43F5E"
+            android:textSize="11.5sp"
+            android:textStyle="bold"
+            android:clickable="true"
+            android:focusable="true" />
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginBottom="16dp"
+        android:background="#1A1F29" />
+
+    <!-- Buttons row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end|center_vertical">
+
+        <Button
+            android:id="@+id/btnM3uClose"
+            android:layout_width="wrap_content"
+            android:layout_height="42dp"
+            android:background="@drawable/bg_button_ghost"
+            android:paddingLeft="22dp"
+            android:paddingRight="22dp"
+            android:text="Đóng"
+            android:textColor="#CBD5E1"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:focusable="true" />
+
+        <Button
+            android:id="@+id/btnM3uSave"
+            android:layout_width="wrap_content"
+            android:layout_height="42dp"
+            android:layout_marginLeft="12dp"
+            android:background="@drawable/bg_button_orange"
+            android:paddingLeft="24dp"
+            android:paddingRight="24dp"
+            android:text="LƯU &amp; NẠP KÊNH"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:focusable="true" />
+    </LinearLayout>
+
+</LinearLayout>

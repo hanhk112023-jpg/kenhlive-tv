@@ -52,9 +52,10 @@ class HomeHubFragment : Fragment() {
         val btnSearch = view.findViewById<View>(R.id.btnHubSearch)
         val tvClock = view.findViewById<TextView>(R.id.tvHubClock)
 
-        // Setup focus animations & click listeners for 2 main grand portal cards: THỂ THAO & PHIM TRUYỆN
+        // Setup focus animations & click listeners for 3 grand portal cards: THỂ THAO, TRUYỀN HÌNH & PHIM TRUYỆN
         val mainCards = listOf(
             cardSports to 0, // Thể thao
+            cardIptv to 2,   // Truyền hình
             cardPhim to 5    // Phim truyện
         )
 
@@ -192,11 +193,12 @@ class HomeHubFragment : Fragment() {
         if (!DeviceMode.isPhone) return
         val portal = root.findViewById<LinearLayout>(R.id.portalContainer) ?: return
         val cardSports = root.findViewById<View>(R.id.cardSports) ?: return
+        val cardIptv = root.findViewById<View>(R.id.cardIptv) ?: return
         val cardPhim = root.findViewById<View>(R.id.cardPhim) ?: return
         val btnSettings = root.findViewById<View>(R.id.btnHubSettings) ?: return
         val bottomRow = btnSettings.parent as? LinearLayout ?: return
         val d = root.resources.displayMetrics.density
-        val gap = (12 * d).toInt()
+        val gap = (10 * d).toInt()
         val portrait = DeviceMode.isPortrait(root.context)
 
         fun cardLp(v: View) = v.layoutParams as? LinearLayout.LayoutParams
@@ -210,6 +212,15 @@ class HomeHubFragment : Fragment() {
                 lp.rightMargin = 0
                 lp.bottomMargin = gap
                 cardSports.layoutParams = lp
+            }
+            cardLp(cardIptv)?.let { lp ->
+                lp.width = LinearLayout.LayoutParams.MATCH_PARENT
+                lp.height = 0
+                lp.weight = 1f
+                lp.leftMargin = 0
+                lp.rightMargin = 0
+                lp.bottomMargin = gap
+                cardIptv.layoutParams = lp
             }
             cardLp(cardPhim)?.let { lp ->
                 lp.width = LinearLayout.LayoutParams.MATCH_PARENT
@@ -240,15 +251,24 @@ class HomeHubFragment : Fragment() {
                 lp.width = 0
                 lp.height = LinearLayout.LayoutParams.MATCH_PARENT
                 lp.weight = 1f
-                lp.rightMargin = gap
+                lp.rightMargin = gap / 2
                 lp.bottomMargin = 0
                 cardSports.layoutParams = lp
+            }
+            cardLp(cardIptv)?.let { lp ->
+                lp.width = 0
+                lp.height = LinearLayout.LayoutParams.MATCH_PARENT
+                lp.weight = 1f
+                lp.leftMargin = gap / 2
+                lp.rightMargin = gap / 2
+                lp.bottomMargin = 0
+                cardIptv.layoutParams = lp
             }
             cardLp(cardPhim)?.let { lp ->
                 lp.width = 0
                 lp.height = LinearLayout.LayoutParams.MATCH_PARENT
                 lp.weight = 1f
-                lp.leftMargin = gap
+                lp.leftMargin = gap / 2
                 cardPhim.layoutParams = lp
             }
             bottomRow.orientation = LinearLayout.HORIZONTAL

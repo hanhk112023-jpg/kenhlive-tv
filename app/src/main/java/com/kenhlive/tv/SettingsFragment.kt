@@ -173,6 +173,14 @@ class SettingsFragment : Fragment() {
                     value = PlayerPrefs.seekStepSec(ctx).toString() + " giây"
                 ) { pickSeekStep() },
 
+                SettingsAdapter.Item.Section("TRUYỀN HÌNH & IPTV"),
+                SettingsAdapter.Item.Row(
+                    R.drawable.ic_nav_tv, "Danh sách kênh M3U tùy chỉnh",
+                    value = com.kenhlive.tv.iptv.IptvRepository.getCustomM3uUrl(ctx).ifBlank { "Mặc định (tinyurl.com/vmt47)" }
+                ) {
+                    showCustomM3uDialog(ctx)
+                },
+
                 SettingsAdapter.Item.Section(getString(R.string.settings_section_storage)),
                 SettingsAdapter.Item.Row(
                     R.drawable.ic_info, getString(R.string.settings_storage_usage),
@@ -454,6 +462,46 @@ class SettingsFragment : Fragment() {
     private fun versionName(): String = try {
         requireContext().packageManager.getPackageInfo(requireContext().packageName, 0).versionName ?: ""
     } catch (_: Exception) { "" }
+
+    private fun showCustomM3uDialog(ctx: Context) {
+        val v = LayoutInflater.from(ctx).inflate(R.layout.dialog_custom_m3u, null)
+        val edt = v.findViewById<EditText>(R.id.edtM3uUrl)
+        val btnSample = v.findViewById<TextView>(R.id.btnM3uSample)
+        val btnClear = v.findViewById<TextView>(R.id.btnM3uClear)
+        val btnClose = v.findViewById<android.widget.Button>(R.id.btnM3uClose)
+        val btnSave = v.findViewById<android.widget.Button>(R.id.btnM3uSave)
+
+        val currentUrl = com.kenhlive.tv.iptv.IptvRepository.getCustomM3uUrl(ctx)
+        edt.setText(currentUrl)
+        edt.setSelection(edt.text.length)
+
+        val d = androidx.appcompat.app.AlertDialog.Builder(ctx, R.style.Theme_KenhLive_Dialog)
+            .setView(v)
+            .create()
+
+        btnSample?.setOnClickListener {
+            edt.setText(com.kenhlive.tv.iptv.IptvRepository.DEFAULT_CUSTOM_M3U)
+            edt.setSelection(edt.text.length)
+        }
+
+        btnClear?.setOnClickListener {
+            edt.setText("")
+        }
+
+        btnClose?.setOnClickListener {
+            d.dismiss()
+        }
+
+        btnSave?.setOnClickListener {
+            val newUrl = edt.text.toString().trim()
+            com.kenhlive.tv.iptv.IptvRepository.setCustomM3uUrl(ctx, newUrl)
+            Toast.makeText(ctx, "Đã lưu đường dẫn M3U mới", Toast.LENGTH_SHORT).show()
+            d.dismiss()
+            rebuild()
+        }
+
+        d.show()
+    }
 
     private fun clearCache() {
         val ctx = requireContext()

@@ -616,39 +616,43 @@ Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn b�
             elif step == 1:
                 action_type = "KEY"
                 action_param = "DPAD_RIGHT"
-                thought = "Chuyển focus sang card TRUYỀN HÌNH"
+                thought = "Chuyển focus sang card TRUYỀN HÌNH (Hub Truyền Hình & M3U Tùy Chọn)"
             elif step == 2:
                 action_type = "KEY"
-                action_param = "DPAD_RIGHT"
-                thought = "Chuyển focus sang card PHIM TRUYỆN tích hợp Logo Canva 3D"
-            elif step == 3:
-                action_type = "KEY"
                 action_param = "ENTER"
-                thought = "Bấm OK vào card PHIM TRUYỆN để mở Giao diện Hub Phim riêng biệt"
-            elif step == 4:
+                thought = "Bấm OK vào card TRUYỀN HÌNH để mở Hub Truyền Hình riêng biệt"
+            elif step == 3:
                 action_type = "WAIT"
                 action_param = "2.0"
-                thought = "Chờ Hub Phim tải hoàn tất Hero Banner và các hàng phim độc lập"
-            elif step == 5:
-                action_type = "KEY"
-                action_param = "DPAD_DOWN"
-                thought = "Duyệt D-pad xuống danh sách phim trong Hub Phim"
-            elif step == 6:
+                thought = "Chờ Hub Truyền Hình nạp danh sách kênh và kênh M3U tùy chỉnh"
+            elif step == 4:
                 action_type = "KEY"
                 action_param = "DOUBLE_BACK"
-                thought = "Bấm DOUBLE_BACK để thoát Hub Phim quay lại Menu Chọn (Home Hub Tab 6)"
-            elif step == 7:
-                action_type = "KEY"
-                action_param = "DPAD_DOWN"
-                thought = "Di chuyển focus xuống hàng tiện ích 4 nút dưới đáy Home Hub"
-            elif step == 8:
+                thought = "Bấm DOUBLE_BACK thoát Hub Truyền Hình quay lại Cổng Chọn (Tab 6)"
+            elif step == 5:
                 action_type = "KEY"
                 action_param = "DPAD_RIGHT"
-                thought = "Duyệt qua các nút tiện ích đáy Home Hub"
+                thought = "Chuyển focus sang card PHIM TRUYỆN (Hub Phim Canva 3D)"
+            elif step == 6:
+                action_type = "KEY"
+                action_param = "ENTER"
+                thought = "Bấm OK vào card PHIM TRUYỆN mở Hub Phim riêng biệt"
+            elif step == 7:
+                action_type = "WAIT"
+                action_param = "2.0"
+                thought = "Chờ Hub Phim tải hoàn tất Hero Banner và các hàng phim"
+            elif step == 8:
+                action_type = "KEY"
+                action_param = "DOUBLE_BACK"
+                thought = "Bấm DOUBLE_BACK thoát Hub Phim quay lại Cổng Chọn (Tab 6)"
+            elif step == 9:
+                action_type = "KEY"
+                action_param = "DPAD_DOWN"
+                thought = "Di chuyển focus xuống hàng tiện ích 4 nút đáy Home Hub"
             else:
                 action_type = "COMPLETE_MISSION"
                 action_param = ""
-                thought = "Đã kiểm tra hoàn tất Cổng Chọn Home Hub, mở Hub Phim và quay lại thành công"
+                thought = "Đã kiểm tra hoàn tất Cổng Chọn 3 Card: Thể Thao, Truyền Hình (M3U) và Phim Truyện"
 
         elif m_id in ("MISSION_SCHEDULE_AND_SIDEBAR_NAVIGATION", "MISSION_SCHEDULE_EPG_AND_FIXTURE_TAP"):
             if step == 0:
@@ -699,24 +703,41 @@ Hãy phân tích hình ảnh màn hình hiện tại đính kèm cùng toàn b�
                 action_param = "2"
                 thought = "Chuyển sang Tab Truyền hình (IPTV)"
             elif step == 1:
+                action_type = "WAIT"
+                action_param = "2.0"
+                thought = "Chờ tải danh sách kênh IPTV và M3U tùy chọn"
+            elif step == 2:
                 action_type = "KEY"
                 action_param = "DPAD_DOWN"
                 thought = "Di chuyển focus xuống lưới kênh truyền hình"
-            elif step == 2:
+            elif step == 3:
                 action_type = "LONG_PRESS"
                 action_param = "OK"
                 thought = "Bấm giữ phím OK để lưu kênh vào mục Kênh Yêu Thích"
-            elif step == 3:
-                action_type = "KEY"
-                action_param = "DPAD_UP"
-                thought = "Di chuyển lên thanh danh mục để kiểm tra tab Yêu Thích"
             elif step == 4:
                 action_type = "KEY"
+                action_param = "DPAD_UP"
+                thought = "Di chuyển lên thanh danh mục để kiểm tra tab Yêu Thích và các nhóm kênh"
+            elif step == 5:
+                action_type = "KEY"
                 action_param = "DPAD_RIGHT"
-                thought = "Duyệt qua các nhóm kênh truyền hình"
+                thought = "Duyệt qua nhóm M3U Của Tôi / Thể Thao Quốc Tế"
+            elif step == 6:
+                action_type = "KEY"
+                action_param = "DPAD_RIGHT"
+                thought = "Di chuyển sang nút '➕ THÊM M3U'"
+            elif step == 7:
+                action_type = "KEY"
+                action_param = "ENTER"
+                thought = "Bấm OK mở hộp thoại DialogCustomM3u kiểm tra cấu hình link M3U cá nhân"
+            elif step == 8:
+                action_type = "KEY"
+                action_param = "BACK"
+                thought = "Bấm BACK đóng hộp thoại DialogCustomM3u"
             else:
                 action_type = "COMPLETE_MISSION"
                 action_param = ""
+                thought = "Đã kiểm tra danh mục IPTV, nạp M3U và lưu kênh yêu thích"
 
         elif m_id in ("MISSION_IPTV_EPG_AND_HERO_PREVIEW", "MISSION_IPTV_EPG_AND_ZAPPING_PLAYER"):
             if step == 0:
@@ -1593,9 +1614,9 @@ class AutonomousQASuite:
             QAMission(
                 "MISSION_IPTV_CATEGORIES_AND_FAVORITES",
                 "Truyền Hình IPTV, Lưới Kênh & Kênh Yêu Thích (Favorites Long-Press)",
-                "Chuyển sang Tab IPTV (Tab 2), duyệt qua các danh mục kênh, test Long-press OK lưu Kênh Yêu Thích, duyệt tab Yêu Thích.",
-                "Lưu kênh yêu thích thành công, lưới kênh nạp đủ logo sắc nét.",
-                max_steps=6
+                "Chuyển sang Tab IPTV (Tab 2), duyệt qua các danh mục kênh, test Long-press OK lưu Kênh Yêu Thích, duyệt tab Yêu Thích, kiểm tra nút THÊM M3U và Dialog cấu hình playlist M3U cá nhân.",
+                "Lưu kênh yêu thích thành công, mở Dialog M3U mượt mà, lưới kênh nạp đủ logo sắc nét.",
+                max_steps=10
             ),
             QAMission(
                 "MISSION_IPTV_EPG_AND_ZAPPING_PLAYER",

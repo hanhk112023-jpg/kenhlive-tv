@@ -112,6 +112,10 @@ class IptvFragment : Fragment() {
         heroHintText = view.findViewById(R.id.heroHintText)
         applyHeroLayoutForDevice()
 
+        view.findViewById<View>(R.id.btnIptvAddM3u)?.setOnClickListener {
+            showCustomM3uDialog()
+        }
+
         heroPreviewBox?.setOnClickListener {
             currentlyFocusedChannel?.let { ch ->
                 val idx = displayedChannels.indexOf(ch).coerceAtLeast(0)
@@ -336,20 +340,66 @@ class IptvFragment : Fragment() {
         loadData()
     }
 
-    private fun loadData() {
-        val cached = IptvRepository.getCachedChannelsDisk(requireContext())
-        if (!cached.isNullOrEmpty()) {
-            allChannels = cached
-            loadingView.visibility = View.GONE
-            emptyText.visibility = View.GONE
-            populateUi(cached, focusFirst = true)
-        } else {
+    private    fun showCustomM3uDialog() {
+        val ctx = context ?: return
+        val v = LayoutInflater.from(ctx).inflate(R.layout.dialog_custom_m3u, null)
+        val edt = v.findViewById<EditText>(R.id.edtM3uUrl)
+        val btnSample = v.findViewById<TextView>(R.id.btnM3uSample)
+        val btnClear = v.findViewById<TextView>(R.id.btnM3uClear)
+        val btnClose = v.findViewById<android.widget.Button>(R.id.btnM3uClose)
+        val btnSave = v.findViewById<android.widget.Button>(R.id.btnM3uSave)
+
+        val currentUrl = IptvRepository.getCustomM3uUrl(ctx)
+        edt.setText(currentUrl)
+        edt.setSelection(edt.text.length)
+
+        val d = androidx.appcompat.app.AlertDialog.Builder(ctx, R.style.Theme_KenhLive_Dialog)
+            .setView(v)
+            .create()
+
+        btnSample?.setOnClickListener {
+            edt.setText(IptvRepository.DEFAULT_CUSTOM_M3U)
+            edt.setSelection(edt.text.length)
+        }
+
+        btnClear?.setOnClickListener {
+            edt.setText("")
+        }
+
+        btnClose?.setOnClickListener {
+            d.dismiss()
+        }
+
+        btnSave?.setOnClickListener {
+            val newUrl = edt.text.toString().trim()
+            IptvRepository.setCustomM3uUrl(ctx, newUrl)
+            Toast.makeText(ctx, "Đang nạp danh sách kênh M3U...", Toast.LENGTH_SHORT).show()
+            d.dismiss()
+            loadData(forceRefresh = true)
+        }
+
+        d.show()
+    }
+
+    fun loadData(forceRefresh: Boolean = false) {
+        if (forceRefresh) {
             loadingView.visibility = View.VISIBLE
             emptyText.visibility = View.GONE
+        } else {
+            val cached = IptvRepository.getCachedChannelsDisk(requireContext())
+            if (!cached.isNullOrEmpty()) {
+                allChannels = cached
+                loadingView.visibility = View.GONE
+                emptyText.visibility = View.GONE
+                populateUi(cached, focusFirst = true)
+            } else {
+                loadingView.visibility = View.VISIBLE
+                emptyText.visibility = View.GONE
+            }
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
-            val fresh = IptvRepository.loadChannels(requireContext())
+            val fresh = IptvRepository.loadChannels(requireContext(), forceRefresh = forceRefresh)
             loadingView.visibility = View.GONE
 
             if (fresh.isEmpty() && allChannels.isEmpty()) {
@@ -357,14 +407,11 @@ class IptvFragment : Fragment() {
                 countText.text = "0 kênh"
                 setupGroups(emptyList())
                 setupGrid(emptyList())
-            } else if (fresh.isNotEmpty() && fresh != allChannels) {
-                // BUG cũ: focusFirst tính SAU khi gán allChannels = fresh nên luôn = false
-                // (trừ khi fresh rỗng) -> dữ liệu mạng về mà không bao giờ xin focus.
-                // Phải chụp trạng thái rỗng TRƯỚC khi gán.
+            } else if (fresh.isNotEmpty() && (forceRefresh || fresh != allChannels)) {
                 val wasEmpty = allChannels.isEmpty()
                 allChannels = fresh
                 emptyText.visibility = View.GONE
-                populateUi(fresh, focusFirst = wasEmpty)
+                populateUi(fresh, focusFirst = wasEmpty || forceRefresh)
             }
 
             EpgRepository.initEpg(requireContext())
@@ -380,32 +427,41 @@ class IptvFragment : Fragment() {
     private fun populateUi(channels: List<IptvChannel>, focusFirst: Boolean) {
         countText.text = "Tổng: ${channels.size} kênh truyền hình HD"
 
-        // Phân nhóm EPG: Yêu Thích -> VTV -> TV360 -> HTV / VTC -> VTVcab / SCTV -> Địa Phương -> Tất cả
-        // Loại bỏ mục Thể Thao và Giải Trí/Phim để phần Truyền Hình thuần túy là các kênh truyền hình
-        val distinctGroups = mutableListOf("Yêu Thích", "VTV", "TV360", "HTV / VTC", "VTVcab / SCTV", "Địa Phương", "Tất cả")
+        val customGroups = channels.filter { it.isCustom }.map { it.group }.distinct().filter { it.isNotBlank() }
+        val distinctGroups = mutableListOf("Yêu Thích", "VTV", "TV360", "HTV / VTC", "VTVcab / SCTV", "Địa Phương")
+        if (customGroups.isNotEmpty()) {
+            distinctGroups.add("M3U Của Tôi")
+            for (cg in customGroups) {
+                if (!distinctGroups.contains(cg) && cg != "M3U Của Tôi") {
+                    distinctGroups.add(cg)
+                }
+            }
+        }
+        distinctGroups.add("Tất cả")
         setupGroups(distinctGroups)
         applyFilter(focusFirst = focusFirst)
     }
 
     private fun applyFilter(focusFirst: Boolean = false) {
         var list = allChannels
-        when (selectedGroup) {
-            "Yêu Thích" -> {
+        when {
+            selectedGroup == "Yêu Thích" -> {
                 val favIds = getFavoriteChannelIds()
                 list = list.filter { favIds.contains(it.id) }
             }
-            "VTV" -> list = list.filter { it.name.contains("VTV", ignoreCase = true) }
-            "TV360" -> list = list.filter { it.group.contains("TV360", ignoreCase = true) || it.url.contains("tv360://", ignoreCase = true) }
-            "HTV / VTC" -> list = list.filter {
+            selectedGroup == "M3U Của Tôi" -> list = list.filter { it.isCustom }
+            selectedGroup == "VTV" -> list = list.filter { it.name.contains("VTV", ignoreCase = true) }
+            selectedGroup == "TV360" -> list = list.filter { it.group.contains("TV360", ignoreCase = true) || it.url.contains("tv360://", ignoreCase = true) }
+            selectedGroup == "HTV / VTC" -> list = list.filter {
                 it.name.contains("HTV", ignoreCase = true) || it.name.contains("VTC", ignoreCase = true) || it.name.contains("THVL", ignoreCase = true) || it.group.contains("HTV", ignoreCase = true)
             }
-            "VTVcab / SCTV" -> list = list.filter {
+            selectedGroup == "VTVcab / SCTV" -> list = list.filter {
                 it.name.contains("VTVcab", ignoreCase = true) || it.name.contains("SCTV", ignoreCase = true) || it.group.contains("VTVcab", ignoreCase = true) || it.group.contains("SCTV", ignoreCase = true)
             }
-            "Thể Thao" -> list = list.filter {
+            selectedGroup == "Thể Thao" -> list = list.filter {
                 !it.isVn || it.name.contains("Sport", ignoreCase = true) || it.name.contains("Thể Thao", ignoreCase = true) || it.name.contains("On Sports", ignoreCase = true) || it.group.contains("Thể Thao", ignoreCase = true)
             }
-            "Giải Trí", "Giải Trí & Phim" -> list = list.filter {
+            selectedGroup == "Giải Trí" || selectedGroup == "Giải Trí & Phim" -> list = list.filter {
                 val n = it.name.lowercase(Locale.ROOT)
                 val g = it.group.lowercase(Locale.ROOT)
                 n.contains("movie") || n.contains("cinema") || n.contains("phim") || n.contains("drama") ||
@@ -413,14 +469,14 @@ class IptvFragment : Fragment() {
                 n.contains("cartoon") || n.contains("hoạt hình") || n.contains("entertainment") || n.contains("giải trí") ||
                 g.contains("giải trí") || g.contains("phim")
             }
-            "Địa Phương", "Tin Tức & Tỉnh", "Tin Tức / Địa Phương" -> list = list.filter {
+            selectedGroup in listOf("Địa Phương", "Tin Tức & Tỉnh", "Tin Tức / Địa Phương") -> list = list.filter {
                 it.isVn && !it.name.contains("VTV", ignoreCase = true) && !it.name.contains("HTV", ignoreCase = true) && !it.name.contains("VTC", ignoreCase = true) && !it.group.contains("TV360", ignoreCase = true)
             }
-            "DAZN" -> list = list.filter { it.group.equals("DAZN", ignoreCase = true) || it.name.contains("DAZN", ignoreCase = true) }
-            "Sky Sports" -> list = list.filter { it.group.equals("Sky Sports", ignoreCase = true) || it.name.contains("Sky", ignoreCase = true) }
-            "beIN Sports" -> list = list.filter { it.group.equals("beIN Sports", ignoreCase = true) || it.name.contains("beIN", ignoreCase = true) }
-            "ESPN" -> list = list.filter { it.group.equals("ESPN", ignoreCase = true) || it.name.contains("ESPN", ignoreCase = true) }
-            "Tất cả" -> { /* giữ nguyên toàn bộ */ }
+            selectedGroup == "DAZN" -> list = list.filter { it.group.equals("DAZN", ignoreCase = true) || it.name.contains("DAZN", ignoreCase = true) }
+            selectedGroup == "Sky Sports" -> list = list.filter { it.group.equals("Sky Sports", ignoreCase = true) || it.name.contains("Sky", ignoreCase = true) }
+            selectedGroup == "beIN Sports" -> list = list.filter { it.group.equals("beIN Sports", ignoreCase = true) || it.name.contains("beIN", ignoreCase = true) }
+            selectedGroup == "ESPN" -> list = list.filter { it.group.equals("ESPN", ignoreCase = true) || it.name.contains("ESPN", ignoreCase = true) }
+            selectedGroup == "Tất cả" -> { /* giữ nguyên toàn bộ */ }
             else -> list = list.filter { it.group.equals(selectedGroup, ignoreCase = true) }
         }
 

@@ -107,8 +107,8 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_marginRight="12dp"
-            android:nextFocusRight="@+id/cardPhim"
+            android:layout_marginRight="6dp"
+            android:nextFocusRight="@+id/cardIptv"
             android:background="@drawable/bg_hub_card_sports"
             android:focusable="true"
             android:clickable="true"
@@ -201,16 +201,20 @@
             </LinearLayout>
         </FrameLayout>
 
-        <!-- CARD 2: TRUYỀN HÌNH (ẨN ĐỂ TẬP TRUNG 100% PHIM & THỂ THAO) -->
+        <!-- CARD 2: TRUYỀN HÌNH (HUB TRUYỀN HÌNH & M3U TÙY CHỌN) -->
         <FrameLayout
             android:id="@+id/cardIptv"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="0"
-            android:visibility="gone"
+            android:layout_weight="1"
+            android:layout_marginLeft="6dp"
+            android:layout_marginRight="6dp"
+            android:visibility="visible"
             android:background="@drawable/bg_hub_card_iptv"
-            android:focusable="false"
-            android:clickable="false"
+            android:focusable="true"
+            android:clickable="true"
+            android:nextFocusLeft="@+id/cardSports"
+            android:nextFocusRight="@+id/cardPhim"
             android:descendantFocusability="blocksDescendants"
             android:padding="28dp">
 
@@ -242,13 +246,13 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginLeft="6dp"
-                        android:background="@drawable/bg_badge_glass"
+                        android:background="@drawable/bg_badge_brand"
                         android:paddingLeft="10dp"
                         android:paddingRight="10dp"
                         android:paddingTop="4dp"
                         android:paddingBottom="4dp"
-                        android:text="MIỄN PHÍ"
-                        android:textColor="@color/kl_text_2"
+                        android:text="M3U TÙY CHỈNH"
+                        android:textColor="#FFFFFF"
                         android:textSize="11sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -282,7 +286,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="6dp"
-                    android:text="Kênh truyền hình VTV, HTV, VTC, K+, Thể thao, Giải trí &amp; Quốc tế trực tuyến"
+                    android:text="Kênh VTV, HTV, VTC, TV360, Thể Thao Quốc Tế &amp; Danh Sách M3U Cá Nhân"
                     android:textColor="@color/kl_text_2"
                     android:textSize="12.5sp"
                     android:lineSpacingExtra="3dp"
@@ -307,8 +311,8 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_marginLeft="12dp"
-            android:nextFocusLeft="@+id/cardSports"
+            android:layout_marginLeft="6dp"
+            android:nextFocusLeft="@+id/cardIptv"
             android:background="@drawable/bg_hub_card_phim"
             android:focusable="true"
             android:clickable="true"

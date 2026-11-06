@@ -234,6 +234,37 @@
             android:paddingRight="14dp"
             android:singleLine="true"
             android:imeOptions="actionSearch" />
+
+        <!-- Nút Thêm / Đổi M3U Playlist -->
+        <LinearLayout
+            android:id="@+id/btnIptvAddM3u"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/iptv_search_h"
+            android:layout_marginLeft="10dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/kl2_card_glass"
+            android:paddingLeft="12dp"
+            android:paddingRight="14dp"
+            android:clickable="true"
+            android:focusable="true">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/ic_nav_tv"
+                android:tint="@color/kl_brand"
+                android:contentDescription="@null" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="6dp"
+                android:text="➕ THÊM M3U"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
     </LinearLayout>
 
     <!-- CỤM DƯỚI: LƯỚI THẺ KÊNH TV (5 CỘT) -->
