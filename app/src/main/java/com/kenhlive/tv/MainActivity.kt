@@ -136,23 +136,22 @@ class MainActivity : AppCompatActivity() {
 
     private fun setupNav() {
         val defs = listOf(
-            Triple(R.id.nav_live, 0, Pair(R.drawable.ic_nav_live, R.string.nav_live)),
-            Triple(R.id.nav_iptv, 2, Pair(R.drawable.ic_nav_tv, R.string.nav_iptv)),
-            Triple(R.id.nav_phim, 5, Pair(R.drawable.ic_nav_phim, R.string.nav_phim)),
-            Triple(R.id.nav_schedule, 1, Pair(R.drawable.ic_nav_schedule, R.string.nav_schedule)),
-            Triple(R.id.nav_search, 3, Pair(R.drawable.ic_nav_search, R.string.nav_search)),
-            Triple(R.id.nav_settings, 4, Pair(R.drawable.ic_nav_settings, R.string.nav_settings))
+            Triple(R.id.nav_live, 0, R.string.nav_live),
+            Triple(R.id.nav_iptv, 2, R.string.nav_iptv),
+            Triple(R.id.nav_phim, 5, R.string.nav_phim),
+            Triple(R.id.nav_schedule, 1, R.string.nav_schedule),
+            Triple(R.id.nav_search, 3, R.string.nav_search),
+            Triple(R.id.nav_settings, 4, R.string.nav_settings)
         )
 
         navViews.clear()
         navIdToTab.clear()
 
-        defs.forEach { (id, tabIdx, def) ->
+        defs.forEach { (id, tabIdx, labelRes) ->
             navIdToTab[id] = tabIdx
             val v = findViewById<View>(id) ?: return@forEach
-            val iv = v.findViewById<ImageView>(R.id.navIcon)
-            iv?.setImageResource(def.first)
-            v.findViewById<TextView>(R.id.navLabel)?.setText(def.second)
+            // KL4: nav chỉ chữ, không còn icon.
+            v.findViewById<TextView>(R.id.navLabel)?.setText(labelRes)
             v.setOnClickListener {
                 showTab(tabIdx)
             }
