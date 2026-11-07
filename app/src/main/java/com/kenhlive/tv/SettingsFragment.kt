@@ -179,7 +179,7 @@ class SettingsFragment : Fragment() {
                 SettingsAdapter.Item.Section("TRUYỀN HÌNH & IPTV"),
                 SettingsAdapter.Item.Row(
                     R.drawable.ic_nav_tv, "Danh sách kênh M3U tùy chỉnh",
-                    value = com.kenhlive.tv.iptv.IptvRepository.getCustomM3uUrl(ctx).ifBlank { "Mặc định (tinyurl.com/vmt47)" }
+                    value = com.kenhlive.tv.iptv.IptvRepository.getCustomM3uUrl(ctx).ifBlank { "Chưa cài đặt" }
                 ) {
                     showCustomM3uDialog(ctx)
                 },
@@ -469,7 +469,6 @@ class SettingsFragment : Fragment() {
     private fun showCustomM3uDialog(ctx: Context) {
         val v = LayoutInflater.from(ctx).inflate(R.layout.dialog_custom_m3u, null)
         val edt = v.findViewById<EditText>(R.id.edtM3uUrl)
-        val btnSample = v.findViewById<TextView>(R.id.btnM3uSample)
         val btnClear = v.findViewById<TextView>(R.id.btnM3uClear)
         val btnClose = v.findViewById<android.widget.Button>(R.id.btnM3uClose)
         val btnSave = v.findViewById<android.widget.Button>(R.id.btnM3uSave)
@@ -481,11 +480,6 @@ class SettingsFragment : Fragment() {
         val d = androidx.appcompat.app.AlertDialog.Builder(ctx, R.style.Theme_KenhLive_Dialog)
             .setView(v)
             .create()
-
-        btnSample?.setOnClickListener {
-            edt.setText(com.kenhlive.tv.iptv.IptvRepository.DEFAULT_CUSTOM_M3U)
-            edt.setSelection(edt.text.length)
-        }
 
         btnClear?.setOnClickListener {
             edt.setText("")

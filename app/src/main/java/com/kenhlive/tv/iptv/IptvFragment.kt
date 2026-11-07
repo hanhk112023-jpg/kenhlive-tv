@@ -378,7 +378,6 @@ class IptvFragment : Fragment() {
         val ctx = context ?: return
         val v = LayoutInflater.from(ctx).inflate(R.layout.dialog_custom_m3u, null)
         val edt = v.findViewById<EditText>(R.id.edtM3uUrl)
-        val btnSample = v.findViewById<TextView>(R.id.btnM3uSample)
         val btnClear = v.findViewById<TextView>(R.id.btnM3uClear)
         val btnClose = v.findViewById<android.widget.Button>(R.id.btnM3uClose)
         val btnSave = v.findViewById<android.widget.Button>(R.id.btnM3uSave)
@@ -390,11 +389,6 @@ class IptvFragment : Fragment() {
         val d = androidx.appcompat.app.AlertDialog.Builder(ctx, R.style.Theme_KenhLive_Dialog)
             .setView(v)
             .create()
-
-        btnSample?.setOnClickListener {
-            edt.setText(IptvRepository.DEFAULT_CUSTOM_M3U)
-            edt.setSelection(edt.text.length)
-        }
 
         btnClear?.setOnClickListener {
             edt.setText("")

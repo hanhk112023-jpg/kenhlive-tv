@@ -30,8 +30,9 @@ object IptvRepository {
     private const val FILE_CACHE_PARSED = "cache_iptv_parsed.json"
     private const val ASSET_FALLBACK_VN = "fallback_vn.m3u"
 
-    // URL danh sách phát M3U mặc định gợi ý cho người dùng (Sky Sports, Canal+, TNT Sports, VTV, HTV...)
-    const val DEFAULT_CUSTOM_M3U = "https://tinyurl.com/vmt47"
+    // Không còn playlist M3U mặc định: người dùng toàn quyền tự thêm link
+    // của riêng họ. Trước đây app tự gán sẵn link mẫu tinyurl.com/vmt47 cho
+    // mọi người chưa từng cài đặt — giờ mặc định là KHÔNG có playlist custom.
 
     // Bộ nhớ RAM tĩnh để PlayerActivity mở sidebar chuyển kênh tức thì
     var currentChannels: List<IptvChannel> = emptyList()
@@ -44,10 +45,10 @@ object IptvRepository {
     var lastCustomLoadError: String? = null
         private set
 
-    /** Lấy URL danh sách M3U tùy chỉnh của người dùng (mặc định link tinyurl.com/vmt47) */
+    /** Lấy URL danh sách M3U tùy chỉnh của người dùng — rỗng = chưa cài đặt (không có mặc định). */
     fun getCustomM3uUrl(context: Context): String {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        return sp.getString(KEY_CUSTOM_M3U_URL, DEFAULT_CUSTOM_M3U) ?: DEFAULT_CUSTOM_M3U
+        return sp.getString(KEY_CUSTOM_M3U_URL, "") ?: ""
     }
 
     /** Lưu URL danh sách M3U tùy chỉnh và xóa cache để nạp mới */
@@ -242,7 +243,7 @@ object IptvRepository {
         val finalChannels = mutableListOf<IptvChannel>()
         finalChannels.addAll(sortedVn)
 
-        // 3. Kênh M3U Tùy Chọn của người dùng (từ link tinyurl.com/vmt47 hoặc link do người dùng tự nhập)
+        // 3. Kênh M3U Tùy Chọn của người dùng (chỉ khi chính họ đã nhập link)
         lastCustomLoadError = null
         if (customUrl.isNotBlank()) {
             if (cachedCustom.isNullOrBlank()) {

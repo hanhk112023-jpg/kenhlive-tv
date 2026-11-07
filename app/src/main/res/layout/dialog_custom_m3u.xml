@@ -78,7 +78,7 @@
         android:background="@drawable/search_input_bg"
         android:paddingLeft="14dp"
         android:paddingRight="14dp"
-        android:hint="https://tinyurl.com/vmt47 hoặc link M3U của bạn"
+        android:hint="https://example.com/list.m3u hoặc link M3U của bạn"
         android:textColorHint="#64748B"
         android:textColor="#FFFFFF"
         android:textSize="13.5sp"
@@ -95,25 +95,9 @@
         android:gravity="center_vertical">
 
         <TextView
-            android:id="@+id/btnM3uSample"
-            android:layout_width="wrap_content"
-            android:layout_height="34dp"
-            android:background="@drawable/bg_badge_glass"
-            android:gravity="center"
-            android:paddingLeft="12dp"
-            android:paddingRight="12dp"
-            android:text="Gợi ý: tinyurl.com/vmt47"
-            android:textColor="@color/kl_cyan"
-            android:textSize="11.5sp"
-            android:textStyle="bold"
-            android:clickable="true"
-            android:focusable="true" />
-
-        <TextView
             android:id="@+id/btnM3uClear"
             android:layout_width="wrap_content"
             android:layout_height="34dp"
-            android:layout_marginLeft="10dp"
             android:background="@drawable/bg_badge_glass"
             android:gravity="center"
             android:paddingLeft="12dp"
