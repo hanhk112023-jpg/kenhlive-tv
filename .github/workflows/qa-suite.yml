@@ -104,7 +104,7 @@ jobs:
               print(f"models parse error: {e}", file=sys.stderr); ids = []
           print("MODELS: " + ", ".join(ids[:50]), file=sys.stderr)
           # Ưu tiên model vision cho QA screenshot; fallback model chat mạnh
-          pref = ["nemotron-3.5-super-vl", "llama-3.2-90b-vision", "llama-4-maverick",
+          pref = ["step-5", "nemotron-3.5-super-vl", "llama-3.2-90b-vision", "llama-4-maverick",
                   "nemotron-nano", "gemma-3-27b", "mistral-large"]
           picked = next((p for p in pref if any(p in i.lower() for i in ids)), "")
           if not picked:
