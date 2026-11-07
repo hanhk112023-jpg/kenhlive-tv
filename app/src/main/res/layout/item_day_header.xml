@@ -1,23 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- KL3 day header — phân tách các ngày trong Schedule/SportAdapter. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:paddingLeft="@dimen/sp_screen_margin"
-    android:paddingRight="@dimen/sp_screen_margin"
-    android:paddingTop="@dimen/sp_row_gap"
-    android:paddingBottom="8dp">
+    android:paddingLeft="@dimen/kl3_margin_x"
+    android:paddingRight="@dimen/kl3_margin_x"
+    android:paddingTop="@dimen/kl3_gap_l"
+    android:paddingBottom="@dimen/kl3_gap">
 
     <View
-        android:layout_width="4dp"
-        android:layout_height="18dp"
-        android:background="@drawable/kl2_section_bar"
-        android:layout_marginRight="9dp" />
+        android:layout_width="@dimen/kl3_section_bar_w"
+        android:layout_height="@dimen/kl3_ts_section"
+        android:background="@drawable/kl3s_section_bar"
+        android:layout_marginRight="@dimen/kl3_sp_md" />
 
     <TextView
         android:id="@+id/dayLabel"
-        style="@style/KL.Text.Section"
+        style="@style/KL3.Text.Section"
         android:layout_width="0dp"
         android:layout_weight="1"
         android:layout_height="wrap_content"
@@ -25,12 +26,12 @@
 
     <TextView
         android:id="@+id/dayCount"
-        style="@style/KL.Text.Meta"
+        style="@style/KL3.Text.Meta"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@drawable/bg_badge_glass"
-        android:paddingLeft="10dp"
-        android:paddingRight="10dp"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp" />
+        android:background="@drawable/kl3_pill_bg"
+        android:paddingLeft="@dimen/kl3_sp_md"
+        android:paddingRight="@dimen/kl3_sp_md"
+        android:paddingTop="@dimen/kl3_sp_xs"
+        android:paddingBottom="@dimen/kl3_sp_xs" />
 </LinearLayout>

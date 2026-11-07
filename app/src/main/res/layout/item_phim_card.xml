@@ -1,25 +1,28 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Sửa 2026-11-04: chiều cao 248 -> 268dp để tiêu đề 2 dòng không bị đè meta,
-     tiêu đề 1 dòng -> 2 dòng để tên dài không còn cắt cụt và không "nhảy chữ"
-     giữa lúc phóng to / thu nhỏ khi focus. -->
+<!-- THẺ PHIM RAIL (dọc 2:3) — KL3.
+     Poster @dimen/kl3_poster_w × kl3_poster_h, bo kl3_r_md qua
+     kl3_poster_placeholder + clipToOutline. Focus ring = kl3_fg_focus
+     foreground; code (PhimCardAdapter) vẫn scale 1.10 + elevation khi focus.
+     Giữ nguyên mọi android:id bind trong PhimFragment. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="148dp"
-    android:layout_height="268dp"
-    android:layout_marginRight="14dp"
-    android:layout_marginBottom="8dp"
+    android:layout_width="@dimen/kl3_poster_w"
+    android:layout_height="wrap_content"
+    android:layout_marginRight="@dimen/kl3_rail_gap"
+    android:layout_marginBottom="@dimen/kl3_sp_sm"
     android:orientation="vertical"
-    android:background="@drawable/bg_netflix_card"
+    android:background="@drawable/kl3_card_bg"
+    android:foreground="@drawable/kl3_fg_focus"
+    android:elevation="@dimen/kl3_elev_1"
     android:focusable="true"
     android:clickable="true"
     android:descendantFocusability="blocksDescendants"
-    android:clipToPadding="false"
-    android:clipToOutline="true"
-    android:padding="4dp">
+    android:clipChildren="false"
+    android:clipToPadding="false">
 
-    <!-- Poster Container (2:3 Cinema Proportions) -->
+    <!-- Poster Container (2:3) -->
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="190dp">
+        android:layout_height="@dimen/kl3_poster_h">
 
         <ImageView
             android:id="@+id/phimPoster"
@@ -28,101 +31,83 @@
             android:scaleType="centerCrop"
             android:clipToOutline="true"
             android:outlineProvider="background"
-            android:background="@drawable/thumb_round_bg"
+            android:background="@drawable/kl3_poster_placeholder"
             android:contentDescription="Poster phim" />
 
-        <!-- Top Left Rating Badge (Hidden to keep poster clean & authentic) -->
+        <!-- Top Left Rating Badge (KL3 gold — code đang ẩn, giữ id) -->
         <TextView
             android:id="@+id/phimRatingBadge"
-            style="@style/KL.Text.Meta"
+            style="@style/KL3.Badge.Hd"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="top|left"
-            android:layout_margin="6dp"
-            android:background="@drawable/bg_badge_glass"
-            android:paddingLeft="6dp"
-            android:paddingRight="6dp"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp"
+            android:layout_margin="@dimen/kl3_sp_sm"
             android:visibility="gone"
-            android:textSize="9.5sp"
-            android:textStyle="bold"
-            android:textColor="#FBBF24" />
+            android:textSize="@dimen/kl3_ts_badge"
+            android:letterSpacing="0.04" />
 
-        <!-- Top Right Quality Badge (Sleek Glass Border) -->
+        <!-- Top Right Quality Badge (KL3 HD amber) -->
         <TextView
             android:id="@+id/phimQualityBadge"
-            style="@style/KL.Text.Meta"
+            style="@style/KL3.Badge.Hd"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="top|right"
-            android:layout_margin="6dp"
-            android:background="@drawable/bg_quality_glass"
-            android:paddingLeft="6dp"
-            android:paddingRight="6dp"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp"
+            android:layout_margin="@dimen/kl3_sp_sm"
             android:text="FHD"
-            android:textSize="9.5sp"
-            android:textStyle="bold"
-            android:textColor="#E2E8F0" />
+            android:textSize="@dimen/kl3_ts_badge"
+            android:letterSpacing="0.06" />
 
-        <!-- Bottom Left Episode / Status Badge -->
+        <!-- Bottom Left Episode / Continue-watching Badge (glass pill) -->
         <TextView
             android:id="@+id/phimEpisodeBadge"
-            style="@style/KL.Text.Meta"
+            style="@style/KL3.Pill"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|left"
-            android:layout_margin="6dp"
-            android:background="@drawable/bg_badge_glass"
-            android:paddingLeft="7dp"
-            android:paddingRight="7dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp"
+            android:layout_margin="@dimen/kl3_sp_sm"
+            android:gravity="center"
             android:text="Tập 1"
-            android:textSize="9.5sp"
+            android:textSize="@dimen/kl3_ts_badge"
             android:textStyle="bold"
-            android:textColor="#FFFFFF" />
+            android:letterSpacing="0.04"
+            android:textColor="@color/kl3_text_primary" />
 
-        <!-- Netflix Red Watch Progress Bar at Bottom of Poster -->
+        <!-- Progress "xem tiếp" — gradient cam KL3M trên track kính -->
         <ProgressBar
             android:id="@+id/phimProgressBar"
             style="?android:attr/progressBarStyleHorizontal"
             android:layout_width="match_parent"
-            android:layout_height="3.5dp"
+            android:layout_height="4dp"
             android:layout_gravity="bottom"
             android:max="100"
             android:progress="0"
-            android:progressDrawable="@drawable/bg_apple_progress"
+            android:progressDrawable="@drawable/kl3m_film_progress"
             android:visibility="gone" />
     </FrameLayout>
 
-    <!-- Movie Title & Year / Language -->
+    <!-- Title & meta dưới poster -->
     <TextView
         android:id="@+id/phimTitle"
-        style="@style/KL.Text.Section"
+        style="@style/KL3.Text.Title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:layout_marginLeft="5dp"
-        android:layout_marginRight="5dp"
-        android:textSize="13sp"
-        android:textStyle="bold"
+        android:layout_marginTop="@dimen/kl3_sp_xs"
+        android:layout_marginLeft="@dimen/kl3_sp_xs"
+        android:layout_marginRight="@dimen/kl3_sp_xs"
         android:maxLines="2"
         android:ellipsize="end"
-        android:textColor="#F8FAFC" />
+        android:lineSpacingExtra="2dp" />
 
     <TextView
         android:id="@+id/phimMeta"
-        style="@style/KL.Text.Meta"
+        style="@style/KL3.Text.Meta"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:layout_marginLeft="5dp"
-        android:layout_marginRight="5dp"
-        android:textSize="10.5sp"
+        android:layout_marginTop="@dimen/kl3_sp_xs"
+        android:layout_marginLeft="@dimen/kl3_sp_xs"
+        android:layout_marginRight="@dimen/kl3_sp_xs"
+        android:layout_marginBottom="@dimen/kl3_sp_xs"
         android:maxLines="1"
-        android:ellipsize="end"
-        android:textColor="#94A3B8" />
+        android:ellipsize="end" />
 </LinearLayout>

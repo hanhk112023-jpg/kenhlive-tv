@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- KL3 scrim — left-to-right fade for hero text over imagery. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape>
+            <gradient
+                android:angle="0"
+                android:startColor="@color/kl3_scrim_85"
+                android:centerColor="@color/kl3_scrim_40"
+                android:endColor="#00000000" />
+        </shape>
+    </item>
+</layer-list>

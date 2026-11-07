@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- KL3M brand "K" tile — warm orange→amber gradient square shown in the
+     hero brand row (KenhLive mark). -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="270"
+        android:startColor="@color/kl3_accent_bright"
+        android:endColor="@color/kl3_accent_deep" />
+    <corners android:radius="@dimen/kl3_r_sm" />
+</shape>

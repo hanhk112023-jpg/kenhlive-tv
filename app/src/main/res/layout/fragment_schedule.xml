@@ -2,7 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/kl_bg_deep">
+    android:background="@color/kl3_bg">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/schedList"
@@ -10,7 +10,7 @@
         android:layout_height="match_parent"
         android:clipToPadding="false"
         android:descendantFocusability="afterDescendants"
-        android:paddingBottom="@dimen/sp_row_gap"
+        android:paddingBottom="@dimen/kl3_gap_l"
         android:scrollbars="vertical" />
 
     <include layout="@layout/view_state" />

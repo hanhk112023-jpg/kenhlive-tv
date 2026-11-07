@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- KL3P player scrim — bottom fade for control bars / carousels.
+     Transparent at top, near-opaque at bottom edge so controls stay readable. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape>
+            <gradient
+                android:angle="90"
+                android:startColor="#00000000"
+                android:centerColor="@color/kl3_scrim_60"
+                android:endColor="@color/kl3_scrim_85" />
+        </shape>
+    </item>
+</layer-list>

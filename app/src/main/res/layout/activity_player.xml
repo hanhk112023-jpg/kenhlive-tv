@@ -3,7 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#000000"
+    android:background="@color/kl3_bg"
     android:keepScreenOn="true">
 
     <androidx.media3.ui.PlayerView
@@ -20,24 +20,23 @@
         android:layout_gravity="center"
         android:orientation="vertical"
         android:gravity="center_horizontal"
-        android:background="@drawable/bg_badge_glass"
-        android:paddingLeft="24dp"
-        android:paddingRight="24dp"
-        android:paddingTop="16dp"
-        android:paddingBottom="16dp"
+        android:background="@drawable/kl3p_glass_panel"
+        android:paddingLeft="@dimen/kl3_sp_xl"
+        android:paddingRight="@dimen/kl3_sp_xl"
+        android:paddingTop="@dimen/kl3_sp_lg"
+        android:paddingBottom="@dimen/kl3_sp_lg"
         android:visibility="visible">
 
         <ProgressBar
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:indeterminateTint="@color/kl_brand" />
+            android:indeterminateTint="@color/kl3_accent" />
 
         <TextView
-            style="@style/KL.Text.Body"
+            style="@style/KL3.Text.Body"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:textColor="@color/kl_text_1"
+            android:layout_marginTop="@dimen/kl3_sp_md"
             android:text="@string/player_buffering" />
     </LinearLayout>
 
@@ -49,99 +48,87 @@
         android:layout_gravity="center"
         android:orientation="vertical"
         android:gravity="center_horizontal"
-        android:background="@drawable/bg_player_hud_card"
-        android:paddingLeft="32dp"
-        android:paddingRight="32dp"
-        android:paddingTop="24dp"
-        android:paddingBottom="24dp"
+        android:background="@drawable/kl3p_glass_panel"
+        android:paddingLeft="@dimen/kl3_sp_xxl"
+        android:paddingRight="@dimen/kl3_sp_xxl"
+        android:paddingTop="@dimen/kl3_sp_xl"
+        android:paddingBottom="@dimen/kl3_sp_xl"
         android:visibility="gone">
 
         <ImageView
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:src="@drawable/ic_signal_off"
-            app:tint="#FFFF6500" />
+            app:tint="@color/kl3_accent" />
 
         <TextView
             android:id="@+id/tvPlayerErrorTitle"
-            style="@style/KL.Text.Title"
+            style="@style/KL3.Text.Title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="@dimen/kl3_sp_md"
             android:text="Lỗi Phát Luồng Video"
-            android:textColor="#FFFFFF"
-            android:textSize="18sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/tvPlayerErrorDetail"
-            style="@style/KL.Text.Body"
+            style="@style/KL3.Text.Meta"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="@dimen/kl3_sp_sm"
+            android:maxWidth="420dp"
+            android:gravity="center"
             android:text="Không thể tải luồng phát này. Vui lòng thử lại hoặc đổi kênh."
-            android:textColor="#94A3B8"
-            android:textSize="13sp" />
+            android:textColor="@color/kl3_text_secondary" />
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="18dp"
+            android:layout_marginTop="@dimen/kl3_sp_lg"
             android:orientation="horizontal">
 
             <Button
                 android:id="@+id/btnPlayerRetry"
+                style="@style/KL3.Button.Primary"
                 android:layout_width="wrap_content"
-                android:layout_height="42dp"
-                android:background="@drawable/bg_button_orange"
+                android:layout_height="wrap_content"
                 android:text="Thử Lại"
-                android:textColor="#FFFFFF"
-                android:textSize="13sp"
+                android:textColor="@color/kl3_on_accent"
+                android:textSize="@dimen/kl3_ts_body"
+                android:fontFamily="@font/oswald"
                 android:textStyle="bold"
-                android:paddingLeft="24dp"
-                android:paddingRight="24dp"
-                android:focusable="true"
+                android:letterSpacing="0.08"
+                android:gravity="center"
+                android:maxLines="1"
                 android:nextFocusRight="@+id/btnPlayerBack" />
 
             <Button
                 android:id="@+id/btnPlayerBack"
+                style="@style/KL3.Button.Ghost"
                 android:layout_width="wrap_content"
-                android:layout_height="42dp"
-                android:layout_marginLeft="14dp"
-                android:background="@drawable/bg_button_ghost"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="@dimen/kl3_gap"
                 android:text="Quay Lại"
-                android:textColor="#CBD5E1"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:paddingLeft="24dp"
-                android:paddingRight="24dp"
-                android:focusable="true"
                 android:nextFocusLeft="@+id/btnPlayerRetry"
                 android:nextFocusRight="@+id/btnPlayerReport" />
 
             <Button
                 android:id="@+id/btnPlayerReport"
+                style="@style/KL3.Button.Ghost"
                 android:layout_width="wrap_content"
-                android:layout_height="42dp"
-                android:layout_marginLeft="14dp"
-                android:background="@drawable/bg_button_ghost"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="@dimen/kl3_gap"
                 android:text="@string/player_btn_report"
-                android:textColor="#29B6F6"
-                android:textSize="13sp"
-                android:textStyle="bold"
-                android:paddingLeft="22dp"
-                android:paddingRight="22dp"
-                android:focusable="true"
+                android:textColor="@color/kl3_info"
                 android:nextFocusLeft="@+id/btnPlayerBack" />
         </LinearLayout>
 
         <TextView
+            style="@style/KL3.Text.Micro"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="@string/player_report_hint"
-            android:textColor="#8E9AA8"
-            android:textSize="12sp" />
+            android:layout_marginTop="@dimen/kl3_sp_md"
+            android:text="@string/player_report_hint" />
     </LinearLayout>
 
     <!-- TOP OVERLAY HUD -->
@@ -150,7 +137,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="@drawable/bg_overlay_top"
+        android:background="@drawable/kl3p_scrim_top"
         android:visibility="gone">
 
         <LinearLayout
@@ -158,38 +145,45 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingLeft="28dp"
-            android:paddingRight="28dp"
-            android:paddingTop="18dp"
-            android:paddingBottom="6dp">
+            android:paddingLeft="@dimen/kl3_margin_x"
+            android:paddingRight="@dimen/kl3_margin_x"
+            android:paddingTop="@dimen/kl3_sp_lg"
+            android:paddingBottom="@dimen/kl3_sp_sm">
 
             <TextView
                 android:id="@+id/backBtn"
-                style="@style/KL.TextBtn"
                 android:layout_width="wrap_content"
-                android:layout_height="40dp"
-                android:paddingLeft="16dp"
-                android:paddingRight="16dp"
+                android:layout_height="@dimen/kl3_btn_h_s"
+                android:background="@drawable/kl3_btn_ghost"
+                android:foreground="@drawable/kl3_fg_focus_pill"
+                android:paddingLeft="@dimen/kl3_chip_pad_x"
+                android:paddingRight="@dimen/kl3_chip_pad_x"
                 android:text="◀ QUAY LẠI"
-                android:textSize="12sp"
+                android:textColor="@color/kl3_text_primary"
+                android:textSize="@dimen/kl3_ts_meta"
+                android:fontFamily="@font/oswald"
+                android:textStyle="bold"
+                android:letterSpacing="0.06"
                 android:maxLines="1"
                 android:ellipsize="end"
+                android:gravity="center"
+                android:focusable="true"
+                android:clickable="true"
                 android:contentDescription="@string/cd_back" />
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginLeft="16dp"
+                android:layout_marginLeft="@dimen/kl3_gap"
                 android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/playerTitle"
-                    style="@style/KL.Text.Title"
+                    style="@style/KL3.Text.Title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textSize="20sp"
-                    android:textColor="#FFFFFF"
+                    android:textSize="@dimen/kl3_ts_body_lg"
                     android:textStyle="bold"
                     android:maxLines="1"
                     android:ellipsize="end" />
@@ -197,17 +191,17 @@
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
+                    android:layout_marginTop="@dimen/kl3_sp_xs"
                     android:orientation="horizontal"
                     android:gravity="center_vertical">
 
                     <TextView
                         android:id="@+id/playerSub"
-                        style="@style/KL.Text.Meta"
+                        style="@style/KL3.Text.Meta"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/sched_live"
-                        android:textColor="@color/kl_live"
+                        android:textColor="@color/kl3_live_bright"
                         android:textStyle="bold"
                         android:visibility="gone" />
                 </LinearLayout>
@@ -219,163 +213,240 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingLeft="28dp"
-            android:paddingRight="28dp"
-            android:paddingTop="4dp"
-            android:paddingBottom="16dp">
+            android:paddingLeft="@dimen/kl3_margin_x"
+            android:paddingRight="@dimen/kl3_margin_x"
+            android:paddingTop="@dimen/kl3_sp_xs"
+            android:paddingBottom="@dimen/kl3_sp_lg">
 
             <TextView
                 android:id="@+id/channelListBtn"
-                style="@style/KL.TextBtn"
                 android:layout_width="wrap_content"
-                android:layout_height="38dp"
-                android:paddingLeft="14dp"
-                android:paddingRight="14dp"
-                android:layout_marginRight="8dp"
+                android:layout_height="@dimen/kl3_btn_h_s"
+                android:background="@drawable/kl3_btn_ghost"
+                android:foreground="@drawable/kl3_fg_focus_pill"
+                android:paddingLeft="@dimen/kl3_chip_pad_x"
+                android:paddingRight="@dimen/kl3_chip_pad_x"
+                android:layout_marginRight="@dimen/kl3_rail_gap"
                 android:text="KÊNH"
-                android:textSize="11.5sp"
+                android:textColor="@color/kl3_text_primary"
+                android:textSize="@dimen/kl3_ts_meta"
+                android:fontFamily="@font/oswald"
+                android:textStyle="bold"
+                android:letterSpacing="0.06"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:gravity="center" />
+                android:gravity="center"
+                android:focusable="true"
+                android:clickable="true" />
 
             <TextView
                 android:id="@+id/qualityBtn"
-                style="@style/KL.TextBtn"
                 android:layout_width="wrap_content"
-                android:layout_height="38dp"
-                android:paddingLeft="14dp"
-                android:paddingRight="14dp"
-                android:layout_marginRight="8dp"
+                android:layout_height="@dimen/kl3_btn_h_s"
+                android:background="@drawable/kl3_btn_ghost"
+                android:foreground="@drawable/kl3_fg_focus_pill"
+                android:paddingLeft="@dimen/kl3_chip_pad_x"
+                android:paddingRight="@dimen/kl3_chip_pad_x"
+                android:layout_marginRight="@dimen/kl3_rail_gap"
                 android:text="CHẤT LƯỢNG"
-                android:textSize="11.5sp"
+                android:textColor="@color/kl3_text_primary"
+                android:textSize="@dimen/kl3_ts_meta"
+                android:fontFamily="@font/oswald"
+                android:textStyle="bold"
+                android:letterSpacing="0.06"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:gravity="center" />
+                android:gravity="center"
+                android:focusable="true"
+                android:clickable="true" />
 
             <TextView
                 android:id="@+id/audioBtn"
-                style="@style/KL.TextBtn"
                 android:layout_width="wrap_content"
-                android:layout_height="38dp"
-                android:paddingLeft="14dp"
-                android:paddingRight="14dp"
-                android:layout_marginRight="8dp"
+                android:layout_height="@dimen/kl3_btn_h_s"
+                android:background="@drawable/kl3_btn_ghost"
+                android:foreground="@drawable/kl3_fg_focus_pill"
+                android:paddingLeft="@dimen/kl3_chip_pad_x"
+                android:paddingRight="@dimen/kl3_chip_pad_x"
+                android:layout_marginRight="@dimen/kl3_rail_gap"
                 android:text="ÂM THANH"
-                android:textSize="11.5sp"
+                android:textColor="@color/kl3_text_primary"
+                android:textSize="@dimen/kl3_ts_meta"
+                android:fontFamily="@font/oswald"
+                android:textStyle="bold"
+                android:letterSpacing="0.06"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:gravity="center" />
+                android:gravity="center"
+                android:focusable="true"
+                android:clickable="true" />
 
             <TextView
                 android:id="@+id/aspectBtn"
-                style="@style/KL.TextBtn"
                 android:layout_width="wrap_content"
-                android:layout_height="38dp"
-                android:paddingLeft="14dp"
-                android:paddingRight="14dp"
-                android:layout_marginRight="8dp"
+                android:layout_height="@dimen/kl3_btn_h_s"
+                android:background="@drawable/kl3_btn_ghost"
+                android:foreground="@drawable/kl3_fg_focus_pill"
+                android:paddingLeft="@dimen/kl3_chip_pad_x"
+                android:paddingRight="@dimen/kl3_chip_pad_x"
+                android:layout_marginRight="@dimen/kl3_rail_gap"
                 android:text="TỈ LỆ"
-                android:textSize="11.5sp"
+                android:textColor="@color/kl3_text_primary"
+                android:textSize="@dimen/kl3_ts_meta"
+                android:fontFamily="@font/oswald"
+                android:textStyle="bold"
+                android:letterSpacing="0.06"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:gravity="center" />
+                android:gravity="center"
+                android:focusable="true"
+                android:clickable="true" />
 
             <TextView
                 android:id="@+id/sleepBtn"
-                style="@style/KL.TextBtn"
                 android:layout_width="wrap_content"
-                android:layout_height="38dp"
-                android:paddingLeft="14dp"
-                android:paddingRight="14dp"
-                android:layout_marginRight="8dp"
+                android:layout_height="@dimen/kl3_btn_h_s"
+                android:background="@drawable/kl3_btn_ghost"
+                android:foreground="@drawable/kl3_fg_focus_pill"
+                android:paddingLeft="@dimen/kl3_chip_pad_x"
+                android:paddingRight="@dimen/kl3_chip_pad_x"
+                android:layout_marginRight="@dimen/kl3_rail_gap"
                 android:text="HẸN GIỜ"
-                android:textSize="11.5sp"
+                android:textColor="@color/kl3_text_primary"
+                android:textSize="@dimen/kl3_ts_meta"
+                android:fontFamily="@font/oswald"
+                android:textStyle="bold"
+                android:letterSpacing="0.06"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:gravity="center" />
+                android:gravity="center"
+                android:focusable="true"
+                android:clickable="true" />
 
             <TextView
                 android:id="@+id/audioTrackBtn"
-                style="@style/KL.TextBtn"
                 android:layout_width="wrap_content"
-                android:layout_height="38dp"
-                android:paddingLeft="14dp"
-                android:paddingRight="14dp"
-                android:layout_marginRight="8dp"
+                android:layout_height="@dimen/kl3_btn_h_s"
+                android:background="@drawable/kl3_btn_ghost"
+                android:foreground="@drawable/kl3_fg_focus_pill"
+                android:paddingLeft="@dimen/kl3_chip_pad_x"
+                android:paddingRight="@dimen/kl3_chip_pad_x"
+                android:layout_marginRight="@dimen/kl3_rail_gap"
                 android:text="KÊNH TIẾNG"
-                android:textSize="11.5sp"
+                android:textColor="@color/kl3_text_primary"
+                android:textSize="@dimen/kl3_ts_meta"
+                android:fontFamily="@font/oswald"
+                android:textStyle="bold"
+                android:letterSpacing="0.06"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:gravity="center" />
+                android:gravity="center"
+                android:focusable="true"
+                android:clickable="true" />
 
             <TextView
                 android:id="@+id/audioBoostBtn"
-                style="@style/KL.TextBtn"
                 android:layout_width="wrap_content"
-                android:layout_height="38dp"
-                android:paddingLeft="14dp"
-                android:paddingRight="14dp"
-                android:layout_marginRight="8dp"
+                android:layout_height="@dimen/kl3_btn_h_s"
+                android:background="@drawable/kl3_btn_ghost"
+                android:foreground="@drawable/kl3_fg_focus_pill"
+                android:paddingLeft="@dimen/kl3_chip_pad_x"
+                android:paddingRight="@dimen/kl3_chip_pad_x"
+                android:layout_marginRight="@dimen/kl3_rail_gap"
                 android:text="TĂNG ÂM"
-                android:textSize="11.5sp"
+                android:textColor="@color/kl3_text_primary"
+                android:textSize="@dimen/kl3_ts_meta"
+                android:fontFamily="@font/oswald"
+                android:textStyle="bold"
+                android:letterSpacing="0.06"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:gravity="center" />
+                android:gravity="center"
+                android:focusable="true"
+                android:clickable="true" />
 
             <TextView
                 android:id="@+id/statsBtn"
-                style="@style/KL.TextBtn"
                 android:layout_width="wrap_content"
-                android:layout_height="38dp"
-                android:paddingLeft="14dp"
-                android:paddingRight="14dp"
-                android:layout_marginRight="8dp"
+                android:layout_height="@dimen/kl3_btn_h_s"
+                android:background="@drawable/kl3_btn_ghost"
+                android:foreground="@drawable/kl3_fg_focus_pill"
+                android:paddingLeft="@dimen/kl3_chip_pad_x"
+                android:paddingRight="@dimen/kl3_chip_pad_x"
+                android:layout_marginRight="@dimen/kl3_rail_gap"
                 android:text="THÔNG SỐ"
-                android:textSize="11.5sp"
+                android:textColor="@color/kl3_text_primary"
+                android:textSize="@dimen/kl3_ts_meta"
+                android:fontFamily="@font/oswald"
+                android:textStyle="bold"
+                android:letterSpacing="0.06"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:gravity="center" />
+                android:gravity="center"
+                android:focusable="true"
+                android:clickable="true" />
 
             <TextView
                 android:id="@+id/multiBtn"
-                style="@style/KL.TextBtn"
                 android:layout_width="wrap_content"
-                android:layout_height="38dp"
-                android:paddingLeft="14dp"
-                android:paddingRight="14dp"
-                android:layout_marginRight="8dp"
+                android:layout_height="@dimen/kl3_btn_h_s"
+                android:background="@drawable/kl3_btn_ghost"
+                android:foreground="@drawable/kl3_fg_focus_pill"
+                android:paddingLeft="@dimen/kl3_chip_pad_x"
+                android:paddingRight="@dimen/kl3_chip_pad_x"
+                android:layout_marginRight="@dimen/kl3_rail_gap"
                 android:text="ĐA MÀN HÌNH"
-                android:textSize="11.5sp"
+                android:textColor="@color/kl3_text_primary"
+                android:textSize="@dimen/kl3_ts_meta"
+                android:fontFamily="@font/oswald"
+                android:textStyle="bold"
+                android:letterSpacing="0.06"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:gravity="center" />
+                android:gravity="center"
+                android:focusable="true"
+                android:clickable="true" />
 
             <TextView
                 android:id="@+id/pipBtn"
-                style="@style/KL.TextBtn"
                 android:layout_width="wrap_content"
-                android:layout_height="38dp"
-                android:paddingLeft="14dp"
-                android:paddingRight="14dp"
-                android:layout_marginRight="8dp"
+                android:layout_height="@dimen/kl3_btn_h_s"
+                android:background="@drawable/kl3_btn_ghost"
+                android:foreground="@drawable/kl3_fg_focus_pill"
+                android:paddingLeft="@dimen/kl3_chip_pad_x"
+                android:paddingRight="@dimen/kl3_chip_pad_x"
+                android:layout_marginRight="@dimen/kl3_rail_gap"
                 android:text="PIP"
-                android:textSize="11.5sp"
+                android:textColor="@color/kl3_text_primary"
+                android:textSize="@dimen/kl3_ts_meta"
+                android:fontFamily="@font/oswald"
+                android:textStyle="bold"
+                android:letterSpacing="0.06"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:gravity="center" />
+                android:gravity="center"
+                android:focusable="true"
+                android:clickable="true" />
 
             <TextView
                 android:id="@+id/phoneMenuBtn"
-                style="@style/KL.TextBtn"
                 android:layout_width="wrap_content"
-                android:layout_height="38dp"
-                android:paddingLeft="14dp"
-                android:paddingRight="14dp"
+                android:layout_height="@dimen/kl3_btn_h_s"
+                android:background="@drawable/kl3_btn_ghost"
+                android:foreground="@drawable/kl3_fg_focus_pill"
+                android:paddingLeft="@dimen/kl3_chip_pad_x"
+                android:paddingRight="@dimen/kl3_chip_pad_x"
                 android:text="TÙY CHỌN"
-                android:textSize="11.5sp"
+                android:textColor="@color/kl3_text_primary"
+                android:textSize="@dimen/kl3_ts_meta"
+                android:fontFamily="@font/oswald"
+                android:textStyle="bold"
+                android:letterSpacing="0.06"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:gravity="center" />
+                android:gravity="center"
+                android:focusable="true"
+                android:clickable="true" />
         </LinearLayout>
     </LinearLayout>
 
@@ -385,15 +456,20 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:background="@drawable/bg_play_pause_circle"
+        android:background="@drawable/kl3_btn_ghost"
+        android:foreground="@drawable/kl3_fg_focus_pill"
         android:text="❚❚ TẠM DỪNG"
-        android:textSize="16sp"
-        android:textColor="#FFFFFFFF"
+        android:textSize="@dimen/kl3_ts_body"
+        android:textColor="@color/kl3_text_primary"
+        android:fontFamily="@font/oswald"
+        android:textStyle="bold"
+        android:letterSpacing="0.06"
         android:gravity="center"
-        android:paddingLeft="18dp"
-        android:paddingRight="18dp"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp"
+        android:paddingLeft="@dimen/kl3_sp_xl"
+        android:paddingRight="@dimen/kl3_sp_xl"
+        android:paddingTop="@dimen/kl3_sp_md"
+        android:paddingBottom="@dimen/kl3_sp_md"
+        android:minHeight="@dimen/kl3_btn_h"
         android:contentDescription="Phát/Tạm dừng"
         android:focusable="true"
         android:visibility="gone" />
@@ -406,24 +482,20 @@
         android:layout_gravity="bottom"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="@drawable/bg_overlay_bottom"
-        android:paddingLeft="18dp"
-        android:paddingRight="18dp"
+        android:background="@drawable/kl3p_scrim_bottom"
+        android:paddingLeft="@dimen/kl3_margin_x"
+        android:paddingRight="@dimen/kl3_margin_x"
         android:visibility="gone">
 
         <TextView
             android:id="@+id/tvPhoneLiveBadge"
+            style="@style/KL3.Badge.Live"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_badge_live_red"
-            android:paddingLeft="9dp"
-            android:paddingRight="9dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp"
             android:text="● TRỰC TIẾP"
-            android:textColor="#FFFFFF"
-            android:textSize="11sp"
-            android:textStyle="bold" />
+            android:textSize="@dimen/kl3_ts_badge"
+            android:textStyle="bold"
+            android:letterSpacing="0.07" />
 
         <View
             android:layout_width="0dp"
@@ -432,28 +504,70 @@
 
         <TextView
             android:id="@+id/phoneLockBtn"
-            style="@style/KL.TextBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginRight="8dp"
+            android:layout_marginRight="@dimen/kl3_gap"
+            android:minHeight="@dimen/kl3_btn_h"
+            android:background="@drawable/kl3_btn_ghost"
+            android:foreground="@drawable/kl3_fg_focus_pill"
+            android:paddingLeft="@dimen/kl3_chip_pad_x"
+            android:paddingRight="@dimen/kl3_chip_pad_x"
+            android:paddingTop="@dimen/kl3_sp_sm"
+            android:paddingBottom="@dimen/kl3_sp_sm"
             android:text="KHÓA"
+            android:textColor="@color/kl3_text_primary"
+            android:textSize="@dimen/kl3_ts_meta"
+            android:fontFamily="@font/oswald"
+            android:textStyle="bold"
+            android:letterSpacing="0.06"
+            android:gravity="center"
+            android:focusable="true"
+            android:clickable="true"
             android:contentDescription="Khóa màn hình" />
 
         <TextView
             android:id="@+id/phoneAspectBtn"
-            style="@style/KL.TextBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginRight="8dp"
+            android:layout_marginRight="@dimen/kl3_gap"
+            android:minHeight="@dimen/kl3_btn_h"
+            android:background="@drawable/kl3_btn_ghost"
+            android:foreground="@drawable/kl3_fg_focus_pill"
+            android:paddingLeft="@dimen/kl3_chip_pad_x"
+            android:paddingRight="@dimen/kl3_chip_pad_x"
+            android:paddingTop="@dimen/kl3_sp_sm"
+            android:paddingBottom="@dimen/kl3_sp_sm"
             android:text="TỈ LỆ"
+            android:textColor="@color/kl3_text_primary"
+            android:textSize="@dimen/kl3_ts_meta"
+            android:fontFamily="@font/oswald"
+            android:textStyle="bold"
+            android:letterSpacing="0.06"
+            android:gravity="center"
+            android:focusable="true"
+            android:clickable="true"
             android:contentDescription="Tỉ lệ màn hình" />
 
         <TextView
             android:id="@+id/phoneRotateBtn"
-            style="@style/KL.TextBtn"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:minHeight="@dimen/kl3_btn_h"
+            android:background="@drawable/kl3_btn_ghost"
+            android:foreground="@drawable/kl3_fg_focus_pill"
+            android:paddingLeft="@dimen/kl3_chip_pad_x"
+            android:paddingRight="@dimen/kl3_chip_pad_x"
+            android:paddingTop="@dimen/kl3_sp_sm"
+            android:paddingBottom="@dimen/kl3_sp_sm"
             android:text="XOAY"
+            android:textColor="@color/kl3_text_primary"
+            android:textSize="@dimen/kl3_ts_meta"
+            android:fontFamily="@font/oswald"
+            android:textStyle="bold"
+            android:letterSpacing="0.06"
+            android:gravity="center"
+            android:focusable="true"
+            android:clickable="true"
             android:contentDescription="Xoay toàn màn hình" />
     </LinearLayout>
 
@@ -466,19 +580,19 @@
         android:layout_marginBottom="64dp"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="@drawable/bg_overlay_bottom"
-        android:paddingLeft="18dp"
-        android:paddingRight="18dp"
+        android:background="@drawable/kl3p_scrim_bottom"
+        android:paddingLeft="@dimen/kl3_margin_x"
+        android:paddingRight="@dimen/kl3_margin_x"
         android:visibility="gone">
 
         <TextView
             android:id="@+id/tvSeekCurrent"
+            style="@style/KL3.Text.Meta"
             android:layout_width="52dp"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:text="00:00"
-            android:textColor="#FFFFFF"
-            android:textSize="12sp"
+            android:textColor="@color/kl3_text_primary"
             android:textStyle="bold" />
 
         <SeekBar
@@ -486,21 +600,21 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginLeft="8dp"
-            android:layout_marginRight="8dp"
+            android:layout_marginLeft="@dimen/kl3_sp_sm"
+            android:layout_marginRight="@dimen/kl3_sp_sm"
             android:maxHeight="4dp"
             android:minHeight="4dp"
-            android:progressTint="@color/kl_brand"
+            android:progressTint="@color/kl3_accent"
             android:thumbTint="#FFFFFF" />
 
         <TextView
             android:id="@+id/tvSeekTotal"
+            style="@style/KL3.Text.Meta"
             android:layout_width="52dp"
             android:layout_height="wrap_content"
             android:gravity="center"
             android:text="00:00"
-            android:textColor="#CBD5E1"
-            android:textSize="12sp" />
+            android:textColor="@color/kl3_text_tertiary" />
     </LinearLayout>
 
     <!-- VOD CONTROL BAR: thanh điều khiển phim gọn, nút kính bo 14dp, focus viền cam -->
@@ -511,11 +625,11 @@
         android:layout_gravity="bottom"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="@drawable/bg_overlay_bottom"
-        android:paddingLeft="28dp"
-        android:paddingRight="28dp"
-        android:paddingTop="10dp"
-        android:paddingBottom="10dp"
+        android:background="@drawable/kl3p_scrim_bottom"
+        android:paddingLeft="@dimen/kl3_margin_x"
+        android:paddingRight="@dimen/kl3_margin_x"
+        android:paddingTop="@dimen/kl3_sp_md"
+        android:paddingBottom="@dimen/kl3_sp_md"
         android:visibility="gone">
 
         <Button
@@ -523,12 +637,17 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:background="@drawable/bg_player_control_btn"
+            android:background="@drawable/kl3p_vod_btn"
+            android:foreground="@drawable/kl3p_fg_focus_md"
             android:drawableTop="@drawable/kl_p_settings"
             android:drawablePadding="4dp"
             android:text="Cài Đặt"
-            android:textColor="#FFFFFF"
-            android:textSize="11.5sp"
+            android:textColor="@color/kl3_text_primary"
+            android:textSize="@dimen/kl3_ts_meta"
+            android:fontFamily="@font/oswald"
+            android:textStyle="bold"
+            android:letterSpacing="0.05"
+            android:maxLines="1"
             android:focusable="true" />
 
         <Button
@@ -536,13 +655,18 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_marginLeft="10dp"
-            android:background="@drawable/bg_player_control_btn"
+            android:layout_marginLeft="@dimen/kl3_gap"
+            android:background="@drawable/kl3p_vod_btn"
+            android:foreground="@drawable/kl3p_fg_focus_md"
             android:drawableTop="@drawable/kl_p_skip_prev"
             android:drawablePadding="4dp"
             android:text="Tập trước"
-            android:textColor="#FFFFFF"
-            android:textSize="11.5sp"
+            android:textColor="@color/kl3_text_primary"
+            android:textSize="@dimen/kl3_ts_meta"
+            android:fontFamily="@font/oswald"
+            android:textStyle="bold"
+            android:letterSpacing="0.05"
+            android:maxLines="1"
             android:focusable="true" />
 
         <Button
@@ -550,13 +674,18 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_marginLeft="10dp"
-            android:background="@drawable/bg_player_control_btn"
+            android:layout_marginLeft="@dimen/kl3_gap"
+            android:background="@drawable/kl3p_vod_btn"
+            android:foreground="@drawable/kl3p_fg_focus_md"
             android:drawableTop="@drawable/kl_p_seek_back"
             android:drawablePadding="4dp"
             android:text="Tua lại"
-            android:textColor="#FFFFFF"
-            android:textSize="11.5sp"
+            android:textColor="@color/kl3_text_primary"
+            android:textSize="@dimen/kl3_ts_meta"
+            android:fontFamily="@font/oswald"
+            android:textStyle="bold"
+            android:letterSpacing="0.05"
+            android:maxLines="1"
             android:focusable="true" />
 
         <Button
@@ -564,13 +693,18 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_marginLeft="10dp"
-            android:background="@drawable/bg_player_control_btn"
+            android:layout_marginLeft="@dimen/kl3_gap"
+            android:background="@drawable/kl3p_vod_btn"
+            android:foreground="@drawable/kl3p_fg_focus_md"
             android:drawableTop="@drawable/kl_p_pause"
             android:drawablePadding="4dp"
             android:text="Tạm dừng"
-            android:textColor="#FFFFFF"
-            android:textSize="11.5sp"
+            android:textColor="@color/kl3_accent_bright"
+            android:textSize="@dimen/kl3_ts_meta"
+            android:fontFamily="@font/oswald"
+            android:textStyle="bold"
+            android:letterSpacing="0.05"
+            android:maxLines="1"
             android:focusable="true" />
 
         <Button
@@ -578,13 +712,18 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_marginLeft="10dp"
-            android:background="@drawable/bg_player_control_btn"
+            android:layout_marginLeft="@dimen/kl3_gap"
+            android:background="@drawable/kl3p_vod_btn"
+            android:foreground="@drawable/kl3p_fg_focus_md"
             android:drawableTop="@drawable/kl_p_seek_fwd"
             android:drawablePadding="4dp"
             android:text="Tua tới"
-            android:textColor="#FFFFFF"
-            android:textSize="11.5sp"
+            android:textColor="@color/kl3_text_primary"
+            android:textSize="@dimen/kl3_ts_meta"
+            android:fontFamily="@font/oswald"
+            android:textStyle="bold"
+            android:letterSpacing="0.05"
+            android:maxLines="1"
             android:focusable="true" />
 
         <Button
@@ -592,13 +731,18 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_marginLeft="10dp"
-            android:background="@drawable/bg_player_control_btn"
+            android:layout_marginLeft="@dimen/kl3_gap"
+            android:background="@drawable/kl3p_vod_btn"
+            android:foreground="@drawable/kl3p_fg_focus_md"
             android:drawableTop="@drawable/kl_p_skip_next"
             android:drawablePadding="4dp"
             android:text="Tập tiếp"
-            android:textColor="#FFFFFF"
-            android:textSize="11.5sp"
+            android:textColor="@color/kl3_text_primary"
+            android:textSize="@dimen/kl3_ts_meta"
+            android:fontFamily="@font/oswald"
+            android:textStyle="bold"
+            android:letterSpacing="0.05"
+            android:maxLines="1"
             android:focusable="true" />
 
         <Button
@@ -606,13 +750,18 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:layout_marginLeft="10dp"
-            android:background="@drawable/bg_player_control_btn"
+            android:layout_marginLeft="@dimen/kl3_gap"
+            android:background="@drawable/kl3p_vod_btn"
+            android:foreground="@drawable/kl3p_fg_focus_md"
             android:drawableTop="@drawable/kl_p_episodes"
             android:drawablePadding="4dp"
             android:text="Danh sách tập"
-            android:textColor="#FFFFFF"
-            android:textSize="11.5sp"
+            android:textColor="@color/kl3_text_primary"
+            android:textSize="@dimen/kl3_ts_meta"
+            android:fontFamily="@font/oswald"
+            android:textStyle="bold"
+            android:letterSpacing="0.05"
+            android:maxLines="1"
             android:focusable="true" />
     </LinearLayout>
 
@@ -622,13 +771,13 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="left|top"
-        android:layout_marginLeft="24dp"
-        android:layout_marginTop="24dp"
-        android:background="@drawable/bg_badge_glass"
-        android:paddingLeft="14dp"
-        android:paddingRight="16dp"
-        android:paddingTop="9dp"
-        android:paddingBottom="9dp"
+        android:layout_marginLeft="@dimen/kl3_margin_x"
+        android:layout_marginTop="@dimen/kl3_margin_x"
+        android:background="@drawable/kl3p_glass_panel"
+        android:paddingLeft="@dimen/kl3_sp_md"
+        android:paddingRight="@dimen/kl3_sp_lg"
+        android:paddingTop="@dimen/kl3_sp_sm"
+        android:paddingBottom="@dimen/kl3_sp_sm"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:clickable="true"
@@ -639,16 +788,16 @@
             android:layout_width="18dp"
             android:layout_height="18dp"
             android:src="@drawable/ic_unlock"
+            app:tint="@color/kl3_accent"
             android:contentDescription="@null" />
 
         <TextView
-            style="@style/KL.Text.Meta"
+            style="@style/KL3.Text.Meta"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="8dp"
+            android:layout_marginLeft="@dimen/kl3_sp_sm"
             android:text="MỞ KHÓA"
-            android:textColor="@color/white"
-            android:textSize="12sp"
+            android:textColor="@color/kl3_text_primary"
             android:textStyle="bold" />
     </LinearLayout>
 
@@ -658,10 +807,10 @@
         android:layout_width="340dp"
         android:layout_height="match_parent"
         android:layout_gravity="right"
-        android:background="#FA000000"
+        android:background="@color/kl3_bg"
         android:orientation="vertical"
-        android:paddingTop="20dp"
-        android:paddingBottom="20dp"
+        android:paddingTop="@dimen/kl3_sp_xl"
+        android:paddingBottom="@dimen/kl3_sp_xl"
         android:visibility="gone">
 
         <LinearLayout
@@ -669,52 +818,47 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingLeft="20dp"
-            android:paddingRight="20dp"
-            android:paddingBottom="14dp">
+            android:paddingLeft="@dimen/kl3_margin_x"
+            android:paddingRight="@dimen/kl3_margin_x"
+            android:paddingBottom="@dimen/kl3_sp_md">
 
             <View
-                android:layout_width="3.5dp"
+                android:layout_width="@dimen/kl3_section_bar_w"
                 android:layout_height="18dp"
-                android:background="@drawable/accent_bar"
-                android:layout_marginRight="9dp" />
+                android:background="@color/kl3_accent"
+                android:layout_marginRight="@dimen/kl3_sp_sm" />
 
             <TextView
+                style="@style/KL3.Text.Section"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="Danh Sách Kênh"
-                android:textColor="#FFFFFF"
-                android:textSize="17sp"
-                android:textStyle="bold" />
+                android:text="Danh Sách Kênh" />
 
             <TextView
                 android:id="@+id/sidebarCount"
+                style="@style/KL3.Pill"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_badge_glass"
-                android:paddingLeft="8dp"
-                android:paddingRight="8dp"
-                android:paddingTop="3dp"
-                android:paddingBottom="3dp"
-                android:textColor="@color/kl_brand"
-                android:textSize="11sp"
+                android:textColor="@color/kl3_accent_bright"
+                android:textSize="@dimen/kl3_ts_micro"
+                android:textStyle="bold"
                 android:text="" />
         </LinearLayout>
 
         <View
             android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#161820"
-            android:layout_marginBottom="8dp" />
+            android:layout_height="@dimen/kl3_divider_h"
+            android:background="@drawable/kl3_divider"
+            android:layout_marginBottom="@dimen/kl3_sp_sm" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/sidebarChannelList"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clipToPadding="false"
-            android:paddingLeft="10dp"
-            android:paddingRight="10dp"
+            android:paddingLeft="@dimen/kl3_sp_sm"
+            android:paddingRight="@dimen/kl3_sp_sm"
             android:scrollbars="vertical" />
     </LinearLayout>
 
@@ -725,9 +869,9 @@
         android:layout_height="220dp"
         android:layout_gravity="bottom"
         android:orientation="vertical"
-        android:background="@drawable/bg_carousel_panel"
-        android:paddingBottom="16dp"
-        android:paddingTop="20dp"
+        android:background="@drawable/kl3p_scrim_bottom"
+        android:paddingBottom="@dimen/kl3_sp_lg"
+        android:paddingTop="@dimen/kl3_sp_xl"
         android:visibility="gone">
 
         <!-- Tiêu đề & Thông tin kênh đang focus -->
@@ -736,47 +880,42 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:paddingLeft="28dp"
-            android:paddingRight="28dp"
-            android:layout_marginBottom="12dp">
+            android:paddingLeft="@dimen/kl3_margin_x"
+            android:paddingRight="@dimen/kl3_margin_x"
+            android:layout_marginBottom="@dimen/kl3_gap">
 
             <View
-                android:layout_width="3.5dp"
+                android:layout_width="@dimen/kl3_section_bar_w"
                 android:layout_height="18dp"
-                android:background="@drawable/accent_bar"
-                android:layout_marginRight="10dp" />
+                android:background="@color/kl3_accent"
+                android:layout_marginRight="@dimen/kl3_sp_sm" />
 
             <TextView
                 android:id="@+id/tvCarouselHeader"
+                style="@style/KL3.Text.Section"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="#FFFFFF"
-                android:textSize="16sp"
-                android:textStyle="bold"
                 android:text="DANH SÁCH TRUYỀN HÌNH" />
 
             <TextView
                 android:id="@+id/tvCarouselCount"
+                style="@style/KL3.Pill"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="10dp"
-                android:background="@drawable/bg_badge_glass"
-                android:paddingLeft="8dp"
-                android:paddingRight="8dp"
-                android:paddingTop="2dp"
-                android:paddingBottom="2dp"
-                android:textColor="#FFFF6500"
-                android:textSize="11sp"
+                android:layout_marginLeft="@dimen/kl3_sp_sm"
+                android:textColor="@color/kl3_accent_bright"
+                android:textSize="@dimen/kl3_ts_micro"
+                android:textStyle="bold"
                 android:text="0 kênh" />
 
             <TextView
                 android:id="@+id/tvCarouselEpgPreview"
+                style="@style/KL3.Text.Meta"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginLeft="18dp"
-                android:textColor="#94A3B8"
-                android:textSize="12sp"
+                android:layout_marginLeft="@dimen/kl3_sp_xl"
+                android:textColor="@color/kl3_text_secondary"
                 android:maxLines="1"
                 android:ellipsize="end"
                 android:text="Bấm ◄/► để chọn kênh, OK để phát ngay" />
@@ -788,8 +927,8 @@
             android:layout_width="match_parent"
             android:layout_height="115dp"
             android:clipToPadding="false"
-            android:paddingLeft="24dp"
-            android:paddingRight="24dp"
+            android:paddingLeft="@dimen/kl3_margin_x"
+            android:paddingRight="@dimen/kl3_margin_x"
             android:orientation="horizontal" />
     </LinearLayout>
 
@@ -803,12 +942,13 @@
         android:layout_gravity="bottom|center_horizontal"
         android:layout_marginBottom="36dp"
         android:orientation="horizontal"
-        android:background="@drawable/bg_player_osd_banner"
-        android:paddingLeft="20dp"
-        android:paddingRight="20dp"
-        android:paddingTop="14dp"
-        android:paddingBottom="14dp"
+        android:background="@drawable/kl3p_glass_panel"
+        android:paddingLeft="@dimen/kl3_sp_xl"
+        android:paddingRight="@dimen/kl3_sp_xl"
+        android:paddingTop="@dimen/kl3_sp_md"
+        android:paddingBottom="@dimen/kl3_sp_md"
         android:gravity="center_vertical"
+        android:elevation="@dimen/kl3_elev_3"
         android:visibility="gone">
 
         <!-- Khung số kênh nổi bật màu cam FPT -->
@@ -816,19 +956,20 @@
             android:id="@+id/osdChannelNumber"
             android:layout_width="56dp"
             android:layout_height="56dp"
-            android:background="@drawable/bg_badge_league_cyan"
+            android:background="@drawable/kl3_btn_primary"
             android:gravity="center"
-            android:textColor="#FFFF6500"
-            android:textSize="22sp"
+            android:textColor="@color/kl3_on_accent"
+            android:textSize="@dimen/kl3_ts_title"
             android:textStyle="bold"
+            android:fontFamily="@font/oswald"
             android:text="01" />
 
         <!-- Logo Kênh nền đen -->
         <FrameLayout
             android:layout_width="56dp"
             android:layout_height="56dp"
-            android:layout_marginLeft="14dp"
-            android:background="#0A0B0E"
+            android:layout_marginLeft="@dimen/kl3_gap"
+            android:background="@color/kl3_bg_soft"
             android:padding="6dp">
 
             <ImageView
@@ -844,15 +985,15 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginLeft="16dp"
+            android:layout_marginLeft="@dimen/kl3_sp_lg"
             android:orientation="vertical">
 
             <TextView
                 android:id="@+id/osdChannelTitle"
+                style="@style/KL3.Text.Title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="#FFFFFF"
-                android:textSize="17sp"
+                android:textSize="@dimen/kl3_ts_body_lg"
                 android:textStyle="bold"
                 android:maxLines="1"
                 android:ellipsize="end"
@@ -860,11 +1001,11 @@
 
             <TextView
                 android:id="@+id/osdEpgNow"
+                style="@style/KL3.Text.Meta"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:textColor="#FFFF6500"
-                android:textSize="12sp"
+                android:layout_marginTop="@dimen/kl3_sp_xs"
+                android:textColor="@color/kl3_accent_bright"
                 android:textStyle="bold"
                 android:maxLines="1"
                 android:ellipsize="end"
@@ -876,19 +1017,18 @@
                 style="@android:style/Widget.ProgressBar.Horizontal"
                 android:layout_width="match_parent"
                 android:layout_height="3.5dp"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="@dimen/kl3_sp_xs"
                 android:max="100"
                 android:progress="50"
-                android:progressDrawable="@drawable/bg_progress_horizontal"
+                android:progressTint="@color/kl3_accent"
                 android:visibility="gone" />
 
             <TextView
                 android:id="@+id/osdEpgNext"
+                style="@style/KL3.Text.Micro"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:textColor="#94A3B8"
-                android:textSize="11sp"
+                android:layout_marginTop="@dimen/kl3_sp_xs"
                 android:maxLines="1"
                 android:ellipsize="end"
                 android:text="Tiếp theo: 19:45 Phim truyện" />
@@ -896,18 +1036,14 @@
 
         <TextView
             android:id="@+id/osdTechTag"
+            style="@style/KL3.Badge.Hd"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="14dp"
-            android:background="@drawable/bg_badge_live_red"
-            android:paddingLeft="10dp"
-            android:paddingRight="10dp"
-            android:paddingTop="5dp"
-            android:paddingBottom="5dp"
-            android:textColor="#FFFFFF"
-            android:textSize="11sp"
+            android:layout_marginLeft="@dimen/kl3_gap"
+            android:text="FHD 50FPS"
+            android:textSize="@dimen/kl3_ts_badge"
             android:textStyle="bold"
-            android:text="FHD 50FPS" />
+            android:letterSpacing="0.07" />
     </LinearLayout>
 
     <!-- GESTURE FEEDBACK BOX (MOBILE SWIPE BRIGHTNESS / VOLUME) -->
@@ -919,11 +1055,12 @@
         android:layout_width="310dp"
         android:layout_height="wrap_content"
         android:layout_gravity="top|right"
-        android:layout_marginTop="24dp"
-        android:layout_marginRight="24dp"
+        android:layout_marginTop="@dimen/kl3_margin_x"
+        android:layout_marginRight="@dimen/kl3_margin_x"
         android:orientation="vertical"
-        android:background="@drawable/bg_player_hud_card"
-        android:padding="16dp"
+        android:background="@drawable/kl3p_glass_panel"
+        android:padding="@dimen/kl3_sp_lg"
+        android:elevation="@dimen/kl3_elev_3"
         android:visibility="gone">
 
         <LinearLayout
@@ -933,83 +1070,85 @@
             android:gravity="center_vertical">
 
             <TextView
+                style="@style/KL3.Text.Micro"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="STATS FOR NERDS"
-                android:textColor="@color/kl_brand"
-                android:textSize="12sp"
+                android:textColor="@color/kl3_accent_bright"
                 android:textStyle="bold"
-                android:letterSpacing="0.05" />
+                android:letterSpacing="0.08" />
 
             <TextView
                 android:id="@+id/tvHudClose"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="✕"
-                android:textColor="#8E9AA8"
-                android:textSize="14sp"
-                android:padding="4dp" />
+                android:textColor="@color/kl3_text_tertiary"
+                android:textSize="@dimen/kl3_ts_body"
+                android:padding="@dimen/kl3_sp_xs"
+                android:focusable="true"
+                android:clickable="true" />
         </LinearLayout>
 
         <View
             android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="8dp"
-            android:layout_marginBottom="10dp"
-            android:background="#1E232E" />
+            android:layout_height="@dimen/kl3_divider_h"
+            android:layout_marginTop="@dimen/kl3_sp_sm"
+            android:layout_marginBottom="@dimen/kl3_sp_md"
+            android:background="@drawable/kl3_divider" />
 
         <TextView
             android:id="@+id/tvStatResolution"
+            style="@style/KL3.Text.Meta"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#F1F5F9"
-            android:textSize="11.5sp"
+            android:textColor="@color/kl3_text_secondary"
             android:text="Độ phân giải: Đang đo..." />
 
         <TextView
             android:id="@+id/tvStatFps"
+            style="@style/KL3.Text.Meta"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="#F1F5F9"
-            android:textSize="11.5sp"
+            android:layout_marginTop="@dimen/kl3_sp_xs"
+            android:textColor="@color/kl3_text_secondary"
             android:text="Khung hình: Đang đo..." />
 
         <TextView
             android:id="@+id/tvStatBitrate"
+            style="@style/KL3.Text.Meta"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="#F1F5F9"
-            android:textSize="11.5sp"
+            android:layout_marginTop="@dimen/kl3_sp_xs"
+            android:textColor="@color/kl3_text_secondary"
             android:text="Bitrate: Đang đo..." />
 
         <TextView
             android:id="@+id/tvStatCodec"
+            style="@style/KL3.Text.Meta"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="#F1F5F9"
-            android:textSize="11.5sp"
+            android:layout_marginTop="@dimen/kl3_sp_xs"
+            android:textColor="@color/kl3_text_secondary"
             android:text="Codec: H.264 / AAC" />
 
         <TextView
             android:id="@+id/tvStatBuffer"
+            style="@style/KL3.Text.Meta"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="#F1F5F9"
-            android:textSize="11.5sp"
+            android:layout_marginTop="@dimen/kl3_sp_xs"
+            android:textColor="@color/kl3_text_secondary"
             android:text="Bộ đệm dự trữ: 0.0s" />
 
         <TextView
             android:id="@+id/tvStatDropped"
+            style="@style/KL3.Text.Meta"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="#F1F5F9"
-            android:textSize="11.5sp"
+            android:layout_marginTop="@dimen/kl3_sp_xs"
+            android:textColor="@color/kl3_text_secondary"
             android:text="Khung hình rớt: 0" />
     </LinearLayout>
 

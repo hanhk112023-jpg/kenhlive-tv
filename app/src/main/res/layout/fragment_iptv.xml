@@ -4,18 +4,18 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/kl_bg_deep">
+    android:background="@color/kl3_bg">
 
-    <!-- CỤM TRÊN: HERO PREVIEW KÊNH ĐANG FOCUS (PHONG CÁCH APPLE TV CINEMA) -->
+    <!-- ============ HERO PREVIEW: kênh đang focus ============ -->
     <RelativeLayout
         android:id="@+id/heroPreviewBox"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/kl2_iptv_hero_h"
-        android:background="@drawable/bg_iptv_hero"
+        android:layout_height="@dimen/kl3_hero_h"
+        android:background="@color/kl3_bg_soft"
         android:focusable="false"
         android:clickable="true">
 
-        <!-- NỀN TRÌNH PHÁT PREVIEW MỜ MỜ (CINEMATIC AMBIENT VIDEO) -->
+        <!-- Lớp video preview mờ phía sau -->
         <FrameLayout
             android:id="@+id/heroPlayerContainer"
             android:layout_width="match_parent"
@@ -32,242 +32,203 @@
                 app:use_controller="false"
                 app:resize_mode="zoom" />
 
-            <!-- Lớp mờ chuyển tiếp: bên trái tối sâu giữ text nét, bên phải lộ video mềm mại -->
+            <!-- Scrim KL3: fade trái + đáy giữ chữ nét trên mọi nền -->
             <View
                 android:id="@+id/heroPlayerScrim"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@drawable/bg_iptv_hero_scrim" />
+                android:background="@drawable/kl3_hero_scrim" />
         </FrameLayout>
 
-        <!-- NỘI DUNG HERO: THÔNG TIN KÊNH + LOGO -->
+        <!-- Nội dung hero: thông tin kênh + EPG + logo -->
         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:paddingLeft="@dimen/sp_screen_margin"
-            android:paddingRight="@dimen/sp_screen_margin"
-            android:paddingTop="16dp"
-            android:paddingBottom="14dp">
+            android:paddingLeft="@dimen/kl3_margin_x"
+            android:paddingRight="@dimen/kl3_margin_x"
+            android:paddingTop="@dimen/kl3_sp_lg"
+            android:paddingBottom="@dimen/kl3_sp_md">
 
-            <!-- Bên trái: Chi tiết kênh & Lịch phát sóng EPG lớn -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_toLeftOf="@+id/heroLogoContainer"
                 android:orientation="vertical"
                 android:gravity="center_vertical"
-                android:paddingRight="@dimen/sp_screen_margin">
+                android:paddingRight="@dimen/kl3_margin_x">
 
-            <!-- Dãy huy hiệu trạng thái sang trọng -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
-
-                <TextView
-                    android:id="@+id/heroChannelGroup"
+                <!-- Hàng badge trạng thái -->
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="VIỆT NAM"
-                    android:textColor="#FFFF6500"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:letterSpacing="0.06"
-                    android:background="@drawable/bg_badge_league_cyan"
-                    android:paddingLeft="10dp"
-                    android:paddingRight="10dp"
-                    android:paddingTop="3dp"
-                    android:paddingBottom="3dp" />
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
 
+                    <TextView
+                        android:id="@+id/heroChannelGroup"
+                        style="@style/KL3.Badge.Provider"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="VIỆT NAM"
+                        android:textSize="@dimen/kl3_ts_badge"
+                        android:letterSpacing="0.06" />
+
+                    <TextView
+                        style="@style/KL3.Badge.Live"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/kl3_sp_sm"
+                        android:text="● TRỰC TIẾP"
+                        android:textSize="@dimen/kl3_ts_badge" />
+
+                    <TextView
+                        style="@style/KL3.Badge.Hd"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginLeft="@dimen/kl3_sp_xs"
+                        android:text="FHD"
+                        android:textSize="@dimen/kl3_ts_badge" />
+                </LinearLayout>
+
+                <!-- Tên kênh -->
                 <TextView
+                    android:id="@+id/heroChannelTitle"
+                    style="@style/KL3.Text.Hero"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="8dp"
-                    android:text="● TRỰC TIẾP"
-                    android:textColor="#FFFFFF"
-                    android:textSize="10sp"
-                    android:textStyle="bold"
-                    android:background="@drawable/bg_badge_live_red"
-                    android:paddingLeft="8dp"
-                    android:paddingRight="8dp"
-                    android:paddingTop="3dp"
-                    android:paddingBottom="3dp" />
+                    android:layout_marginTop="@dimen/kl3_sp_sm"
+                    android:text="VTV1 HD"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
 
+                <!-- EPG: đang phát -->
                 <TextView
+                    android:id="@+id/heroEpgNow"
+                    style="@style/KL3.Text.Title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="6dp"
-                    android:text="FHD"
-                    android:textColor="#FFFF6500"
-                    android:textSize="9.5sp"
-                    android:textStyle="bold"
-                    android:background="@drawable/bg_badge_hd"
-                    android:paddingLeft="6dp"
-                    android:paddingRight="6dp"
-                    android:paddingTop="2dp"
-                    android:paddingBottom="2dp" />
+                    android:layout_marginTop="@dimen/kl3_sp_xs"
+                    android:text="Đang phát: Thời sự 19h00"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+
+                <!-- Progress EPG (Kotlin tự chỉnh width theo thiết bị) -->
+                <ProgressBar
+                    android:id="@+id/heroEpgProgress"
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:layout_width="280dp"
+                    android:layout_height="@dimen/kl3_sp_xs"
+                    android:layout_marginTop="@dimen/kl3_sp_xs"
+                    android:max="100"
+                    android:progress="45"
+                    android:progressDrawable="@drawable/kl3i_progress_horizontal"
+                    android:visibility="gone" />
+
+                <!-- EPG: tiếp theo -->
+                <TextView
+                    android:id="@+id/heroEpgNext"
+                    style="@style/KL3.Text.Meta"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/kl3_sp_xs"
+                    android:text="Tiếp theo: Phim truyện Việt Nam"
+                    android:maxLines="1"
+                    android:ellipsize="end" />
+
+                <!-- Gợi ý điều khiển (code đổi theo phone/TV) -->
+                <TextView
+                    android:id="@+id/heroHintText"
+                    style="@style/KL3.Text.Micro"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="@dimen/kl3_sp_sm"
+                    android:text="Bấm [OK] để xem toàn màn hình • Bấm [Lên/Xuống] để duyệt kênh" />
             </LinearLayout>
 
-            <!-- Tên kênh truyền hình -->
-            <TextView
-                android:id="@+id/heroChannelTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="VTV1 HD"
-                android:textColor="#FFFFFF"
-                android:textSize="30sp"
-                android:textStyle="bold"
-                android:shadowColor="#80000000"
-                android:shadowDx="0"
-                android:shadowDy="2"
-                android:shadowRadius="4"
-                android:fontFamily="@font/oswald" />
+            <!-- Khung logo kênh — glass panel, code ẩn khi phone dọc -->
+            <FrameLayout
+                android:id="@+id/heroLogoContainer"
+                android:layout_width="160dp"
+                android:layout_height="120dp"
+                android:layout_alignParentRight="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/kl3i_logo_frame"
+                android:padding="@dimen/kl3_sp_md">
 
-            <!-- Lịch EPG: Đang phát -->
-            <TextView
-                android:id="@+id/heroEpgNow"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="Đang phát: Thời sự 19h00"
-                android:textColor="#F8FAFC"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:maxLines="1"
-                android:ellipsize="end" />
-
-            <!-- Progress bar tiến độ EPG FPT Play -->
-            <ProgressBar
-                android:id="@+id/heroEpgProgress"
-                style="@android:style/Widget.ProgressBar.Horizontal"
-                android:layout_width="280dp"
-                android:layout_height="4dp"
-                android:layout_marginTop="5dp"
-                android:max="100"
-                android:progress="45"
-                android:progressDrawable="@drawable/bg_progress_horizontal"
-                android:visibility="gone" />
-
-            <!-- Lịch EPG: Tiếp theo -->
-            <TextView
-                android:id="@+id/heroEpgNext"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="3dp"
-                android:text="Tiếp theo: Phim truyện Việt Nam"
-                android:textColor="#94A3B8"
-                android:textSize="12.5sp"
-                android:maxLines="1"
-                android:ellipsize="end" />
-
-            <!-- Gợi ý điều khiển (chữ đổi theo thiết bị trong IptvFragment) -->
-            <TextView
-                android:id="@+id/heroHintText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:text="Bấm [OK] để xem toàn màn hình • Bấm [Lên/Xuống] để duyệt kênh"
-                android:textColor="#8E9AA8"
-                android:textSize="11sp" />
-        </LinearLayout>
-
-        <!-- Bên phải: Khung kính Logo Kênh 3D nổi bật -->
-        <FrameLayout
-            android:id="@+id/heroLogoContainer"
-            android:layout_width="160dp"
-            android:layout_height="120dp"
-            android:layout_alignParentRight="true"
-            android:layout_centerVertical="true"
-            android:background="@drawable/bg_iptv_logo_frame"
-            android:padding="12dp">
-
-            <ImageView
-                android:id="@+id/heroLogoImg"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="fitCenter"
-                android:src="@drawable/ic_nav_tv" />
-        </FrameLayout>
+                <ImageView
+                    android:id="@+id/heroLogoImg"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/ic_nav_tv" />
+            </FrameLayout>
         </RelativeLayout>
 
-        <!-- Đường kẻ viền chân Hero mờ dần -->
+        <!-- Hairline chân hero -->
         <View
             android:layout_width="match_parent"
-            android:layout_height="1dp"
+            android:layout_height="@dimen/kl3_divider_h"
             android:layout_alignParentBottom="true"
-            android:background="#1B2232" />
+            android:background="@drawable/kl3_divider" />
     </RelativeLayout>
 
-    <!-- THANH DANH MỤC NHÓM KÊNH & Ô TÌM KIẾM -->
+    <!-- ============ THANH NHÓM KÊNH + TÌM KIẾM + M3U ============ -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingTop="10dp"
-        android:paddingBottom="6dp"
-        android:paddingLeft="@dimen/sp_screen_margin"
-        android:paddingRight="@dimen/sp_screen_margin">
+        android:paddingTop="@dimen/kl3_sp_md"
+        android:paddingBottom="@dimen/kl3_sp_sm"
+        android:paddingLeft="@dimen/kl3_margin_x"
+        android:paddingRight="@dimen/kl3_margin_x">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/iptvGroupList"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:clipToPadding="false" />
+            android:clipToPadding="false"
+            android:clipChildren="false" />
 
-        <!-- Ô Tìm kiếm nhanh phong cách bo tròn -->
         <EditText
             android:id="@+id/searchChannelInput"
+            style="@style/KL3.Input"
             android:layout_width="@dimen/iptv_search_w"
-            android:layout_height="@dimen/iptv_search_h"
-            android:layout_marginLeft="14dp"
-            android:hint="Tìm kênh TV..."
-            android:textColorHint="#8E9AA8"
-            android:textColor="#FFFFFF"
-            android:textSize="12sp"
-            android:background="@drawable/kl2_input_pill"
-            android:paddingLeft="16dp"
-            android:paddingRight="14dp"
-            android:singleLine="true"
-            android:imeOptions="actionSearch" />
+            android:layout_height="@dimen/kl3_input_h"
+            android:layout_marginLeft="@dimen/kl3_gap"
+            android:hint="Tìm kênh TV..." />
 
-        <!-- Nút Thêm / Đổi M3U Playlist -->
         <LinearLayout
             android:id="@+id/btnIptvAddM3u"
             android:layout_width="wrap_content"
-            android:layout_height="@dimen/iptv_search_h"
-            android:layout_marginLeft="10dp"
+            android:layout_height="@dimen/kl3_btn_h"
+            android:layout_marginLeft="@dimen/kl3_gap"
             android:orientation="horizontal"
             android:gravity="center_vertical"
-            android:background="@drawable/kl2_card_glass"
-            android:paddingLeft="12dp"
-            android:paddingRight="14dp"
-            android:clickable="true"
-            android:focusable="true">
+            android:background="@drawable/kl3_btn_ghost"
+            android:paddingLeft="@dimen/kl3_sp_lg"
+            android:paddingRight="@dimen/kl3_sp_lg"
+            android:focusable="true"
+            android:clickable="true">
 
             <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
+                android:layout_width="@dimen/kl3_crest_s"
+                android:layout_height="@dimen/kl3_crest_s"
                 android:src="@drawable/ic_nav_tv"
-                android:tint="@color/kl_brand"
+                android:tint="@color/kl3_accent"
                 android:contentDescription="@null" />
 
             <TextView
+                style="@style/KL3.Text.Button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="6dp"
-                android:text="➕ THÊM M3U"
-                android:textColor="#FFFFFF"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:layout_marginLeft="@dimen/kl3_sp_sm"
+                android:text="THÊM M3U" />
         </LinearLayout>
     </LinearLayout>
 
-    <!-- CỤM DƯỚI: LƯỚI THẺ KÊNH TV (5 CỘT) -->
+    <!-- ============ LƯỚI KÊNH TV ============ -->
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -279,39 +240,41 @@
             android:layout_height="match_parent"
             android:clipToPadding="false"
             android:clipChildren="false"
-            android:paddingLeft="@dimen/sp_screen_margin"
-            android:paddingRight="@dimen/sp_screen_margin"
-            android:paddingTop="4dp"
-            android:paddingBottom="24dp"
+            android:paddingLeft="@dimen/kl3_margin_x"
+            android:paddingRight="@dimen/kl3_margin_x"
+            android:paddingTop="@dimen/kl3_sp_xs"
+            android:paddingBottom="@dimen/kl3_sp_xl"
             android:scrollbars="vertical" />
 
         <ProgressBar
             android:id="@+id/iptvLoading"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="@dimen/kl3_icon_btn"
+            android:layout_height="@dimen/kl3_icon_btn"
             android:layout_gravity="center"
-            android:indeterminateTint="@color/kl_brand"
+            android:indeterminateTint="@color/kl3_accent"
             android:visibility="gone" />
 
         <TextView
             android:id="@+id/iptvEmptyText"
+            style="@style/KL3.Text.Body"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
+            android:paddingLeft="@dimen/kl3_margin_x"
+            android:paddingRight="@dimen/kl3_margin_x"
+            android:gravity="center"
             android:text="Không tìm thấy kênh truyền hình phù hợp"
-            android:textColor="#8E9AA8"
-            android:textSize="14sp"
             android:visibility="gone" />
 
         <TextView
             android:id="@+id/channelCountText"
+            style="@style/KL3.Text.Meta"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="bottom|right"
-            android:layout_marginRight="28dp"
-            android:layout_marginBottom="16dp"
-            android:textColor="#FFFF6500"
-            android:textSize="12sp"
+            android:layout_marginRight="@dimen/kl3_sp_xl"
+            android:layout_marginBottom="@dimen/kl3_sp_lg"
+            android:textColor="@color/kl3_gold"
             android:textStyle="bold"
             android:visibility="gone" />
     </FrameLayout>

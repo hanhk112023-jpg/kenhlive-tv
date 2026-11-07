@@ -1,17 +1,22 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- KL3 match card — trận ĐANG DIỄN RA (MatchCardsAdapter TYPE_LIVE).
+     3 tầng: badges → đội + score pill → meta (BLV/viewers/phòng).
+     Mọi android:id giữ nguyên; code set width + màu động khi bind. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/cardRoot"
-    android:layout_width="@dimen/card_w"
+    android:layout_width="@dimen/kl3_match_card_w"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:layout_marginRight="@dimen/sp_card_gap"
-    android:background="@drawable/sl_apple_card"
-    android:padding="16dp"
+    android:layout_marginRight="@dimen/kl3_rail_gap"
+    android:background="@drawable/kl3_card_bg"
+    android:foreground="@drawable/kl3_fg_focus"
+    android:padding="@dimen/kl3_card_h_pad"
+    android:elevation="@dimen/kl3_elev_1"
     android:descendantFocusability="blocksDescendants"
     android:focusable="true"
     android:clickable="true">
 
-    <!-- Row 1: League tag (left) + Provider tag + LIVE pill RED (right) -->
+    <!-- Row 1: League tag (left) + Provider tag + time badge + LIVE pill -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -20,36 +25,27 @@
 
         <TextView
             android:id="@+id/cardLeague"
+            style="@style/KL3.Text.Badge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_badge_league_cyan"
-            android:textColor="@color/kl_cyan"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.04"
-            android:paddingLeft="9dp"
-            android:paddingRight="9dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp"
+            android:background="@drawable/kl3_pill_bg"
+            android:textColor="@color/kl3_text_secondary"
+            android:paddingLeft="@dimen/kl3_badge_pad_x"
+            android:paddingRight="@dimen/kl3_badge_pad_x"
+            android:paddingTop="@dimen/kl3_sp_xs"
+            android:paddingBottom="@dimen/kl3_sp_xs"
             android:maxLines="1"
             android:maxWidth="140dp"
             android:ellipsize="end" />
 
         <TextView
             android:id="@+id/cardProvider"
+            style="@style/KL3.Badge.Provider"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="6dp"
-            android:background="@drawable/bg_badge_brand"
-            android:textColor="#FBBF24"
-            android:textSize="10.5sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.04"
-            android:paddingLeft="7dp"
-            android:paddingRight="7dp"
-            android:paddingTop="2.5dp"
-            android:paddingBottom="2.5dp"
-            android:maxLines="1"
+            android:layout_marginLeft="@dimen/kl3_sp_sm"
+            android:textColor="@color/kl3_info"
+            android:textSize="@dimen/kl3_ts_micro"
             android:visibility="gone" />
 
         <View
@@ -59,45 +55,34 @@
 
         <TextView
             android:id="@+id/cardTimeBadge"
+            style="@style/KL3.Badge.Soon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginRight="6dp"
-            android:background="@drawable/bg_badge_time"
-            android:textColor="#38BDF8"
-            android:textSize="11sp"
-            android:fontFamily="@font/oswald"
-            android:textStyle="bold"
-            android:letterSpacing="0.04"
-            android:paddingLeft="7dp"
-            android:paddingRight="7dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp"
+            android:layout_marginRight="@dimen/kl3_sp_sm"
+            android:textColor="#FFFFFFFF"
+            android:textSize="@dimen/kl3_ts_micro"
             android:visibility="gone" />
 
         <TextView
             android:id="@+id/cardLive"
+            style="@style/KL3.Badge.Live"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="● LIVE"
-            android:textColor="#FFFFFF"
-            android:textSize="11sp"
+            android:textSize="@dimen/kl3_ts_badge"
             android:textStyle="bold"
             android:letterSpacing="0.06"
-            android:background="@drawable/kl2_live_badge"
-            android:paddingLeft="9dp"
-            android:paddingRight="9dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp"
+            android:fontFamily="sans-serif-black"
             android:maxLines="1"
             android:singleLine="true"
             android:ellipsize="none" />
     </LinearLayout>
 
-    <!-- Row 2: Trung tâm trận đấu (FotMob / Stadium Style: Team Host | Score Board | Team Guest) -->
+    <!-- Row 2: Host | Score pill | Guest -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="@dimen/kl3_gap"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:minHeight="62dp">
@@ -112,13 +97,12 @@
 
             <TextView
                 android:id="@+id/cardHost"
+                style="@style/KL3.Text.Title"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:gravity="end"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp"
-                android:fontFamily="sans-serif-medium"
+                android:textColor="@color/kl3_text_primary"
                 android:maxLines="1"
                 android:singleLine="true"
                 android:breakStrategy="simple"
@@ -127,34 +111,36 @@
 
             <ImageView
                 android:id="@+id/cardHostIcon"
-                android:layout_width="@dimen/kl2_crest_l"
-                android:layout_height="@dimen/kl2_crest_l"
-                android:layout_marginLeft="7dp"
+                android:layout_width="@dimen/kl3_crest_s"
+                android:layout_height="@dimen/kl3_crest_s"
+                android:layout_marginLeft="@dimen/kl3_sp_sm"
                 android:padding="2dp"
                 android:src="@drawable/bg_team_crest_placeholder"
                 android:visibility="visible"
                 android:contentDescription="@null" />
         </LinearLayout>
 
-        <!-- Tâm điểm: Bảng Tỉ số sân vận động / VS to rõ chuẩn 4K TV -->
+        <!-- Tâm điểm: Bảng Tỉ số / VS -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center"
-            android:paddingLeft="8dp"
-            android:paddingRight="8dp">
+            android:paddingLeft="@dimen/kl3_sp_sm"
+            android:paddingRight="@dimen/kl3_sp_sm">
 
             <TextView
                 android:id="@+id/cardScore"
-                android:layout_width="62dp"
-                android:layout_height="36dp"
+                style="@style/KL3.Badge.Score"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="56dp"
+                android:minHeight="@dimen/kl3_chip_h"
                 android:gravity="center"
-                android:background="@drawable/kl2_score_pill"
-                android:textColor="#FFFFFF"
+                android:paddingLeft="@dimen/kl3_sp_sm"
+                android:paddingRight="@dimen/kl3_sp_sm"
                 android:text="VS"
-                android:fontFamily="@font/oswald"
-                android:textSize="18sp"
+                android:textSize="@dimen/kl3_ts_title"
                 android:textStyle="bold"
                 android:letterSpacing="0.05" />
         </LinearLayout>
@@ -169,9 +155,9 @@
 
             <ImageView
                 android:id="@+id/cardGuestIcon"
-                android:layout_width="@dimen/kl2_crest_l"
-                android:layout_height="@dimen/kl2_crest_l"
-                android:layout_marginRight="7dp"
+                android:layout_width="@dimen/kl3_crest_s"
+                android:layout_height="@dimen/kl3_crest_s"
+                android:layout_marginRight="@dimen/kl3_sp_sm"
                 android:padding="2dp"
                 android:src="@drawable/bg_team_crest_placeholder"
                 android:visibility="visible"
@@ -179,13 +165,12 @@
 
             <TextView
                 android:id="@+id/cardGuest"
+                style="@style/KL3.Text.Title"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:gravity="start"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp"
-                android:fontFamily="sans-serif-medium"
+                android:textColor="@color/kl3_text_primary"
                 android:maxLines="1"
                 android:singleLine="true"
                 android:breakStrategy="simple"
@@ -194,15 +179,15 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Đường chia hairline mờ thanh thoát -->
+    <!-- Hairline -->
     <View
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="8dp"
-        android:background="#22FFFFFF" />
+        android:layout_height="@dimen/kl3_divider_h"
+        android:layout_marginTop="@dimen/kl3_gap"
+        android:layout_marginBottom="@dimen/kl3_sp_sm"
+        android:background="@drawable/kl3_divider" />
 
-    <!-- Row 3: Meta info chuẩn: Avatar BLV tròn + Tên BLV + Lượt xem + Phòng -->
+    <!-- Row 3: Meta — Avatar BLV + Tên BLV + Viewers + Phòng -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -211,46 +196,38 @@
 
         <ImageView
             android:id="@+id/cardAvatar"
-            android:layout_width="26dp"
-            android:layout_height="26dp"
-            android:layout_marginRight="7dp"
-            android:background="@drawable/bg_circle"
+            android:layout_width="@dimen/kl3_avatar_s"
+            android:layout_height="@dimen/kl3_avatar_s"
+            android:layout_marginRight="@dimen/kl3_sp_sm"
+            android:background="@drawable/kl3s_avatar_circle"
             android:contentDescription="@null" />
 
         <TextView
             android:id="@+id/cardBlv"
-            style="@style/KL.Text.Meta"
+            style="@style/KL3.Text.Body"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:textColor="#CBD5E1"
-            android:textSize="11.5sp"
+            android:textColor="@color/kl3_text_secondary"
             android:maxLines="1"
             android:ellipsize="end" />
 
         <TextView
             android:id="@+id/cardViewers"
+            style="@style/KL3.Text.Score"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="6dp"
-            android:textColor="#FBBF24"
-            android:fontFamily="@font/oswald"
-            android:textSize="12.5sp"
-            android:textStyle="bold" />
+            android:layout_marginLeft="@dimen/kl3_sp_sm"
+            android:textSize="@dimen/kl3_ts_meta" />
 
         <TextView
             android:id="@+id/cardRooms"
+            style="@style/KL3.Badge.Provider"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="6dp"
-            android:textColor="#38BDF8"
-            android:textSize="10.5sp"
-            android:textStyle="bold"
-            android:background="@drawable/room_badge_bg"
-            android:paddingLeft="7dp"
-            android:paddingRight="7dp"
-            android:paddingTop="2.5dp"
-            android:paddingBottom="2.5dp"
+            android:layout_marginLeft="@dimen/kl3_sp_sm"
+            android:textColor="@color/kl3_info"
+            android:textSize="@dimen/kl3_ts_micro"
             android:visibility="gone" />
     </LinearLayout>
 

@@ -4,16 +4,16 @@
     android:layout_height="wrap_content"
     android:fillViewport="true"
     android:scrollbars="none"
-    android:background="@drawable/kl2_dialog_bg">
+    android:background="@drawable/kl3p_dialog_bg">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:paddingLeft="24dp"
-        android:paddingRight="24dp"
-        android:paddingTop="18dp"
-        android:paddingBottom="16dp">
+        android:paddingLeft="@dimen/kl3_sp_xl"
+        android:paddingRight="@dimen/kl3_sp_xl"
+        android:paddingTop="@dimen/kl3_sp_lg"
+        android:paddingBottom="@dimen/kl3_sp_lg">
 
         <!-- Tiêu đề Dialog -->
         <LinearLayout
@@ -23,10 +23,10 @@
             android:gravity="center_vertical">
 
             <View
-                android:layout_width="4dp"
+                android:layout_width="@dimen/kl3_section_bar_w"
                 android:layout_height="20dp"
-                android:background="@drawable/kl2_section_bar"
-                android:layout_marginRight="10dp" />
+                android:background="@color/kl3_accent"
+                android:layout_marginRight="@dimen/kl3_sp_sm" />
 
             <LinearLayout
                 android:layout_width="0dp"
@@ -35,40 +35,34 @@
                 android:orientation="vertical">
 
                 <TextView
-                    style="@style/KL.Text.Section"
+                    style="@style/KL3.Text.Section"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="#FFFFFF"
-                    android:textSize="17sp"
-                    android:textStyle="bold"
                     android:text="@string/player_settings_title" />
 
                 <TextView
-                    style="@style/KL.Text.Meta"
+                    style="@style/KL3.Text.Meta"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:textColor="#94A3B8"
-                    android:textSize="12sp"
+                    android:layout_marginTop="@dimen/kl3_sp_xs"
                     android:text="@string/player_settings_subtitle" />
             </LinearLayout>
         </LinearLayout>
 
         <View
             android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="8dp"
-            android:background="#1A1F29" />
+            android:layout_height="@dimen/kl3_divider_h"
+            android:layout_marginTop="@dimen/kl3_sp_md"
+            android:layout_marginBottom="@dimen/kl3_sp_sm"
+            android:background="@drawable/kl3_divider" />
 
         <!-- Nhóm: Chất lượng hình ảnh -->
         <TextView
             android:id="@+id/videoHeader"
-            style="@style/KL.Text.Meta"
+            style="@style/KL3.Text.Micro"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/kl_brand"
-            android:textSize="12sp"
+            android:textColor="@color/kl3_accent_bright"
             android:textStyle="bold"
             android:letterSpacing="0.08"
             android:text="@string/player_video_label" />
@@ -76,7 +70,7 @@
         <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="@dimen/kl3_sp_sm"
             android:scrollbars="none">
 
             <LinearLayout
@@ -88,23 +82,21 @@
 
         <TextView
             android:id="@+id/videoStatus"
-            style="@style/KL.Text.Meta"
+            style="@style/KL3.Text.Micro"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="#64748B"
-            android:textSize="11sp"
+            android:layout_marginTop="@dimen/kl3_sp_xs"
+            android:textColor="@color/kl3_text_tertiary"
             android:text="" />
 
         <!-- Nhóm: Chế độ âm thanh -->
         <TextView
             android:id="@+id/audioHeader"
-            style="@style/KL.Text.Meta"
+            style="@style/KL3.Text.Micro"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:textColor="@color/kl_brand"
-            android:textSize="12sp"
+            android:layout_marginTop="@dimen/kl3_sp_md"
+            android:textColor="@color/kl3_accent_bright"
             android:textStyle="bold"
             android:letterSpacing="0.08"
             android:text="@string/player_audio_label" />
@@ -113,7 +105,7 @@
             android:id="@+id/audioScroll"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="@dimen/kl3_sp_sm"
             android:scrollbars="none">
 
             <LinearLayout
@@ -125,23 +117,21 @@
 
         <TextView
             android:id="@+id/audioStatus"
-            style="@style/KL.Text.Meta"
+            style="@style/KL3.Text.Micro"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="#64748B"
-            android:textSize="11sp"
+            android:layout_marginTop="@dimen/kl3_sp_xs"
+            android:textColor="@color/kl3_text_tertiary"
             android:text="" />
 
         <!-- Nhóm: Tỉ lệ khung hình -->
         <TextView
             android:id="@+id/aspectHeader"
-            style="@style/KL.Text.Meta"
+            style="@style/KL3.Text.Micro"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:textColor="@color/kl_brand"
-            android:textSize="12sp"
+            android:layout_marginTop="@dimen/kl3_sp_md"
+            android:textColor="@color/kl3_accent_bright"
             android:textStyle="bold"
             android:letterSpacing="0.08"
             android:text="@string/player_display_label" />
@@ -150,7 +140,7 @@
             android:id="@+id/aspectScroll"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="@dimen/kl3_sp_sm"
             android:scrollbars="none">
 
             <LinearLayout
@@ -162,23 +152,21 @@
 
         <TextView
             android:id="@+id/aspectStatus"
-            style="@style/KL.Text.Meta"
+            style="@style/KL3.Text.Micro"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="#64748B"
-            android:textSize="11sp"
+            android:layout_marginTop="@dimen/kl3_sp_xs"
+            android:textColor="@color/kl3_text_tertiary"
             android:text="" />
 
         <!-- Nhóm: Bước tua -->
         <TextView
             android:id="@+id/seekHeader"
-            style="@style/KL.Text.Meta"
+            style="@style/KL3.Text.Micro"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:textColor="@color/kl_brand"
-            android:textSize="12sp"
+            android:layout_marginTop="@dimen/kl3_sp_md"
+            android:textColor="@color/kl3_accent_bright"
             android:textStyle="bold"
             android:letterSpacing="0.08"
             android:text="@string/player_seek_label" />
@@ -187,7 +175,7 @@
             android:id="@+id/seekScroll"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="@dimen/kl3_sp_sm"
             android:scrollbars="none">
 
             <LinearLayout
@@ -199,28 +187,26 @@
 
         <TextView
             android:id="@+id/seekStatus"
-            style="@style/KL.Text.Meta"
+            style="@style/KL3.Text.Micro"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="4dp"
-            android:textColor="#64748B"
-            android:textSize="11sp"
+            android:layout_marginTop="@dimen/kl3_sp_xs"
+            android:textColor="@color/kl3_text_tertiary"
             android:text="" />
 
         <View
             android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="10dp"
-            android:layout_marginBottom="8dp"
-            android:background="#1A1F29" />
+            android:layout_height="@dimen/kl3_divider_h"
+            android:layout_marginTop="@dimen/kl3_sp_md"
+            android:layout_marginBottom="@dimen/kl3_sp_sm"
+            android:background="@drawable/kl3_divider" />
 
         <TextView
-            style="@style/KL.Text.Meta"
+            style="@style/KL3.Text.Micro"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center"
-            android:textColor="#64748B"
-            android:textSize="11.5sp"
+            android:textColor="@color/kl3_text_tertiary"
             android:text="@string/player_hint_tv" />
 
     </LinearLayout>

@@ -1,18 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Chip chọn tập / server trong EpisodePickerDialog — KL3.
+     EpisodePickerDialog GÁN LẠI background (bg_badge_hd / bg_badge_glass)
+     và textColor theo trạng thái khi bind; background/textColor ở đây chỉ
+     là mặc định trước bind. Giữ nguyên id tvEpisodeName. -->
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/tvEpisodeName"
-    style="@style/KL.Text.Chip"
     android:layout_width="match_parent"
     android:layout_height="@dimen/episode_chip_h"
-    android:layout_margin="4dp"
+    android:layout_margin="@dimen/kl3_sp_xs"
     android:minWidth="@dimen/episode_chip_min_w"
     android:gravity="center"
-    android:background="@drawable/bg_dialog_choice_chip"
-    android:textColor="@color/csl_dialog_choice_text"
-    android:textSize="12.5sp"
+    android:background="@drawable/kl3_chip_bg"
+    android:textColor="@color/kl3_text_primary"
+    android:textSize="@dimen/kl3_ts_meta"
     android:textStyle="bold"
-    android:paddingLeft="12dp"
-    android:paddingRight="12dp"
+    android:paddingLeft="@dimen/kl3_sp_md"
+    android:paddingRight="@dimen/kl3_sp_md"
     android:focusable="true"
     android:clickable="true"
     android:singleLine="true"

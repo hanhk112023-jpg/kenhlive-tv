@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- KL3 hero slide — banner trận tâm điểm (HeroPagerAdapter).
+     Mọi android:id giữ nguyên; code set text/màu/background động khi bind. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -7,7 +9,7 @@
     android:focusable="false"
     android:descendantFocusability="afterDescendants">
 
-    <!-- 16:9 banner cover: fitCenter trên nền đen thuần #000000 -->
+    <!-- 16:9 banner cover: fitCenter trên nền đen thuần -->
     <ImageView
         android:id="@+id/heroCover"
         android:layout_width="match_parent"
@@ -16,71 +18,71 @@
         android:background="#000000"
         android:contentDescription="@string/cd_match" />
 
-    <!-- Cinematic scrim overlay (Gradient đen tuyền Apple TV / Netflix) -->
+    <!-- KL3 cinematic scrim overlay -->
     <View
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/bg_hero_scrim" />
+        android:background="@drawable/kl3_hero_scrim" />
 
-    <!-- TOP RIGHT: CLOCK & SOLAR/LUNAR DATE WIDGET (Pill đen bo góc) -->
+    <!-- TOP RIGHT: CLOCK & SOLAR/LUNAR DATE WIDGET -->
     <LinearLayout
         android:id="@+id/heroClockContainer"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="top|end"
-        android:layout_marginTop="16dp"
-        android:layout_marginRight="@dimen/sp_screen_margin"
+        android:layout_marginTop="@dimen/kl3_gap"
+        android:layout_marginRight="@dimen/kl3_margin_x"
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
         <TextView
             android:id="@+id/heroClockText"
+            style="@style/KL3.Text.Title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_clock_pill"
-            android:paddingLeft="14dp"
-            android:paddingRight="14dp"
-            android:paddingTop="5dp"
-            android:paddingBottom="5dp"
-            android:textColor="#FFFFFF"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:fontFamily="@font/oswald" />
+            android:background="@drawable/kl3_pill_bg"
+            android:paddingLeft="@dimen/kl3_gap"
+            android:paddingRight="@dimen/kl3_gap"
+            android:paddingTop="@dimen/kl3_sp_xs"
+            android:paddingBottom="@dimen/kl3_sp_xs"
+            android:textColor="@color/kl3_text_primary"
+            android:fontFamily="@font/oswald"
+            android:textStyle="bold" />
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
+            android:layout_marginLeft="@dimen/kl3_gap"
             android:orientation="vertical"
             android:gravity="right">
 
             <TextView
                 android:id="@+id/heroSolarDate"
+                style="@style/KL3.Text.Meta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/kl_text_1"
-                android:textSize="12sp"
+                android:textColor="@color/kl3_text_primary"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/heroLunarDate"
+                style="@style/KL3.Text.Micro"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:textColor="@color/kl_amber"
-                android:textSize="11sp" />
+                android:layout_marginTop="@dimen/kl3_sp_xs"
+                android:textColor="@color/kl3_gold" />
         </LinearLayout>
     </LinearLayout>
 
-    <!-- CONTENT ANCHOR (2-Column Balanced Layout on TV - Apple TV / Stitch Spec) -->
+    <!-- CONTENT ANCHOR -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="horizontal"
         android:gravity="bottom"
-        android:paddingLeft="@dimen/sp_screen_margin"
-        android:paddingRight="@dimen/sp_screen_margin"
-        android:paddingBottom="@dimen/hero_pad_b">
+        android:paddingLeft="@dimen/kl3_margin_x"
+        android:paddingRight="@dimen/kl3_margin_x"
+        android:paddingBottom="@dimen/kl3_sp_xl">
 
         <!-- Trận đấu tâm điểm, tỷ số & Nút hành động -->
         <LinearLayout
@@ -88,7 +90,7 @@
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <!-- Header Row: LIVE badge RED + Tournament/League Cyan + Viewers -->
+            <!-- Header Row: LIVE badge + League + Viewers -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -97,52 +99,43 @@
 
                 <TextView
                     android:id="@+id/heroLiveBadge"
+                    style="@style/KL3.Badge.Live"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="● TRỰC TIẾP"
-                    android:textColor="#FFFFFF"
+                    android:textColor="#FFFFFFFF"
+                    android:textSize="@dimen/kl3_ts_badge"
                     android:textStyle="bold"
-                    android:textSize="11sp"
                     android:letterSpacing="0.06"
-                    android:background="@drawable/bg_badge_live_red"
-                    android:paddingLeft="9dp"
-                    android:paddingRight="9dp"
-                    android:paddingTop="3dp"
-                    android:paddingBottom="3dp" />
+                    android:fontFamily="sans-serif-black" />
 
                 <TextView
                     android:id="@+id/heroLeague"
+                    style="@style/KL3.Badge.Provider"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="8dp"
-                    android:background="@drawable/bg_badge_league_cyan"
-                    android:textColor="@color/kl_brand"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:letterSpacing="0.04"
-                    android:paddingLeft="9dp"
-                    android:paddingRight="9dp"
-                    android:paddingTop="3dp"
-                    android:paddingBottom="3dp"
+                    android:layout_marginLeft="@dimen/kl3_sp_sm"
+                    android:textColor="@color/kl3_info"
+                    android:textSize="@dimen/kl3_ts_micro"
                     android:maxWidth="320dp"
                     android:ellipsize="end" />
 
                 <TextView
                     android:id="@+id/heroViewers"
+                    style="@style/KL3.Text.Badge"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="8dp"
-                    android:background="@drawable/bg_score_pill"
+                    android:layout_marginLeft="@dimen/kl3_sp_sm"
+                    android:background="@drawable/kl3_pill_bg"
                     android:drawableLeft="@drawable/ic_eye"
-                    android:drawablePadding="6dp"
-                    android:paddingLeft="10dp"
-                    android:paddingRight="10dp"
-                    android:paddingTop="3dp"
-                    android:paddingBottom="3dp"
-                    android:textColor="@color/kl_amber"
-                    android:textSize="11sp"
-                    android:textStyle="bold"
-                    android:fontFamily="@font/oswald" />
+                    android:drawablePadding="@dimen/kl3_sp_xs"
+                    android:paddingLeft="@dimen/kl3_sp_md"
+                    android:paddingRight="@dimen/kl3_sp_md"
+                    android:paddingTop="@dimen/kl3_sp_xs"
+                    android:paddingBottom="@dimen/kl3_sp_xs"
+                    android:textColor="@color/kl3_gold"
+                    android:fontFamily="@font/oswald"
+                    android:textStyle="bold" />
             </LinearLayout>
 
             <!-- Arena Match Scoreboard (Logo Đội Nhà | Tỉ số / VS | Logo Đội Khách) -->
@@ -150,7 +143,7 @@
                 android:id="@+id/heroArenaContainer"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="@dimen/kl3_sp_sm"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
                 android:visibility="gone">
@@ -163,20 +156,18 @@
 
                     <ImageView
                         android:id="@+id/heroHostIcon"
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
+                        android:layout_width="@dimen/kl3_avatar_s"
+                        android:layout_height="@dimen/kl3_avatar_s"
                         android:padding="2dp"
                         android:src="@drawable/bg_team_crest_placeholder"
                         android:contentDescription="@null" />
 
                     <TextView
                         android:id="@+id/heroHostName"
+                        style="@style/KL3.Text.Display"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="10dp"
-                        android:textColor="#FFFFFF"
-                        android:textSize="21sp"
-                        android:textStyle="bold"
+                        android:layout_marginLeft="@dimen/kl3_gap"
                         android:maxWidth="280dp"
                         android:maxLines="1"
                         android:singleLine="true"
@@ -188,20 +179,21 @@
 
                 <TextView
                     android:id="@+id/heroScoreText"
+                    style="@style/KL3.Badge.Score"
                     android:layout_width="wrap_content"
-                    android:layout_height="40dp"
+                    android:layout_height="wrap_content"
                     android:minWidth="64dp"
-                    android:layout_marginLeft="14dp"
-                    android:layout_marginRight="14dp"
+                    android:minHeight="@dimen/kl3_btn_h_s"
+                    android:layout_marginLeft="@dimen/kl3_gap"
+                    android:layout_marginRight="@dimen/kl3_gap"
                     android:gravity="center"
-                    android:background="@drawable/bg_score_pill_live"
-                    android:textColor="#FFD700"
+                    android:paddingLeft="@dimen/kl3_sp_md"
+                    android:paddingRight="@dimen/kl3_sp_md"
+                    android:textColor="@color/kl3_gold"
                     android:fontFamily="@font/oswald"
-                    android:textSize="20sp"
+                    android:textSize="@dimen/kl3_ts_title"
                     android:textStyle="bold"
                     android:letterSpacing="0.06"
-                    android:paddingLeft="12dp"
-                    android:paddingRight="12dp"
                     android:text="VS" />
 
                 <LinearLayout
@@ -212,12 +204,10 @@
 
                     <TextView
                         android:id="@+id/heroGuestName"
+                        style="@style/KL3.Text.Display"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginRight="10dp"
-                        android:textColor="#FFFFFF"
-                        android:textSize="21sp"
-                        android:textStyle="bold"
+                        android:layout_marginRight="@dimen/kl3_gap"
                         android:maxWidth="280dp"
                         android:maxLines="1"
                         android:singleLine="true"
@@ -228,28 +218,27 @@
 
                     <ImageView
                         android:id="@+id/heroGuestIcon"
-                        android:layout_width="44dp"
-                        android:layout_height="44dp"
+                        android:layout_width="@dimen/kl3_avatar_s"
+                        android:layout_height="@dimen/kl3_avatar_s"
                         android:padding="2dp"
                         android:src="@drawable/bg_team_crest_placeholder"
                         android:contentDescription="@null" />
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Match Title: Đậm, to rõ phong cách Netflix Showcase -->
+            <!-- Match Title -->
             <TextView
                 android:id="@+id/heroTitle"
+                style="@style/KL3.Text.Hero"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="@dimen/kl3_sp_sm"
                 android:includeFontPadding="false"
                 android:maxLines="2"
                 android:breakStrategy="simple"
                 android:hyphenationFrequency="none"
                 android:ellipsize="end"
-                android:textColor="#FFFFFF"
-                android:textSize="25sp"
-                android:textStyle="bold"
+                android:textColor="@color/kl3_text_primary"
                 android:shadowColor="#FF000000"
                 android:shadowDy="3"
                 android:shadowRadius="12" />
@@ -257,23 +246,22 @@
             <!-- Commentator / Description Subtitle -->
             <TextView
                 android:id="@+id/heroBlv"
+                style="@style/KL3.Text.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="@dimen/kl3_sp_xs"
                 android:maxLines="1"
                 android:ellipsize="end"
-                android:textColor="@color/kl_text_2"
-                android:textSize="14sp"
                 android:shadowColor="#E6000000"
                 android:shadowDy="2"
                 android:shadowRadius="8" />
 
-            <!-- CTA Buttons: Apple TV Minimalist Focusable Pills -->
+            <!-- CTA Buttons: Primary + Ghost KL3 -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:padding="6dp"
+                android:layout_marginTop="@dimen/kl3_sp_sm"
+                android:padding="@dimen/kl3_sp_sm"
                 android:clipChildren="false"
                 android:clipToPadding="false"
                 android:orientation="horizontal"
@@ -287,30 +275,31 @@
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:background="@drawable/bg_hero_btn_watch"
-                    android:paddingLeft="20dp"
-                    android:paddingRight="20dp"
-                    android:paddingTop="11dp"
-                    android:paddingBottom="11dp"
+                    android:background="@drawable/kl3_btn_primary"
+                    android:foreground="@drawable/kl3_fg_focus_pill"
+                    android:minHeight="@dimen/kl3_btn_h"
+                    android:paddingLeft="@dimen/kl3_btn_pad_x"
+                    android:paddingRight="@dimen/kl3_btn_pad_x"
+                    android:paddingTop="@dimen/kl3_sp_md"
+                    android:paddingBottom="@dimen/kl3_sp_md"
                     android:clickable="true"
                     android:focusable="true"
                     android:nextFocusLeft="@id/heroPlay">
 
                     <ImageView
-                        android:layout_width="14dp"
-                        android:layout_height="14dp"
+                        android:layout_width="@dimen/kl3_sp_lg"
+                        android:layout_height="@dimen/kl3_sp_lg"
                         android:src="@drawable/ic_play"
+                        android:tint="@color/kl3_on_accent"
                         android:contentDescription="@string/cd_play" />
 
                     <TextView
                         android:id="@+id/heroPlayText"
+                        style="@style/KL3.Text.Button"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="8dp"
-                        android:text="[OK] Xem ngay"
-                        android:textStyle="bold"
-                        android:textSize="13sp"
-                        android:textColor="#FFFFFF" />
+                        android:layout_marginLeft="@dimen/kl3_sp_sm"
+                        android:text="[OK] Xem ngay" />
                 </LinearLayout>
 
                 <!-- Secondary CTA: [MENU] Chi tiết / Đổi luồng -->
@@ -318,30 +307,33 @@
                     android:id="@+id/heroDetails"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="12dp"
+                    android:layout_marginLeft="@dimen/kl3_gap"
                     android:orientation="horizontal"
                     android:gravity="center_vertical"
-                    android:background="@drawable/bg_hero_btn_details"
-                    android:paddingLeft="18dp"
-                    android:paddingRight="18dp"
-                    android:paddingTop="11dp"
-                    android:paddingBottom="11dp"
+                    android:background="@drawable/kl3_btn_ghost"
+                    android:foreground="@drawable/kl3_fg_focus_pill"
+                    android:minHeight="@dimen/kl3_btn_h"
+                    android:paddingLeft="@dimen/kl3_btn_pad_x"
+                    android:paddingRight="@dimen/kl3_btn_pad_x"
+                    android:paddingTop="@dimen/kl3_sp_md"
+                    android:paddingBottom="@dimen/kl3_sp_md"
                     android:clickable="true"
                     android:focusable="true">
 
                     <ImageView
-                        android:layout_width="14dp"
-                        android:layout_height="14dp"
+                        android:layout_width="@dimen/kl3_sp_lg"
+                        android:layout_height="@dimen/kl3_sp_lg"
                         android:src="@drawable/ic_info"
+                        android:tint="@color/kl3_text_primary"
                         android:contentDescription="Chi tiết" />
 
                     <TextView
+                        style="@style/KL3.Text.Button"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="7dp"
+                        android:layout_marginLeft="@dimen/kl3_sp_sm"
                         android:text="[MENU] Đổi Luồng"
-                        android:textSize="13sp"
-                        android:textColor="#FFFFFF" />
+                        android:textColor="@color/kl3_text_primary" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>

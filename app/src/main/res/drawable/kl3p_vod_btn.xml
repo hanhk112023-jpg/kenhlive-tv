@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- KL3P VOD/web control button — glass rounded-14 chip with icon+label.
+     Focus = accent ring + stronger glass (matches kl3_btn_ghost language
+     but with kl3_r_md corners since these are rectangular control cells). -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/kl3_glass_strong" />
+            <stroke android:width="@dimen/kl3_focus_ring_w" android:color="@color/kl3_accent" />
+            <corners android:radius="@dimen/kl3_r_md" />
+        </shape>
+    </item>
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/kl3_pressed" />
+            <stroke android:width="1dp" android:color="@color/kl3_glass_border" />
+            <corners android:radius="@dimen/kl3_r_md" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/kl3_glass" />
+            <stroke android:width="1dp" android:color="@color/kl3_glass_border" />
+            <corners android:radius="@dimen/kl3_r_md" />
+        </shape>
+    </item>
+</selector>

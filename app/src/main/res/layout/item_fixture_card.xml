@@ -1,17 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- KL3 fixture card — trận SẮP ĐÁ (MatchCardsAdapter TYPE_FIXTURE).
+     Đồng nhất ngôn ngữ với item_match_card: badges → đội + giờ pill → meta. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/cardRoot"
-    android:layout_width="@dimen/card_w"
+    android:layout_width="@dimen/kl3_match_card_w"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:layout_marginRight="@dimen/sp_card_gap"
-    android:background="@drawable/sl_apple_card"
-    android:padding="16dp"
+    android:layout_marginRight="@dimen/kl3_rail_gap"
+    android:background="@drawable/kl3_card_bg"
+    android:foreground="@drawable/kl3_fg_focus"
+    android:padding="@dimen/kl3_card_h_pad"
+    android:elevation="@dimen/kl3_elev_1"
     android:descendantFocusability="blocksDescendants"
     android:focusable="true"
     android:clickable="true">
 
-    <!-- Row 1: League tag (left) + Countdown pill AMBER (right) (Phong cách FotMob / SofaScore) -->
+    <!-- Row 1: League tag (left) + Countdown pill (right) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -20,17 +24,15 @@
 
         <TextView
             android:id="@+id/fxLeague"
+            style="@style/KL3.Text.Badge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_badge_league_cyan"
-            android:textColor="@color/kl_cyan"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.04"
-            android:paddingLeft="9dp"
-            android:paddingRight="9dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp"
+            android:background="@drawable/kl3_pill_bg"
+            android:textColor="@color/kl3_text_secondary"
+            android:paddingLeft="@dimen/kl3_badge_pad_x"
+            android:paddingRight="@dimen/kl3_badge_pad_x"
+            android:paddingTop="@dimen/kl3_sp_xs"
+            android:paddingBottom="@dimen/kl3_sp_xs"
             android:maxLines="1"
             android:maxWidth="160dp"
             android:ellipsize="end" />
@@ -42,24 +44,19 @@
 
         <TextView
             android:id="@+id/fxCountdown"
+            style="@style/KL3.Badge.Hd"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textColor="@color/kl_amber"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:background="@drawable/bg_badge_countdown"
-            android:paddingLeft="9dp"
-            android:paddingRight="9dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp"
+            android:textColor="@color/kl3_gold"
+            android:textSize="@dimen/kl3_ts_micro"
             android:visibility="gone" />
     </LinearLayout>
 
-    <!-- Row 2: Trung tâm trận đấu sắp đá (Host | Giờ đấu | Guest) -->
+    <!-- Row 2: Host | Giờ đấu pill | Guest -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="@dimen/kl3_gap"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:minHeight="58dp">
@@ -74,13 +71,12 @@
 
             <TextView
                 android:id="@+id/fxHost"
+                style="@style/KL3.Text.Title"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:gravity="end"
-                android:textColor="@color/kl_text_1"
-                android:textSize="14sp"
-                android:fontFamily="sans-serif-medium"
+                android:textColor="@color/kl3_text_primary"
                 android:maxLines="1"
                 android:breakStrategy="simple"
                 android:hyphenationFrequency="none"
@@ -88,32 +84,34 @@
 
             <ImageView
                 android:id="@+id/fxHostIcon"
-                android:layout_width="38dp"
-                android:layout_height="38dp"
-                android:layout_marginLeft="8dp"
+                android:layout_width="@dimen/kl3_crest_s"
+                android:layout_height="@dimen/kl3_crest_s"
+                android:layout_marginLeft="@dimen/kl3_sp_sm"
                 android:src="@drawable/ic_sports"
                 android:visibility="gone"
                 android:contentDescription="@null" />
         </LinearLayout>
 
-        <!-- Giờ thi đấu to rõ đặt trong Pill Dark Slate -->
+        <!-- Giờ thi đấu trong Score pill -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center"
-            android:paddingLeft="10dp"
-            android:paddingRight="10dp">
+            android:paddingLeft="@dimen/kl3_sp_sm"
+            android:paddingRight="@dimen/kl3_sp_sm">
 
             <TextView
                 android:id="@+id/fxTime"
-                android:layout_width="54dp"
-                android:layout_height="32dp"
+                style="@style/KL3.Badge.Score"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="56dp"
+                android:minHeight="@dimen/kl3_chip_h"
                 android:gravity="center"
-                android:background="@drawable/kl2_score_pill"
-                android:textColor="#FFFFFF"
-                android:fontFamily="@font/oswald"
-                android:textSize="14sp"
+                android:paddingLeft="@dimen/kl3_sp_sm"
+                android:paddingRight="@dimen/kl3_sp_sm"
+                android:textSize="@dimen/kl3_ts_title"
                 android:textStyle="bold"
                 android:letterSpacing="0.05" />
         </LinearLayout>
@@ -128,22 +126,21 @@
 
             <ImageView
                 android:id="@+id/fxGuestIcon"
-                android:layout_width="38dp"
-                android:layout_height="38dp"
-                android:layout_marginRight="8dp"
+                android:layout_width="@dimen/kl3_crest_s"
+                android:layout_height="@dimen/kl3_crest_s"
+                android:layout_marginRight="@dimen/kl3_sp_sm"
                 android:src="@drawable/ic_sports"
                 android:visibility="gone"
                 android:contentDescription="@null" />
 
             <TextView
                 android:id="@+id/fxGuest"
+                style="@style/KL3.Text.Title"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
                 android:gravity="start"
-                android:textColor="@color/kl_text_1"
-                android:textSize="14sp"
-                android:fontFamily="sans-serif-medium"
+                android:textColor="@color/kl3_text_primary"
                 android:maxLines="1"
                 android:breakStrategy="simple"
                 android:hyphenationFrequency="none"
@@ -151,15 +148,15 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Đường chia hairline mờ thanh thoát -->
+    <!-- Hairline -->
     <View
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginTop="10dp"
-        android:layout_marginBottom="8dp"
-        android:background="#22FFFFFF" />
+        android:layout_height="@dimen/kl3_divider_h"
+        android:layout_marginTop="@dimen/kl3_gap"
+        android:layout_marginBottom="@dimen/kl3_sp_sm"
+        android:background="@drawable/kl3_divider" />
 
-    <!-- Row 3: Ngày thi đấu + Danh sách BLV dự kiến phân bổ -->
+    <!-- Row 3: Ngày thi đấu + Danh sách BLV dự kiến -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -168,11 +165,10 @@
 
         <TextView
             android:id="@+id/fxDate"
+            style="@style/KL3.Text.Meta"
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:textColor="@color/kl_text_2"
-            android:textSize="11sp"
             android:maxLines="1"
             android:ellipsize="end" />
 

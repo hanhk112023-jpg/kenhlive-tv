@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ============================================================
+     KL3 DIMENS — PHONE (default). TV overrides in
+     values-television/kl3_dimens.xml. Same names both places.
+     Spacing scale is 4dp-based: use only kl3_sp_* tokens.
+     ============================================================ -->
+<resources>
+    <!-- ===== SPACING SCALE (4dp base) ===== -->
+    <dimen name="kl3_sp_xs">4dp</dimen>
+    <dimen name="kl3_sp_sm">8dp</dimen>
+    <dimen name="kl3_sp_md">12dp</dimen>
+    <dimen name="kl3_sp_lg">16dp</dimen>
+    <dimen name="kl3_sp_xl">24dp</dimen>
+    <dimen name="kl3_sp_xxl">32dp</dimen>
+    <dimen name="kl3_sp_xxxl">48dp</dimen>
+
+    <!-- screen chrome spacing -->
+    <dimen name="kl3_margin_x">16dp</dimen>        <!-- left/right screen padding -->
+    <dimen name="kl3_gap">12dp</dimen>            <!-- default gap between items -->
+    <dimen name="kl3_gap_l">20dp</dimen>          <!-- gap between sections/rows -->
+    <dimen name="kl3_rail_gap">8dp</dimen>        <!-- gap inside horizontal rail -->
+
+    <!-- ===== CORNER RADIUS ===== -->
+    <dimen name="kl3_r_sm">10dp</dimen>           <!-- small badges, inputs -->
+    <dimen name="kl3_r_md">14dp</dimen>           <!-- posters, channel cards -->
+    <dimen name="kl3_r_lg">20dp</dimen>           <!-- standard cards -->
+    <dimen name="kl3_r_xl">28dp</dimen>           <!-- dialogs, hero panels -->
+    <dimen name="kl3_r_pill">999dp</dimen>        <!-- pills, buttons, chips -->
+
+    <!-- ===== ELEVATION ===== -->
+    <dimen name="kl3_elev_0">0dp</dimen>
+    <dimen name="kl3_elev_1">2dp</dimen>           <!-- resting card -->
+    <dimen name="kl3_elev_2">6dp</dimen>           <!-- raised surface -->
+    <dimen name="kl3_elev_3">14dp</dimen>          <!-- dialog / overlay -->
+    <dimen name="kl3_elev_focus">10dp</dimen>      <!-- focused card lift (TV + phone) -->
+
+    <!-- ===== FOCUS TREATMENT ===== -->
+    <dimen name="kl3_focus_ring_w">3dp</dimen>
+    <dimen name="kl3_focus_glow_w">6dp</dimen>
+    <dimen name="kl3_focus_ring_w_s">2dp</dimen>   <!-- compact elements (chips, badges) -->
+
+    <!-- ===== TYPOGRAPHY SCALE (sp — overridden on TV) ===== -->
+    <dimen name="kl3_ts_micro">10sp</dimen>       <!-- tiny badges/captions -->
+    <dimen name="kl3_ts_badge">11sp</dimen>
+    <dimen name="kl3_ts_meta">12sp</dimen>
+    <dimen name="kl3_ts_body">14sp</dimen>
+    <dimen name="kl3_ts_body_lg">16sp</dimen>
+    <dimen name="kl3_ts_title">17sp</dimen>
+    <dimen name="kl3_ts_section">19sp</dimen>
+    <dimen name="kl3_ts_display">26sp</dimen>
+    <dimen name="kl3_ts_hero">30sp</dimen>
+
+    <!-- ===== COMPONENT SIZES (phone; touch targets ≥48dp) ===== -->
+    <dimen name="kl3_card_w">236dp</dimen>            <!-- standard landscape card -->
+    <dimen name="kl3_card_thumb_h">133dp</dimen>      <!-- 16:9 thumb inside card -->
+    <dimen name="kl3_card_h_pad">14dp</dimen>         <!-- inner padding of cards -->
+    <dimen name="kl3_poster_w">140dp</dimen>          <!-- movie/series poster -->
+    <dimen name="kl3_poster_h">210dp</dimen>          <!-- ~2:3 poster -->
+    <dimen name="kl3_channel_card_w">196dp</dimen>
+    <dimen name="kl3_channel_card_h">124dp</dimen>
+    <dimen name="kl3_match_card_w">250dp</dimen>
+
+    <dimen name="kl3_btn_h">48dp</dimen>              <!-- primary/ghost button -->
+    <dimen name="kl3_btn_h_s">40dp</dimen>            <!-- compact button -->
+    <dimen name="kl3_btn_pad_x">22dp</dimen>
+    <dimen name="kl3_icon_btn">48dp</dimen>           <!-- round icon button -->
+    <dimen name="kl3_icon_btn_s">40dp</dimen>
+
+    <dimen name="kl3_chip_h">36dp</dimen>
+    <dimen name="kl3_chip_pad_x">16dp</dimen>
+    <dimen name="kl3_badge_h">22dp</dimen>
+    <dimen name="kl3_badge_pad_x">8dp</dimen>
+
+    <dimen name="kl3_input_h">48dp</dimen>
+    <dimen name="kl3_avatar_s">32dp</dimen>
+    <dimen name="kl3_crest_s">20dp</dimen>
+
+    <dimen name="kl3_hero_h">300dp</dimen>            <!-- home hero banner -->
+    <dimen name="kl3_section_bar_w">4dp</dimen>       <!-- accent bar next to section title -->
+    <dimen name="kl3_divider_h">1dp</dimen>
+    <dimen name="kl3_dot_live">8dp</dimen>            <!-- pulsing live dot -->
+
+    <!-- skeleton -->
+    <dimen name="kl3_skel_card_w">236dp</dimen>
+    <dimen name="kl3_skel_card_h">160dp</dimen>
+    <dimen name="kl3_skel_poster_w">140dp</dimen>
+    <dimen name="kl3_skel_poster_h">210dp</dimen>
+    <dimen name="kl3_skel_line_h">14dp</dimen>
+    <dimen name="kl3_skel_radius">@dimen/kl3_r_md</dimen>
+</resources>

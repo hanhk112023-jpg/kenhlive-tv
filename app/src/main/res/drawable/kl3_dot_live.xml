@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- KL3 pulsing live dot (oval). Size = @dimen/kl3_dot_live. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="oval">
+    <solid android:color="@color/kl3_live" />
+</shape>

@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ============================================================
+     KL3 STYLES — typography + component styles.
+     Usage:
+       style="@style/KL3.Text.Section"        on TextView
+       style="@style/KL3.Button.Primary"      on Button/TextView
+       style="@style/KL3.Card"                on any focusable container
+       style="@style/KL3.Chip"                on filter chip TextView
+       style="@style/KL3.Badge.Live"          etc.
+     All sizes resolve through kl3_dimens (TV auto-overrides).
+     ============================================================ -->
+<resources>
+
+    <!-- ================= TYPOGRAPHY ================= -->
+    <!-- Display: hero titles, big numbers. Oswald, uppercase-ish feel. -->
+    <style name="KL3.Text.Display" parent="">
+        <item name="android:textSize">@dimen/kl3_ts_display</item>
+        <item name="android:textColor">@color/kl3_text_primary</item>
+        <item name="android:fontFamily">@font/oswald</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.01</item>
+        <item name="android:lineSpacingExtra">2dp</item>
+    </style>
+
+    <!-- Hero title inside banner — biggest, tight. -->
+    <style name="KL3.Text.Hero" parent="KL3.Text.Display">
+        <item name="android:textSize">@dimen/kl3_ts_hero</item>
+        <item name="android:maxLines">2</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <!-- Section header: "TRỰC TIẾP", "PHIM MỚI", ... with accent bar. -->
+    <style name="KL3.Text.Section" parent="">
+        <item name="android:textSize">@dimen/kl3_ts_section</item>
+        <item name="android:textColor">@color/kl3_text_primary</item>
+        <item name="android:fontFamily">@font/oswald</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.05</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <!-- Card / item title. -->
+    <style name="KL3.Text.Title" parent="">
+        <item name="android:textSize">@dimen/kl3_ts_title</item>
+        <item name="android:textColor">@color/kl3_text_primary</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <!-- Slightly larger title for detail screens. -->
+    <style name="KL3.Text.TitleLg" parent="KL3.Text.Title">
+        <item name="android:textSize">@dimen/kl3_ts_body_lg</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <!-- Default body / secondary text. -->
+    <style name="KL3.Text.Body" parent="">
+        <item name="android:textSize">@dimen/kl3_ts_body</item>
+        <item name="android:textColor">@color/kl3_text_secondary</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+
+    <!-- Metadata: timestamps, counts, descriptions. Tabular figures. -->
+    <style name="KL3.Text.Meta" parent="">
+        <item name="android:textSize">@dimen/kl3_ts_meta</item>
+        <item name="android:textColor">@color/kl3_text_tertiary</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:fontFeatureSettings">tnum</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+    </style>
+
+    <!-- Tiny labels: "HD", timestamps, captions. -->
+    <style name="KL3.Text.Micro" parent="">
+        <item name="android:textSize">@dimen/kl3_ts_micro</item>
+        <item name="android:textColor">@color/kl3_text_tertiary</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:letterSpacing">0.06</item>
+        <item name="android:maxLines">1</item>
+    </style>
+
+    <!-- Score / count emphasis — Oswald, gold by default via caller. -->
+    <style name="KL3.Text.Score" parent="">
+        <item name="android:textSize">@dimen/kl3_ts_title</item>
+        <item name="android:textColor">@color/kl3_gold</item>
+        <item name="android:fontFamily">@font/oswald</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.04</item>
+        <item name="android:fontFeatureSettings">tnum</item>
+        <item name="android:maxLines">1</item>
+    </style>
+
+    <!-- Button label. -->
+    <style name="KL3.Text.Button" parent="">
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textSize">@dimen/kl3_ts_body</item>
+        <item name="android:textColor">@color/kl3_on_accent</item>
+        <item name="android:fontFamily">@font/oswald</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.08</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <!-- Chip / pill label. -->
+    <style name="KL3.Text.Chip" parent="">
+        <item name="android:textSize">@dimen/kl3_ts_body</item>
+        <item name="android:textColor">@color/kl3_text_secondary</item>
+        <item name="android:fontFamily">sans-serif-medium</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <!-- Badge label (LIVE, HD, provider). -->
+    <style name="KL3.Text.Badge" parent="">
+        <item name="android:textSize">@dimen/kl3_ts_badge</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.07</item>
+        <item name="android:fontFamily">sans-serif-black</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:gravity">center</item>
+    </style>
+
+    <!-- ================= CONTROLS ================= -->
+
+    <!-- Standard raised button — orange gradient pill. -->
+    <style name="KL3.Button.Primary" parent="">
+        <item name="android:background">@drawable/kl3_btn_primary</item>
+        <item name="android:minHeight">@dimen/kl3_btn_h</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:paddingLeft">@dimen/kl3_btn_pad_x</item>
+        <item name="android:paddingRight">@dimen/kl3_btn_pad_x</item>
+        <item name="android:gravity">center</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+    </style>
+
+    <!-- Compact primary variant. -->
+    <style name="KL3.Button.PrimarySm" parent="KL3.Button.Primary">
+        <item name="android:minHeight">@dimen/kl3_btn_h_s</item>
+        <item name="android:paddingLeft">14dp</item>
+        <item name="android:paddingRight">14dp</item>
+        <item name="android:textSize">@dimen/kl3_ts_meta</item>
+    </style>
+
+    <!-- Ghost / secondary button — glass pill, white text. -->
+    <style name="KL3.Button.Ghost" parent="">
+        <item name="android:background">@drawable/kl3_btn_ghost</item>
+        <item name="android:textColor">@color/kl3_text_primary</item>
+        <item name="android:minHeight">@dimen/kl3_btn_h</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:paddingLeft">@dimen/kl3_btn_pad_x</item>
+        <item name="android:paddingRight">@dimen/kl3_btn_pad_x</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textSize">@dimen/kl3_ts_body</item>
+        <item name="android:fontFamily">@font/oswald</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.06</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+    </style>
+
+    <!-- Danger/destructive ghost variant (logout, delete). -->
+    <style name="KL3.Button.Danger" parent="KL3.Button.Ghost">
+        <item name="android:textColor">@color/kl3_error</item>
+    </style>
+
+    <!-- Round icon button (top bar, player controls). -->
+    <style name="KL3.Button.Icon" parent="">
+        <item name="android:background">@drawable/kl3_btn_icon</item>
+        <item name="android:padding">12dp</item>
+        <item name="android:scaleType">centerInside</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+    </style>
+
+    <!-- ================= CARDS / CHIPS / BADGES ================= -->
+
+    <!-- Standard KL3 card container. background = kl3_card_bg (stateful),
+         foreground = kl3_fg_focus (ring glow on focus). -->
+    <style name="KL3.Card" parent="">
+        <item name="android:background">@drawable/kl3_card_bg</item>
+        <item name="android:foreground">@drawable/kl3_fg_focus</item>
+        <item name="android:padding">@dimen/kl3_card_h_pad</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+        <item name="android:elevation">@dimen/kl3_elev_1</item>
+    </style>
+
+    <!-- Poster card (movies/series): sharper corners, no inner padding. -->
+    <style name="KL3.Card.Poster" parent="KL3.Card">
+        <item name="android:padding">0dp</item>
+    </style>
+
+    <!-- Filter / category chip. -->
+    <style name="KL3.Chip" parent="">
+        <item name="android:background">@drawable/kl3_chip_bg</item>
+        <item name="android:minHeight">@dimen/kl3_chip_h</item>
+        <item name="android:paddingLeft">@dimen/kl3_chip_pad_x</item>
+        <item name="android:paddingRight">@dimen/kl3_chip_pad_x</item>
+        <item name="android:gravity">center</item>
+        <item name="android:focusable">true</item>
+        <item name="android:clickable">true</item>
+    </style>
+
+    <!-- Plain glass pill (labels, meta chips). -->
+    <style name="KL3.Pill" parent="">
+        <item name="android:background">@drawable/kl3_pill_bg</item>
+        <item name="android:paddingLeft">10dp</item>
+        <item name="android:paddingRight">10dp</item>
+        <item name="android:paddingTop">4dp</item>
+        <item name="android:paddingBottom">4dp</item>
+        <item name="android:gravity">center</item>
+        <item name="android:maxLines">1</item>
+    </style>
+
+    <!-- Search / text input. -->
+    <style name="KL3.Input" parent="">
+        <item name="android:background">@drawable/kl3_input_bg</item>
+        <item name="android:textColor">@color/kl3_text_primary</item>
+        <item name="android:textColorHint">@color/kl3_text_tertiary</item>
+        <item name="android:textSize">@dimen/kl3_ts_body</item>
+        <item name="android:minHeight">@dimen/kl3_input_h</item>
+        <item name="android:paddingLeft">16dp</item>
+        <item name="android:paddingRight">16dp</item>
+        <item name="android:drawablePadding">10dp</item>
+        <item name="android:singleLine">true</item>
+        <item name="android:imeOptions">actionSearch</item>
+        <item name="android:inputType">text</item>
+    </style>
+
+    <!-- ================= BADGE STYLES ================= -->
+    <!-- Apply on TextView; combine with KL3.Text.Badge for text props. -->
+
+    <style name="KL3.Badge.Live" parent="">
+        <item name="android:background">@drawable/kl3_badge_live</item>
+        <item name="android:minHeight">@dimen/kl3_badge_h</item>
+        <item name="android:paddingLeft">@dimen/kl3_badge_pad_x</item>
+        <item name="android:paddingRight">@dimen/kl3_badge_pad_x</item>
+        <item name="android:textColor">#FFFFFFFF</item>
+        <item name="android:gravity">center</item>
+        <item name="android:maxLines">1</item>
+    </style>
+
+    <style name="KL3.Badge.Soon" parent="KL3.Badge.Live">
+        <item name="android:background">@drawable/kl3_badge_soon</item>
+        <item name="android:textColor">#FFFFFFFF</item>
+    </style>
+
+    <style name="KL3.Badge.Ended" parent="KL3.Badge.Live">
+        <item name="android:background">@drawable/kl3_badge_ended</item>
+        <item name="android:textColor">@color/kl3_text_secondary</item>
+    </style>
+
+    <style name="KL3.Badge.Hd" parent="KL3.Badge.Live">
+        <item name="android:background">@drawable/kl3_badge_hd</item>
+        <item name="android:textColor">@color/kl3_gold</item>
+    </style>
+
+    <style name="KL3.Badge.Provider" parent="KL3.Badge.Live">
+        <item name="android:background">@drawable/kl3_badge_provider</item>
+        <item name="android:textColor">@color/kl3_info</item>
+    </style>
+
+    <!-- Score / VS center pill (darker, slate). -->
+    <style name="KL3.Badge.Score" parent="">
+        <item name="android:background">@drawable/kl3_score_pill</item>
+        <item name="android:gravity">center</item>
+        <item name="android:textColor">@color/kl3_text_primary</item>
+        <item name="android:maxLines">1</item>
+    </style>
+
+    <!-- App bar background — near-black with hairline bottom. -->
+    <style name="KL3.AppBar" parent="">
+        <item name="android:background">@drawable/kl3_topbar_bg</item>
+    </style>
+
+    <!-- Skeleton block (shimmer placeholder). -->
+    <style name="KL3.Skeleton" parent="">
+        <item name="android:background">@drawable/kl3_skeleton</item>
+    </style>
+</resources>

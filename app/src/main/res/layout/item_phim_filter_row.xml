@@ -1,35 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Hàng danh mục phim: nằm trong luồng cuộn ngay dưới hero (thay cho thanh ngang cố định
-     ở trên cùng của thiết kế cũ). -->
+<!-- Hàng danh mục phim trong luồng cuộn, ngay dưới hero (thay thanh pills
+     cố định cũ). Label "DANH MỤC" kiểu KL3 micro + accent; chips dùng
+     item_phim_filter_pill (adapter gán sl_apple_pill_* khi bind).
+     Giữ nguyên android:id: rvFilterRow. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:clipChildren="false"
     android:clipToPadding="false"
-    android:background="@color/kl_bg_deep"
-    android:paddingLeft="@dimen/sp_screen_margin"
-    android:paddingRight="@dimen/sp_screen_margin"
-    android:paddingTop="14dp"
-    android:paddingBottom="2dp">
+    android:background="@color/kl3_bg"
+    android:paddingLeft="@dimen/kl3_margin_x"
+    android:paddingRight="@dimen/kl3_margin_x"
+    android:paddingTop="@dimen/kl3_gap"
+    android:paddingBottom="@dimen/kl3_sp_xs">
 
     <TextView
-        style="@style/KL.Text.Meta"
+        style="@style/KL3.Text.Micro"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="DANH MỤC"
-        android:textColor="@color/kl_brand"
-        android:textSize="11.5sp"
-        android:textStyle="bold"
-        android:letterSpacing="0.08" />
+        android:letterSpacing="0.14"
+        android:textColor="@color/kl3_accent" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvFilterRow"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:layout_marginTop="12dp"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/kl3_sp_md"
+        android:minHeight="@dimen/kl3_chip_h"
+        android:paddingTop="@dimen/kl3_sp_xs"
+        android:paddingBottom="@dimen/kl3_sp_sm"
         android:clipToPadding="false"
         android:clipChildren="false"
         android:scrollbars="none" />

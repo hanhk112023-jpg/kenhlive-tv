@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- KL3 filter chip — glass pill; selected = accent tint + border.
+     Pair foreground with kl3_fg_focus_pill for D-pad ring. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true" android:state_selected="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/kl3_accent" />
+            <stroke android:width="2dp" android:color="#FFFFFFFF" />
+            <corners android:radius="@dimen/kl3_r_pill" />
+        </shape>
+    </item>
+    <item android:state_focused="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/kl3_surface_high" />
+            <stroke android:width="@dimen/kl3_focus_ring_w" android:color="@color/kl3_accent" />
+            <corners android:radius="@dimen/kl3_r_pill" />
+        </shape>
+    </item>
+    <item android:state_selected="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/kl3_accent" />
+            <corners android:radius="@dimen/kl3_r_pill" />
+        </shape>
+    </item>
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/kl3_pressed" />
+            <corners android:radius="@dimen/kl3_r_pill" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/kl3_glass" />
+            <stroke android:width="1dp" android:color="@color/kl3_glass_border" />
+            <corners android:radius="@dimen/kl3_r_pill" />
+        </shape>
+    </item>
+</selector>

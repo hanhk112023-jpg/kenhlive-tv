@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ============================================================
+     KL3 DIMENS — ANDROID TV (10-foot) OVERRIDES.
+     Same resource names as values/kl3_dimens.xml; only values
+     differ. TV needs: bigger type, roomier margins, larger
+     D-pad targets, taller hero.
+     ============================================================ -->
+<resources>
+    <!-- spacing — TV sits ~3.8m away, margins must be generous -->
+    <dimen name="kl3_margin_x">56dp</dimen>
+    <dimen name="kl3_gap">14dp</dimen>
+    <dimen name="kl3_gap_l">28dp</dimen>
+    <dimen name="kl3_rail_gap">12dp</dimen>
+
+    <!-- type scale — 10-foot readability -->
+    <dimen name="kl3_ts_micro">12sp</dimen>
+    <dimen name="kl3_ts_badge">13sp</dimen>
+    <dimen name="kl3_ts_meta">15sp</dimen>
+    <dimen name="kl3_ts_body">18sp</dimen>
+    <dimen name="kl3_ts_body_lg">19sp</dimen>
+    <dimen name="kl3_ts_title">22sp</dimen>
+    <dimen name="kl3_ts_section">24sp</dimen>
+    <dimen name="kl3_ts_display">34sp</dimen>
+    <dimen name="kl3_ts_hero">40sp</dimen>
+
+    <!-- component sizes — D-pad targets stay ≥ ~36dp visual,
+         focus ring makes them readable at distance -->
+    <dimen name="kl3_card_w">330dp</dimen>
+    <dimen name="kl3_card_thumb_h">186dp</dimen>
+    <dimen name="kl3_card_h_pad">18dp</dimen>
+    <dimen name="kl3_poster_w">170dp</dimen>
+    <dimen name="kl3_poster_h">255dp</dimen>
+    <dimen name="kl3_channel_card_w">252dp</dimen>
+    <dimen name="kl3_channel_card_h">158dp</dimen>
+    <dimen name="kl3_match_card_w">320dp</dimen>
+
+    <dimen name="kl3_btn_h">44dp</dimen>
+    <dimen name="kl3_btn_h_s">38dp</dimen>
+    <dimen name="kl3_btn_pad_x">26dp</dimen>
+    <dimen name="kl3_icon_btn">52dp</dimen>
+    <dimen name="kl3_icon_btn_s">44dp</dimen>
+
+    <dimen name="kl3_chip_h">42dp</dimen>
+    <dimen name="kl3_chip_pad_x">22dp</dimen>
+    <dimen name="kl3_badge_h">26dp</dimen>
+    <dimen name="kl3_badge_pad_x">10dp</dimen>
+
+    <dimen name="kl3_input_h">46dp</dimen>
+    <dimen name="kl3_avatar_s">36dp</dimen>
+    <dimen name="kl3_crest_s">24dp</dimen>
+
+    <dimen name="kl3_hero_h">360dp</dimen>
+
+    <!-- focus — stronger ring on TV, slightly larger glow -->
+    <dimen name="kl3_focus_ring_w">3.5dp</dimen>
+    <dimen name="kl3_focus_glow_w">8dp</dimen>
+    <dimen name="kl3_focus_ring_w_s">2.5dp</dimen>
+    <dimen name="kl3_elev_focus">14dp</dimen>
+
+    <!-- skeleton -->
+    <dimen name="kl3_skel_card_w">330dp</dimen>
+    <dimen name="kl3_skel_card_h">200dp</dimen>
+    <dimen name="kl3_skel_poster_w">170dp</dimen>
+    <dimen name="kl3_skel_poster_h">255dp</dimen>
+    <dimen name="kl3_skel_line_h">16dp</dimen>
+</resources>

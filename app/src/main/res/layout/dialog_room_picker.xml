@@ -4,13 +4,13 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@drawable/kl2_dialog_bg"
-    android:paddingLeft="24dp"
-    android:paddingRight="24dp"
-    android:paddingTop="22dp"
-    android:paddingBottom="16dp">
+    android:background="@drawable/kl3p_dialog_bg"
+    android:paddingLeft="@dimen/kl3_sp_xl"
+    android:paddingRight="@dimen/kl3_sp_xl"
+    android:paddingTop="@dimen/kl3_sp_xl"
+    android:paddingBottom="@dimen/kl3_sp_lg">
 
-    <!-- Tiêu đề kèm thanh nhấn chuyển sắc kl2 -->
+    <!-- Tiêu đề kèm thanh nhấn accent KL3 -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -18,10 +18,10 @@
         android:gravity="center_vertical">
 
         <View
-            android:layout_width="4dp"
-            android:layout_height="34dp"
-            android:background="@drawable/kl2_section_bar"
-            android:layout_marginRight="12dp" />
+            android:layout_width="@dimen/kl3_section_bar_w"
+            android:layout_height="22dp"
+            android:background="@color/kl3_accent"
+            android:layout_marginRight="@dimen/kl3_gap" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -31,29 +31,28 @@
 
             <TextView
                 android:id="@+id/dialogTitle"
-                style="@style/KL.Text.Section"
+                style="@style/KL3.Text.Section"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="18sp"
                 android:maxLines="2"
                 android:ellipsize="end" />
 
             <TextView
                 android:id="@+id/dialogLeague"
-                style="@style/KL.Text.Meta"
+                style="@style/KL3.Text.Meta"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@color/kl_brand"
-                android:layout_marginTop="4dp" />
+                android:textColor="@color/kl3_accent_bright"
+                android:layout_marginTop="@dimen/kl3_sp_xs" />
         </LinearLayout>
     </LinearLayout>
 
     <View
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="12dp"
-        android:background="@color/kl_border_soft" />
+        android:layout_height="@dimen/kl3_divider_h"
+        android:layout_marginTop="@dimen/kl3_sp_lg"
+        android:layout_marginBottom="@dimen/kl3_gap"
+        android:background="@drawable/kl3_divider" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/roomList"
@@ -61,6 +60,6 @@
         android:layout_height="wrap_content"
         android:maxHeight="440dp"
         android:clipToPadding="false"
-        android:paddingBottom="28dp"
+        android:paddingBottom="@dimen/kl3_sp_xxl"
         android:scrollbars="vertical" />
 </LinearLayout>

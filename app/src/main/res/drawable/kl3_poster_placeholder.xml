@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- KL3 poster placeholder — dark gradient + hairline, shown while
+     loading or when no artwork exists. Pair with a centered icon/logo. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="270"
+        android:startColor="@color/kl3_poster_a"
+        android:endColor="@color/kl3_poster_b" />
+    <stroke android:width="1dp" android:color="@color/kl3_divider" />
+    <corners android:radius="@dimen/kl3_r_md" />
+</shape>

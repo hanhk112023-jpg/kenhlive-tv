@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- KL3 league filter chips rail (SportAdapter TYPE_CHIPS → chipRow). -->
 <HorizontalScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:scrollbars="none"
     android:clipToPadding="false"
-    android:paddingLeft="@dimen/sp_screen_margin"
-    android:paddingRight="@dimen/sp_screen_margin"
-    android:paddingTop="10dp"
-    android:paddingBottom="12dp">
+    android:paddingLeft="@dimen/kl3_margin_x"
+    android:paddingRight="@dimen/kl3_margin_x"
+    android:paddingTop="@dimen/kl3_sp_md"
+    android:paddingBottom="@dimen/kl3_gap">
 
     <LinearLayout
         android:id="@+id/chipRow"

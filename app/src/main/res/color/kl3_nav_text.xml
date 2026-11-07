@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Text color for list/nav items: focus = primary + accent, selected = accent,
+     default = secondary. Use with android:textColor on nav/rail items. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true" android:color="@color/kl3_text_primary" />
+    <item android:state_selected="true" android:color="@color/kl3_accent" />
+    <item android:state_pressed="true" android:color="@color/kl3_text_primary" />
+    <item android:color="@color/kl3_text_secondary" />
+</selector>

@@ -1,15 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Filter pill — KL3 chip. Adapter (FilterAdapter trong PhimFragment)
+     GÁN LẠI background sl_apple_pill_selected/unselected + textColor khi
+     bind, nên background/textColor ở đây chỉ là giá trị mặc định trước bind.
+     Scale 1.08 khi focus do code animate; giữ nguyên id tvFilterTitle. -->
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/tvFilterTitle"
     android:layout_width="wrap_content"
-    android:layout_height="@dimen/phim_pill_h"
-    android:layout_marginRight="8dp"
-    android:background="@drawable/sl_apple_pill"
+    android:layout_height="@dimen/kl3_chip_h"
+    android:layout_marginRight="@dimen/kl3_rail_gap"
+    android:background="@drawable/kl3_chip_bg"
     android:gravity="center"
-    android:paddingLeft="16dp"
-    android:paddingRight="16dp"
-    android:textColor="#FFFFFF"
-    android:textSize="12.5sp"
+    android:paddingLeft="@dimen/kl3_chip_pad_x"
+    android:paddingRight="@dimen/kl3_chip_pad_x"
+    android:textColor="@color/kl3_text_secondary"
+    android:textSize="@dimen/kl3_ts_body"
     android:textStyle="bold"
+    android:maxLines="1"
+    android:ellipsize="end"
     android:focusable="true"
     android:clickable="true" />

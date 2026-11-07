@@ -1,58 +1,58 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- HÀNG SECTION PHIM (rail) — KL3: header = accent bar kl3m_accent_bar
+     (rộng kl3_section_bar_w) + KL3.Text.Section + đếm KL3.Text.Meta;
+     carousel ngang với lề kl3_margin_x, peek mép phải bằng fading edge.
+     Giữ nguyên android:id: rowAccentDot, rowTitle, rowCount, rowCarousel. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
     android:clipChildren="false"
     android:clipToPadding="false"
-    android:layout_marginBottom="22dp">
+    android:layout_marginBottom="@dimen/kl3_gap_l">
 
-    <!-- Netflix Row Header -->
+    <!-- Header hàng: accent bar + tiêu đề + số lượng -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingLeft="@dimen/sp_screen_margin"
-        android:paddingRight="@dimen/sp_screen_margin"
-        android:layout_marginBottom="12dp">
+        android:paddingLeft="@dimen/kl3_margin_x"
+        android:paddingRight="@dimen/kl3_margin_x"
+        android:layout_marginBottom="@dimen/kl3_gap">
 
         <View
             android:id="@+id/rowAccentDot"
-            android:layout_width="4dp"
-            android:layout_height="18dp"
-            android:background="@drawable/bg_kl_accent" />
+            android:layout_width="@dimen/kl3_section_bar_w"
+            android:layout_height="20dp"
+            android:background="@drawable/kl3m_accent_bar" />
 
         <TextView
             android:id="@+id/rowTitle"
-            style="@style/KL.Text.Section"
+            style="@style/KL3.Text.Section"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
-            android:textSize="15.5sp"
-            android:textStyle="bold"
-            android:letterSpacing="0.03"
-            android:textColor="#FFFFFF" />
+            android:layout_marginLeft="@dimen/kl3_sp_md"
+            android:textColor="@color/kl3_text_primary" />
 
         <View
             android:layout_width="0dp"
-            android:layout_height="1dp"
-            android:layout_weight="1" />
+            android:layout_height="@dimen/kl3_divider_h"
+            android:layout_weight="1"
+            android:background="@drawable/kl3_divider" />
 
         <TextView
             android:id="@+id/rowCount"
-            style="@style/KL.Text.Meta"
+            style="@style/KL3.Text.Meta"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:textSize="11.5sp"
-            android:textStyle="bold"
-            android:textColor="#94A3B8" />
+            android:layout_marginLeft="@dimen/kl3_sp_md"
+            android:textColor="@color/kl3_text_tertiary" />
     </LinearLayout>
 
     <!-- Horizontal Carousel List -->
-    <!-- Sửa 2026-11-04: thẻ cuối ở mép phải trước đây bị cắt cứng. Thêm fading
-         edge ngang để mép phải mờ dần thay vì cắt dọc, và giữ padding phải bằng
-         lề màn hình để khi cuộn tới cuối, thẻ cuối vẫn hiện trọn vẹn. -->
+    <!-- fading edge ngang: mép phải mờ dần (peek), padding phải = lề màn hình
+         để thẻ cuối vẫn hiện trọn khi cuộn tới cuối. -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rowCarousel"
         android:layout_width="match_parent"
@@ -60,12 +60,12 @@
         android:orientation="horizontal"
         android:clipToPadding="false"
         android:clipChildren="false"
-        android:paddingLeft="@dimen/sp_screen_margin"
-        android:paddingRight="@dimen/sp_screen_margin"
-        android:paddingTop="16dp"
-        android:paddingBottom="12dp"
+        android:paddingLeft="@dimen/kl3_margin_x"
+        android:paddingRight="@dimen/kl3_margin_x"
+        android:paddingTop="@dimen/kl3_sp_lg"
+        android:paddingBottom="@dimen/kl3_sp_md"
         android:fadingEdge="horizontal"
-        android:fadingEdgeLength="32dp"
+        android:fadingEdgeLength="@dimen/kl3_sp_xxl"
         android:scrollbars="none" />
 
 </LinearLayout>

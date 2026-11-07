@@ -4,47 +4,50 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/kl_bg_deep">
+    android:background="@color/kl3_bg">
 
+    <!-- Ô nhập + nút xoá -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:paddingLeft="@dimen/sp_screen_margin"
-        android:paddingRight="@dimen/sp_screen_margin"
-        android:paddingTop="14dp"
-        android:paddingBottom="10dp">
+        android:paddingLeft="@dimen/kl3_margin_x"
+        android:paddingRight="@dimen/kl3_margin_x"
+        android:paddingTop="@dimen/kl3_sp_md"
+        android:paddingBottom="@dimen/kl3_sp_sm">
 
         <EditText
             android:id="@+id/searchInput"
-            style="@style/KL.Input"
+            style="@style/KL3.Input"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:hint="@string/search_hint"
             android:drawableLeft="@drawable/ic_nav_search"
-            app:drawableTint="@color/kl_text_3" />
+            app:drawableTint="@color/kl3_text_tertiary" />
 
         <ImageButton
             android:id="@+id/clearBtn"
-            style="@style/KL.IconButton"
-            android:layout_width="44dp"
-            android:layout_height="44dp"
-            android:layout_marginLeft="10dp"
+            style="@style/KL3.Button.Icon"
+            android:layout_width="@dimen/kl3_icon_btn_s"
+            android:layout_height="@dimen/kl3_icon_btn_s"
+            android:layout_marginLeft="@dimen/kl3_sp_sm"
             android:src="@drawable/ic_close"
+            android:tint="@color/kl3_icon_tint"
             android:focusable="false"
             android:contentDescription="@string/search_clear" />
     </LinearLayout>
 
+    <!-- Hàng chip league -->
     <HorizontalScrollView
         android:id="@+id/chipRow"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingLeft="@dimen/sp_screen_margin"
-        android:paddingRight="@dimen/sp_screen_margin"
-        android:paddingTop="8dp"
-        android:paddingBottom="10dp"
+        android:paddingLeft="@dimen/kl3_margin_x"
+        android:paddingRight="@dimen/kl3_margin_x"
+        android:paddingTop="@dimen/kl3_sp_xs"
+        android:paddingBottom="@dimen/kl3_sp_sm"
         android:clipToPadding="false"
         android:scrollbars="none"
         android:descendantFocusability="afterDescendants">
@@ -60,11 +63,11 @@
 
     <TextView
         android:id="@+id/resultCount"
-        style="@style/KL.Text.Meta"
+        style="@style/KL3.Text.Meta"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/sp_screen_margin"
-        android:layout_marginBottom="8dp"
+        android:layout_marginLeft="@dimen/kl3_margin_x"
+        android:layout_marginBottom="@dimen/kl3_sp_sm"
         android:letterSpacing="0.03" />
 
     <FrameLayout
@@ -79,10 +82,10 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:clipToPadding="false"
-            android:paddingLeft="@dimen/sp_screen_margin"
-            android:paddingRight="@dimen/sp_screen_margin"
-            android:paddingTop="8dp"
-            android:paddingBottom="@dimen/sp_row_gap"
+            android:paddingLeft="@dimen/kl3_margin_x"
+            android:paddingRight="@dimen/kl3_margin_x"
+            android:paddingTop="@dimen/kl3_sp_sm"
+            android:paddingBottom="@dimen/kl3_gap_l"
             android:scrollbars="vertical"
             android:descendantFocusability="afterDescendants" />
 

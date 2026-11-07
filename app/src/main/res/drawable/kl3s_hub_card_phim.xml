@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- KL3S hub portal card — PHIM TRUYỆN. Deep surface + gold/amber ambient wash. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/kl3_pressed" />
+            <stroke android:width="1dp" android:color="@color/kl3_glass_border" />
+            <corners android:radius="@dimen/kl3_r_lg" />
+        </shape>
+    </item>
+    <item>
+        <layer-list>
+            <item>
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:angle="270"
+                        android:startColor="@color/kl3_surface"
+                        android:endColor="@color/kl3_bg_soft" />
+                    <corners android:radius="@dimen/kl3_r_lg" />
+                </shape>
+            </item>
+            <item>
+                <shape android:shape="rectangle">
+                    <gradient
+                        android:angle="315"
+                        android:startColor="@color/kl3_gold_soft"
+                        android:endColor="#00FFB300" />
+                    <corners android:radius="@dimen/kl3_r_lg" />
+                </shape>
+            </item>
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="#00000000" />
+                    <stroke android:width="1dp" android:color="@color/kl3_divider" />
+                    <corners android:radius="@dimen/kl3_r_lg" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+</selector>

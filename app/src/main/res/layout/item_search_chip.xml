@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Chip league/filter dùng chung (Search, Sport, Phim trending).
+     KL3.Chip: glass pill + focus ring pill; text theo kl3_chip_text. -->
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
-    style="@style/KL.Chip"
+    style="@style/KL3.Chip"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_marginRight="8dp"
+    android:layout_marginRight="@dimen/kl3_rail_gap"
+    android:foreground="@drawable/kl3_fg_focus_pill"
+    android:textColor="@color/kl3_chip_text"
+    android:textSize="@dimen/kl3_ts_body"
+    android:fontFamily="sans-serif-medium"
+    android:gravity="center"
     android:focusable="true"
     android:clickable="true" />

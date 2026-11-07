@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- KL3 "+N" overflow pill trong hàng avatar BLV. -->
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/anchorPlus"
-    style="@style/KL.Text.Meta"
+    style="@style/KL3.Text.Meta"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_marginLeft="6dp"
-    android:background="@drawable/bg_badge_glass"
-    android:paddingLeft="7dp"
-    android:paddingRight="7dp"
-    android:paddingTop="2dp"
-    android:paddingBottom="2dp" />
+    android:layout_marginLeft="@dimen/kl3_sp_sm"
+    android:background="@drawable/kl3_pill_bg"
+    android:paddingLeft="@dimen/kl3_sp_sm"
+    android:paddingRight="@dimen/kl3_sp_sm"
+    android:paddingTop="@dimen/kl3_sp_xs"
+    android:paddingBottom="@dimen/kl3_sp_xs" />

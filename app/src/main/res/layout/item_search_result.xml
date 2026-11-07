@@ -5,32 +5,32 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:background="@drawable/kl2_card_glass"
-    android:foreground="@drawable/fg_focus"
-    android:padding="@dimen/sp_item_pad"
-    android:layout_marginBottom="8dp"
+    android:background="@drawable/kl3_card_bg"
+    android:foreground="@drawable/kl3_fg_focus"
+    android:padding="@dimen/kl3_card_h_pad"
+    android:layout_marginBottom="@dimen/kl3_sp_sm"
     android:descendantFocusability="blocksDescendants"
     android:focusable="true"
     android:clickable="true">
 
     <ImageView
         android:id="@+id/srAvatar"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="@dimen/kl3_avatar_s"
+        android:layout_height="@dimen/kl3_avatar_s"
         android:scaleType="centerCrop"
-        android:background="@drawable/bg_circle"
+        android:background="@drawable/kl3i_glass_circle"
         android:contentDescription="@string/cd_blv" />
 
     <LinearLayout
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:layout_marginLeft="12dp"
+        android:layout_marginLeft="@dimen/kl3_sp_md"
         android:orientation="vertical">
 
         <TextView
             android:id="@+id/srMatch"
-            style="@style/KL.Text.Title"
+            style="@style/KL3.Text.Title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:maxLines="1"
@@ -38,25 +38,22 @@
 
         <TextView
             android:id="@+id/srMeta"
-            style="@style/KL.Text.Meta"
+            style="@style/KL3.Text.Meta"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="2dp"
+            android:layout_marginTop="@dimen/kl3_sp_xs"
             android:maxLines="1"
             android:ellipsize="end" />
     </LinearLayout>
 
     <TextView
         android:id="@+id/srLeague"
-        style="@style/KL.Text.Meta"
+        style="@style/KL3.Pill"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="8dp"
-        android:background="@drawable/bg_badge_glass"
-        android:paddingLeft="9dp"
-        android:paddingRight="9dp"
-        android:paddingTop="3dp"
-        android:paddingBottom="3dp"
+        android:layout_marginLeft="@dimen/kl3_sp_sm"
+        android:textColor="@color/kl3_info"
+        android:textSize="@dimen/kl3_ts_micro"
         android:maxWidth="140dp"
         android:maxLines="1"
         android:ellipsize="end" />

@@ -1,13 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- MÀN PHIM — KL3. RecyclerView dọc chứa hero + filter row + rails/lưới;
+     overlay search full-screen + empty/error states. Giữ nguyên mọi
+     android:id bind trong PhimFragment. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/kl_bg_deep">
+    android:background="@color/kl3_bg">
 
-    <!-- Thiết kế mới: KHÔNG còn thanh pills ngang cố định trên cùng.
-         Danh mục chuyển thành một hàng trong luồng cuộn, ngay dưới hero (item_phim_filter_row). -->
+    <!-- Danh mục nằm trong luồng cuộn, ngay dưới hero (item_phim_filter_row). -->
 
     <FrameLayout
         android:layout_width="match_parent"
@@ -21,11 +23,11 @@
             android:id="@+id/phimMainList"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:background="@color/kl_bg_deep"
+            android:background="@color/kl3_bg"
             android:clipToPadding="true"
             android:clipChildren="true"
-            android:paddingTop="8dp"
-            android:paddingBottom="40dp"
+            android:paddingTop="@dimen/kl3_sp_sm"
+            android:paddingBottom="@dimen/kl3_sp_xxl"
             android:scrollbars="none" />
 
         <!-- Loading Bar -->
@@ -36,6 +38,7 @@
             android:layout_height="48dp"
             android:layout_gravity="center"
             android:indeterminate="true"
+            android:indeterminateTint="@color/kl3_accent"
             android:visibility="gone" />
 
         <!-- Error / Empty State Container -->
@@ -52,37 +55,41 @@
                 android:id="@+id/ivPhimEmptyIll"
                 android:layout_width="160dp"
                 android:layout_height="160dp"
-                android:layout_marginBottom="12dp"
+                android:layout_marginBottom="@dimen/kl3_gap"
                 android:src="@drawable/ill_empty_cinema"
                 android:scaleType="fitCenter"
                 android:contentDescription="Minh họa lịch sử xem" />
 
             <TextView
                 android:id="@+id/tvPhimErrorTitle"
-                style="@style/KL.Text.Section"
+                style="@style/KL3.Text.TitleLg"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Không thể tải kho phim"
-                android:textColor="#FFFFFF"
-                android:textSize="16sp" />
+                android:textColor="@color/kl3_text_primary" />
 
             <TextView
                 android:id="@+id/tvPhimErrorSub"
-                style="@style/KL.Text.Meta"
+                style="@style/KL3.Text.Meta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
+                android:layout_marginTop="@dimen/kl3_sp_xs"
                 android:text="Kiểm tra kết nối mạng hoặc thử lại sau"
-                android:textColor="@color/kl_text_3"
-                android:textSize="12sp" />
+                android:textColor="@color/kl3_text_tertiary" />
 
             <Button
                 android:id="@+id/btnPhimRetry"
-                style="@style/KL.Button.Primary"
+                style="@style/KL3.Button.Primary"
                 android:layout_width="wrap_content"
                 android:layout_height="@dimen/retry_btn_h"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="@dimen/kl3_gap"
                 android:text="Thử lại"
+                android:textAllCaps="true"
+                android:textSize="@dimen/kl3_ts_body"
+                android:textStyle="bold"
+                android:letterSpacing="0.08"
+                android:fontFamily="@font/oswald"
+                android:textColor="@color/kl3_on_accent"
                 android:focusable="true" />
         </LinearLayout>
 
@@ -92,12 +99,12 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:background="#0B0E14"
+            android:background="@color/kl3_bg"
             android:visibility="gone"
-            android:paddingLeft="24dp"
-            android:paddingRight="24dp"
-            android:paddingTop="12dp"
-            android:paddingBottom="12dp">
+            android:paddingLeft="@dimen/kl3_margin_x"
+            android:paddingRight="@dimen/kl3_margin_x"
+            android:paddingTop="@dimen/kl3_sp_md"
+            android:paddingBottom="@dimen/kl3_sp_md">
 
             <!-- Search Header Bar -->
             <LinearLayout
@@ -110,69 +117,73 @@
                 <LinearLayout
                     android:id="@+id/searchPhimInputContainer"
                     android:layout_width="0dp"
-                    android:layout_height="44dp"
+                    android:layout_height="@dimen/kl3_input_h"
                     android:layout_weight="1"
-                    android:background="@drawable/search_input_bg"
+                    android:background="@drawable/kl3_input_bg"
                     android:gravity="center_vertical"
-                    android:paddingLeft="14dp"
-                    android:paddingRight="10dp">
+                    android:paddingLeft="@dimen/kl3_sp_lg"
+                    android:paddingRight="@dimen/kl3_sp_sm">
 
                     <ImageView
                         android:layout_width="20dp"
                         android:layout_height="20dp"
                         android:src="@drawable/ic_nav_search"
                         android:contentDescription="Tìm kiếm"
-                        app:tint="#94A3B8" />
+                        app:tint="@color/kl3_text_tertiary" />
 
                     <EditText
                         android:id="@+id/etSearchPhim"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
                         android:layout_weight="1"
-                        android:layout_marginLeft="10dp"
-                        android:layout_marginRight="8dp"
+                        android:layout_marginLeft="@dimen/kl3_sp_md"
+                        android:layout_marginRight="@dimen/kl3_sp_sm"
                         android:background="@null"
                         android:hint="Tìm phim, anime, diễn viên (VD: One Piece, Conan, Lật Mặt...)"
                         android:imeOptions="actionSearch"
                         android:inputType="text"
                         android:maxLines="1"
                         android:singleLine="true"
-                        android:textColor="#FFFFFF"
-                        android:textColorHint="#8E9AA8"
-                        android:textSize="14sp" />
+                        android:textColor="@color/kl3_text_primary"
+                        android:textColorHint="@color/kl3_text_tertiary"
+                        android:textSize="@dimen/kl3_ts_body" />
 
                     <ImageButton
                         android:id="@+id/btnClearSearchPhim"
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
+                        android:layout_width="@dimen/kl3_icon_btn_s"
+                        android:layout_height="@dimen/kl3_icon_btn_s"
                         android:background="?attr/selectableItemBackgroundBorderless"
                         android:src="@drawable/ic_close"
                         android:contentDescription="Xóa chữ"
                         android:visibility="gone"
                         android:focusable="true"
-                        app:tint="#94A3B8" />
+                        app:tint="@color/kl3_text_tertiary" />
                 </LinearLayout>
 
                 <!-- Search Action Button -->
                 <Button
                     android:id="@+id/btnDoSearchPhim"
-                    style="@style/KL.Button.Primary"
+                    style="@style/KL3.Button.Primary"
                     android:layout_width="wrap_content"
-                    android:layout_height="44dp"
-                    android:layout_marginLeft="12dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/kl3_gap"
                     android:text="Tìm kiếm"
-                    android:textSize="13sp"
+                    android:textAllCaps="true"
+                    android:textSize="@dimen/kl3_ts_body"
+                    android:textStyle="bold"
+                    android:letterSpacing="0.08"
+                    android:fontFamily="@font/oswald"
+                    android:textColor="@color/kl3_on_accent"
                     android:focusable="true" />
 
                 <!-- Close / Back Button -->
                 <Button
                     android:id="@+id/btnCloseSearchPhim"
-                    style="@style/KL.Button.Ghost"
+                    style="@style/KL3.Button.Ghost"
                     android:layout_width="wrap_content"
-                    android:layout_height="44dp"
-                    android:layout_marginLeft="8dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="@dimen/kl3_sp_sm"
                     android:text="✕ Đóng"
-                    android:textSize="13sp"
                     android:focusable="true" />
             </LinearLayout>
 
@@ -180,18 +191,18 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="@dimen/kl3_sp_md"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
                 <TextView
+                    style="@style/KL3.Text.Meta"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="🔥 Thịnh hành:"
-                    android:textColor="#FF8A00"
-                    android:textSize="12sp"
+                    android:text="Thịnh hành:"
+                    android:textColor="@color/kl3_accent"
                     android:textStyle="bold"
-                    android:layout_marginRight="10dp" />
+                    android:layout_marginRight="@dimen/kl3_sp_md" />
 
                 <HorizontalScrollView
                     android:layout_width="0dp"
@@ -211,26 +222,24 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:layout_marginBottom="6dp"
+                android:layout_marginTop="@dimen/kl3_sp_md"
+                android:layout_marginBottom="@dimen/kl3_sp_sm"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
                 <TextView
                     android:id="@+id/tvSearchResultsStatus"
+                    style="@style/KL3.Text.Title"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="Gợi ý phim thịnh hành"
-                    android:textColor="#CBD5E1"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    android:text="Gợi ý phim thịnh hành" />
 
                 <ProgressBar
                     android:id="@+id/pbSearchPhim"
                     android:layout_width="18dp"
                     android:layout_height="18dp"
-                    android:indeterminateTint="#FF8A00"
+                    android:indeterminateTint="@color/kl3_accent"
                     android:visibility="gone" />
             </LinearLayout>
 
@@ -242,8 +251,8 @@
                 android:layout_weight="1"
                 android:clipToPadding="false"
                 android:clipChildren="false"
-                android:paddingTop="8dp"
-                android:paddingBottom="24dp"
+                android:paddingTop="@dimen/kl3_sp_sm"
+                android:paddingBottom="@dimen/kl3_sp_xl"
                 android:scrollbars="none" />
 
             <!-- Empty Search State -->
@@ -258,20 +267,18 @@
 
                 <TextView
                     android:id="@+id/tvSearchEmptyTitle"
+                    style="@style/KL3.Text.TitleLg"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="Không tìm thấy phim phù hợp"
-                    android:textColor="#FFFFFF"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                    android:text="Không tìm thấy phim phù hợp" />
 
                 <TextView
+                    style="@style/KL3.Text.Body"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="Thử tìm kiếm với từ khóa khác hoặc bấm chọn các gợi ý thịnh hành phía trên"
-                    android:textColor="#94A3B8"
-                    android:textSize="12sp" />
+                    android:layout_marginTop="@dimen/kl3_sp_xs"
+                    android:gravity="center"
+                    android:text="Thử tìm kiếm với từ khóa khác hoặc bấm chọn các gợi ý thịnh hành phía trên" />
             </LinearLayout>
         </LinearLayout>
     </FrameLayout>

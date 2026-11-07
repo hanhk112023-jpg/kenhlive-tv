@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ============================================================
+     KL3 DESIGN SYSTEM — COLOR TOKENS
+     Premium streaming direction: deep-black canvas, warm
+     orange→amber accent, subtle glass surfaces.
+     All names are prefixed kl3_ — never reuse existing tokens.
+     ============================================================ -->
+<resources>
+    <!-- ===== BACKGROUNDS (layered, darkest → lightest) ===== -->
+    <color name="kl3_bg">#FF050508</color>            <!-- app canvas, pure near-black -->
+    <color name="kl3_bg_soft">#FF0A0C12</color>       <!-- hero backdrop / top areas -->
+    <color name="kl3_surface">#FF12141C</color>       <!-- card base (level 1) -->
+    <color name="kl3_surface_high">#FF1B1F2B</color>  <!-- card hover/focus fill (level 2) -->
+    <color name="kl3_surface_top">#FF262B3A</color>   <!-- dialogs, menus, popovers (level 3) -->
+    <color name="kl3_surface_solid">#F212141C</color> <!-- opaque-ish card over imagery -->
+
+    <!-- ===== GLASS / BORDERS ===== -->
+    <color name="kl3_glass">#14FFFFFF</color>         <!-- 8% white glass fill -->
+    <color name="kl3_glass_strong">#24FFFFFF</color>  <!-- 14% glass fill -->
+    <color name="kl3_glass_border">#33FFFFFF</color>  <!-- hairline on glass -->
+    <color name="kl3_divider">#1C2433</color>         <!-- hairline separator -->
+    <color name="kl3_divider_soft">#120F1620</color>  <!-- barely-there row divider -->
+    <color name="kl3_pressed">#26FFFFFF</color>       <!-- pressed overlay tint -->
+
+    <!-- ===== TEXT (3 tiers + inverse) ===== -->
+    <color name="kl3_text_primary">#FFF7F7F9</color>
+    <color name="kl3_text_secondary">#FFB8C0CE</color>
+    <color name="kl3_text_tertiary">#FF7C8497</color>
+    <color name="kl3_text_disabled">#FF4A5162</color>
+    <color name="kl3_on_accent">#FFFFFFFF</color>     <!-- text on orange/amber -->
+    <color name="kl3_on_dark">#FF050508</color>       <!-- text on light glass -->
+
+    <!-- ===== BRAND ACCENT (orange → amber gradient family) ===== -->
+    <color name="kl3_accent">#FFFF6500</color>        <!-- primary action / focus ring -->
+    <color name="kl3_accent_bright">#FFFF8A3D</color> <!-- gradient top stop -->
+    <color name="kl3_accent_deep">#FFE04A00</color>   <!-- gradient bottom stop -->
+    <color name="kl3_accent_soft">#1FFF6500</color>   <!-- tinted chip fill -->
+    <color name="kl3_accent_glow">#66FF6500</color>   <!-- focus glow stroke -->
+    <color name="kl3_accent_dim">#80FF6500</color>    <!-- subtle accent border -->
+    <color name="kl3_gold">#FFFFB300</color>          <!-- scores, premium, VIP meta -->
+    <color name="kl3_gold_soft">#1FFFB300</color>
+    <color name="kl3_info">#FF00E5FF</color>          <!-- channel/stream info accent -->
+    <color name="kl3_info_soft">#1F00E5FF</color>
+
+    <!-- ===== SEMANTIC STATES ===== -->
+    <color name="kl3_live">#FFFF334B</color>          <!-- LIVE badge / live dot -->
+    <color name="kl3_live_bright">#FFFF4D66</color>   <!-- badge gradient top -->
+    <color name="kl3_live_deep">#FFE01A34</color>     <!-- badge gradient bottom -->
+    <color name="kl3_live_glow">#55FF334B</color>
+    <color name="kl3_upcoming">#FF38BDF8</color>      <!-- "sắp đá" / scheduled -->
+    <color name="kl3_ended">#FF7C8497</color>         <!-- finished / muted state -->
+    <color name="kl3_success">#FF34D399</color>
+    <color name="kl3_error">#FFFF4D4D</color>
+    <color name="kl3_warning">#FFFBBF24</color>       <!-- caution / buffering -->
+
+    <!-- ===== SCRIMS ===== -->
+    <color name="kl3_scrim_85">#D9000000</color>
+    <color name="kl3_scrim_60">#99000000</color>
+    <color name="kl3_scrim_40">#66000000</color>
+    <color name="kl3_scrim_20">#33000000</color>
+
+    <!-- ===== SKELETON / PLACEHOLDER ===== -->
+    <color name="kl3_skeleton">#14FFFFFF</color>
+    <color name="kl3_skeleton_hi">#26FFFFFF</color>
+    <color name="kl3_poster_a">#FF181B26</color>      <!-- poster placeholder gradient -->
+    <color name="kl3_poster_b">#FF0C0E15</color>
+</resources>

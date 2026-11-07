@@ -6,7 +6,8 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/kl_bg_deep"
+    android:background="@color/kl3_bg"
+    android:foreground="@drawable/kl3_fg_focus"
     android:focusable="true"
     android:clickable="true"
     android:descendantFocusability="blocksDescendants">
@@ -15,7 +16,7 @@
         android:id="@+id/cellPlayer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/kl_bg_deep"
+        android:background="@color/kl3_bg"
         app:surface_type="texture_view"
         app:use_controller="false" />
 
@@ -23,18 +24,18 @@
         android:layout_width="match_parent"
         android:layout_height="52dp"
         android:layout_gravity="top"
-        android:background="@drawable/bg_overlay_top" />
+        android:background="@drawable/kl3p_scrim_top" />
 
     <TextView
         android:id="@+id/cellLabel"
-        style="@style/KL.Text.Meta"
+        style="@style/KL3.Text.Title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="top|left"
-        android:layout_marginLeft="28dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginLeft="@dimen/kl3_margin_x"
+        android:layout_marginTop="@dimen/kl3_sp_md"
         android:layout_marginRight="90dp"
-        android:textColor="@color/kl_text_1"
+        android:textSize="@dimen/kl3_ts_meta"
         android:textStyle="bold"
         android:shadowColor="#CC000000"
         android:shadowDy="2"
@@ -45,32 +46,28 @@
 
     <TextView
         android:id="@+id/cellAudio"
-        style="@style/KL.Text.Badge"
+        style="@style/KL3.Badge.Provider"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="top|right"
-        android:layout_marginRight="28dp"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/bg_badge_glass"
-        android:paddingLeft="9dp"
-        android:paddingRight="9dp"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp"
-        android:textColor="@color/kl_text_1" />
+        android:layout_marginRight="@dimen/kl3_margin_x"
+        android:layout_marginTop="@dimen/kl3_sp_md"
+        android:text=""
+        android:textSize="@dimen/kl3_ts_badge"
+        android:textStyle="bold"
+        android:letterSpacing="0.07" />
 
     <TextView
         android:id="@+id/cellSwapHint"
-        style="@style/KL.Text.Meta"
+        style="@style/KL3.Pill"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|right"
-        android:layout_marginRight="28dp"
-        android:layout_marginBottom="28dp"
-        android:background="@drawable/bg_badge_glass"
-        android:paddingLeft="9dp"
-        android:paddingRight="9dp"
-        android:paddingTop="4dp"
-        android:paddingBottom="4dp"
+        android:layout_marginRight="@dimen/kl3_margin_x"
+        android:layout_marginBottom="@dimen/kl3_margin_x"
         android:text="@string/mv_swap_hint"
+        android:textColor="@color/kl3_text_secondary"
+        android:textSize="@dimen/kl3_ts_micro"
+        android:textStyle="bold"
         android:visibility="gone" />
 </FrameLayout>

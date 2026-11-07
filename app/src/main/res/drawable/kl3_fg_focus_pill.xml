@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- KL3 focus ring for PILL-shaped elements (chips, pills, round buttons).
+     Use as android:foreground on pill-shaped views. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true">
+        <layer-list>
+            <item>
+                <shape android:shape="rectangle">
+                    <stroke android:width="@dimen/kl3_focus_glow_w" android:color="@color/kl3_accent_glow" />
+                    <corners android:radius="@dimen/kl3_r_pill" />
+                </shape>
+            </item>
+            <item android:left="@dimen/kl3_focus_ring_w_s" android:top="@dimen/kl3_focus_ring_w_s"
+                android:right="@dimen/kl3_focus_ring_w_s" android:bottom="@dimen/kl3_focus_ring_w_s">
+                <shape android:shape="rectangle">
+                    <stroke android:width="@dimen/kl3_focus_ring_w_s" android:color="@color/kl3_accent" />
+                    <corners android:radius="@dimen/kl3_r_pill" />
+                </shape>
+            </item>
+        </layer-list>
+    </item>
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <stroke android:width="2dp" android:color="@color/kl3_accent" />
+            <corners android:radius="@dimen/kl3_r_pill" />
+        </shape>
+    </item>
+    <item><color android:color="#00000000" /></item>
+</selector>

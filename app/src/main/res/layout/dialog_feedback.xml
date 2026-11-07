@@ -3,49 +3,49 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@drawable/kl2_dialog_bg"
-    android:paddingLeft="32dp"
-    android:paddingRight="32dp"
-    android:paddingTop="26dp"
-    android:paddingBottom="26dp">
+    android:background="@drawable/kl3i_dialog_bg"
+    android:padding="@dimen/kl3_sp_xl">
 
-    <!-- Top Header Bar -->
+    <!-- Header -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
-        <ImageView
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:src="@drawable/ic_telegram"
-            android:contentDescription="Telegram" />
+        <FrameLayout
+            android:layout_width="@dimen/kl3_icon_btn"
+            android:layout_height="@dimen/kl3_icon_btn"
+            android:background="@drawable/kl3i_icon_box">
+
+            <ImageView
+                android:layout_width="@dimen/kl3_crest_s"
+                android:layout_height="@dimen/kl3_crest_s"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_telegram"
+                android:tint="@color/kl3_accent"
+                android:contentDescription="Telegram" />
+        </FrameLayout>
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="14dp"
+            android:layout_marginLeft="@dimen/kl3_sp_md"
             android:orientation="vertical">
 
             <TextView
-                style="@style/KL.Text.Section"
+                style="@style/KL3.Text.Section"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="THÔNG BÁO"
-                android:textColor="#FFFFFF"
-                android:textSize="20sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.06" />
+                android:text="THÔNG BÁO" />
 
             <TextView
+                style="@style/KL3.Text.Micro"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/kl3_sp_xs"
                 android:text="NHÓM THẢO LUẬN &amp; HỖ TRỢ TRỰC TUYẾN"
-                android:textColor="@color/kl_brand"
-                android:textSize="11sp"
-                android:textStyle="bold"
-                android:letterSpacing="0.08" />
+                android:textColor="@color/kl3_accent" />
         </LinearLayout>
 
         <View
@@ -54,28 +54,23 @@
             android:layout_weight="1" />
 
         <TextView
-            style="@style/KL.Text.Meta"
+            style="@style/KL3.Pill"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_badge_glass"
-            android:paddingLeft="12dp"
-            android:paddingRight="12dp"
-            android:paddingTop="5dp"
-            android:paddingBottom="5dp"
             android:text="KENHLIVE TV"
-            android:textColor="@color/kl_cyan"
-            android:textSize="11sp"
+            android:textColor="@color/kl3_info"
+            android:textSize="@dimen/kl3_ts_micro"
             android:textStyle="bold" />
     </LinearLayout>
 
     <View
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginTop="14dp"
-        android:layout_marginBottom="18dp"
-        android:background="@color/kl_border_soft" />
+        android:layout_height="@dimen/kl3_divider_h"
+        android:layout_marginTop="@dimen/kl3_sp_lg"
+        android:layout_marginBottom="@dimen/kl3_sp_lg"
+        android:background="@drawable/kl3_divider" />
 
-    <!-- Two-Column Body: Exact Announcement Text (Left) + Telegram QR Code Card (Right) -->
+    <!-- Body 2 cột: nội dung + QR Telegram -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -83,58 +78,55 @@
         android:gravity="center_vertical"
         android:baselineAligned="false">
 
-        <!-- Left Column: Exact Message -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginRight="24dp"
+            android:layout_marginRight="@dimen/kl3_sp_xl"
             android:orientation="vertical">
 
             <TextView
+                style="@style/KL3.Text.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Chào mừng bạn đến với cộng đồng KenhLive TV! Vui lòng tham gia nhóm Telegram để cùng thảo luận, chia sẻ trải nghiệm, nhận lịch thi đấu nóng hổi và được hỗ trợ nhanh chóng nhất."
-                android:textColor="#FFFFFF"
-                android:textSize="14sp"
                 android:lineSpacingExtra="4dp" />
 
             <TextView
+                style="@style/KL3.Text.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="@dimen/kl3_sp_md"
                 android:text="Tại nhóm Telegram, bạn có thể: báo lỗi kênh, yêu cầu thêm giải đấu/phim truyện hoặc nhận file cập nhật mới nhất."
-                android:textColor="@color/kl_brand"
-                android:textSize="13.5sp"
+                android:textColor="@color/kl3_accent"
                 android:textStyle="bold"
                 android:lineSpacingExtra="4dp" />
 
             <TextView
+                style="@style/KL3.Text.Body"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="@dimen/kl3_sp_md"
                 android:text="Cảm ơn bạn đã luôn đồng hành và ủng hộ KenhLive TV."
-                android:textColor="#CBD5E1"
-                android:textSize="13sp"
+                android:textColor="@color/kl3_text_secondary"
                 android:lineSpacingExtra="4dp" />
         </LinearLayout>
 
-        <!-- Right Column: QR Code & Direct Handle -->
+        <!-- QR card -->
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:gravity="center_horizontal"
-            android:background="@drawable/bg_badge_glass"
-            android:padding="16dp">
+            android:background="@drawable/kl3_pill_bg"
+            android:padding="@dimen/kl3_sp_lg">
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:background="@drawable/bg_qr_container"
+                android:background="@drawable/kl3i_card_logo_bg"
                 android:gravity="center"
-                android:padding="8dp"
-                android:elevation="4dp">
+                android:padding="@dimen/kl3_sp_sm">
 
                 <ImageView
                     android:id="@+id/imgQrTelegram"
@@ -147,69 +139,56 @@
 
             <TextView
                 android:id="@+id/tvTelegramHandle"
-                style="@style/KL.Text.Title"
+                style="@style/KL3.Text.Title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="@dimen/kl3_sp_md"
                 android:text="Nhóm Telegram: @kenhlivetv"
-                android:textColor="@color/kl_brand"
-                android:textSize="13.5sp"
-                android:textStyle="bold" />
+                android:textColor="@color/kl3_accent" />
 
             <TextView
                 android:id="@+id/tvTelegramUrl"
-                style="@style/KL.Text.Meta"
+                style="@style/KL3.Text.Meta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="https://t.me/kenhlivetv"
-                android:textColor="#94A3B8"
-                android:textSize="11sp" />
+                android:layout_marginTop="@dimen/kl3_sp_xs"
+                android:text="https://t.me/kenhlivetv" />
 
             <TextView
+                style="@style/KL3.Text.Micro"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="Quét mã QR để vào nhóm"
-                android:textColor="#8E9AA8"
-                android:textSize="10.5sp" />
+                android:layout_marginTop="@dimen/kl3_sp_xs"
+                android:text="Quét mã QR để vào nhóm" />
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Bottom Actions Row -->
+    <!-- Actions -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="22dp"
+        android:layout_marginTop="@dimen/kl3_sp_xl"
         android:orientation="horizontal"
         android:gravity="center">
 
         <Button
             android:id="@+id/btnCloseFeedback"
+            style="@style/KL3.Button.Primary"
             android:layout_width="wrap_content"
-            android:layout_height="44dp"
-            android:background="@drawable/bg_button_orange"
+            android:layout_height="wrap_content"
             android:text="ĐÃ HIỂU / ĐÓNG"
-            android:textColor="#FFFFFF"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:paddingLeft="28dp"
-            android:paddingRight="28dp"
+            android:textColor="@color/kl3_on_accent"
             android:focusable="true"
             android:nextFocusRight="@+id/btnOpenTelegram" />
 
         <Button
             android:id="@+id/btnOpenTelegram"
+            style="@style/KL3.Button.Ghost"
             android:layout_width="wrap_content"
-            android:layout_height="44dp"
-            android:layout_marginLeft="16dp"
-            android:background="@drawable/bg_button_ghost"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/kl3_sp_md"
             android:text="VÀO NHÓM TELEGRAM"
-            android:textColor="#CBD5E1"
-            android:textSize="13sp"
-            android:textStyle="bold"
-            android:paddingLeft="24dp"
-            android:paddingRight="24dp"
+            android:textColor="@color/kl3_text_primary"
             android:focusable="true"
             android:nextFocusLeft="@+id/btnCloseFeedback" />
     </LinearLayout>

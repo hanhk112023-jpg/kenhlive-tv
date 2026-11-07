@@ -10,15 +10,15 @@
     android:layout_marginRight="6dp"
     android:layout_marginTop="3dp"
     android:layout_marginBottom="3dp"
-    android:background="@drawable/bg_iptv_channel_card"
-    android:foreground="@drawable/fg_iptv_focus"
+    android:background="@drawable/kl3_card_bg"
+    android:foreground="@drawable/kl3_fg_focus"
     android:focusable="true"
     android:clickable="true">
 
     <FrameLayout
         android:layout_width="48dp"
         android:layout_height="40dp"
-        android:background="#0A0B0E"
+        android:background="@color/kl3_bg_soft"
         android:padding="3dp">
 
         <ImageView
@@ -33,40 +33,35 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:layout_marginLeft="12dp"
+        android:layout_marginLeft="@dimen/kl3_sp_md"
         android:orientation="vertical">
 
         <TextView
             android:id="@+id/overlayChannelName"
+            style="@style/KL3.Text.Title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="#FFFFFF"
-            android:textSize="13.5sp"
+            android:textSize="@dimen/kl3_ts_meta"
             android:textStyle="bold"
             android:maxLines="1"
             android:ellipsize="end" />
 
         <TextView
             android:id="@+id/overlayChannelSub"
+            style="@style/KL3.Text.Micro"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
-            android:textColor="#94A3B8"
-            android:textSize="11sp"
             android:maxLines="1"
             android:ellipsize="end" />
     </LinearLayout>
 
     <TextView
         android:id="@+id/overlayChannelBadge"
+        style="@style/KL3.Pill"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@color/kl_brand"
-        android:textSize="10sp"
-        android:textStyle="bold"
-        android:background="@drawable/bg_badge_glass"
-        android:paddingLeft="8dp"
-        android:paddingRight="8dp"
-        android:paddingTop="3dp"
-        android:paddingBottom="3dp" />
+        android:textColor="@color/kl3_accent_bright"
+        android:textSize="@dimen/kl3_ts_micro"
+        android:textStyle="bold" />
 </LinearLayout>

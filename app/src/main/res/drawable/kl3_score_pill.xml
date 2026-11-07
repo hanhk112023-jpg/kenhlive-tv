@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- KL3 score / VS center pill — deep slate glass, sharp corners. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <gradient
+        android:angle="270"
+        android:startColor="#FF262B3A"
+        android:endColor="#FF12141C" />
+    <stroke android:width="1dp" android:color="#33FFFFFF" />
+    <corners android:radius="@dimen/kl3_r_md" />
+</shape>

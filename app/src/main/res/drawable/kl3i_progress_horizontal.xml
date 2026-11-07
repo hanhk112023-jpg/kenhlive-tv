@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- KL3I EPG progress bar — thin accent fill on a surface track,
+     pill ends. Use as android:progressDrawable on horizontal ProgressBar. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/background">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/kl3_surface_high" />
+            <corners android:radius="@dimen/kl3_r_pill" />
+        </shape>
+    </item>
+    <item android:id="@android:id/progress">
+        <clip>
+            <shape android:shape="rectangle">
+                <solid android:color="@color/kl3_accent" />
+                <corners android:radius="@dimen/kl3_r_pill" />
+            </shape>
+        </clip>
+    </item>
+</layer-list>

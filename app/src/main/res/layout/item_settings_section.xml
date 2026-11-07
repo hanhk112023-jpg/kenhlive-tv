@@ -4,18 +4,19 @@
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:paddingTop="@dimen/sp_row_gap"
-    android:paddingBottom="8dp">
+    android:paddingTop="@dimen/kl3_gap_l"
+    android:paddingBottom="@dimen/kl3_sp_sm">
 
+    <!-- Accent bar 4dp theo spec KL3 section header -->
     <View
-        android:layout_width="4dp"
-        android:layout_height="18dp"
-        android:background="@drawable/kl2_section_bar"
-        android:layout_marginRight="9dp" />
+        android:layout_width="@dimen/kl3_section_bar_w"
+        android:layout_height="@dimen/kl3_sp_lg"
+        android:background="@color/kl3_accent"
+        android:layout_marginRight="@dimen/kl3_sp_md" />
 
     <TextView
         android:id="@+id/sectionTitle"
-        style="@style/KL.Text.Section"
+        style="@style/KL3.Text.Section"
         android:layout_width="0dp"
         android:layout_weight="1"
         android:layout_height="wrap_content"

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icon tint for chrome icons: focus = accent, selected = accent,
+     default = tertiary (quiet). -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_focused="true" android:color="@color/kl3_accent" />
+    <item android:state_selected="true" android:color="@color/kl3_accent" />
+    <item android:state_pressed="true" android:color="@color/kl3_accent" />
+    <item android:color="@color/kl3_text_tertiary" />
+</selector>

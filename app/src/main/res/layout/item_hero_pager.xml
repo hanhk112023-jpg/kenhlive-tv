@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- KL3 hero pager — ViewPager2 + dots. kl3_hero_h auto-scale TV (360dp). -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
@@ -8,21 +9,21 @@
     <androidx.viewpager2.widget.ViewPager2
         android:id="@+id/heroPager"
         android:layout_width="match_parent"
-        android:layout_height="@dimen/hero_h"
-        android:layout_marginLeft="@dimen/hero_side_margin"
-        android:layout_marginRight="@dimen/hero_side_margin"
-        android:background="@drawable/bg_hero_card"
+        android:layout_height="@dimen/kl3_hero_h"
+        android:layout_marginLeft="@dimen/kl3_margin_x"
+        android:layout_marginRight="@dimen/kl3_margin_x"
+        android:background="@drawable/kl3_card_bg"
         android:focusable="false"
         android:descendantFocusability="afterDescendants"
         android:clipToOutline="true" />
 
-    <!-- dots indicator -->
+    <!-- dots indicator (code đổi bg dot active/inactive) -->
     <LinearLayout
         android:id="@+id/heroDots"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|right"
-        android:layout_marginRight="@dimen/hero_dots_margin"
-        android:layout_marginBottom="14dp"
+        android:layout_marginRight="@dimen/kl3_gap"
+        android:layout_marginBottom="@dimen/kl3_gap"
         android:orientation="horizontal" />
 </FrameLayout>

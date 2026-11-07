@@ -2,17 +2,17 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/kl_bg_deep">
+    android:background="@color/kl3_bg">
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/settingsList"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:paddingLeft="@dimen/sp_screen_margin"
-        android:paddingRight="@dimen/sp_screen_margin"
-        android:paddingTop="10dp"
-        android:paddingBottom="@dimen/sp_row_gap"
+        android:paddingLeft="@dimen/kl3_margin_x"
+        android:paddingRight="@dimen/kl3_margin_x"
+        android:paddingTop="@dimen/kl3_sp_md"
+        android:paddingBottom="@dimen/kl3_gap_l"
         android:scrollbars="vertical"
         android:descendantFocusability="afterDescendants" />
 </FrameLayout>

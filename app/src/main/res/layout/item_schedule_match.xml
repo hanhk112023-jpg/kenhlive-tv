@@ -1,20 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- KL3 schedule row — 1 trận trong tab Lịch (ScheduleAdapter/SportAdapter).
+     Timeline: cột giờ + badge → divider dọc → crest → tên → crest → league → BLV. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/schedCard"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="horizontal"
     android:gravity="center_vertical"
-    android:background="@drawable/kl2_card_glass"
-    android:padding="@dimen/sp_item_pad"
-    android:layout_marginLeft="@dimen/sp_screen_margin"
-    android:layout_marginRight="@dimen/sp_screen_margin"
-    android:layout_marginBottom="@dimen/sched_row_gap"
+    android:background="@drawable/kl3_card_bg"
+    android:foreground="@drawable/kl3_fg_focus"
+    android:padding="@dimen/kl3_card_h_pad"
+    android:elevation="@dimen/kl3_elev_1"
+    android:layout_marginLeft="@dimen/kl3_margin_x"
+    android:layout_marginRight="@dimen/kl3_margin_x"
+    android:layout_marginBottom="@dimen/kl3_gap"
     android:descendantFocusability="blocksDescendants"
     android:focusable="true"
     android:clickable="true">
 
-    <!-- Cot gio + badge LIVE -->
+    <!-- Cot gio + badge LIVE (code setBackgroundResource badge khi bind) -->
     <LinearLayout
         android:layout_width="@dimen/sched_time_w"
         android:layout_height="wrap_content"
@@ -23,11 +27,12 @@
 
         <TextView
             android:id="@+id/matchTime"
-            style="@style/KL.Text.Title"
+            style="@style/KL3.Text.Title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:fontFamily="@font/oswald"
-            android:textSize="19sp"
+            android:textStyle="bold"
+            android:textColor="@color/kl3_text_primary"
             android:maxLines="1"
             android:singleLine="true"
             android:includeFontPadding="false"
@@ -35,43 +40,45 @@
 
         <TextView
             android:id="@+id/statusBadge"
-            style="@style/KL.Text.Badge"
+            style="@style/KL3.Text.Badge"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="5dp"
-            android:paddingLeft="9dp"
-            android:paddingRight="9dp"
-            android:paddingTop="3dp"
-            android:paddingBottom="3dp"
-            android:ellipsize="end"
-            android:textSize="10.5sp"
+            android:layout_marginTop="@dimen/kl3_sp_xs"
+            android:background="@drawable/kl3_pill_bg"
+            android:paddingLeft="@dimen/kl3_badge_pad_x"
+            android:paddingRight="@dimen/kl3_badge_pad_x"
+            android:paddingTop="@dimen/kl3_sp_xs"
+            android:paddingBottom="@dimen/kl3_sp_xs"
+            android:textColor="@color/kl3_text_tertiary"
+            android:textSize="@dimen/kl3_ts_micro"
             android:visibility="gone" />
     </LinearLayout>
 
     <!-- Hairline dọc ngăn cột giờ với nội dung trận -->
     <View
-        android:layout_width="1dp"
-        android:layout_height="38dp"
-        android:layout_marginLeft="12dp"
-        android:background="#1AFFFFFF" />
+        android:layout_width="@dimen/kl3_divider_h"
+        android:layout_height="@dimen/kl3_sp_xxl"
+        android:layout_marginLeft="@dimen/kl3_gap"
+        android:background="@color/kl3_divider" />
 
     <!-- Crest doi nha -->
     <ImageView
         android:id="@+id/hostIcon"
-        android:layout_width="@dimen/sched_avatar"
-        android:layout_height="@dimen/sched_avatar"
-        android:layout_marginLeft="@dimen/sp_item_pad"
+        android:layout_width="@dimen/kl3_crest_s"
+        android:layout_height="@dimen/kl3_crest_s"
+        android:layout_marginLeft="@dimen/kl3_card_h_pad"
+        android:background="@drawable/kl3s_avatar_circle"
         android:contentDescription="@null" />
 
     <!-- Ten tran -->
     <TextView
         android:id="@+id/matchName"
-        style="@style/KL.Text.Title"
+        style="@style/KL3.Text.Title"
         android:layout_width="0dp"
         android:layout_weight="1"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp"
+        android:layout_marginLeft="@dimen/kl3_gap"
+        android:layout_marginRight="@dimen/kl3_gap"
         android:maxLines="2"
         android:breakStrategy="simple"
         android:hyphenationFrequency="none"
@@ -80,8 +87,9 @@
     <!-- Crest doi khach -->
     <ImageView
         android:id="@+id/guestIcon"
-        android:layout_width="@dimen/sched_avatar"
-        android:layout_height="@dimen/sched_avatar"
+        android:layout_width="@dimen/kl3_crest_s"
+        android:layout_height="@dimen/kl3_crest_s"
+        android:background="@drawable/kl3s_avatar_circle"
         android:contentDescription="@null" />
 
     <!-- Tag giai -->
@@ -90,21 +98,21 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginLeft="10dp"
-        android:layout_marginRight="10dp">
+        android:layout_marginLeft="@dimen/kl3_gap"
+        android:layout_marginRight="@dimen/kl3_gap">
 
         <ImageView
             android:id="@+id/leagueCrest"
-            android:layout_width="@dimen/crest_s"
-            android:layout_height="@dimen/crest_s"
+            android:layout_width="@dimen/kl3_crest_s"
+            android:layout_height="@dimen/kl3_crest_s"
             android:contentDescription="@null" />
 
         <TextView
             android:id="@+id/matchLeague"
-            style="@style/KL.Text.Meta"
+            style="@style/KL3.Text.Meta"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="6dp"
+            android:layout_marginLeft="@dimen/kl3_sp_sm"
             android:maxWidth="200dp"
             android:maxLines="1"
             android:ellipsize="end" />

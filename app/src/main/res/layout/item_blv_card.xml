@@ -1,13 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- KL3 BLV card — "Bình luận viên tâm điểm" (BlvCardsAdapter).
+     Code override background bằng gradient bg_blv_card_* khi bind;
+     foreground kl3_fg_focus vẫn giữ vòng focus cam. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/blvCardRoot"
-    android:layout_width="@dimen/channel_card_w"
-    android:layout_height="@dimen/channel_card_h"
+    android:layout_width="@dimen/kl3_channel_card_w"
+    android:layout_height="@dimen/kl3_channel_card_h"
     android:orientation="vertical"
-    android:layout_marginRight="@dimen/sp_card_gap"
-    android:background="@drawable/bg_blv_card_1"
-    android:foreground="@drawable/fg_card_focus_cyan"
-    android:padding="14dp"
+    android:layout_marginRight="@dimen/kl3_gap"
+    android:background="@drawable/kl3_card_bg"
+    android:foreground="@drawable/kl3_fg_focus"
+    android:padding="@dimen/kl3_card_h_pad"
+    android:elevation="@dimen/kl3_elev_1"
     android:focusable="true"
     android:clickable="true">
 
@@ -20,16 +24,12 @@
 
         <TextView
             android:id="@+id/blvRank"
+            style="@style/KL3.Badge.Hd"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_badge_rank"
-            android:textColor="#FFFFFF"
-            android:textSize="10sp"
-            android:textStyle="bold"
-            android:paddingLeft="7dp"
-            android:paddingRight="7dp"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp" />
+            android:textColor="@color/kl3_gold"
+            android:textSize="@dimen/kl3_ts_micro"
+            android:textStyle="bold" />
 
         <View
             android:layout_width="0dp"
@@ -38,18 +38,14 @@
 
         <TextView
             android:id="@+id/blvLiveTag"
+            style="@style/KL3.Badge.Live"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="● TRỰC TIẾP"
-            android:textColor="#FFFFFF"
-            android:textSize="10sp"
+            android:textColor="#FFFFFFFF"
+            android:textSize="@dimen/kl3_ts_micro"
             android:textStyle="bold"
-            android:letterSpacing="0.04"
-            android:background="@drawable/bg_badge_live_red"
-            android:paddingLeft="7dp"
-            android:paddingRight="7dp"
-            android:paddingTop="2dp"
-            android:paddingBottom="2dp" />
+            android:letterSpacing="0.04" />
     </LinearLayout>
 
     <!-- Center: BLV Avatar + Tên BLV -->
@@ -59,20 +55,20 @@
         android:layout_weight="1"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:layout_marginTop="6dp">
+        android:layout_marginTop="@dimen/kl3_sp_sm">
 
         <ImageView
             android:id="@+id/blvAvatar"
-            android:layout_width="46dp"
-            android:layout_height="46dp"
-            android:background="@drawable/bg_circle"
+            android:layout_width="@dimen/kl3_avatar_s"
+            android:layout_height="@dimen/kl3_avatar_s"
+            android:background="@drawable/kl3s_avatar_circle"
             android:contentDescription="@null" />
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_weight="1"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
+            android:layout_marginLeft="@dimen/kl3_gap"
             android:orientation="vertical">
 
             <LinearLayout
@@ -83,10 +79,9 @@
 
                 <TextView
                     android:id="@+id/blvName"
+                    style="@style/KL3.Text.Title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="#FFFFFF"
-                    android:textSize="17sp"
                     android:fontFamily="@font/oswald"
                     android:textStyle="bold"
                     android:maxLines="1"
@@ -94,63 +89,55 @@
 
                 <TextView
                     android:id="@+id/blvLevelBadge"
+                    style="@style/KL3.Badge.Hd"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="6dp"
-                    android:background="@drawable/bg_badge_level"
-                    android:textColor="@color/kl_amber"
-                    android:textSize="9sp"
+                    android:layout_marginLeft="@dimen/kl3_sp_xs"
+                    android:textColor="@color/kl3_gold"
+                    android:textSize="@dimen/kl3_ts_micro"
                     android:textStyle="bold"
-                    android:paddingLeft="5dp"
-                    android:paddingRight="5dp"
-                    android:paddingTop="1dp"
-                    android:paddingBottom="1dp"
                     android:visibility="gone" />
             </LinearLayout>
 
             <TextView
                 android:id="@+id/blvLeague"
+                style="@style/KL3.Text.Meta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/kl_amber"
-                android:textSize="10sp"
-                android:textStyle="bold"
+                android:layout_marginTop="@dimen/kl3_sp_xs"
+                android:textColor="@color/kl3_gold"
                 android:maxLines="1"
                 android:ellipsize="end" />
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Bottom: Match Title + Viewers -->
+    <!-- Bottom: Match Title + Score/Clock + Viewers -->
     <TextView
         android:id="@+id/blvMatchTitle"
+        style="@style/KL3.Text.Title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="#FFFFFF"
-        android:textSize="12sp"
-        android:textStyle="bold"
         android:maxLines="1"
         android:ellipsize="end" />
 
     <!-- Tỉ số / đồng hồ trận thật từ API (ẩn khi trận chưa có dữ kiện) -->
     <TextView
         android:id="@+id/blvScore"
+        style="@style/KL3.Text.Score"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:textColor="@color/kl_amber"
-        android:textSize="11sp"
-        android:textStyle="bold"
+        android:layout_marginTop="@dimen/kl3_sp_xs"
+        android:textSize="@dimen/kl3_ts_meta"
         android:maxLines="1"
         android:ellipsize="end"
         android:visibility="gone" />
 
     <TextView
         android:id="@+id/blvViewers"
+        style="@style/KL3.Text.Meta"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:textColor="#B3FFFFFF"
-        android:textSize="10sp"
+        android:layout_marginTop="@dimen/kl3_sp_xs"
         android:maxLines="1"
         android:ellipsize="end" />
 </LinearLayout>

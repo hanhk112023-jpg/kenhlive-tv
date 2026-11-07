@@ -1,32 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- KL3 bottom-nav item (phone). Selected state driven by MainActivity
+     (v.isSelected) → kl3_nav_item_bg / kl3_nav_text / kl3_icon_tint. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="0dp"
     android:layout_height="match_parent"
     android:layout_weight="1"
     android:orientation="vertical"
     android:gravity="center"
-    android:layout_marginLeft="4dp"
-    android:layout_marginRight="4dp"
-    android:layout_marginTop="4dp"
-    android:layout_marginBottom="4dp"
-    android:background="@drawable/bg_nav_item_phone"
-    android:paddingTop="6dp"
-    android:paddingBottom="6dp"
+    android:layout_marginLeft="@dimen/kl3_sp_xs"
+    android:layout_marginRight="@dimen/kl3_sp_xs"
+    android:layout_marginTop="@dimen/kl3_sp_xs"
+    android:layout_marginBottom="@dimen/kl3_sp_xs"
+    android:background="@drawable/kl3_nav_item_bg"
+    android:foreground="@drawable/kl3_fg_focus_pill"
+    android:paddingTop="@dimen/kl3_sp_xs"
+    android:paddingBottom="@dimen/kl3_sp_xs"
     android:clickable="true"
     android:focusable="false">
 
     <ImageView
         android:id="@+id/navIcon"
-        android:layout_width="@dimen/nav_icon"
-        android:layout_height="@dimen/nav_icon"
-        android:tint="@color/csl_nav_icon"
+        android:layout_width="@dimen/kl3_avatar_s"
+        android:layout_height="@dimen/kl3_avatar_s"
+        android:tint="@color/kl3_icon_tint"
+        android:duplicateParentState="true"
         android:contentDescription="@null" />
 
     <TextView
         android:id="@+id/navLabel"
-        style="@style/KL.Text.Nav"
-        android:textColor="@color/csl_nav_text"
+        style="@style/KL3.Text.Meta"
+        android:textColor="@color/kl3_nav_text"
+        android:duplicateParentState="true"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="3dp" />
+        android:layout_marginTop="@dimen/kl3_sp_xs" />
 </LinearLayout>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- KL3 skeleton block — shimmer base. For shimmer animation wrap in
+     a ValueAnimator/GradientDrawable swap in Kotlin, or keep static. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/kl3_skeleton" />
+    <corners android:radius="@dimen/kl3_r_md" />
+</shape>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- KL3 hairline divider. View height = @dimen/kl3_divider_h. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="@color/kl3_divider" />
+    <size android:height="@dimen/kl3_divider_h" />
+</shape>

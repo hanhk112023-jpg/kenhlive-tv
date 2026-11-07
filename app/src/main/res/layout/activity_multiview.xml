@@ -2,7 +2,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/kl_bg_deep"
+    android:background="@color/kl3_bg"
     android:keepScreenOn="true">
 
     <LinearLayout
@@ -50,11 +50,11 @@
         android:layout_gravity="bottom"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="@drawable/bg_overlay_bottom"
-        android:paddingLeft="28dp"
-        android:paddingRight="28dp"
-        android:paddingTop="22dp"
-        android:paddingBottom="16dp">
+        android:background="@drawable/kl3p_scrim_bottom"
+        android:paddingLeft="@dimen/kl3_margin_x"
+        android:paddingRight="@dimen/kl3_margin_x"
+        android:paddingTop="@dimen/kl3_sp_xl"
+        android:paddingBottom="@dimen/kl3_sp_lg">
 
         <LinearLayout
             android:layout_width="0dp"
@@ -63,18 +63,18 @@
             android:orientation="vertical">
 
             <TextView
-                style="@style/KL.Text.Section"
+                style="@style/KL3.Text.Section"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/mv_title" />
 
             <TextView
                 android:id="@+id/hintText"
-                style="@style/KL.Text.Meta"
+                style="@style/KL3.Text.Meta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:textColor="#CBD5E1"
+                android:layout_marginTop="@dimen/kl3_sp_xs"
+                android:textColor="@color/kl3_text_secondary"
                 android:maxLines="1"
                 android:ellipsize="end"
                 android:maxWidth="600dp" />
@@ -82,12 +82,12 @@
 
         <TextView
             android:id="@+id/layoutBtn"
-            style="@style/KL.Button.Ghost"
+            style="@style/KL3.Button.Ghost"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="14dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="8dp" />
+            android:layout_marginLeft="@dimen/kl3_gap"
+            android:paddingTop="@dimen/kl3_sp_sm"
+            android:paddingBottom="@dimen/kl3_sp_sm" />
     </LinearLayout>
 
     <!-- Trạng thái rỗng TRUNG THỰC khi không có trận live thật (thay cho danh sách
@@ -96,7 +96,7 @@
         android:id="@+id/mvEmptyBox"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#E6000000"
+        android:background="@color/kl3_scrim_85"
         android:clickable="true"
         android:focusable="true"
         android:gravity="center"
@@ -104,56 +104,53 @@
         android:visibility="gone">
 
         <TextView
-            style="@style/KL.Text.Section"
+            style="@style/KL3.Text.Title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:gravity="center"
+            android:textSize="@dimen/kl3_ts_body_lg"
+            android:textStyle="bold"
             android:text="Hiện chưa có trận đấu nào đang trực tiếp" />
 
         <TextView
-            style="@style/KL.Text.Meta"
+            style="@style/KL3.Text.Body"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="6dp"
+            android:layout_marginTop="@dimen/kl3_sp_sm"
             android:gravity="center"
-            android:text="Danh sách trận sẽ có khi các trận bắt đầu. Bấm Thử lại để kiểm tra lại."
-            android:textColor="#CBD5E1" />
+            android:maxWidth="520dp"
+            android:text="Danh sách trận sẽ có khi các trận bắt đầu. Bấm Thử lại để kiểm tra lại." />
 
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="@dimen/kl3_sp_xl"
             android:gravity="center"
             android:orientation="horizontal">
 
             <Button
                 android:id="@+id/btnMvRetry"
+                style="@style/KL3.Button.Primary"
                 android:layout_width="wrap_content"
-                android:layout_height="44dp"
-                android:background="@drawable/bg_dialog_choice_chip"
-                android:focusable="true"
-                android:nextFocusRight="@id/btnMvBack"
-                android:paddingLeft="22dp"
-                android:paddingRight="22dp"
+                android:layout_height="wrap_content"
                 android:text="Thử lại"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:textColor="@color/kl3_on_accent"
+                android:textSize="@dimen/kl3_ts_body"
+                android:fontFamily="@font/oswald"
+                android:textStyle="bold"
+                android:letterSpacing="0.08"
+                android:gravity="center"
+                android:maxLines="1"
+                android:nextFocusRight="@id/btnMvBack" />
 
             <Button
                 android:id="@+id/btnMvBack"
+                style="@style/KL3.Button.Ghost"
                 android:layout_width="wrap_content"
-                android:layout_height="44dp"
-                android:layout_marginLeft="12dp"
-                android:background="@drawable/bg_dialog_choice_chip"
-                android:focusable="true"
-                android:nextFocusLeft="@id/btnMvRetry"
-                android:paddingLeft="22dp"
-                android:paddingRight="22dp"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="@dimen/kl3_gap"
                 android:text="Quay lại"
-                android:textColor="#FFFFFF"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:nextFocusLeft="@id/btnMvRetry" />
         </LinearLayout>
     </LinearLayout>
 

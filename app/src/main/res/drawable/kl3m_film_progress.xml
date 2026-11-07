@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- KL3M watch-progress bar — glass track + orange→amber accent fill.
+     Used by phimProgressBar on film cards ("xem tiếp"). -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/background">
+        <shape android:shape="rectangle">
+            <corners android:radius="@dimen/kl3_r_pill" />
+            <solid android:color="@color/kl3_glass_strong" />
+        </shape>
+    </item>
+    <item android:id="@android:id/progress">
+        <clip>
+            <shape android:shape="rectangle">
+                <corners android:radius="@dimen/kl3_r_pill" />
+                <gradient
+                    android:angle="0"
+                    android:startColor="@color/kl3_accent"
+                    android:endColor="@color/kl3_accent_bright" />
+            </shape>
+        </clip>
+    </item>
+</layer-list>

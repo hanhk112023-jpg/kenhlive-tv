@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- KL3 BLV avatar nhỏ trong hàng trận (ScheduleAdapter/SportAdapter inflate vào anchorRow). -->
 <ImageView xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/anchorAvatar"
-    android:layout_width="@dimen/sched_avatar"
-    android:layout_height="@dimen/sched_avatar"
-    android:layout_marginLeft="4dp"
+    android:layout_width="@dimen/kl3_avatar_s"
+    android:layout_height="@dimen/kl3_avatar_s"
+    android:layout_marginLeft="@dimen/kl3_sp_xs"
     android:scaleType="centerCrop"
-    android:background="@drawable/bg_circle"
+    android:background="@drawable/kl3s_avatar_circle"
     android:contentDescription="@string/cd_blv" />

@@ -1,14 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- DIALOG CHỌN TẬP PHIM — KL3: surface_top bo kl3_r_xl (kl3m_dialog_bg),
+     header poster + meta badges KL3, divider kl3_divider, section label
+     accent, nút ghost + 1 CTA primary "Đóng". Giữ nguyên mọi android:id
+     bind trong EpisodePickerDialog. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:background="@drawable/bg_dialog"
-    android:paddingLeft="20dp"
-    android:paddingRight="20dp"
-    android:paddingTop="16dp"
-    android:paddingBottom="16dp"
+    android:background="@drawable/kl3m_dialog_bg"
+    android:paddingLeft="@dimen/kl3_sp_xl"
+    android:paddingRight="@dimen/kl3_sp_xl"
+    android:paddingTop="@dimen/kl3_sp_lg"
+    android:paddingBottom="@dimen/kl3_sp_lg"
     android:clipChildren="false"
     android:clipToPadding="false">
 
@@ -23,116 +26,102 @@
             android:layout_width="76dp"
             android:layout_height="108dp"
             android:scaleType="centerCrop"
-            android:background="@drawable/thumb_round_bg"
+            android:clipToOutline="true"
+            android:outlineProvider="background"
+            android:background="@drawable/kl3_poster_placeholder"
             android:contentDescription="Poster phim" />
 
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginLeft="16dp"
+            android:layout_marginLeft="@dimen/kl3_gap"
             android:orientation="vertical">
 
             <TextView
                 android:id="@+id/dialogFilmTitle"
-                style="@style/KL.Text.Section"
+                style="@style/KL3.Text.TitleLg"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:maxLines="2"
-                android:ellipsize="end"
-                android:textSize="17sp"
-                android:textColor="#FFFFFF" />
+                android:ellipsize="end" />
 
             <TextView
                 android:id="@+id/dialogFilmOrigTitle"
-                style="@style/KL.Text.Meta"
+                style="@style/KL3.Text.Meta"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:textColor="@color/kl_text_3"
-                android:textSize="12sp" />
+                android:layout_marginTop="@dimen/kl3_sp_xs" />
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="@dimen/kl3_sp_sm"
                 android:orientation="horizontal"
                 android:gravity="center_vertical">
 
                 <TextView
                     android:id="@+id/dialogFilmYear"
-                    style="@style/KL.Text.Meta"
+                    style="@style/KL3.Pill"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:background="@drawable/bg_badge_glass"
-                    android:paddingLeft="8dp"
-                    android:paddingRight="8dp"
-                    android:paddingTop="3dp"
-                    android:paddingBottom="3dp"
-                    android:textColor="#FFFFFF"
-                    android:textSize="11sp" />
+                    android:gravity="center"
+                    android:minHeight="@dimen/kl3_badge_h"
+                    android:textSize="@dimen/kl3_ts_badge"
+                    android:textStyle="bold"
+                    android:textColor="@color/kl3_text_primary" />
 
                 <TextView
                     android:id="@+id/dialogFilmQuality"
-                    style="@style/KL.Text.Meta"
+                    style="@style/KL3.Badge.Hd"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="6dp"
-                    android:background="@drawable/bg_badge_hd"
-                    android:paddingLeft="8dp"
-                    android:paddingRight="8dp"
-                    android:paddingTop="3dp"
-                    android:paddingBottom="3dp"
+                    android:layout_marginLeft="@dimen/kl3_sp_sm"
                     android:text="HD"
-                    android:textColor="#FFFFFF"
-                    android:textSize="11sp" />
+                    android:textSize="@dimen/kl3_ts_badge" />
 
                 <TextView
                     android:id="@+id/dialogFilmEpisodesCount"
-                    style="@style/KL.Text.Meta"
+                    style="@style/KL3.Text.Score"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginLeft="6dp"
-                    android:textColor="@color/kl_brand"
-                    android:textSize="12sp" />
+                    android:layout_marginLeft="@dimen/kl3_sp_sm"
+                    android:textSize="@dimen/kl3_ts_body" />
             </LinearLayout>
 
             <TextView
                 android:id="@+id/dialogFilmDesc"
-                style="@style/KL.Text.Meta"
+                style="@style/KL3.Text.Body"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
+                android:layout_marginTop="@dimen/kl3_sp_sm"
                 android:maxLines="2"
-                android:ellipsize="end"
-                android:textColor="@color/kl_text_2"
-                android:textSize="12sp" />
+                android:ellipsize="end" />
         </LinearLayout>
     </LinearLayout>
 
     <View
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginBottom="8dp"
-        android:background="@drawable/card_top_divider" />
+        android:layout_height="@dimen/kl3_divider_h"
+        android:layout_marginTop="@dimen/kl3_sp_md"
+        android:layout_marginBottom="@dimen/kl3_sp_md"
+        android:background="@drawable/kl3_divider" />
 
     <TextView
-        style="@style/KL.Text.Section"
+        style="@style/KL3.Text.Micro"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="CHỌN SERVER &amp; TẬP PHIM (HLS 4K TRỰC TIẾP)"
-        android:textSize="12sp"
-        android:textColor="@color/kl_text_3"
-        android:letterSpacing="0.08" />
+        android:text="CHỌN SERVER &amp; TẬP PHIM"
+        android:letterSpacing="0.14"
+        android:textColor="@color/kl3_accent" />
 
     <!-- Server Selector (Vietsub / Thuyết Minh / Lồng Tiếng) -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/dialogServersRow"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
-        android:padding="8dp"
+        android:layout_marginTop="@dimen/kl3_sp_sm"
+        android:padding="@dimen/kl3_sp_sm"
         android:clipToPadding="false"
         android:visibility="gone" />
 
@@ -141,8 +130,8 @@
         android:id="@+id/dialogChunksRow"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
-        android:padding="8dp"
+        android:layout_marginTop="@dimen/kl3_sp_xs"
+        android:padding="@dimen/kl3_sp_sm"
         android:clipToPadding="false"
         android:visibility="gone" />
 
@@ -152,71 +141,78 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginTop="16dp"
-        android:layout_marginBottom="16dp" />
+        android:layout_marginTop="@dimen/kl3_gap"
+        android:layout_marginBottom="@dimen/kl3_gap"
+        android:indeterminateTint="@color/kl3_accent" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/dialogEpisodesGrid"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="@dimen/kl3_sp_sm"
         android:maxHeight="192dp"
-        android:padding="8dp"
+        android:padding="@dimen/kl3_sp_sm"
         android:clipToPadding="false"
         android:visibility="gone" />
 
     <TextView
         android:id="@+id/dialogNoEpisodes"
-        style="@style/KL.Text.Meta"
+        style="@style/KL3.Text.Body"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="@dimen/kl3_gap"
         android:text="Chưa có tập phim khả dụng"
+        android:textColor="@color/kl3_text_tertiary"
         android:visibility="gone" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:padding="8dp"
+        android:layout_marginTop="@dimen/kl3_sp_md"
+        android:padding="@dimen/kl3_sp_sm"
         android:clipChildren="false"
         android:clipToPadding="false"
-        android:gravity="right">
+        android:gravity="end">
 
         <Button
             android:id="@+id/dialogBtnDeleteHistory"
-            style="@style/KL.Button.Ghost"
+            style="@style/KL3.Button.Danger"
             android:layout_width="wrap_content"
             android:layout_height="@dimen/dialog_btn_h"
-            android:layout_marginRight="10dp"
+            android:layout_marginRight="@dimen/kl3_sp_md"
             android:text="Xóa Lịch Sử"
             android:drawableStart="@drawable/ic_trash"
-            android:drawablePadding="6dp"
-            android:drawableTint="#EF4444"
-            android:textColor="#EF4444"
+            android:drawablePadding="@dimen/kl3_sp_xs"
+            android:drawableTint="@color/kl3_error"
             android:visibility="gone"
             android:focusable="true" />
 
         <Button
             android:id="@+id/dialogBtnFavorite"
-            style="@style/KL.Button.Ghost"
+            style="@style/KL3.Button.Ghost"
             android:layout_width="wrap_content"
             android:layout_height="@dimen/dialog_btn_h"
-            android:layout_marginRight="10dp"
+            android:layout_marginRight="@dimen/kl3_sp_md"
             android:text="Lưu Phim"
             android:drawableStart="@drawable/ic_bookmark"
-            android:drawablePadding="6dp"
-            android:drawableTint="#FFD700"
-            android:textColor="#FFD700"
+            android:drawablePadding="@dimen/kl3_sp_xs"
+            android:drawableTint="@color/kl3_gold"
+            android:textColor="@color/kl3_gold"
             android:focusable="true" />
 
         <Button
             android:id="@+id/dialogBtnClose"
-            style="@style/KL.Button.Ghost"
+            style="@style/KL3.Button.Primary"
             android:layout_width="wrap_content"
             android:layout_height="@dimen/dialog_btn_h"
             android:text="Đóng"
+            android:textAllCaps="true"
+            android:textSize="@dimen/kl3_ts_body"
+            android:textStyle="bold"
+            android:letterSpacing="0.08"
+            android:fontFamily="@font/oswald"
+            android:textColor="@color/kl3_on_accent"
             android:focusable="true" />
     </LinearLayout>
 </LinearLayout>

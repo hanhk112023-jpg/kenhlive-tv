@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="@color/kl_bg_deep">
+    android:background="@color/kl3_bg">
 
     <!-- TOP APP BAR -->
     <LinearLayout
@@ -12,9 +12,9 @@
         android:layout_height="@dimen/topbar_h"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="@drawable/bg_topbar"
-        android:paddingLeft="@dimen/sp_screen_margin"
-        android:paddingRight="@dimen/sp_screen_margin"
+        android:background="@drawable/kl3_topbar_bg"
+        android:paddingLeft="@dimen/kl3_margin_x"
+        android:paddingRight="@dimen/kl3_margin_x"
         android:visibility="gone">
 
         <ImageView
@@ -26,23 +26,22 @@
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="10dp"
+            android:layout_marginLeft="@dimen/kl3_gap"
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
             <TextView
-                style="@style/KL.Text.Section"
+                style="@style/KL3.Text.Section"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/app_name"
-                android:textSize="17sp"
                 android:letterSpacing="0.06" />
 
             <View
-                android:layout_width="6dp"
-                android:layout_height="6dp"
-                android:layout_marginLeft="7dp"
-                android:background="@drawable/bg_live_dot" />
+                android:layout_width="@dimen/kl3_dot_live"
+                android:layout_height="@dimen/kl3_dot_live"
+                android:layout_marginLeft="@dimen/kl3_sp_sm"
+                android:background="@drawable/kl3_dot_live" />
         </LinearLayout>
 
         <View
@@ -52,16 +51,16 @@
 
         <TextView
             android:id="@+id/countText"
-            style="@style/KL.Text.Meta"
+            style="@style/KL3.Text.Meta"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:background="@drawable/bg_badge_glass"
-            android:paddingLeft="11dp"
-            android:paddingRight="11dp"
-            android:paddingTop="5dp"
-            android:paddingBottom="5dp"
-            android:textColor="@color/kl_brand"
-            android:textSize="12sp"
+            android:background="@drawable/kl3_pill_bg"
+            android:paddingLeft="@dimen/kl3_sp_md"
+            android:paddingRight="@dimen/kl3_sp_md"
+            android:paddingTop="@dimen/kl3_sp_xs"
+            android:paddingBottom="@dimen/kl3_sp_xs"
+            android:textColor="@color/kl3_accent"
+            android:textStyle="bold"
             android:maxLines="1"
             android:ellipsize="end"
             android:maxWidth="160dp"
@@ -69,19 +68,25 @@
 
         <ImageButton
             android:id="@+id/btnTopRefresh"
-            style="@style/KL.IconButton"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginLeft="8dp"
+            android:layout_width="@dimen/kl3_icon_btn"
+            android:layout_height="@dimen/kl3_icon_btn"
+            android:layout_marginLeft="@dimen/kl3_sp_sm"
+            android:background="@drawable/kl3_btn_icon"
+            android:padding="@dimen/kl3_sp_md"
+            android:scaleType="centerInside"
+            android:tint="@color/kl3_icon_tint"
             android:src="@drawable/ic_refresh"
             android:contentDescription="Làm mới" />
 
         <ImageButton
             android:id="@+id/btnTopSettings"
-            style="@style/KL.IconButton"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:layout_marginLeft="8dp"
+            android:layout_width="@dimen/kl3_icon_btn"
+            android:layout_height="@dimen/kl3_icon_btn"
+            android:layout_marginLeft="@dimen/kl3_sp_sm"
+            android:background="@drawable/kl3_btn_icon"
+            android:padding="@dimen/kl3_sp_md"
+            android:scaleType="centerInside"
+            android:tint="@color/kl3_icon_tint"
             android:src="@drawable/ic_nav_settings"
             android:contentDescription="@string/nav_settings" />
     </LinearLayout>
@@ -98,9 +103,9 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/bottomnav_h"
         android:orientation="horizontal"
-        android:background="@drawable/bg_bottomnav"
-        android:paddingLeft="4dp"
-        android:paddingRight="4dp"
+        android:background="@drawable/kl3s_bottomnav_bg"
+        android:paddingLeft="@dimen/kl3_sp_xs"
+        android:paddingRight="@dimen/kl3_sp_xs"
         android:baselineAligned="false"
         android:visibility="gone">
 
