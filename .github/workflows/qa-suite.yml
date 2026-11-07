@@ -77,18 +77,50 @@ jobs:
           sudo apt-get install -y -qq --no-install-recommends tesseract-ocr tesseract-ocr-vie
           pip install --quiet pillow pytesseract
 
-      # AI Brain: Ưu tiên Google AI Studio (Gemini free tier, OpenAI-compatible, không cần proxy VN).
-      # Fallback về Meteor gateway nếu chưa cấu hình GEMINI_API_KEY.
+      # AI Brain: Ưu tiên Google AI Studio (Gemini free tier) → NVIDIA NIM (free tier,
+      # OpenAI-compatible, có vision) → fallback Meteor gateway.
       # Preflight chạy trên runner (mạng mở): chọn model vision tốt nhất và bắn thử 1 chat completion
       # để fail-fast trước khi tốn thời gian dựng emulator.
       - name: Preflight AI (chọn nhà cung cấp + model + kiểm tra key)
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          NVIDIA_API_KEY: ${{ secrets.NVIDIA_API_KEY }}
           METEOR_API_KEY: ${{ secrets.METEOR_API_KEY }}
           METEOR_API_BASE: http://meteor.pikamc.vn:25155/v1
         run: |
           set -euo pipefail
-          if [ -n "$GEMINI_API_KEY" ]; then
+          if [ -n "$NVIDIA_API_KEY" ] && [ -z "$GEMINI_API_KEY" ]; then
+            echo "✅ Dùng NVIDIA NIM (OpenAI-compatible, free tier)"
+            echo "AI_PROVIDER=NVIDIA" >> "$GITHUB_ENV"
+            echo "AI_BASE_URL=https://integrate.api.nvidia.com/v1" >> "$GITHUB_ENV"
+            echo "AI_API_KEY=$NVIDIA_API_KEY" >> "$GITHUB_ENV"
+            curl -sS -m 30 -H "Authorization: Bearer $NVIDIA_API_KEY" \
+              "https://integrate.api.nvidia.com/v1/models" -o /tmp/models.json || true
+            MODEL=$(python3 - << 'PYEOF'
+          import json, sys
+          try:
+              ids = [m.get("id", "") for m in json.load(open("/tmp/models.json")).get("data", [])]
+          except Exception as e:
+              print(f"models parse error: {e}", file=sys.stderr); ids = []
+          print("MODELS: " + ", ".join(ids[:50]), file=sys.stderr)
+          # Ưu tiên model vision cho QA screenshot; fallback model chat mạnh
+          pref = ["nemotron-3.5-super-vl", "llama-3.2-90b-vision", "llama-4-maverick",
+                  "nemotron-nano", "gemma-3-27b", "mistral-large"]
+          picked = next((p for p in pref if any(p in i.lower() for i in ids)), "")
+          if not picked:
+              vis = [i for i in ids if "vision" in i.lower() or "vl" in i.lower()]
+              picked = vis[0] if vis else (ids[0] if ids else "")
+          print(picked)
+          PYEOF
+          )
+            [ -n "$MODEL" ] || MODEL="meta/llama-3.2-90b-vision-instruct"
+            echo "AI_MODEL=$MODEL" >> "$GITHUB_ENV"
+            echo "Model AI QA được chọn: $MODEL"
+            echo "Kiểm tra chat completion..."
+            curl -sS -m 40 -H "Authorization: Bearer $NVIDIA_API_KEY" -H "Content-Type: application/json" \
+              -d "{\"model\":\"$MODEL\",\"messages\":[{\"role\":\"user\",\"content\":\"Tra loi dung mot tu: OK\"}],\"max_tokens\":8}" \
+              "https://integrate.api.nvidia.com/v1/chat/completions" | head -c 600; echo
+          elif [ -n "$GEMINI_API_KEY" ]; then
             echo "✅ Dùng Google AI Studio (Gemini free tier, OpenAI-compatible)"
             echo "AI_PROVIDER=GEMINI" >> "$GITHUB_ENV"
             echo "AI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai" >> "$GITHUB_ENV"
