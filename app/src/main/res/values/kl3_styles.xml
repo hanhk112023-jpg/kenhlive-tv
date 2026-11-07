@@ -104,6 +104,19 @@
         <item name="android:gravity">center</item>
     </style>
 
+    <!-- KL4 bottom-nav / rail label: chữ Oswald đậm, không icon.
+         Màu do layout gán qua @color/kl3_nav_text (selected/focused = accent). -->
+    <style name="KL3.Text.Nav" parent="">
+        <item name="android:textAllCaps">true</item>
+        <item name="android:textSize">@dimen/kl3_ts_meta</item>
+        <item name="android:fontFamily">@font/oswald</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:letterSpacing">0.06</item>
+        <item name="android:maxLines">1</item>
+        <item name="android:ellipsize">end</item>
+        <item name="android:gravity">center</item>
+    </style>
+
     <!-- Chip / pill label. -->
     <style name="KL3.Text.Chip" parent="">
         <item name="android:textSize">@dimen/kl3_ts_body</item>

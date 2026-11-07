@@ -64,6 +64,23 @@ object SportsStreamResolver {
         return null
     }
 
+    /**
+     * Tổng tỉ số hiện tại từ mảng điểm theo hiệp/kỳ (vd NBA [Q1,Q2,Q3,Q4,OT],
+     * bóng đá [hiệp 1, hiệp 2, hiệp phụ...]). Trước đây đọc `optInt(0)` — luôn là
+     * 0 vì phần tử đầu là điểm hiệp đầu chưa ghi bàn -> mọi trận live hiển thị
+     * "0 - 0" dù đã có bàn thắng. Đã kiểm chứng với feed thật: Lakers [20,33,0,0,0]
+     * = 53 điểm khớp Giờ Vàng.
+     */
+    private fun JSONArray.totalScore(): Int {
+        var sum = 0
+        for (i in 0 until length()) {
+            val v = opt(i)
+            if (v is Number) sum += v.toInt()
+            else optString(i, "").toIntOrNull()?.let { sum += it }
+        }
+        return sum
+    }
+
     suspend fun resolveStream(roomNum: String): String? = withContext(Dispatchers.IO) {
         if (roomNum.isBlank()) return@withContext null
         if (roomNum.startsWith("http://") || roomNum.startsWith("https://")) {
@@ -183,8 +200,8 @@ object SportsStreamResolver {
                 val liveClock = if (statusNum == 3 && normTime.isBlank()) "HT" else normTime
                 val kickoffTime = formatTimestampToTime(matchTimeMs)
 
-                val hScore = if (isLive && hs != null && hs.length() > 0) hs.optInt(0, 0) else null
-                val aScore = if (isLive && as_ != null && as_.length() > 0) as_.optInt(0, 0) else null
+                val hScore = if (isLive && hs != null && hs.length() > 0) hs.totalScore() else null
+                val aScore = if (isLive && as_ != null && as_.length() > 0) as_.totalScore() else null
 
                 val matchTitle = if (isLive && hScore != null && aScore != null) {
                     "$homeName $hScore - $aScore $awayName"
@@ -394,8 +411,8 @@ object SportsStreamResolver {
                     }
                 }
 
-                val hScore = if (isLive && hs != null && hs.length() > 0) hs.optInt(0, 0) else null
-                val aScore = if (isLive && as_ != null && as_.length() > 0) as_.optInt(0, 0) else null
+                val hScore = if (isLive && hs != null && hs.length() > 0) hs.totalScore() else null
+                val aScore = if (isLive && as_ != null && as_.length() > 0) as_.totalScore() else null
                 val liveClock = if (status == 3) "HT" else ""
 
                 // Bóc tách tỉ số real-time nếu trận đấu đang diễn ra hoặc đã có bàn thắng

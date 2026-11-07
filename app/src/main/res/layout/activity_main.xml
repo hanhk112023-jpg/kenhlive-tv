@@ -66,29 +66,38 @@
             android:maxWidth="160dp"
             android:visibility="gone" />
 
-        <ImageButton
+        <!-- KL4: nút top bar dạng chữ (không icon) -->
+        <TextView
             android:id="@+id/btnTopRefresh"
-            android:layout_width="@dimen/kl3_icon_btn"
-            android:layout_height="@dimen/kl3_icon_btn"
+            style="@style/KL3.Text.Button"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/kl3_btn_h_s"
             android:layout_marginLeft="@dimen/kl3_sp_sm"
-            android:background="@drawable/kl3_btn_icon"
-            android:padding="@dimen/kl3_sp_md"
-            android:scaleType="centerInside"
-            android:tint="@color/kl3_icon_tint"
-            android:src="@drawable/ic_refresh"
-            android:contentDescription="Làm mới" />
+            android:background="@drawable/kl3_btn_ghost"
+            android:foreground="@drawable/kl3_fg_focus_pill"
+            android:gravity="center"
+            android:paddingLeft="@dimen/kl3_btn_pad_x"
+            android:paddingRight="@dimen/kl3_btn_pad_x"
+            android:text="LÀM MỚI"
+            android:textColor="@color/kl3_text_primary"
+            android:clickable="true"
+            android:focusable="true" />
 
-        <ImageButton
+        <TextView
             android:id="@+id/btnTopSettings"
-            android:layout_width="@dimen/kl3_icon_btn"
-            android:layout_height="@dimen/kl3_icon_btn"
+            style="@style/KL3.Text.Button"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/kl3_btn_h_s"
             android:layout_marginLeft="@dimen/kl3_sp_sm"
-            android:background="@drawable/kl3_btn_icon"
-            android:padding="@dimen/kl3_sp_md"
-            android:scaleType="centerInside"
-            android:tint="@color/kl3_icon_tint"
-            android:src="@drawable/ic_nav_settings"
-            android:contentDescription="@string/nav_settings" />
+            android:background="@drawable/kl3_btn_ghost"
+            android:foreground="@drawable/kl3_fg_focus_pill"
+            android:gravity="center"
+            android:paddingLeft="@dimen/kl3_btn_pad_x"
+            android:paddingRight="@dimen/kl3_btn_pad_x"
+            android:text="CÀI ĐẶT"
+            android:textColor="@color/kl3_text_primary"
+            android:clickable="true"
+            android:focusable="true" />
     </LinearLayout>
 
     <FrameLayout

@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- KL3 bottom-nav item (phone). Selected state driven by MainActivity
-     (v.isSelected) → kl3_nav_item_bg / kl3_nav_text / kl3_icon_tint. -->
+<!-- KL4 bottom-nav item (phone) — TEXT ONLY, không icon.
+     Selected state driven by MainActivity (v.isSelected):
+     text accent (kl3_nav_text) + gạch chân accent (kl3_nav_underline). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="0dp"
     android:layout_height="match_parent"
@@ -18,20 +19,18 @@
     android:clickable="true"
     android:focusable="false">
 
-    <ImageView
-        android:id="@+id/navIcon"
-        android:layout_width="@dimen/kl3_avatar_s"
-        android:layout_height="@dimen/kl3_avatar_s"
-        android:tint="@color/kl3_icon_tint"
-        android:duplicateParentState="true"
-        android:contentDescription="@null" />
-
     <TextView
         android:id="@+id/navLabel"
-        style="@style/KL3.Text.Meta"
+        style="@style/KL3.Text.Nav"
         android:textColor="@color/kl3_nav_text"
         android:duplicateParentState="true"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/kl3_sp_xs" />
+        android:layout_height="wrap_content" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="3dp"
+        android:layout_marginTop="@dimen/kl3_sp_xs"
+        android:background="@drawable/kl3_nav_underline"
+        android:duplicateParentState="true" />
 </LinearLayout>

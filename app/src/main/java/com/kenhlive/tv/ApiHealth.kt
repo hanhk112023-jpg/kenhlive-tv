@@ -92,8 +92,8 @@ object ApiHealthChecker {
         Source("Giờ Vàng TV (thể thao)", "https://live-api.keonhacaitp.one/storage/livestream/live.json"),
         Source("ColaTV (thể thao)", "https://api.colaapis6.com/?t=1"),
         Source("IPTV-org (danh sách kênh)", "https://iptv-org.github.io/iptv/countries/vn.m3u", longTimeout = true),
-        Source("EPG (lịch phát sóng)", "https://epgshare01.online/epgshare01/epg_ripper_VN1.xml.gz", longTimeout = true),
-        Source("Máy chủ cập nhật APK", "https://kenhlive-dl.htuananh153.workers.dev/version")
+        Source("EPG (lịch phát sóng)", "https://epgshare01.online/epgshare01/epg_ripper_VN1.xml.gz", longTimeout = true)
+        // KL4: đã gỡ kênh cập nhật APK (workers.dev) — app không còn tự cập nhật.
     )
 
     suspend fun checkAll(): List<Result> = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {

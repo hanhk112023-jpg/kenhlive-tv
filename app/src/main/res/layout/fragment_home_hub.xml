@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- KL3 HOME HUB — cổng chọn 3 hub (Thể thao / Truyền hình / Phim).
-     Giữ nguyên mọi android:id (HomeHubFragment bind trực tiếp) và cấu trúc
-     LinearLayout.LayoutParams mà applyHubLayout() thao tác (weight + margins). -->
+<!-- KL4 HOME HUB — cổng chọn 3 hub (Thể thao / Truyền hình / Phim).
+     Thiết kế "Hero portal": mỗi thẻ là 1 hàng ngang — trái là khối chữ
+     (badge + title Oswald lớn + mô tả ngắn + hint), phải là một con số/stat
+     lớn làm visual anchor bằng chữ (không icon). Mỗi thẻ một accent riêng:
+     thể thao = cam, truyền hình = cyan, phim = amber.
+     Giữ nguyên mọi android:id mà HomeHubFragment bind (cardSports/cardIptv/
+     cardPhim/btnHub*/tvHubClock/portalContainer) + thêm id *Content để
+     applyHubLayout() đổi orientation khi điện thoại dọc. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
@@ -84,7 +89,7 @@
             tools:text="21:45 · Thứ Hai" />
     </LinearLayout>
 
-    <!-- 2. CENTER STAGE: 3 GRAND PORTAL FEATURE CARDS -->
+    <!-- 2. CENTER STAGE: 3 GRAND PORTAL FEATURE CARDS (layout ngang trong thẻ) -->
     <LinearLayout
         android:id="@+id/portalContainer"
         android:layout_width="match_parent"
@@ -98,7 +103,7 @@
         android:paddingBottom="@dimen/kl3_gap"
         android:baselineAligned="false">
 
-        <!-- CARD 1: THỂ THAO -->
+        <!-- CARD 1: THỂ THAO — accent cam -->
         <FrameLayout
             android:id="@+id/cardSports"
             android:layout_width="0dp"
@@ -114,15 +119,18 @@
             android:padding="@dimen/kl3_sp_xl">
 
             <LinearLayout
+                android:id="@+id/cardSportsContent"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:orientation="vertical">
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
-                <!-- Top badges -->
+                <!-- Trái: khối chữ -->
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
                     <TextView
                         style="@style/KL3.Badge.Live"
@@ -135,62 +143,61 @@
                         android:fontFamily="sans-serif-black" />
 
                     <TextView
-                        style="@style/KL3.Text.Badge"
+                        style="@style/KL3.Text.Hero"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="@dimen/kl3_sp_sm"
-                        android:background="@drawable/kl3_pill_bg"
-                        android:paddingLeft="@dimen/kl3_badge_pad_x"
-                        android:paddingRight="@dimen/kl3_badge_pad_x"
-                        android:paddingTop="@dimen/kl3_sp_xs"
-                        android:paddingBottom="@dimen/kl3_sp_xs"
-                        android:text="4 NHÀ ĐÀI"
-                        android:textColor="@color/kl3_info" />
+                        android:layout_marginTop="@dimen/kl3_sp_sm"
+                        android:text="THỂ THAO"
+                        android:letterSpacing="0.08" />
+
+                    <TextView
+                        style="@style/KL3.Text.Body"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/kl3_sp_sm"
+                        android:text="Trực tiếp bóng đá Socolive, Gà Vàng, ColaTV · Lịch thi đấu 7 ngày · Tỉ số real-time"
+                        android:maxLines="2"
+                        android:ellipsize="end" />
+
+                    <TextView
+                        style="@style/KL3.Text.Chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/kl3_gap"
+                        android:text="NHẤN OK →"
+                        android:textColor="@color/kl3_accent" />
                 </LinearLayout>
 
-                <View
-                    android:layout_width="1dp"
-                    android:layout_height="0dp"
-                    android:layout_weight="1" />
-
-                <!-- Icon: Canva 3D Glowing Football Logo -->
-                <ImageView
-                    android:layout_width="76dp"
-                    android:layout_height="76dp"
-                    android:src="@drawable/ic_hub_football"
-                    android:layout_marginBottom="@dimen/kl3_gap"
-                    android:contentDescription="Thể thao" />
-
-                <!-- Title -->
-                <TextView
-                    style="@style/KL3.Text.Display"
+                <!-- Phải: stat anchor bằng chữ -->
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="THỂ THAO"
-                    android:letterSpacing="0.04" />
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal"
+                    android:layout_marginLeft="@dimen/kl3_gap_l">
 
-                <!-- Description -->
-                <TextView
-                    style="@style/KL3.Text.Body"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/kl3_sp_sm"
-                    android:text="Trực tiếp bóng đá Socolive, Gà Vàng 33, ColaTV, Giờ Vàng · Lịch thi đấu &amp; Trực tiếp HD"
-                    android:maxLines="3"
-                    android:ellipsize="end" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="4"
+                        android:textSize="56sp"
+                        android:textColor="@color/kl3_accent"
+                        android:fontFamily="@font/oswald"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.02" />
 
-                <!-- Footer Hint -->
-                <TextView
-                    style="@style/KL3.Text.Chip"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/kl3_gap"
-                    android:text="ẤN OK ĐỂ VÀO XEM →"
-                    android:textColor="@color/kl3_accent" />
+                    <TextView
+                        style="@style/KL3.Text.Micro"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/kl3_sp_xs"
+                        android:text="NHÀ ĐÀI"
+                        android:letterSpacing="0.1" />
+                </LinearLayout>
             </LinearLayout>
         </FrameLayout>
 
-        <!-- CARD 2: TRUYỀN HÌNH (HUB TRUYỀN HÌNH & M3U TÙY CHỌN) -->
+        <!-- CARD 2: TRUYỀN HÌNH — accent cyan -->
         <FrameLayout
             android:id="@+id/cardIptv"
             android:layout_width="0dp"
@@ -209,15 +216,18 @@
             android:padding="@dimen/kl3_sp_xl">
 
             <LinearLayout
+                android:id="@+id/cardIptvContent"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:orientation="vertical">
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
-                <!-- Top badges -->
+                <!-- Trái: khối chữ -->
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
                     <TextView
                         style="@style/KL3.Text.Badge"
@@ -228,67 +238,65 @@
                         android:paddingRight="@dimen/kl3_badge_pad_x"
                         android:paddingTop="@dimen/kl3_sp_xs"
                         android:paddingBottom="@dimen/kl3_sp_xs"
-                        android:text="150+ KÊNH HD"
+                        android:text="M3U TÙY CHỈNH"
                         android:textColor="@color/kl3_info" />
 
                     <TextView
-                        style="@style/KL3.Text.Badge"
+                        style="@style/KL3.Text.Hero"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="@dimen/kl3_sp_sm"
-                        android:background="@drawable/kl3_badge_provider"
-                        android:paddingLeft="@dimen/kl3_badge_pad_x"
-                        android:paddingRight="@dimen/kl3_badge_pad_x"
-                        android:paddingTop="@dimen/kl3_sp_xs"
-                        android:paddingBottom="@dimen/kl3_sp_xs"
-                        android:text="M3U TÙY CHỈNH"
+                        android:layout_marginTop="@dimen/kl3_sp_sm"
+                        android:text="TRUYỀN HÌNH"
+                        android:letterSpacing="0.08" />
+
+                    <TextView
+                        style="@style/KL3.Text.Body"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/kl3_sp_sm"
+                        android:text="Kênh VTV, HTV, VTC, TV360, Thể Thao Quốc Tế &amp; Danh Sách M3U Cá Nhân"
+                        android:maxLines="2"
+                        android:ellipsize="end" />
+
+                    <TextView
+                        style="@style/KL3.Text.Chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/kl3_gap"
+                        android:text="NHẤN OK →"
                         android:textColor="@color/kl3_info" />
                 </LinearLayout>
 
-                <View
-                    android:layout_width="1dp"
-                    android:layout_height="0dp"
-                    android:layout_weight="1" />
-
-                <!-- Icon -->
-                <ImageView
-                    android:layout_width="60dp"
-                    android:layout_height="60dp"
-                    android:src="@drawable/ic_nav_tv"
-                    android:tint="@color/kl3_info"
-                    android:layout_marginBottom="@dimen/kl3_gap"
-                    android:contentDescription="Truyền hình" />
-
-                <!-- Title -->
-                <TextView
-                    style="@style/KL3.Text.Display"
+                <!-- Phải: stat anchor bằng chữ -->
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="TRUYỀN HÌNH"
-                    android:letterSpacing="0.04" />
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal"
+                    android:layout_marginLeft="@dimen/kl3_gap_l">
 
-                <!-- Description -->
-                <TextView
-                    style="@style/KL3.Text.Body"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/kl3_sp_sm"
-                    android:text="Kênh VTV, HTV, VTC, TV360, Thể Thao Quốc Tế &amp; Danh Sách M3U Cá Nhân"
-                    android:maxLines="3"
-                    android:ellipsize="end" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="150+"
+                        android:textSize="56sp"
+                        android:textColor="@color/kl3_info"
+                        android:fontFamily="@font/oswald"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.02" />
 
-                <!-- Footer Hint -->
-                <TextView
-                    style="@style/KL3.Text.Chip"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/kl3_gap"
-                    android:text="ẤN OK ĐỂ VÀO XEM →"
-                    android:textColor="@color/kl3_info" />
+                    <TextView
+                        style="@style/KL3.Text.Micro"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/kl3_sp_xs"
+                        android:text="KÊNH HD"
+                        android:letterSpacing="0.1" />
+                </LinearLayout>
             </LinearLayout>
         </FrameLayout>
 
-        <!-- CARD 3: PHIM TRUYỆN -->
+        <!-- CARD 3: PHIM TRUYỆN — accent amber -->
         <FrameLayout
             android:id="@+id/cardPhim"
             android:layout_width="0dp"
@@ -304,15 +312,18 @@
             android:padding="@dimen/kl3_sp_xl">
 
             <LinearLayout
+                android:id="@+id/cardPhimContent"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:orientation="vertical">
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
 
-                <!-- Top badges -->
+                <!-- Trái: khối chữ -->
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal">
+                    android:layout_weight="1"
+                    android:orientation="vertical">
 
                     <TextView
                         style="@style/KL3.Text.Badge"
@@ -323,67 +334,67 @@
                         android:paddingRight="@dimen/kl3_badge_pad_x"
                         android:paddingTop="@dimen/kl3_sp_xs"
                         android:paddingBottom="@dimen/kl3_sp_xs"
-                        android:text="KHO BOM TẤN"
+                        android:text="4K FHD"
                         android:textColor="@color/kl3_gold" />
 
                     <TextView
-                        style="@style/KL3.Text.Badge"
+                        style="@style/KL3.Text.Hero"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginLeft="@dimen/kl3_sp_sm"
-                        android:background="@drawable/kl3_pill_bg"
-                        android:paddingLeft="@dimen/kl3_badge_pad_x"
-                        android:paddingRight="@dimen/kl3_badge_pad_x"
-                        android:paddingTop="@dimen/kl3_sp_xs"
-                        android:paddingBottom="@dimen/kl3_sp_xs"
-                        android:text="THUYẾT MINH"
-                        android:textColor="@color/kl3_text_secondary" />
+                        android:layout_marginTop="@dimen/kl3_sp_sm"
+                        android:text="PHIM TRUYỆN"
+                        android:letterSpacing="0.08" />
+
+                    <TextView
+                        style="@style/KL3.Text.Body"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/kl3_sp_sm"
+                        android:text="Hơn 33.000+ phim điện ảnh, phim bộ Hàn/Trung/Âu Mỹ, hoạt hình Anime — Vietsub &amp; Thuyết minh"
+                        android:maxLines="2"
+                        android:ellipsize="end" />
+
+                    <TextView
+                        style="@style/KL3.Text.Chip"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/kl3_gap"
+                        android:text="NHẤN OK →"
+                        android:textColor="@color/kl3_gold" />
                 </LinearLayout>
 
-                <View
-                    android:layout_width="1dp"
-                    android:layout_height="0dp"
-                    android:layout_weight="1" />
-
-                <!-- Icon: Canva 3D Cinema Clapperboard & Reel Logo -->
-                <ImageView
-                    android:layout_width="76dp"
-                    android:layout_height="76dp"
-                    android:src="@drawable/ic_hub_cinema"
-                    android:layout_marginBottom="@dimen/kl3_gap"
-                    android:contentDescription="Phim truyện" />
-
-                <!-- Title -->
-                <TextView
-                    style="@style/KL3.Text.Display"
+                <!-- Phải: stat anchor bằng chữ -->
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="PHIM TRUYỆN"
-                    android:letterSpacing="0.04" />
+                    android:orientation="vertical"
+                    android:gravity="center_horizontal"
+                    android:layout_marginLeft="@dimen/kl3_gap_l">
 
-                <!-- Description -->
-                <TextView
-                    style="@style/KL3.Text.Body"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/kl3_sp_sm"
-                    android:text="Hơn 33.000+ phim điện ảnh, phim bộ Hàn/Trung/Âu Mỹ, hoạt hình Anime phát trực tiếp HLS 4K"
-                    android:maxLines="3"
-                    android:ellipsize="end" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="33K+"
+                        android:textSize="56sp"
+                        android:textColor="@color/kl3_gold"
+                        android:fontFamily="@font/oswald"
+                        android:textStyle="bold"
+                        android:letterSpacing="0.02" />
 
-                <!-- Footer Hint -->
-                <TextView
-                    style="@style/KL3.Text.Chip"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/kl3_gap"
-                    android:text="ẤN OK ĐỂ VÀO XEM →"
-                    android:textColor="@color/kl3_gold" />
+                    <TextView
+                        style="@style/KL3.Text.Micro"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="@dimen/kl3_sp_xs"
+                        android:text="PHIM &amp; BỘ"
+                        android:letterSpacing="0.1" />
+                </LinearLayout>
             </LinearLayout>
         </FrameLayout>
     </LinearLayout>
 
-    <!-- 3. BOTTOM UTILITY & SETTINGS ROW (MỤC 4 & TIỆN ÍCH) -->
+    <!-- 3. BOTTOM UTILITY ROW (KL4: chỉ giữ CÀI ĐẶT + BÁO LỖI — Lịch thi đấu &amp;
+         Tìm kiếm đã có trên thanh điều hướng chính, bỏ để giảm nút thừa) -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -404,19 +415,10 @@
             android:focusable="true"
             android:clickable="true">
 
-            <ImageView
-                android:layout_width="@dimen/kl3_sp_lg"
-                android:layout_height="@dimen/kl3_sp_lg"
-                android:src="@drawable/ic_nav_settings"
-                android:tint="@color/kl3_text_secondary"
-                android:duplicateParentState="true"
-                android:contentDescription="Cài đặt" />
-
             <TextView
                 style="@style/KL3.Text.Button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="@dimen/kl3_sp_sm"
                 android:text="CÀI ĐẶT"
                 android:textColor="@color/kl3_text_primary" />
         </LinearLayout>
@@ -435,57 +437,17 @@
             android:focusable="true"
             android:clickable="true">
 
-            <!-- Sửa 2026-11-04: icon Telegram trước đây không tint nên giữ màu
-                 xanh dương gốc, nhìn như một viền focus xanh riêng, trong khi các
-                 nút hub khác đều tint trắng và focus chung bằng pill cam. -->
-            <ImageView
-                android:layout_width="@dimen/kl3_sp_lg"
-                android:layout_height="@dimen/kl3_sp_lg"
-                android:src="@drawable/ic_telegram"
-                android:tint="@color/kl3_text_secondary"
-                android:duplicateParentState="true"
-                android:contentDescription="Báo lỗi Telegram" />
-
             <TextView
                 style="@style/KL3.Text.Button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="@dimen/kl3_sp_sm"
                 android:text="BÁO LỖI TELEGRAM"
                 android:textColor="@color/kl3_text_primary" />
         </LinearLayout>
 
-        <LinearLayout
-            android:id="@+id/btnHubMultiview"
-            android:layout_width="wrap_content"
-            android:layout_height="@dimen/kl3_btn_h"
-            android:layout_marginLeft="@dimen/kl3_gap"
-            android:background="@drawable/kl3_btn_ghost"
-            android:foreground="@drawable/kl3_fg_focus_pill"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:paddingLeft="@dimen/kl3_btn_pad_x"
-            android:paddingRight="@dimen/kl3_btn_pad_x"
-            android:focusable="false"
-            android:clickable="false"
-            android:visibility="gone">
-
-            <ImageView
-                android:layout_width="@dimen/kl3_sp_lg"
-                android:layout_height="@dimen/kl3_sp_lg"
-                android:src="@drawable/ic_multiview"
-                android:tint="@color/kl3_text_secondary"
-                android:contentDescription="Đa màn hình" />
-
-            <TextView
-                style="@style/KL3.Text.Button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginLeft="@dimen/kl3_sp_sm"
-                android:text="XEM ĐA MÀN HÌNH"
-                android:textColor="@color/kl3_text_primary" />
-        </LinearLayout>
-
+        <!-- TV không có bottom nav -> giữ LỊCH THI ĐẤU / TÌM KIẾM trên Hub (mặc định
+             GONE, HomeHubFragment hiện lại khi DeviceMode.isTv). Trên phone đã có
+             bottom nav nên ẩn bớt nút thừa. -->
         <LinearLayout
             android:id="@+id/btnHubSchedule"
             android:layout_width="wrap_content"
@@ -498,21 +460,13 @@
             android:paddingLeft="@dimen/kl3_btn_pad_x"
             android:paddingRight="@dimen/kl3_btn_pad_x"
             android:focusable="true"
-            android:clickable="true">
-
-            <ImageView
-                android:layout_width="@dimen/kl3_sp_lg"
-                android:layout_height="@dimen/kl3_sp_lg"
-                android:src="@drawable/ic_nav_schedule"
-                android:tint="@color/kl3_text_secondary"
-                android:duplicateParentState="true"
-                android:contentDescription="Lịch thi đấu" />
+            android:clickable="true"
+            android:visibility="gone">
 
             <TextView
                 style="@style/KL3.Text.Button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="@dimen/kl3_sp_sm"
                 android:text="LỊCH THI ĐẤU"
                 android:textColor="@color/kl3_text_primary" />
         </LinearLayout>
@@ -529,24 +483,31 @@
             android:paddingLeft="@dimen/kl3_btn_pad_x"
             android:paddingRight="@dimen/kl3_btn_pad_x"
             android:focusable="true"
-            android:clickable="true">
-
-            <ImageView
-                android:layout_width="@dimen/kl3_sp_lg"
-                android:layout_height="@dimen/kl3_sp_lg"
-                android:src="@drawable/ic_nav_search"
-                android:tint="@color/kl3_text_secondary"
-                android:duplicateParentState="true"
-                android:contentDescription="Tìm kiếm" />
+            android:clickable="true"
+            android:visibility="gone">
 
             <TextView
                 style="@style/KL3.Text.Button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginLeft="@dimen/kl3_sp_sm"
                 android:text="TÌM KIẾM"
                 android:textColor="@color/kl3_text_primary" />
         </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/btnHubMultiview"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/kl3_btn_h"
+            android:layout_marginLeft="@dimen/kl3_gap"
+            android:background="@drawable/kl3_btn_ghost"
+            android:foreground="@drawable/kl3_fg_focus_pill"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:paddingLeft="@dimen/kl3_btn_pad_x"
+            android:paddingRight="@dimen/kl3_btn_pad_x"
+            android:focusable="false"
+            android:clickable="false"
+            android:visibility="gone" />
 
         <View
             android:layout_width="0dp"

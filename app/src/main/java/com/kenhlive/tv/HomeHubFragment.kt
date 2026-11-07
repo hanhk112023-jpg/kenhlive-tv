@@ -82,10 +82,14 @@ class HomeHubFragment : Fragment() {
 
             card?.setOnKeyListener { _, keyCode, event ->
                 if (event.action == KeyEvent.ACTION_DOWN && keyCode == KeyEvent.KEYCODE_DPAD_DOWN) {
+                    // Chỉ chuyển focus tới nút đang hiển thị (TV hiện Lịch/Tìm kiếm,
+                    // phone ẩn vì đã có bottom nav).
+                    fun tryFocus(v: View?): Boolean =
+                        v != null && v.visibility == View.VISIBLE && v.requestFocus()
                     when (card.id) {
-                        R.id.cardPhim -> btnSearch?.requestFocus() ?: btnSettings?.requestFocus()
-                        R.id.cardIptv -> btnSchedule?.requestFocus() ?: btnSettings?.requestFocus()
-                        else -> btnSettings?.requestFocus()
+                        R.id.cardPhim -> if (!tryFocus(btnSearch)) tryFocus(btnSettings)
+                        R.id.cardIptv -> if (!tryFocus(btnSchedule)) tryFocus(btnSettings)
+                        else -> tryFocus(btnSettings)
                     }
                     true
                 } else {
@@ -96,6 +100,12 @@ class HomeHubFragment : Fragment() {
 
         // Setup utility row buttons (Tab 4 Settings, Feedback & Quick Tools)
         btnMultiview?.visibility = View.GONE
+        // TV không có bottom nav: Lịch thi đấu / Tìm kiếm chỉ vào được qua Hub.
+        // Phone đã có bottom nav nên 2 nút này giữ GONE (đã set trong layout).
+        if (DeviceMode.isTv) {
+            btnSchedule?.visibility = View.VISIBLE
+            btnSearch?.visibility = View.VISIBLE
+        }
         val bottomButtons = listOf(
             btnSettings to { (activity as? MainActivity)?.openSection(4) },
             btnFeedback to { com.kenhlive.tv.ui.FeedbackDialog.show(requireContext()) },
@@ -201,9 +211,37 @@ class HomeHubFragment : Fragment() {
         val gap = (10 * d).toInt()
         val portrait = DeviceMode.isPortrait(root.context)
 
+        // KL4: nội dung mỗi thẻ portal là 1 hàng ngang (chữ trái + stat phải).
+        // Điện thoại dọc -> xếp dọc (khối chữ trên, stat dưới) để không bị bóp.
+        fun setPortalContentOrientation(vertical: Boolean) {
+            for (id in intArrayOf(R.id.cardSportsContent, R.id.cardIptvContent, R.id.cardPhimContent)) {
+                val content = root.findViewById<LinearLayout>(id) ?: continue
+                content.orientation = if (vertical) LinearLayout.VERTICAL else LinearLayout.HORIZONTAL
+                for (i in 0 until content.childCount) {
+                    val child = content.getChildAt(i)
+                    val lp = child.layoutParams as? LinearLayout.LayoutParams ?: continue
+                    if (vertical) {
+                        lp.width = LinearLayout.LayoutParams.MATCH_PARENT
+                        lp.height = LinearLayout.LayoutParams.WRAP_CONTENT
+                        lp.weight = 0f
+                    } else if (i == 0) {
+                        lp.width = 0
+                        lp.height = LinearLayout.LayoutParams.WRAP_CONTENT
+                        lp.weight = 1f
+                    } else {
+                        lp.width = LinearLayout.LayoutParams.WRAP_CONTENT
+                        lp.height = LinearLayout.LayoutParams.WRAP_CONTENT
+                        lp.weight = 0f
+                    }
+                    child.layoutParams = lp
+                }
+            }
+        }
+
         fun cardLp(v: View) = v.layoutParams as? LinearLayout.LayoutParams
 
         if (portrait) {
+            setPortalContentOrientation(vertical = true)
             portal.orientation = LinearLayout.VERTICAL
             cardLp(cardSports)?.let { lp ->
                 lp.width = LinearLayout.LayoutParams.MATCH_PARENT
@@ -246,6 +284,7 @@ class HomeHubFragment : Fragment() {
                 }
             }
         } else {
+            setPortalContentOrientation(vertical = false)
             portal.orientation = LinearLayout.HORIZONTAL
             cardLp(cardSports)?.let { lp ->
                 lp.width = 0

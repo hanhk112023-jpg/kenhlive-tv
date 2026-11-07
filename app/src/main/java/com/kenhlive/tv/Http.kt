@@ -8,7 +8,7 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 
 /**
- * HTTP client dùng chung (repository + UpdateManager):
+ * HTTP client dùng chung (repository):
  * - OkHttp: connection pool, gzip tự động, disk cache 8MB cho JSON GET
  * - Interceptor thêm UA/Referer (API Socolive chặn request trần)
  * - Retry có backoff cho lỗi transient (mạng TV/Wi-Fi chập chờn)

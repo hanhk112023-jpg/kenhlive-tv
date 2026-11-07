@@ -7,11 +7,11 @@
      ============================================================ -->
 <resources>
     <!-- ===== BACKGROUNDS (layered, darkest → lightest) ===== -->
-    <color name="kl3_bg">#FF050508</color>            <!-- app canvas, pure near-black -->
-    <color name="kl3_bg_soft">#FF0A0C12</color>       <!-- hero backdrop / top areas -->
-    <color name="kl3_surface">#FF12141C</color>       <!-- card base (level 1) -->
-    <color name="kl3_surface_high">#FF1B1F2B</color>  <!-- card hover/focus fill (level 2) -->
-    <color name="kl3_surface_top">#FF262B3A</color>   <!-- dialogs, menus, popovers (level 3) -->
+    <color name="kl3_bg">#FF050507</color>            <!-- app canvas, pure near-black -->
+    <color name="kl3_bg_soft">#FF0B0D12</color>       <!-- hero backdrop / top areas -->
+    <color name="kl3_surface">#FF11141B</color>       <!-- card base (level 1) -->
+    <color name="kl3_surface_high">#FF1A1F2A</color>  <!-- card hover/focus fill (level 2) -->
+    <color name="kl3_surface_top">#FF242A38</color>   <!-- dialogs, menus, popovers (level 3) -->
     <color name="kl3_surface_solid">#F212141C</color> <!-- opaque-ish card over imagery -->
 
     <!-- ===== GLASS / BORDERS ===== -->
@@ -23,24 +23,24 @@
     <color name="kl3_pressed">#26FFFFFF</color>       <!-- pressed overlay tint -->
 
     <!-- ===== TEXT (3 tiers + inverse) ===== -->
-    <color name="kl3_text_primary">#FFF7F7F9</color>
-    <color name="kl3_text_secondary">#FFB8C0CE</color>
-    <color name="kl3_text_tertiary">#FF7C8497</color>
+    <color name="kl3_text_primary">#FFF5F6F8</color>
+    <color name="kl3_text_secondary">#FFA8B0BE</color>
+    <color name="kl3_text_tertiary">#FF6B7484</color>
     <color name="kl3_text_disabled">#FF4A5162</color>
     <color name="kl3_on_accent">#FFFFFFFF</color>     <!-- text on orange/amber -->
-    <color name="kl3_on_dark">#FF050508</color>       <!-- text on light glass -->
+    <color name="kl3_on_dark">#FF050507</color>       <!-- text on light glass -->
 
     <!-- ===== BRAND ACCENT (orange → amber gradient family) ===== -->
-    <color name="kl3_accent">#FFFF6500</color>        <!-- primary action / focus ring -->
+    <color name="kl3_accent">#FFFF5C1F</color>        <!-- primary action / focus ring -->
     <color name="kl3_accent_bright">#FFFF8A3D</color> <!-- gradient top stop -->
     <color name="kl3_accent_deep">#FFE04A00</color>   <!-- gradient bottom stop -->
-    <color name="kl3_accent_soft">#1FFF6500</color>   <!-- tinted chip fill -->
-    <color name="kl3_accent_glow">#66FF6500</color>   <!-- focus glow stroke -->
-    <color name="kl3_accent_dim">#80FF6500</color>    <!-- subtle accent border -->
+    <color name="kl3_accent_soft">#1FFF5C1F</color>   <!-- tinted chip fill -->
+    <color name="kl3_accent_glow">#66FF5C1F</color>   <!-- focus glow stroke -->
+    <color name="kl3_accent_dim">#80FF5C1F</color>    <!-- subtle accent border -->
     <color name="kl3_gold">#FFFFB300</color>          <!-- scores, premium, VIP meta -->
     <color name="kl3_gold_soft">#1FFFB300</color>
-    <color name="kl3_info">#FF00E5FF</color>          <!-- channel/stream info accent -->
-    <color name="kl3_info_soft">#1F00E5FF</color>
+    <color name="kl3_info">#FF22D3EE</color>          <!-- channel/stream info accent (IPTV cyan) -->
+    <color name="kl3_info_soft">#1F22D3EE</color>
 
     <!-- ===== SEMANTIC STATES ===== -->
     <color name="kl3_live">#FFFF334B</color>          <!-- LIVE badge / live dot -->

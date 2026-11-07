@@ -131,8 +131,6 @@ class MainActivity : AppCompatActivity() {
         }
         vm.load()
 
-        UpdateManager.checkAndUpdate(this)
-        UpdateManager.resumePendingInstall(this)
         handleDebugIntent(intent)
     }
 
@@ -477,7 +475,6 @@ class MainActivity : AppCompatActivity() {
             when (target) {
                 "mv" -> showTab(TAB_HUB, animate = false)
                 "pip" -> lifecycleScope.launch { openPlayer(pip = true) }
-                "update" -> UpdateManager.debugForceDialog(this)
                 "refresh" -> {
                     lifecycleScope.launch {
                         supportFragmentManager.fragments.filterIsInstance<LiveFragment>()

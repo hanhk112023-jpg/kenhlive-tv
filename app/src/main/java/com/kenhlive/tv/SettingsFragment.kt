@@ -161,9 +161,6 @@ class SettingsFragment : Fragment() {
                     R.drawable.ic_trash, getString(R.string.settings_clear_cache), chevron = false
                 ) { clearCache() },
                 SettingsAdapter.Item.Row(
-                    R.drawable.ic_refresh, getString(R.string.settings_check_update), chevron = false
-                ) { UpdateManager.checkAndUpdate(requireActivity()) },
-                SettingsAdapter.Item.Row(
                     R.drawable.ic_info, getString(R.string.settings_version),
                     value = versionName(), chevron = false
                 ) {

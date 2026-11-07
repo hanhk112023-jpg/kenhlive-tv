@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- KL3 nav rail item (Android TV). Focus ring = kl3_fg_focus foreground;
-     selected = accent tint qua kl3_nav_item_bg / kl3_nav_text / kl3_icon_tint. -->
+<!-- KL4 nav rail item (Android TV) — TEXT ONLY, không icon.
+     Focus ring = kl3_fg_focus foreground; selected = accent text (kl3_nav_text)
+     + nền accent mềm (kl3_nav_item_bg). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="60dp"
@@ -14,20 +15,18 @@
     android:clickable="true"
     android:focusable="true">
 
-    <ImageView
-        android:id="@+id/navIcon"
-        android:layout_width="@dimen/kl3_avatar_s"
-        android:layout_height="@dimen/kl3_avatar_s"
-        android:tint="@color/kl3_icon_tint"
-        android:duplicateParentState="true"
-        android:contentDescription="@null" />
+    <View
+        android:layout_width="4dp"
+        android:layout_height="24dp"
+        android:layout_marginRight="@dimen/kl3_gap"
+        android:background="@drawable/kl3_nav_rail_bar" />
 
     <TextView
         android:id="@+id/navLabel"
-        style="@style/KL3.Text.Body"
+        style="@style/KL3.Text.Nav"
+        android:textSize="@dimen/kl3_ts_section"
         android:textColor="@color/kl3_nav_text"
         android:duplicateParentState="true"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="@dimen/kl3_gap" />
+        android:layout_height="wrap_content" />
 </LinearLayout>

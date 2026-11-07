@@ -658,6 +658,20 @@ class PlayerActivity : AppCompatActivity() {
                 title.text = "$hubLabel · ${title.text}"
             }
         }
+
+        // KL4: mỗi hub một accent riêng trên tiêu đề player (cam / cyan / amber)
+        // để nhận diện ngay "mặt" trình phát đang mở.
+        val hubAccent = when (hubKind) {
+            Hub.SPORTS -> R.color.kl3_accent
+            Hub.TV -> R.color.kl3_info
+            Hub.FILM -> R.color.kl3_gold
+            else -> 0
+        }
+        if (hubAccent != 0) {
+            findViewById<TextView>(R.id.playerTitle)?.setTextColor(
+                androidx.core.content.ContextCompat.getColor(this, hubAccent)
+            )
+        }
     }
 
     /**
@@ -2027,9 +2041,7 @@ class PlayerActivity : AppCompatActivity() {
 
     private fun syncVodControlBar() {
         val playing = player?.isPlaying == true
-        btnBarPlayPause?.setCompoundDrawablesWithIntrinsicBounds(
-            0, if (playing) R.drawable.kl_p_pause else R.drawable.kl_p_play, 0, 0
-        )
+        // KL4: thanh điều khiển VOD chỉ chữ, không icon — không còn set compound drawable.
         btnBarPlayPause?.text = if (playing) "Tạm dừng" else "Phát"
         val step = PlayerPrefs.seekStepSec(this)
         btnBarSeekBack?.text = "Tua -${step}s"
