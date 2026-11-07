@@ -92,7 +92,17 @@ class BlvCardsAdapter(
         private val DIFF = object : DiffUtil.ItemCallback<LiveRoom>() {
             override fun areItemsTheSame(a: LiveRoom, b: LiveRoom) = a.roomNum == b.roomNum
             override fun areContentsTheSame(a: LiveRoom, b: LiveRoom) =
-                a.viewers == b.viewers && a.blvName == b.blvName && a.matchTitle == b.matchTitle
+                a.viewers == b.viewers && a.blvName == b.blvName && a.matchTitle == b.matchTitle &&
+                // Các trường "sống" của trận phải nằm trong so sánh — thiếu chúng thì
+                // tỉ số/đồng hồ/giờ đá mới từ API không kích hoạt rebind, card đứng hình.
+                a.league == b.league && a.avatar == b.avatar && a.cover == b.cover &&
+                a.score == b.score && a.focusCount == b.focusCount &&
+                a.hostScore == b.hostScore && a.guestScore == b.guestScore &&
+                a.liveClock == b.liveClock && a.kickoffTime == b.kickoffTime &&
+                a.matchTimeMs == b.matchTimeMs && a.isLiveGame == b.isLiveGame &&
+                a.hostIcon == b.hostIcon && a.guestIcon == b.guestIcon &&
+                a.category == b.category && a.blvLevel == b.blvLevel &&
+                a.notice == b.notice
         }
 
         private val GRADIENTS = intArrayOf(
@@ -114,6 +124,7 @@ class BlvCardsAdapter(
         val levelBadge: TextView? = v.findViewById(R.id.blvLevelBadge)
         val league: TextView = v.findViewById(R.id.blvLeague)
         val matchTitle: TextView = v.findViewById(R.id.blvMatchTitle)
+        val score: TextView? = v.findViewById(R.id.blvScore)
         val viewers: TextView = v.findViewById(R.id.blvViewers)
     }
 
@@ -137,6 +148,23 @@ class BlvCardsAdapter(
         }
         h.league.text = r.league.ifBlank { "Socolive" }
         h.matchTitle.text = r.matchTitle
+        // Tỉ số / đồng hồ / giờ đá THẬT từ API — chỉ hiện khi có dữ kiện, không bịa.
+        val scoreText = buildString {
+            val hs = r.hostScore
+            val gs = r.guestScore
+            if (hs != null && gs != null) {
+                append("$hs - $gs")
+                if (r.liveClock.isNotBlank()) append("  ·  ${r.liveClock}")
+            } else if (r.kickoffTime.isNotBlank()) {
+                append("⏱ ${r.kickoffTime}")
+            }
+        }
+        if (scoreText.isNotBlank()) {
+            h.score?.text = scoreText
+            h.score?.visibility = View.VISIBLE
+        } else {
+            h.score?.visibility = View.GONE
+        }
         val viewersText = SocoliveRepository.fmtViewers(r.viewers) + " lượt xem"
         h.viewers.text = if (r.score > 0) "$viewersText • Điểm: ${SocoliveRepository.fmtViewers(r.score)}" else viewersText
 

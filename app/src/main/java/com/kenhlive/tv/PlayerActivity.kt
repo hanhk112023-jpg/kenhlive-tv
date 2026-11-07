@@ -194,6 +194,22 @@ class PlayerActivity : AppCompatActivity() {
     private var sportsFailoverCount: Int = 0
     private var iptvFailoverCount: Int = 0
 
+    // Ngữ cảnh hub cho dòng phụ dưới tiêu đề: thể thao (giải đấu + trạng thái
+    // + tỉ số/đồng hồ thật) và truyền hình (số kênh + EPG đang chiếu). Nguồn
+    // extras "matchTitle"/"league"/"match_time_ms"/"channel_id" do các màn
+    // trước truyền vào — trước đây bị bỏ không đọc.
+    private var hubMatchTitle: String = ""
+    private var hubLeague: String = ""
+    private var hubMatchTimeMs: Long = 0L
+    private var hubChannelId: String = ""
+    private var hubChannelName: String = ""
+    private val hubSubTicker = object : Runnable {
+        override fun run() {
+            updateHubSubtitle()
+            handler.postDelayed(this, 45_000L)
+        }
+    }
+
     // Danh sách kênh nhanh (Sidebar & Chuyển kênh D-pad)
     private var channelSidebar: View? = null
     private var sidebarList: RecyclerView? = null
@@ -357,6 +373,11 @@ class PlayerActivity : AppCompatActivity() {
         isIptvMode = intent.getBooleanExtra("is_iptv", false)
         currentChannelIndex = intent.getIntExtra("current_index", 0)
         currentRoomNum = intent.getStringExtra("roomNum") ?: ""
+        hubMatchTitle = intent.getStringExtra("matchTitle").orEmpty()
+        hubLeague = intent.getStringExtra("league").orEmpty()
+        hubMatchTimeMs = intent.getLongExtra("match_time_ms", 0L)
+        hubChannelId = intent.getStringExtra("channel_id").orEmpty()
+        hubChannelName = name
         currentSportsSource = com.kenhlive.tv.sports.SportsSource.detectSource(currentRoomNum)
 
         // Read VOD Extras
@@ -391,9 +412,12 @@ class PlayerActivity : AppCompatActivity() {
                 subTv.visibility = View.GONE
             }
         } else {
-            subTv.text = getString(R.string.sched_live)
-            subTv.setTextColor(resources.getColor(R.color.kl_live, theme))
-            subTv.visibility = View.VISIBLE
+            // Hub SPORTS/TV: subtitle theo ngữ cảnh thật (giải đấu+tỉ số / số kênh+EPG),
+            // ticker 45s để tỉ số và chương trình tự làm mới trong lúc xem.
+            updateHubSubtitle()
+            if (hubKind == Hub.SPORTS || hubKind == Hub.TV) {
+                handler.postDelayed(hubSubTicker, 45_000L)
+            }
         }
 
         // Binding Quick Channel OSD
@@ -634,6 +658,67 @@ class PlayerActivity : AppCompatActivity() {
                 title.text = "$hubLabel · ${title.text}"
             }
         }
+    }
+
+    /**
+     * Dòng phụ dưới tiêu đề player theo ngữ cảnh hub — toàn bộ dữ liệu THẬT,
+     * không hardcode: SPORTS = giải đấu + trạng thái + tỉ số/đồng hồ lấy từ
+     * registry đa nguồn (tự làm mới mỗi 45s qua hubSubTicker); TV = số kênh
+     * trong playlist + chương trình EPG đang chiếu; còn lại = nhãn LIVE.
+     */
+    private fun updateHubSubtitle() {
+        val subTv = findViewById<TextView>(R.id.playerSub) ?: return
+        if (isVodMode) return
+        val parts = mutableListOf<String>()
+        when (hubKind) {
+            Hub.SPORTS -> {
+                val parsed = DataNormalizer.parseMatch(hubMatchTitle, hubLeague)
+                val league = parsed.league.ifBlank { hubLeague }
+                if (league.isNotBlank()) parts.add(league.uppercase(Locale.US))
+                // match_time_ms có thể là giây hoặc ms tuỳ nguồn — chuẩn hoá 1 lần.
+                val ms = if (hubMatchTimeMs in 1..100_000_000_000L) hubMatchTimeMs * 1000L else hubMatchTimeMs
+                val meta = if (parsed.host.isNotBlank() && parsed.guest.isNotBlank()) {
+                    com.kenhlive.tv.sports.TeamLogoRegistry.findMatchMeta(parsed.host, parsed.guest, ms)
+                } else null
+                val hs = meta?.homeScore ?: parsed.hostScore
+                val gs = meta?.awayScore ?: parsed.guestScore
+                val finished = ms > 0L && DataNormalizer.isMatchFinished(ms) && meta?.isLive != true
+                when {
+                    finished -> {
+                        parts.add("ĐÃ KẾT THÚC")
+                        if (hs != null && gs != null) parts.add("$hs - $gs")
+                    }
+                    meta?.isLive == true -> {
+                        parts.add("TRỰC TIẾP")
+                        if (hs != null && gs != null) parts.add("$hs - $gs")
+                        if (meta.liveClock.isNotBlank()) parts.add(meta.liveClock)
+                    }
+                    ms > 0L && System.currentTimeMillis() < ms - DataNormalizer.MATCH_KICKOFF_TOLERANCE_MS -> {
+                        parts.add("SẮP ĐÁ")
+                        val ko = meta?.kickoffTime?.ifBlank { null }
+                            ?: DataNormalizer.formatKickoffTime(ms)
+                        if (ko.isNotBlank()) parts.add(ko)
+                    }
+                    hs != null && gs != null -> parts.add("$hs - $gs")
+                }
+            }
+            Hub.TV -> {
+                if (isIptvMode) parts.add("KÊNH ${currentChannelIndex + 1}")
+                val epg = if (hubChannelId.isNotBlank() || hubChannelName.isNotBlank()) {
+                    com.kenhlive.tv.iptv.EpgRepository.getCurrentAndNext(hubChannelId, hubChannelName)?.first
+                } else null
+                if (epg != null) parts.add("Đang chiếu: ${epg.title}")
+            }
+        }
+        if (parts.isEmpty()) {
+            subTv.text = getString(R.string.sched_live)
+        } else {
+            subTv.text = parts.joinToString("  ·  ")
+        }
+        // Đỏ chỉ cho nội dung đang live; trạng thái khác (sắp đá/kết thúc/EPG) dùng amber.
+        val isLiveText = subTv.text.contains("TRỰC TIẾP") || subTv.text == getString(R.string.sched_live)
+        subTv.setTextColor(resources.getColor(if (isLiveText) R.color.kl_live else R.color.kl_amber, theme))
+        subTv.visibility = View.VISIBLE
     }
 
     private fun setupMobileGestures() {
@@ -1307,6 +1392,10 @@ class PlayerActivity : AppCompatActivity() {
     private fun switchChannel(ch: IptvChannel) {
         url = ch.url
         findViewById<TextView>(R.id.playerTitle).text = ch.name
+        // Subtitle hub TV: số kênh + EPG phải đổi ngay theo kênh mới, không chờ tick 45s.
+        hubChannelId = ch.id
+        hubChannelName = ch.name
+        updateHubSubtitle()
         channelSidebar?.visibility = View.GONE
         hideCarousel()
         showOverlay()
@@ -1628,6 +1717,13 @@ class PlayerActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
+        // Subtitle hub (tỉ số/EPG) tự làm mới mỗi 45s — khởi động lại mỗi lần
+        // activity quay lại foreground (onStop đã gỡ callback).
+        if (!isVodMode && (hubKind == Hub.SPORTS || hubKind == Hub.TV)) {
+            updateHubSubtitle()
+            handler.removeCallbacks(hubSubTicker)
+            handler.postDelayed(hubSubTicker, 45_000L)
+        }
         if (player == null && url.isNotBlank()) {
             // Quay lại màn hình sau khi bị hệ thống dừng: dựng lại player và
             // phát tiếp từ đúng chỗ đã lưu (không phát lại từ đầu).
@@ -2555,6 +2651,7 @@ class PlayerActivity : AppCompatActivity() {
         handler.removeCallbacks(sleepTimerRunnable)
         handler.removeCallbacks(hideCarouselRunnable)
         handler.removeCallbacks(seekUpdateRunnable)
+        handler.removeCallbacks(hubSubTicker)
         try { loudnessEnhancer?.release() } catch (_: Exception) {}
         loudnessEnhancer = null
         audioFx.detach()

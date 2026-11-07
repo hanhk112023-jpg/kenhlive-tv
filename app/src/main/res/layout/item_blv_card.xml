@@ -131,6 +131,19 @@
         android:maxLines="1"
         android:ellipsize="end" />
 
+    <!-- Tỉ số / đồng hồ trận thật từ API (ẩn khi trận chưa có dữ kiện) -->
+    <TextView
+        android:id="@+id/blvScore"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:textColor="@color/kl_amber"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:visibility="gone" />
+
     <TextView
         android:id="@+id/blvViewers"
         android:layout_width="match_parent"

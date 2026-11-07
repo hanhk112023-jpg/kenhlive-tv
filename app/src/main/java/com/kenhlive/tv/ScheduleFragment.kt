@@ -212,6 +212,7 @@ class ScheduleFragment : Fragment() {
                     .putExtra("roomNum", room.roomNum)
                     .putExtra("matchTitle", "${match.host} vs ${match.guest}")
                     .putExtra("league", match.league)
+                    .putExtra("match_time_ms", match.matchTimeMs)
             )
         }
     }

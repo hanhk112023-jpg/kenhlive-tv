@@ -66,6 +66,9 @@ class IptvFragment : Fragment() {
     private var allChannels: List<IptvChannel> = emptyList()
     private var displayedChannels: List<IptvChannel> = emptyList()
     private var selectedGroup: String = "VTV"
+    // Sau khi user lưu link M3U mới: tự chuyển sang nhóm "M3U Của Tôi" để thấy
+    // kênh vừa nạp ngay, thay vì đứng yên ở nhóm VTV mặc định.
+    private var selectCustomGroupAfterLoad = false
     private var currentKeyword: String = ""
     private var lastFocusedChannelIndex: Int = 0
 
@@ -156,6 +159,9 @@ class IptvFragment : Fragment() {
         gridList.clipToPadding = false
         gridList.setHasFixedSize(true)
         gridList.setItemViewCacheSize(10)
+        // Tắt item animator như các lưới khác trong app: refresh danh sách kênh
+        // không bị animation change/add chạy lại gây nháy và khựng khi scroll.
+        gridList.itemAnimator = null
         channelsAdapter = ChannelsAdapter()
         gridList.adapter = channelsAdapter
 
@@ -163,6 +169,7 @@ class IptvFragment : Fragment() {
         groupList.clipChildren = false
         groupList.clipToPadding = false
         groupList.setHasFixedSize(true)
+        groupList.itemAnimator = null
         groupsAdapter = GroupsAdapter()
         groupList.adapter = groupsAdapter
 
@@ -400,6 +407,7 @@ class IptvFragment : Fragment() {
         btnSave?.setOnClickListener {
             val newUrl = edt.text.toString().trim()
             IptvRepository.setCustomM3uUrl(ctx, newUrl)
+            selectCustomGroupAfterLoad = true
             Toast.makeText(ctx, "Đang nạp danh sách kênh M3U...", Toast.LENGTH_SHORT).show()
             d.dismiss()
             loadData(forceRefresh = true)
@@ -427,6 +435,11 @@ class IptvFragment : Fragment() {
 
         viewLifecycleOwner.lifecycleScope.launch {
             val fresh = IptvRepository.loadChannels(requireContext(), forceRefresh = forceRefresh)
+            // Đọc + xoá cờ ngay khi có kết quả: nếu list không đổi (fresh ==
+            // allChannels) thì nhánh populateUi không chạy, cờ tồn đọng sẽ bắn
+            // nhầm ở lần refresh không liên quan sau đó.
+            val pendingCustomGroup = selectCustomGroupAfterLoad
+            selectCustomGroupAfterLoad = false
             loadingView.visibility = View.GONE
 
             if (fresh.isEmpty() && allChannels.isEmpty()) {
@@ -437,8 +450,22 @@ class IptvFragment : Fragment() {
             } else if (fresh.isNotEmpty() && (forceRefresh || fresh != allChannels)) {
                 val wasEmpty = allChannels.isEmpty()
                 allChannels = fresh
+                // User vừa lưu link M3U: nhảy sang nhóm "M3U Của Tôi" để thấy kênh
+                // mới ngay — trước đây app nạp xong nhưng vẫn đứng ở nhóm VTV nên
+                // trông như link bị bỏ qua.
+                if (pendingCustomGroup && fresh.any { it.isCustom }) {
+                    selectedGroup = "M3U Của Tôi"
+                }
                 emptyText.visibility = View.GONE
                 populateUi(fresh, focusFirst = wasEmpty || forceRefresh)
+            }
+
+            // Báo lỗi nạp M3U khi user chủ động tải lại (lưu link / refresh) —
+            // trước đây link chết hay nội dung không phải M3U đều im lặng.
+            if (forceRefresh) {
+                IptvRepository.lastCustomLoadError?.let {
+                    Toast.makeText(requireContext(), it, Toast.LENGTH_LONG).show()
+                }
             }
 
             EpgRepository.initEpg(requireContext())
@@ -624,6 +651,30 @@ class IptvFragment : Fragment() {
             holder.tvName.text = ch.name
             holder.tvSub.text = if (ch.isVn) "Việt Nam" else ch.group
             holder.badge.text = if (ch.isVn) "VIỆT NAM" else ch.group.uppercase()
+
+            // Số kênh thật = vị trí trong playlist ĐẦY ĐỦ (currentChannels) — trùng
+            // với phím số chuyển kênh trên remote. Không dùng position của adapter
+            // vì lưới đang bị lọc theo nhóm/từ khóa. Không còn badge "FHD" hardcode:
+            // chất lượng luồng không đến từ playlist nên không được bịa.
+            val zapIndex = IptvRepository.currentChannels.indexOfFirst { it.id == ch.id }
+            if (zapIndex >= 0) {
+                holder.tvNum?.text = String.format(Locale.US, "%02d", zapIndex + 1)
+                holder.tvNum?.visibility = View.VISIBLE
+            } else {
+                holder.tvNum?.visibility = View.GONE
+            }
+
+            // EPG now-playing thật — chỉ tra cho kênh VN (nguồn EPG là epg_ripper_VN1);
+            // kênh nước ngoài bỏ qua để tránh quét mờ toàn bộ map mỗi lần bind.
+            val epgNow = if (ch.isVn) {
+                EpgRepository.getCurrentAndNext(ch.id, ch.name)?.first
+            } else null
+            if (epgNow != null) {
+                holder.tvEpg?.text = "▶ ${epgNow.startFormatted()} · ${epgNow.title}"
+                holder.tvEpg?.visibility = View.VISIBLE
+            } else {
+                holder.tvEpg?.visibility = View.GONE
+            }
 
             val badge = getChannelBadgeDrawable(ch)
             if (ch.logo.isNotEmpty() && !ch.logo.contains("imgur.com") && !ch.logo.contains("wikimedia.org")) {
@@ -837,5 +888,7 @@ class IptvFragment : Fragment() {
         val badge: TextView = v.findViewById(R.id.channelBadge)
         val tvName: TextView = v.findViewById(R.id.channelName)
         val tvSub: TextView = v.findViewById(R.id.channelSub)
+        val tvNum: TextView? = v.findViewById(R.id.channelNum)
+        val tvEpg: TextView? = v.findViewById(R.id.channelEpg)
     }
 }

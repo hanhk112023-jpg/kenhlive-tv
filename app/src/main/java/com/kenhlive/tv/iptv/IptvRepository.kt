@@ -36,6 +36,14 @@ object IptvRepository {
     // Bộ nhớ RAM tĩnh để PlayerActivity mở sidebar chuyển kênh tức thì
     var currentChannels: List<IptvChannel> = emptyList()
 
+    /**
+     * Kết quả nạp playlist M3U tùy chỉnh ở lần loadChannels gần nhất —
+     * null = không có link custom / OK; chuỗi = lý do thất bại để UI báo user
+     * thay vì im lặng chỉ hiện kênh mặc định.
+     */
+    var lastCustomLoadError: String? = null
+        private set
+
     /** Lấy URL danh sách M3U tùy chỉnh của người dùng (mặc định link tinyurl.com/vmt47) */
     fun getCustomM3uUrl(context: Context): String {
         val sp = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -235,15 +243,42 @@ object IptvRepository {
         finalChannels.addAll(sortedVn)
 
         // 3. Kênh M3U Tùy Chọn của người dùng (từ link tinyurl.com/vmt47 hoặc link do người dùng tự nhập)
-        if (!cachedCustom.isNullOrBlank()) {
-            val customChannels = parseM3u(
-                cachedCustom!!,
-                defaultGroup = "M3U Tùy Chọn",
-                isVn = false,
-                filterSports = false,
-                isCustom = true
-            )
-            finalChannels.addAll(customChannels)
+        lastCustomLoadError = null
+        if (customUrl.isNotBlank()) {
+            if (cachedCustom.isNullOrBlank()) {
+                // Link đã lưu nhưng không tải được nội dung (mạng lỗi / link chết /
+                // server trả non-200) — trước đây bị bỏ qua im lặng khiến user tưởng
+                // app bỏ qua link mình nhập.
+                lastCustomLoadError = "Không tải được danh sách kênh từ link M3U (kiểm tra lại đường dẫn hoặc mạng)"
+            } else {
+                val customChannels = parseM3u(
+                    cachedCustom!!,
+                    defaultGroup = "M3U Tùy Chọn",
+                    isVn = false,
+                    filterSports = false,
+                    isCustom = true
+                )
+                if (customChannels.isNotEmpty()) {
+                    finalChannels.addAll(customChannels)
+                } else if (isSingleStreamPlaylist(cachedCustom!!)) {
+                    // Link là MỘT luồng .m3u8 đơn (media playlist, không có #EXTINF)
+                    // chứ không phải danh sách kênh — vẫn cho xem như 1 kênh duy nhất
+                    // thay vì báo "không có kênh" khó hiểu.
+                    finalChannels.add(
+                        IptvChannel(
+                            id = "custom_stream_${customUrl.hashCode()}",
+                            name = "Kênh M3U",
+                            group = "M3U Của Tôi",
+                            logo = "",
+                            url = customUrl,
+                            isVn = false,
+                            isCustom = true
+                        )
+                    )
+                } else {
+                    lastCustomLoadError = "Link tải về không phải danh sách kênh M3U hợp lệ"
+                }
+            }
         }
 
         // 4. Kênh Thể thao Quốc tế (DAZN, Sky Sports, beIN, ESPN, FIFA+, Fight, Tennis, Golf, F1...)
@@ -264,6 +299,16 @@ object IptvRepository {
             null
         }
     }
+
+    /**
+     * Nhận diện media playlist (.m3u8 đơn lẻ): có header #EXTM3U + tag #EXT-X-
+     * nhưng KHÔNG có #EXTINF (dấu hiệu danh sách kênh). Trường hợp này người
+     * dùng thường dán nhầm link một kênh thay vì link playlist.
+     */
+    internal fun isSingleStreamPlaylist(content: String): Boolean =
+        content.contains("#EXTM3U", ignoreCase = true) &&
+            content.contains("#EXT-X-", ignoreCase = true) &&
+            !content.contains("#EXTINF", ignoreCase = true)
 
     fun parseM3u(
         content: String,

@@ -242,6 +242,9 @@ class SportAdapter(
             }
             list.setHasFixedSize(true)
             list.setItemViewCacheSize(8)
+            // Prefetch 2 card phía trước khi D-pad scroll tới — rail ngang
+            // tránh khựng khi card chưa kịp inflate/bind.
+            (list.layoutManager as? LinearLayoutManager)?.initialPrefetchItemCount = 2
             list.setRecycledViewPool(pool)
             list.adapter = cards
             list.clipChildren = false
@@ -273,6 +276,7 @@ class SportAdapter(
             }
             list.setHasFixedSize(true)
             list.setItemViewCacheSize(8)
+            (list.layoutManager as? LinearLayoutManager)?.initialPrefetchItemCount = 2
             list.setRecycledViewPool(blvPool)
             list.adapter = cards
             list.clipChildren = false

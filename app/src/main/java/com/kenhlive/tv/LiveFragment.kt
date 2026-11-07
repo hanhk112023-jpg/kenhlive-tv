@@ -64,7 +64,9 @@ class LiveFragment : Fragment() {
         )
         list.layoutManager = LinearLayoutManager(requireContext())
         list.adapter = adapter
-        if (DeviceMode.lowRam) { list.itemAnimator = null }
+        // Tắt item animator như mọi lưới khác trong app: auto-refresh thể thao
+        // submit list định kỳ, animation change/add chạy lại gây nháy + khựng D-pad.
+        list.itemAnimator = null
 
         if (DeviceMode.isTv) {
             list.viewTreeObserver.addOnGlobalFocusChangeListener { _, newFocus ->
@@ -572,6 +574,7 @@ class LiveFragment : Fragment() {
                     .putExtra("roomNum", room.roomNum)
                     .putExtra("matchTitle", room.matchTitle)
                     .putExtra("league", room.league)
+                    .putExtra("match_time_ms", room.matchTimeMs)
             )
         }
     }

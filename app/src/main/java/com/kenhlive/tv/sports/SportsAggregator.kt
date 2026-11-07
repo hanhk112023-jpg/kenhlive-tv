@@ -20,7 +20,24 @@ object SportsAggregator {
      */
     fun enrichMatchGroup(group: LiveMatchGroup): LiveMatchGroup {
         if (group.rooms.isEmpty()) return group
-        return TeamLogoRegistry.enrich(group)
+        val enriched = TeamLogoRegistry.enrich(group)
+        // Lan truyen du kien tran (ti so / dong ho / gio da / logo doi) xuong tung
+        // phong: truoc day chi group co, nen card tung phong BLV va player khong
+        // bao gio thay duoc ti so that. Phong van uu tien du lieu rieng neu co.
+        return enriched.copy(
+            rooms = enriched.rooms.map { r ->
+                r.copy(
+                    hostIcon = r.hostIcon.ifBlank { enriched.hostIcon },
+                    guestIcon = r.guestIcon.ifBlank { enriched.guestIcon },
+                    kickoffTime = r.kickoffTime.ifBlank { enriched.kickoffTime },
+                    matchTimeMs = if (r.matchTimeMs > 0L) r.matchTimeMs else enriched.matchTimeMs,
+                    isLiveGame = r.isLiveGame ?: enriched.isLiveGame,
+                    hostScore = r.hostScore ?: enriched.hostScore,
+                    guestScore = r.guestScore ?: enriched.guestScore,
+                    liveClock = r.liveClock.ifBlank { enriched.liveClock }
+                )
+            }
+        )
     }
 
     /**

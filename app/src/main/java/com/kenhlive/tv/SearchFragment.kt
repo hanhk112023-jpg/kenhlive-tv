@@ -307,6 +307,9 @@ class SearchFragment : Fragment() {
                     .putExtra("url", url)
                     .putExtra("hub", PlayerActivity.Hub.SPORTS)
                     .putExtra("name", "${room.matchTitle} · ${room.blvName}")
+                    .putExtra("matchTitle", room.matchTitle)
+                    .putExtra("league", room.league)
+                    .putExtra("match_time_ms", room.matchTimeMs)
             )
         }
     }
